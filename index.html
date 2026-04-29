@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>간호사 시뮬레이터</title>
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --success: #10b981;
+            --bg: #f1f5f9;
+            --text: #0f172a;
+            --card: #ffffff;
+        }
+        body { font-family: 'Malgun Gothic', sans-serif; margin: 0; background: var(--bg); color: var(--text); overflow-x: hidden; }
+        
+        /* Top Bar & Stats */
+        #top-bar { display: flex; justify-content: space-between; padding: 15px; background: var(--card); border-bottom: 1px solid #cbd5e1; font-weight: bold; }
+        .hidden { display: none !important; }
+        
+        /* Progress Bar */
+        #progress-wrap { background: #e2e8f0; height: 12px; border-radius: 6px; margin: 15px; overflow: hidden; position: relative; }
+        #progress-fill { background: var(--primary); height: 100%; width: 0%; transition: width 0.3s ease; }
+        #progress-info { display: flex; justify-content: space-between; font-size: 11px; margin: -10px 15px 10px; color: #64748b; font-weight: bold; }
+        
+        /* Inventory / Badges */
+        #inventory-bar { display: flex; gap: 5px; padding: 0 15px 10px; flex-wrap: wrap; }
+        .badge { background: #cbd5e1; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; }
+        .badge.warn { background: var(--warning); color: #fff; }
+        .badge.accent { background: var(--primary); color: #fff; }
+        .badge.success { background: var(--success); color: #fff; }
+
+        /* Game Area & Cards */
+        #game-area { padding: 15px; padding-bottom: 120px; }
+        .card { background: var(--card); padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 15px; }
+        .scene-emoji { font-size: 2.5rem; display: block; margin-bottom: 10px; }
+        .scene-title { margin: 0 0 10px 0; font-size: 1.2rem; }
+        .scene-desc { font-size: 0.95rem; line-height: 1.5; margin-bottom: 20px; color: #334155; white-space: pre-wrap; }
+        
+        /* Buttons */
+        .choice-btn { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #cbd5e1; background: #f8fafc; border-radius: 8px; cursor: pointer; text-align: left; font-size: 0.95rem; transition: background 0.2s; }
+        .choice-btn:hover { background: #e2e8f0; }
+        .choice-btn.primary { background: var(--primary); color: white; border: none; text-align: center; font-weight: bold; }
+        .choice-btn.primary:hover { background: #2563eb; }
+        .choice-btn.center { text-align: center; }
+
+        /* Start Menu Options */
+        .shift-option { display: inline-block; padding: 8px 12px; margin: 5px 2px; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; background: #fff; font-size: 0.9rem; }
+        .shift-option.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .menu-container { text-align: center; margin-top: 30px; }
+
+        /* Log Bar (Fixed Bottom) */
+        #log-bar { position: fixed; bottom: 0; left: 0; width: 100%; height: 100px; overflow-y: auto; background: #1e293b; color: #f8fafc; padding: 10px; box-sizing: border-box; font-size: 0.85rem; border-top: 2px solid var(--primary); }
+        .log-entry { margin-bottom: 4px; border-bottom: 1px solid #334155; padding-bottom: 4px; }
+        .log-entry.log-good { color: var(--success); }
+        .log-entry.log-bad { color: var(--danger); }
+        .log-entry.log-important { color: var(--warning); font-weight: bold; }
+
+        /* Game Over / Quiz Modal */
+        #modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.95); color: white; display: none; flex-direction: column; align-items: center; justify-content: flex-start; padding: 30px 20px; box-sizing: border-box; overflow-y: auto; z-index: 1000; }
+        #modal.active { display: flex; }
+        #modal-stats .highlight { font-weight: bold; color: var(--warning); }
+        
+        .feedback-box { padding: 15px; border-radius: 8px; margin-bottom: 15px; font-weight: bold; }
+        .feedback-box.correct { background: #d1fae5; color: #065f46; }
+        .feedback-box.wrong { background: #fee2e2; color: #991b1b; }
+    </style>
+</head>
+<body>
+
+    <div id="top-bar" class="hidden">
+        <div>❤️ HP: <span id="hp" style="color:var(--success)">100</span></div>
+        <div>⭐ 평판: <span id="rep">0</span></div>
+    </div>
+
+    <div id="progress-wrap" class="hidden">
+        <div id="progress-fill"></div>
+    </div>
+    <div id="progress-info" class="hidden">
+        <span id="progress-text">진행도</span>
+        <span id="progress-percent">0%</span>
+    </div>
+
+    <div id="inventory-bar" class="hidden"></div>
+
+    <div id="game-area">
+        <div class="card menu-container">
+            <span class="scene-emoji">🏥</span>
+            <h2>간호사 시뮬레이터</h2>
+            <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 20px;">당신의 임상 판단력을 테스트하세요.</p>
+            
+            <div style="margin-bottom: 20px;">
+                <button class="shift-option active" onclick="setShift('Day', 1.0, this)">Day (기본)</button>
+                <button class="shift-option" onclick="setShift('Evening', 1.2, this)">Evening (어려움)</button>
+                <button class="shift-option" onclick="setShift('Night', 1.5, this)">Night (지옥)</button>
+            </div>
+            
+            <button class="choice-btn primary" onclick="initSurvival()">실전 듀티 시작</button>
+            <button class="choice-btn center" onclick="renderQuizMenu()">트레이닝 센터 (문제은행)</button>
+        </div>
+    </div>
+
+    <div id="log-bar" class="hidden"></div>
+
+    <div id="modal">
+        <h2 id="modal-title" style="color: var(--danger); margin-bottom: 5px;"></h2>
+        <p id="modal-desc" style="text-align: center; color: #cbd5e1; margin-bottom: 20px;"></p>
+        <div id="modal-stats" style="margin-bottom: 30px; line-height: 1.8; text-align: center; background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; width: 100%;"></div>
+        
+        <hr style="width: 100%; border: 1px solid #334155; margin-bottom: 20px;">
+        
+        <h3 style="color: var(--primary);">📚 승급 심사 (무한 랜덤 문제풀이)</h3>
+        <div style="width: 100%; background: #1e293b; padding: 20px; border-radius: 12px; box-sizing: border-box;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.9rem; color: #94a3b8; border-bottom: 1px solid #334155; padding-bottom: 10px; margin-bottom: 15px;">
+                <span>남은 문제: <strong id="left" style="color:#fff"></strong></span>
+                <span>랭크: <strong id="rank" style="color:var(--warning)">신규</strong></span>
+            </div>
+            
+            <div id="question-box" style="font-weight: bold; margin-bottom: 20px; font-size: 1.1rem; line-height: 1.4; white-space: pre-wrap;"></div>
+            <div id="choices"></div>
+            
+            <div id="result" style="margin-top: 15px; font-weight: bold; text-align: center; padding: 10px;"></div>
+            <div style="text-align: center; margin-top: 10px;">
+                <span style="font-size: 0.9rem; color: #94a3b8;">현재 점수: <span id="score" style="color:#fff; font-weight:bold;">0</span>점</span>
+            </div>
+        </div>
+        <button class="choice-btn center" style="margin-top: 20px; background: transparent; color: white;" onclick="location.reload()">처음으로 돌아가기</button>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
