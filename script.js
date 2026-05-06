@@ -35,7 +35,32 @@ let gameState = {
     disclaimerAccepted: false,
     studyTools: { wrongIds: [], bookmarkIds: [] },
     timedExam: null, // { startMs, durationMs, total, done, correct, wrong }
+    srs: { cards: {} }, // { baseId: { box: 1..5, dueAt: ms, lastSeen: ms } }
 };
+
+// SRS Leitner 5-box 간격(일): 박스1=즉시, 2=1일, 3=3일, 4=7일, 5=14일
+const SRS_INTERVALS_DAYS = [0, 0, 1, 3, 7, 14];
+function srsAnswered(baseId, isCorrect) {
+    if (!baseId) return;
+    const card = gameState.srs.cards[baseId] || { box: 1, dueAt: 0, lastSeen: 0 };
+    if (isCorrect) card.box = Math.min(5, card.box + 1);
+    else card.box = 1;
+    card.lastSeen = Date.now();
+    card.dueAt = Date.now() + SRS_INTERVALS_DAYS[card.box] * 24 * 60 * 60 * 1000;
+    gameState.srs.cards[baseId] = card;
+    saveSettings();
+}
+function getSrsDueIds() {
+    const now = Date.now();
+    return Object.entries(gameState.srs.cards)
+        .filter(([id, c]) => c.dueAt <= now)
+        .map(([id]) => id);
+}
+function getSrsBoxCounts() {
+    const counts = [0, 0, 0, 0, 0]; // boxes 1..5
+    Object.values(gameState.srs.cards).forEach(c => { if (c.box >= 1 && c.box <= 5) counts[c.box - 1]++; });
+    return counts;
+}
 
 // =========================
 // i18n 헬퍼
@@ -216,6 +241,13 @@ const T = {
     examTimeUsed:     { ko: "소요 시간", en: "Time used" },
     finishExamBtn:    { ko: "지금 종료", en: "Finish Now" },
     nextExamQ:        { ko: "다음 문항", en: "Next Question" },
+
+    // ===== SRS Leitner =====
+    srsBtn:           { ko: "🧠 간격반복(SRS) 복습", en: "🧠 Spaced Repetition Review" },
+    srsEmpty:         { ko: "오늘 도래한 SRS 카드가 없습니다. 일반 학습으로 카드를 만들어 보세요.", en: "No SRS cards due today. Build cards via regular study." },
+    srsAllNew:        { ko: "아직 SRS에 등록된 카드가 없습니다.", en: "No SRS cards yet." },
+    srsBoxLabel:      { ko: "박스", en: "Box" },
+    srsDueLabel:      { ko: "도래", en: "Due" },
     quizDoneTitle:  { ko: "학습 종료", en: "Study Ended" },
     quizDoneDesc:   { ko: "머리가 과열됐습니다. 오늘은 여기까지!", en: "Brain overheated. That's it for today!" },
     rank0:          { ko: "신규 간호사 (SN/RN)", en: "New Grad RN" },
@@ -263,6 +295,7 @@ function saveSettings() {
             lifetime: gameState.lifetime,
             disclaimerAccepted: gameState.disclaimerAccepted,
             studyTools: gameState.studyTools,
+            srs: gameState.srs,
         }));
     } catch (e) { /* private mode 등 무시 */ }
 }
@@ -278,6 +311,7 @@ function loadSettings() {
             gameState.studyTools.wrongIds = Array.isArray(data.studyTools.wrongIds) ? data.studyTools.wrongIds : [];
             gameState.studyTools.bookmarkIds = Array.isArray(data.studyTools.bookmarkIds) ? data.studyTools.bookmarkIds : [];
         }
+        if (data.srs && data.srs.cards) gameState.srs.cards = data.srs.cards;
     } catch (e) { /* corrupt 무시 */ }
 }
 
@@ -327,7 +361,8 @@ function renderRoot() {
     if (gameState.mode === "settings") return renderSettings();
     if (gameState.mode === "quiz_menu") return renderQuizMenu();
     if (gameState.mode === "quiz" || gameState.mode === "review_wrong"
-        || gameState.mode === "review_bookmark" || gameState.mode === "timed_exam") return renderNextQuizQuestion();
+        || gameState.mode === "review_bookmark" || gameState.mode === "timed_exam"
+        || gameState.mode === "srs_review") return renderNextQuizQuestion();
     if (gameState.mode === "survival") return renderSurvivalEvent("random_hub");
     return renderMainMenu();
 }
@@ -1461,6 +1496,7 @@ function renderQuizMenu() {
 
     const wrongCount = gameState.studyTools.wrongIds.length;
     const bookmarkCount = gameState.studyTools.bookmarkIds.length;
+    const dueCount = getSrsDueIds().length;
     UI.gameArea.innerHTML = `
     <div class="scene-card card">
       <span class="scene-emoji">📖</span>
@@ -1469,6 +1505,7 @@ function renderQuizMenu() {
       <div class="choice-list">
         ${CATEGORY_KEYS.map((key) => `<button class="choice-btn primary" data-cat="${key}">${catName(key)}</button>`).join("")}
         <hr style="border:0; border-top:1px dashed rgba(99,102,241,0.2); margin: 14px 0 10px;">
+        <button class="choice-btn ghost" data-tool="srs">${t("srsBtn")} <span class="tool-count">${dueCount}</span></button>
         <button class="choice-btn ghost" data-tool="wrong">${t("wrongReviewBtn")} <span class="tool-count">${wrongCount}</span></button>
         <button class="choice-btn ghost" data-tool="bookmark">${t("bookmarkBtn")} <span class="tool-count">${bookmarkCount}</span></button>
         <button class="choice-btn ghost" data-tool="timed">${t("timedExamBtn")}</button>
@@ -1484,8 +1521,21 @@ function renderQuizMenu() {
             if (btn.dataset.tool === "wrong") startWrongReview();
             else if (btn.dataset.tool === "bookmark") startBookmarkReview();
             else if (btn.dataset.tool === "timed") startTimedExam();
+            else if (btn.dataset.tool === "srs") startSrsReview();
         });
     });
+}
+
+// SRS 모드 — 도래(due)한 카드만 풀이
+function startSrsReview() {
+    const due = getSrsDueIds();
+    if (due.length === 0) {
+        showToast(t(Object.keys(gameState.srs.cards).length === 0 ? "srsAllNew" : "srsEmpty"));
+        return;
+    }
+    gameState.mode = "srs_review"; gameState.quizCategory = null; gameState.quizSolved = 0;
+    UI.logBar.innerHTML = ""; addLog(t("srsBtn"), "log-important");
+    renderNextQuizQuestion();
 }
 
 function startQuiz(categoryKey) {
@@ -1700,6 +1750,7 @@ function renderNextQuizQuestion() {
     let categoryKey = gameState.quizCategory;
     if (gameState.mode === "review_wrong")     baseIdFilter = gameState.studyTools.wrongIds.slice();
     if (gameState.mode === "review_bookmark")  baseIdFilter = gameState.studyTools.bookmarkIds.slice();
+    if (gameState.mode === "srs_review")       baseIdFilter = getSrsDueIds();
     if (gameState.mode === "timed_exam")       categoryKey = null;
     const ev = generateClinicalEventByCategory(categoryKey, baseIdFilter);
     if (!ev) {
@@ -1714,6 +1765,10 @@ function renderNextQuizQuestion() {
         meta.push(t("wrongReviewBtn"));
     } else if (gameState.mode === "review_bookmark") {
         meta.push(t("bookmarkBtn"));
+    } else if (gameState.mode === "srs_review") {
+        const card = gameState.srs.cards[ev.baseId];
+        meta.push(t("srsBtn"));
+        if (card) meta.push(`${t("srsBoxLabel")} ${card.box}/5`);
     } else {
         meta.push(`${catName(gameState.quizCategory)}`);
         meta.push(`${loc("해결","Solved")}: ${gameState.quizSolved}`);
@@ -1788,6 +1843,8 @@ function handleQuizChoice(choice, ev) {
         addLog(`${wrongTag} ${choice.log}`, "log-bad");
         if (correctChoice) addLog(`${t("correctAnswer")}: ${correctChoice.text}`, "log-important");
     }
+    // 모든 답 후 SRS 카드 업데이트 (간격반복)
+    srsAnswered(ev.baseId, isCorrect);
     gameState.hp = clamp(gameState.hp, 0, 100);
 
     // 모의시험 카운터 갱신·종료 처리
