@@ -18,6 +18,8 @@ let gameState = {
     streak: 0,
     bestStreak: 0,
     bossesCleared: 0,
+    correctCount: 0,
+    wrongCount: 0,
     lang: "ko", // "ko" | "en"
     lifetime: { totalQuizSolved: 0, bestStreak: 0, bestRep: 0, dutiesCompleted: 0 },
     disclaimerAccepted: false,
@@ -130,17 +132,30 @@ const T = {
     gameOverRepTitle:   { ko: "⚠️ 평판 실추", en: "⚠️ Reputation Collapse" },
     gameOverRepDesc:    { ko: "치명적인 실수 누적으로 투약 사고 위기입니다.", en: "Critical errors stacked into a med-incident risk." },
     endLegend:      { ko: "🏆 전설의 간호사", en: "🏆 Legendary Nurse" },
-    endLegendDesc:  { ko: "병원장 표창 후보로 추천됐습니다.", en: "Nominated for the CEO commendation." },
+    endLegendDesc:  { ko: "병원장 표창 후보입니다. 동료들이 모범 사례로 인용합니다.", en: "Nominated for CEO commendation. Cited by peers as best practice." },
     endHero:        { ko: "🌟 듀티의 영웅", en: "🌟 Shift Hero" },
-    endHeroDesc:    { ko: "동료들이 박수로 인계해줍니다.", en: "Colleagues applaud as you sign out." },
-    endAce:         { ko: "💪 에이스 듀티 클리어", en: "💪 Ace Shift Cleared" },
-    endAceDesc:     { ko: "확실한 1인분, 그 이상이었습니다.", en: "Way more than carrying your weight." },
-    endSafe:        { ko: "✅ 듀티 무사 완수", en: "✅ Shift Safely Completed" },
+    endHeroDesc:    { ko: "복도 끝에서 박수가 터졌습니다.", en: "Applause echoes down the corridor." },
+    endMaster:      { ko: "💎 임상 마스터", en: "💎 Clinical Master" },
+    endMasterDesc:  { ko: "임상 판단이 흠잡을 데가 없습니다.", en: "Your clinical judgment is virtually flawless." },
+    endAce:         { ko: "💪 노련한 에이스", en: "💪 Seasoned Ace" },
+    endAceDesc:     { ko: "동기들 사이에서 단연 앞서갑니다.", en: "Clearly ahead of your peers." },
+    endVeteran:     { ko: "⭐ 믿음직한 베테랑", en: "⭐ Reliable Veteran" },
+    endVeteranDesc: { ko: "안정감 있는 듀티였습니다.", en: "A steady, dependable shift." },
+    endSafe:        { ko: "✅ 무사 완수", en: "✅ Safely Completed" },
     endSafeDesc:    { ko: "수고하셨습니다. 안전한 듀티였습니다.", en: "Well done. A safe shift." },
-    endSurvived:    { ko: "😮‍💨 겨우 살아남음", en: "😮‍💨 Barely Survived" },
+    endSurvived:    { ko: "😮‍💨 겨우 통과", en: "😮‍💨 Just Survived" },
     endSurvivedDesc:{ ko: "오늘은 운이 좋았습니다. 내일은 더 잘해봐요.", en: "Lucky today. Aim higher tomorrow." },
-    endNeedsWork:   { ko: "📋 듀티 종료 · 개선 필요", en: "📋 Shift Ended · Needs Work" },
-    endNeedsWorkDesc:{ko: "복기와 재교육이 필요한 듀티였습니다.", en: "A shift that calls for review and retraining." },
+    endNeedsWork:   { ko: "🤔 학습 필요", en: "🤔 Needs More Study" },
+    endNeedsWorkDesc:{ko: "약점 위주로 다시 복기해보세요.", en: "Review your weak points." },
+    endRetrain:     { ko: "📋 재교육 필수", en: "📋 Mandatory Retraining" },
+    endRetrainDesc: { ko: "오늘은 침착하게 복기와 재교육이 우선입니다.", en: "Step back, debrief, and retrain." },
+    accuracyLabel:  { ko: "정답률", en: "Accuracy" },
+    correctLabel:   { ko: "정답", en: "Correct" },
+    wrongLabel:     { ko: "오답", en: "Wrong" },
+    rulesHeading:   { ko: "🎯 엔딩 기준", en: "🎯 Ending Criteria" },
+    correctAnswer:  { ko: "✅ 정답", en: "✅ Correct Answer" },
+    yourChoice:     { ko: "당신의 선택", en: "Your Choice" },
+    rationaleLabel: { ko: "해설", en: "Rationale" },
     quizDoneTitle:  { ko: "학습 종료", en: "Study Ended" },
     quizDoneDesc:   { ko: "머리가 과열됐습니다. 오늘은 여기까지!", en: "Brain overheated. That's it for today!" },
     rank0:          { ko: "신규 간호사 (SN/RN)", en: "New Grad RN" },
@@ -391,8 +406,8 @@ function rememberQuestion(baseId) {
     if (!gameState.recentIds.includes(baseId)) {
         gameState.recentIds.push(baseId);
     }
-    // 최근 45개의 문제 유형을 기억하여 중복을 원천 차단
-    if (gameState.recentIds.length > 45) {
+    // 최근 80개의 baseId를 기억하여 중복을 원천 차단 (총 93개 임상문제 중)
+    if (gameState.recentIds.length > 80) {
         gameState.recentIds.shift();
     }
 }
@@ -709,7 +724,7 @@ function renderSceneCard(ev, options = {}) {
         btn.className = "choice-btn";
         btn.innerHTML = choice.text;
         btn.onclick = () => {
-            if (mode === "survival") handleSurvivalChoice(choice);
+            if (mode === "survival") handleSurvivalChoice(choice, ev);
             else handleQuizChoice(choice, ev, idx);
         };
         listEl.appendChild(btn);
@@ -728,6 +743,7 @@ function resetStateForMode() {
     gameState.hp = 100; gameState.rep = 0; gameState.eventCount = 0;
     gameState.items = []; gameState.quizSolved = 0; gameState.recentIds = [];
     gameState.streak = 0; gameState.bestStreak = 0; gameState.bossesCleared = 0;
+    gameState.correctCount = 0; gameState.wrongCount = 0;
 }
 
 // =========================
@@ -933,10 +949,26 @@ function renderSurvivalEvent(eventId) {
     renderSceneCard(ev, { mode: "survival", meta });
 }
 
-function handleSurvivalChoice(choice) {
+function handleSurvivalChoice(choice, ev) {
     applyChoiceEffect(choice);
     const repDelta = choice.effect?.rep || 0;
     if (choice.log) addLog(choice.log, repDelta > 0 ? "log-good" : repDelta < 0 ? "log-bad" : "");
+
+    // 정답/오답 카운트 (intro 제외 — eventCount 증가한 이벤트만)
+    const isScoredEvent = ev && ev.baseId !== "intro";
+    if (isScoredEvent) {
+        if (repDelta > 0) gameState.correctCount += 1;
+        else if (repDelta < 0) gameState.wrongCount += 1;
+    }
+
+    // 오답 시 정답 안내 (학습 효과)
+    if (repDelta < 0 && ev && ev.choices) {
+        const correctChoice = ev.choices.find(c => (c.effect?.rep || 0) > 0);
+        if (correctChoice) {
+            addLog(`${t("correctAnswer")}: ${correctChoice.text}`, "log-important");
+            if (correctChoice.log) addLog(correctChoice.log, "log-good");
+        }
+    }
 
     // 콤보(연속 정답) 트래킹
     if (repDelta > 0) {
@@ -964,15 +996,23 @@ function handleSurvivalChoice(choice) {
     if (gameState.hp <= 0) return showGameOver(t("gameOverHpTitle"), t("gameOverHpDesc"));
     if (gameState.rep < -60) return showGameOver(t("gameOverRepTitle"), t("gameOverRepDesc"));
     if (gameState.eventCount >= MAX_PROGRESS_EVENTS) {
-        const allBosses = gameState.bossesCleared >= 3;
+        const correct = gameState.correctCount;
+        const wrong = gameState.wrongCount;
+        const total = correct + wrong;
+        const accuracy = total > 0 ? Math.round((correct / total) * 100) : 0;
+        const bosses = gameState.bossesCleared;
+
         let title, desc;
-        if (gameState.rep >= 250 && allBosses) { title = t("endLegend"); desc = t("endLegendDesc"); }
-        else if (gameState.rep >= 150 && allBosses) { title = t("endHero"); desc = t("endHeroDesc"); }
-        else if (gameState.rep >= 100) { title = t("endAce"); desc = t("endAceDesc"); }
-        else if (gameState.rep >= 50) { title = t("endSafe"); desc = t("endSafeDesc"); }
-        else if (gameState.rep >= 0) { title = t("endSurvived"); desc = t("endSurvivedDesc"); }
-        else { title = t("endNeedsWork"); desc = t("endNeedsWorkDesc"); }
-        desc += `\n\n${t("bestCombo")} ${gameState.bestStreak} · ${t("metaBoss")} ${gameState.bossesCleared}/3`;
+        if (accuracy >= 95 && bosses === 3)         { title = t("endLegend");    desc = t("endLegendDesc"); }
+        else if (accuracy >= 85 && bosses >= 2)     { title = t("endHero");      desc = t("endHeroDesc"); }
+        else if (accuracy >= 75)                    { title = t("endMaster");    desc = t("endMasterDesc"); }
+        else if (accuracy >= 65)                    { title = t("endAce");       desc = t("endAceDesc"); }
+        else if (accuracy >= 55)                    { title = t("endVeteran");   desc = t("endVeteranDesc"); }
+        else if (accuracy >= 45)                    { title = t("endSafe");      desc = t("endSafeDesc"); }
+        else if (accuracy >= 30)                    { title = t("endSurvived");  desc = t("endSurvivedDesc"); }
+        else if (accuracy >= 15)                    { title = t("endNeedsWork"); desc = t("endNeedsWorkDesc"); }
+        else                                        { title = t("endRetrain");   desc = t("endRetrainDesc"); }
+        desc += `\n\n${t("accuracyLabel")}: ${correct}/${total} (${accuracy}%) · ${t("bestCombo")} ${gameState.bestStreak} · ${t("metaBoss")} ${gameState.bossesCleared}/3`;
         // 평생 통계 갱신
         gameState.lifetime.dutiesCompleted += 1;
         if (gameState.bestStreak > gameState.lifetime.bestStreak) gameState.lifetime.bestStreak = gameState.bestStreak;
@@ -1003,29 +1043,53 @@ function renderNextQuizQuestion() {
 function handleQuizChoice(choice, ev) {
     document.querySelectorAll("#choice-list .choice-btn").forEach((b) => (b.disabled = true));
     const isCorrect = (choice.effect?.rep || 0) > 0;
+    const correctChoice = ev.choices.find(c => (c.effect?.rep || 0) > 0);
 
-    document.getElementById("feedback-zone").innerHTML = `
-    <div class="feedback-box ${isCorrect ? "correct" : "wrong"}">
-      <div class="feedback-title">${isCorrect ? t("correct") : t("wrong")}</div>
-      <div class="feedback-text">${choice.log || loc("해설이 없습니다.", "No explanation.")}</div>
-    </div>
-    <div class="choice-list" style="margin-top:12px;">
-      <button class="choice-btn primary center" onclick="goNextQuiz()">${t("nextQuestion")}</button>
-      <button class="choice-btn center" onclick="renderQuizMenu()">${t("changeSubject")}</button>
-    </div>
-  `;
+    // 선택 버튼에 시각적 표시 (정답=녹색, 사용자 오답=빨강)
+    const buttons = document.querySelectorAll("#choice-list .choice-btn");
+    ev.choices.forEach((c, i) => {
+        if (c === correctChoice) buttons[i].classList.add("answer-correct");
+        if (c === choice && !isCorrect) buttons[i].classList.add("answer-wrong");
+    });
+
+    let feedbackHtml = `
+      <div class="feedback-box ${isCorrect ? "correct" : "wrong"}">
+        <div class="feedback-title">${isCorrect ? t("correct") : t("wrong")}</div>`;
+
+    if (!isCorrect) {
+        feedbackHtml += `
+          <div class="feedback-row"><strong>${t("yourChoice")}:</strong> ${choice.text}</div>
+          <div class="feedback-text">${choice.log || ""}</div>
+          <hr class="feedback-divider">
+          <div class="feedback-row"><strong>${t("correctAnswer")}:</strong> ${correctChoice.text}</div>
+          <div class="feedback-text"><strong>${t("rationaleLabel")}:</strong> ${correctChoice.log || ""}</div>`;
+    } else {
+        feedbackHtml += `
+          <div class="feedback-row"><strong>${t("correctAnswer")}:</strong> ${correctChoice.text}</div>
+          <div class="feedback-text">${correctChoice.log || ""}</div>`;
+    }
+
+    feedbackHtml += `</div>
+      <div class="choice-list" style="margin-top:12px;">
+        <button class="choice-btn primary center" onclick="goNextQuiz()">${t("nextQuestion")}</button>
+        <button class="choice-btn center" onclick="renderQuizMenu()">${t("changeSubject")}</button>
+      </div>`;
+    document.getElementById("feedback-zone").innerHTML = feedbackHtml;
 
     const correctTag = loc("[정답]", "[Correct]");
     const wrongTag = loc("[오답]", "[Wrong]");
     if (isCorrect) {
         gameState.rep += 6;
         gameState.quizSolved += 1;
+        gameState.correctCount += 1;
         gameState.lifetime.totalQuizSolved += 1;
         saveSettings();
         addLog(`${correctTag} ${choice.log}`, "log-good");
     } else {
         gameState.hp -= Math.round(4 * gameState.difficulty);
+        gameState.wrongCount += 1;
         addLog(`${wrongTag} ${choice.log}`, "log-bad");
+        if (correctChoice) addLog(`${t("correctAnswer")}: ${correctChoice.text}`, "log-important");
     }
     gameState.hp = clamp(gameState.hp, 0, 100);
     updateStats();
@@ -1042,10 +1106,31 @@ function goNextQuiz() {
 function showGameOver(title, desc) {
     document.getElementById("modal-title").textContent = title;
     document.getElementById("modal-desc").textContent = desc;
+    const correct = gameState.correctCount;
+    const wrong = gameState.wrongCount;
+    const total = correct + wrong;
+    const acc = total > 0 ? Math.round((correct / total) * 100) : 0;
     document.getElementById("modal-stats").innerHTML = `
-    ${t("finalHp")}: <span class="highlight">${clamp(gameState.hp, 0, 100)}</span><br>
+    ${t("finalHp")}: <span class="highlight">${clamp(gameState.hp, 0, 100)}</span> ·
     ${t("finalRep")}: <span class="highlight">${gameState.rep}</span><br>
-    ${t("eventsHandled")}: <span class="highlight">${gameState.eventCount}</span>
+    ${t("correctLabel")} <span class="highlight">${correct}</span> /
+    ${t("wrongLabel")} <span class="highlight">${wrong}</span> ·
+    ${t("accuracyLabel")}: <span class="highlight">${acc}%</span>
+    <hr style="border:0; border-top:1px solid rgba(255,255,255,0.12); margin:10px 0;">
+    <div class="ending-rules-block">
+      <div class="ending-rules-title">${t("rulesHeading")}</div>
+      <div class="ending-rules-grid">
+        <div>🏆 ${loc("전설","Legendary")}</div><div>≥95% · ${loc("보스 3/3","Boss 3/3")}</div>
+        <div>🌟 ${loc("영웅","Hero")}</div><div>≥85% · ${loc("보스 2+","Boss 2+")}</div>
+        <div>💎 ${loc("마스터","Master")}</div><div>≥75%</div>
+        <div>💪 ${loc("에이스","Ace")}</div><div>≥65%</div>
+        <div>⭐ ${loc("베테랑","Veteran")}</div><div>≥55%</div>
+        <div>✅ ${loc("무사","Safe")}</div><div>≥45%</div>
+        <div>😮‍💨 ${loc("통과","Survived")}</div><div>≥30%</div>
+        <div>🤔 ${loc("학습 필요","Needs Study")}</div><div>≥15%</div>
+        <div>📋 ${loc("재교육","Retrain")}</div><div>&lt;15%</div>
+      </div>
+    </div>
   `;
     document.getElementById("modal-promo-title").textContent = t("promotionTitle");
     document.getElementById("modal-left-label").textContent = t("leftLabel");
