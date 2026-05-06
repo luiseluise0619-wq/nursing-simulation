@@ -248,6 +248,10 @@ const T = {
     srsAllNew:        { ko: "아직 SRS에 등록된 카드가 없습니다.", en: "No SRS cards yet." },
     srsBoxLabel:      { ko: "박스", en: "Box" },
     srsDueLabel:      { ko: "도래", en: "Due" },
+
+    // ===== 서브토픽 필터 =====
+    chooseTopic:      { ko: "세부 주제 선택", en: "Choose Subtopic" },
+    allTopics:        { ko: "📚 전체 (모든 세부 주제)", en: "📚 All (every subtopic)" },
     quizDoneTitle:  { ko: "학습 종료", en: "Study Ended" },
     quizDoneDesc:   { ko: "머리가 과열됐습니다. 오늘은 여기까지!", en: "Brain overheated. That's it for today!" },
     rank0:          { ko: "신규 간호사 (SN/RN)", en: "New Grad RN" },
@@ -360,6 +364,7 @@ function renderRoot() {
     if (gameState.mode === "menu") return renderMainMenu();
     if (gameState.mode === "settings") return renderSettings();
     if (gameState.mode === "quiz_menu") return renderQuizMenu();
+    if (gameState.mode === "subtopic_picker") return pickCategory(gameState.quizCategory);
     if (gameState.mode === "quiz" || gameState.mode === "review_wrong"
         || gameState.mode === "review_bookmark" || gameState.mode === "timed_exam"
         || gameState.mode === "srs_review") return renderNextQuizQuestion();
@@ -1104,14 +1109,15 @@ function generatePressureUlcerStageQuestion() {
 // =========================
 // 라우터 및 렌더링 (중복 방지 적용)
 // =========================
-function generateClinicalEventByCategory(categoryKey = null, baseIdFilter = null) {
+function generateClinicalEventByCategory(categoryKey = null, baseIdFilter = null, partFilter = null) {
     let pool = [];
     for (let generator of clinicalGenerators) {
         const ev = generator();
         normalizeEvent(ev);
         const catOk = !categoryKey || ev.categoryKey === categoryKey;
         const idOk = !baseIdFilter || baseIdFilter.includes(ev.baseId);
-        if (catOk && idOk && !recentlyUsed(ev.baseId)) pool.push(ev);
+        const partOk = !partFilter || ev.part === partFilter;
+        if (catOk && idOk && partOk && !recentlyUsed(ev.baseId)) pool.push(ev);
     }
     if (pool.length === 0) {
         gameState.recentIds = [];
@@ -1120,7 +1126,8 @@ function generateClinicalEventByCategory(categoryKey = null, baseIdFilter = null
             normalizeEvent(ev);
             const catOk = !categoryKey || ev.categoryKey === categoryKey;
             const idOk = !baseIdFilter || baseIdFilter.includes(ev.baseId);
-            if (catOk && idOk) pool.push(ev);
+            const partOk = !partFilter || ev.part === partFilter;
+            if (catOk && idOk && partOk) pool.push(ev);
         }
     }
     if (pool.length === 0) return null; // 빈 풀(예: 오답이 없을 때)
@@ -1173,6 +1180,7 @@ function resetStateForMode() {
     gameState.items = []; gameState.quizSolved = 0; gameState.recentIds = [];
     gameState.streak = 0; gameState.bestStreak = 0; gameState.bossesCleared = 0;
     gameState.correctCount = 0; gameState.wrongCount = 0;
+    gameState.partFilter = null;
     gameState.narrative = {
         codeBlueFailed: false, vipFailed: false, massFailed: false, savedCodeBlue: false,
         helpedNewbie: false, acceptedThanks: false, sharedMeal: false, ethicsViolation: false,
@@ -1514,7 +1522,7 @@ function renderQuizMenu() {
     </div>
   `;
     UI.gameArea.querySelectorAll("[data-cat]").forEach(btn => {
-        btn.addEventListener("click", () => startQuiz(btn.dataset.cat));
+        btn.addEventListener("click", () => pickCategory(btn.dataset.cat));
     });
     UI.gameArea.querySelectorAll("[data-tool]").forEach(btn => {
         btn.addEventListener("click", () => {
@@ -1538,9 +1546,49 @@ function startSrsReview() {
     renderNextQuizQuestion();
 }
 
-function startQuiz(categoryKey) {
+// 카테고리 안의 서브토픽 목록을 수집
+function getPartsForCategory(categoryKey) {
+    const parts = new Map(); // koPart -> count
+    for (const gen of clinicalGenerators) {
+        const ev = gen();
+        normalizeEvent(ev);
+        if (ev.categoryKey === categoryKey && ev.part) {
+            // 양 언어 part 보존을 위해 원본을 다시 추출 - 현재 lang의 part가 키
+            parts.set(ev.part, (parts.get(ev.part) || 0) + 1);
+        }
+    }
+    return Array.from(parts.entries()); // [[partLabel, count], ...]
+}
+
+// 카테고리 클릭 → 서브토픽 선택 화면 (part 카운트가 1개면 바로 시작)
+function pickCategory(categoryKey) {
+    const parts = getPartsForCategory(categoryKey);
+    if (parts.length <= 1) { startQuiz(categoryKey, null); return; }
+    gameState.mode = "subtopic_picker"; gameState.quizCategory = categoryKey;
+    showCoreUI(); UI.logBar.innerHTML = "";
+    UI.gameArea.innerHTML = `
+    <div class="scene-card card">
+      <span class="scene-emoji">🔍</span>
+      <h2 class="scene-title">${catName(categoryKey)}</h2>
+      <p class="scene-desc">${t("chooseTopic")}</p>
+      <div class="choice-list">
+        <button class="choice-btn primary" data-part="__all__">${t("allTopics")}</button>
+        ${parts.map(([p, n]) => `<button class="choice-btn ghost" data-part="${encodeURIComponent(p)}">${p} <span class="tool-count">${n}</span></button>`).join("")}
+        <button class="choice-btn center" onclick="renderQuizMenu()">${t("backMenu")}</button>
+      </div>
+    </div>`;
+    UI.gameArea.querySelectorAll("[data-part]").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const p = btn.dataset.part;
+            startQuiz(categoryKey, p === "__all__" ? null : decodeURIComponent(p));
+        });
+    });
+}
+
+function startQuiz(categoryKey, partFilter) {
     gameState.mode = "quiz"; gameState.quizCategory = categoryKey; gameState.quizSolved = 0;
-    UI.logBar.innerHTML = ""; addLog(`${catName(categoryKey)} ${t("trainingStart")}`, "log-important");
+    gameState.partFilter = partFilter || null;
+    UI.logBar.innerHTML = ""; addLog(`${catName(categoryKey)}${partFilter ? " · " + partFilter : ""} ${t("trainingStart")}`, "log-important");
     renderNextQuizQuestion();
 }
 
@@ -1752,7 +1800,8 @@ function renderNextQuizQuestion() {
     if (gameState.mode === "review_bookmark")  baseIdFilter = gameState.studyTools.bookmarkIds.slice();
     if (gameState.mode === "srs_review")       baseIdFilter = getSrsDueIds();
     if (gameState.mode === "timed_exam")       categoryKey = null;
-    const ev = generateClinicalEventByCategory(categoryKey, baseIdFilter);
+    const partFilter = (gameState.mode === "quiz") ? (gameState.partFilter || null) : null;
+    const ev = generateClinicalEventByCategory(categoryKey, baseIdFilter, partFilter);
     if (!ev) {
         showGameOver(loc("📋 풀이 종료","📋 Done"), loc("더 이상 풀 문제가 없습니다.","No more questions to review."));
         return;
@@ -1771,6 +1820,7 @@ function renderNextQuizQuestion() {
         if (card) meta.push(`${t("srsBoxLabel")} ${card.box}/5`);
     } else {
         meta.push(`${catName(gameState.quizCategory)}`);
+        if (gameState.partFilter) meta.push(`🔍 ${gameState.partFilter}`);
         meta.push(`${loc("해결","Solved")}: ${gameState.quizSolved}`);
     }
     renderSceneCard(ev, { mode: "quiz", questionIndex: gameState.quizSolved + 1, meta });
