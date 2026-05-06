@@ -623,9 +623,11 @@ const clinicalGenerators = [
     generateBulimiaQuestion, generateHeatColdQuestion, generateCrutchGaitQuestion,
     generateHandHygieneTypesQuestion, generateROMTypesQuestion, generateHerdImmunityQuestion,
     generateJustCultureQuestion,
-    // ===== 이미지 문제 1차: ECG 4 + 욕창 단계 =====
+    // ===== 이미지 문제: ECG·욕창·트리아지·9의법칙·심장·체위·반사 (총 10개) =====
     generateECGNSRQuestion, generateECGAFibQuestion, generateECGVTachQuestion,
-    generateECGAsystoleQuestion, generatePressureUlcerStageQuestion
+    generateECGAsystoleQuestion, generatePressureUlcerStageQuestion,
+    generateTriageColorQuestion, generateRuleOfNinesQuestion, generateHeartChambersQuestion,
+    generatePositionDiagramQuestion, generateMoroReflexQuestion
 ];
 
 function generateABGAQuestion() {
@@ -978,6 +980,77 @@ function generateECGAsystoleQuestion() {
         ])
     };
 }
+function generateTriageColorQuestion() {
+    const svg = `<svg viewBox="0 0 600 120" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="150" height="120" fill="#dc2626"/><rect x="150" y="0" width="150" height="120" fill="#facc15"/><rect x="300" y="0" width="150" height="120" fill="#16a34a"/><rect x="450" y="0" width="150" height="120" fill="#1f2937"/><text x="75" y="55" text-anchor="middle" fill="white" font-size="22" font-weight="800">RED</text><text x="75" y="80" text-anchor="middle" fill="white" font-size="13">${loc("긴급","Immediate")}</text><text x="225" y="55" text-anchor="middle" fill="#1e293b" font-size="22" font-weight="800">YELLOW</text><text x="225" y="80" text-anchor="middle" fill="#1e293b" font-size="13">${loc("응급","Delayed")}</text><text x="375" y="55" text-anchor="middle" fill="white" font-size="22" font-weight="800">GREEN</text><text x="375" y="80" text-anchor="middle" fill="white" font-size="13">${loc("비응급","Minor")}</text><text x="525" y="55" text-anchor="middle" fill="white" font-size="22" font-weight="800">BLACK</text><text x="525" y="80" text-anchor="middle" fill="white" font-size="13">${loc("사망/지연","Expectant")}</text></svg>`;
+    return { baseId: "triageColor", categoryKey: "community", part: loc("재난 트리아지","Disaster Triage"), emoji: "🚦",
+        title: loc("START 색상 매칭","START Color Matching"),
+        desc: loc("호흡 30/min 이상이거나 모세혈관 재충전 2초 이상 또는 명령 따르기 불가능한 환자의 색깔은?","Patient with RR>30, capillary refill >2 sec, or unable to follow commands. Which color?"),
+        image: svg,
+        choices: shuffle([
+            { text: loc("적색(Red) - 즉시 처치","Red — Immediate"), effect: { hp: -3, rep: 22 }, log: loc("정답. RPM(Respiration·Pulse·Mental status) 중 하나라도 비정상이면 적색.","Correct. If any of RPM is abnormal → Red.") },
+            { text: loc("황색(Yellow) - 지연","Yellow — Delayed"), effect: { hp: -22, rep: -12 }, log: loc("황색은 RPM 정상이지만 보행 불가.","Yellow = RPM normal but can't walk.") },
+            { text: loc("녹색(Green) - 경증","Green — Minor"), effect: { hp: -28, rep: -20 }, log: loc("녹색은 보행 가능한 환자.","Green = walking wounded.") },
+            { text: loc("흑색(Black) - 사망/지연","Black — Expectant"), effect: { hp: -25, rep: -15 }, log: loc("흑색은 기도 후에도 무호흡.","Black = apneic after airway opening.") }
+        ])
+    };
+}
+function generateRuleOfNinesQuestion() {
+    const svg = `<svg viewBox="0 0 600 240" xmlns="http://www.w3.org/2000/svg"><rect width="600" height="240" fill="#fff5f0"/><g transform="translate(180,20)"><ellipse cx="120" cy="20" rx="22" ry="22" fill="#fde68a" stroke="#92400e" stroke-width="1.5"/><text x="120" y="25" text-anchor="middle" font-size="11" font-weight="700">9%</text><rect x="78" y="42" width="84" height="80" fill="#fecaca" stroke="#991b1b" stroke-width="1.5" rx="4"/><text x="120" y="86" text-anchor="middle" font-size="13" font-weight="800">${loc("앞 18%","Ant 18%")}</text><rect x="50" y="50" width="28" height="64" fill="#fde68a" stroke="#92400e" stroke-width="1.5" rx="4"/><text x="64" y="85" text-anchor="middle" font-size="11" font-weight="700">9%</text><rect x="162" y="50" width="28" height="64" fill="#fde68a" stroke="#92400e" stroke-width="1.5" rx="4"/><text x="176" y="85" text-anchor="middle" font-size="11" font-weight="700">9%</text><rect x="80" y="124" width="36" height="100" fill="#fed7aa" stroke="#9a3412" stroke-width="1.5" rx="4"/><text x="98" y="180" text-anchor="middle" font-size="11" font-weight="700">18%</text><rect x="124" y="124" width="36" height="100" fill="#fed7aa" stroke="#9a3412" stroke-width="1.5" rx="4"/><text x="142" y="180" text-anchor="middle" font-size="11" font-weight="700">18%</text><text x="120" y="-5" text-anchor="middle" font-size="11" fill="#1e293b" font-weight="600">${loc("성인 9의 법칙(앞면)","Rule of Nines (Anterior)")}</text></g></svg>`;
+    return { baseId: "ruleOfNinesImg", categoryKey: "adult", part: loc("화상 면적","Burn TBSA"), emoji: "🔥",
+        title: loc("9의 법칙 - 화상 계산","Rule of Nines"),
+        desc: loc("그림에서 양쪽 다리 앞면 전체에 화상을 입었다면 총 %TBSA는?","If burn covers anterior surfaces of both entire legs, total %TBSA?"),
+        image: svg,
+        choices: shuffle([
+            { text: loc("18% (양쪽 다리 앞면 9% × 2)","18% (anterior of each leg 9% × 2)"), effect: { hp: -2, rep: 22 }, log: loc("정답. 한 다리 전체=18%, 앞면만=9% × 2 = 18%.","Correct. Whole leg=18%, anterior only=9% × 2 = 18%.") },
+            { text: loc("36% (양쪽 다리 전체 18% × 2)","36% (whole both legs)"), effect: { hp: -28, rep: -18 }, log: loc("앞면만이라고 했습니다.","Question says anterior only.") },
+            { text: loc("9% (한쪽 다리 앞면)","9% (one leg anterior)"), effect: { hp: -25, rep: -15 }, log: loc("양쪽이라고 했습니다.","Question says both legs.") },
+            { text: loc("27% (양쪽 다리 + 회음부 1%)","27% (both legs + perineum 1%)"), effect: { hp: -25, rep: -15 }, log: loc("계산이 맞지 않습니다.","Math doesn't add up.") }
+        ])
+    };
+}
+function generateHeartChambersQuestion() {
+    const svg = `<svg viewBox="0 0 400 240" xmlns="http://www.w3.org/2000/svg"><rect width="400" height="240" fill="#fff5f5"/><path d="M 100 50 Q 80 80 90 130 L 110 200 Q 130 220 160 200 Q 200 230 240 200 Q 270 220 290 200 L 310 130 Q 320 80 300 50 Q 280 30 240 40 Q 200 30 160 40 Q 120 30 100 50 Z" fill="#fee2e2" stroke="#991b1b" stroke-width="2"/><line x1="200" y1="40" x2="200" y2="220" stroke="#991b1b" stroke-width="2"/><line x1="100" y1="120" x2="200" y2="120" stroke="#991b1b" stroke-width="2"/><line x1="200" y1="120" x2="310" y2="120" stroke="#991b1b" stroke-width="2"/><text x="140" y="90" text-anchor="middle" font-size="13" font-weight="700">A</text><text x="265" y="90" text-anchor="middle" font-size="13" font-weight="700">B</text><text x="140" y="170" text-anchor="middle" font-size="13" font-weight="700">C</text><text x="265" y="170" text-anchor="middle" font-size="13" font-weight="700">D</text><text x="200" y="20" text-anchor="middle" font-size="11" fill="#1e293b" font-weight="600">${loc("심장 4개 방","Heart 4 Chambers")}</text></svg>`;
+    return { baseId: "heartChambers", categoryKey: "adult", part: loc("해부학","Anatomy"), emoji: "🫀",
+        title: loc("심장 챔버","Heart Chambers"),
+        desc: loc("전신 순환의 동맥혈을 펌프하는 가장 두꺼운 벽을 가진 챔버는 (A·B·C·D 중)?","Which chamber (A/B/C/D) pumps oxygenated blood to the body and has the thickest wall?"),
+        image: svg,
+        choices: shuffle([
+            { text: loc("D (좌심실, Left Ventricle)","D (Left Ventricle)"), effect: { hp: -2, rep: 22 }, log: loc("정답. 좌심실 = 환자 기준 좌측·아래·체순환 펌프.","Correct. LV = patient's left, lower, systemic pump.") },
+            { text: loc("A (우심방)","A (Right Atrium)"), effect: { hp: -22, rep: -12 }, log: loc("RA는 정맥혈을 받음.","RA receives venous blood.") },
+            { text: loc("B (좌심방)","B (Left Atrium)"), effect: { hp: -22, rep: -12 }, log: loc("LA는 폐정맥혈을 받음.","LA receives pulmonary venous blood.") },
+            { text: loc("C (우심실)","C (Right Ventricle)"), effect: { hp: -22, rep: -12 }, log: loc("RV는 폐순환 펌프(저압).","RV pumps to lungs (low pressure).") }
+        ])
+    };
+}
+function generatePositionDiagramQuestion() {
+    const svg = `<svg viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg"><rect width="600" height="200" fill="#f0f9ff"/><g transform="translate(20,20)"><rect x="0" y="100" width="160" height="14" fill="#94a3b8"/><line x1="0" y1="100" x2="160" y2="40" stroke="#1e293b" stroke-width="3"/><circle cx="155" cy="42" r="14" fill="#fecaca" stroke="#991b1b" stroke-width="1.5"/><text x="80" y="155" text-anchor="middle" font-size="13" font-weight="700">A</text><text x="80" y="175" text-anchor="middle" font-size="11" fill="#64748b">${loc("60-90°","60-90°")}</text></g><g transform="translate(220,20)"><rect x="0" y="100" width="160" height="14" fill="#94a3b8"/><line x1="0" y1="100" x2="160" y2="68" stroke="#1e293b" stroke-width="3"/><circle cx="155" cy="70" r="14" fill="#fecaca" stroke="#991b1b" stroke-width="1.5"/><text x="80" y="155" text-anchor="middle" font-size="13" font-weight="700">B</text><text x="80" y="175" text-anchor="middle" font-size="11" fill="#64748b">${loc("30-45°","30-45°")}</text></g><g transform="translate(420,20)"><rect x="0" y="100" width="160" height="14" fill="#94a3b8"/><line x1="0" y1="100" x2="160" y2="120" stroke="#1e293b" stroke-width="3"/><circle cx="155" cy="122" r="14" fill="#fecaca" stroke="#991b1b" stroke-width="1.5"/><text x="80" y="155" text-anchor="middle" font-size="13" font-weight="700">C</text><text x="80" y="175" text-anchor="middle" font-size="11" fill="#64748b">${loc("머리 ↓","Head ↓")}</text></g></svg>`;
+    return { baseId: "positionDiagram", categoryKey: "fundamentals", part: loc("체위","Positioning"), emoji: "🛏️",
+        title: loc("체위 식별","Identify the Position"),
+        desc: loc("그림 C는 머리가 발보다 낮은 자세입니다. 어떤 체위인가요?","Diagram C: head lower than feet. Which position?"),
+        image: svg,
+        choices: shuffle([
+            { text: loc("Trendelenburg - 쇼크 시 (현재는 권장 안 함)","Trendelenburg — for shock (no longer recommended)"), effect: { hp: -2, rep: 22 }, log: loc("정답. 머리↓·발↑. 현대에는 modified만 제한적 사용.","Correct. Head down, feet up. Modern use is limited.") },
+            { text: loc("High Fowler's - 호흡곤란","High Fowler's — for dyspnea"), effect: { hp: -22, rep: -12 }, log: loc("그림 A입니다.","That's diagram A.") },
+            { text: loc("Semi-Fowler's","Semi-Fowler's"), effect: { hp: -22, rep: -12 }, log: loc("그림 B입니다.","That's diagram B.") },
+            { text: loc("Sims' - 좌측 측와","Sims' (left lateral)"), effect: { hp: -22, rep: -12 }, log: loc("Sims는 옆으로 누운 자세.","Sims is a side-lying position.") }
+        ])
+    };
+}
+function generateMoroReflexQuestion() {
+    const svg = `<svg viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg"><rect width="600" height="200" fill="#fef3f7"/><g transform="translate(180,30)"><circle cx="120" cy="60" r="42" fill="#fed7aa" stroke="#9a3412" stroke-width="2"/><circle cx="106" cy="55" r="3" fill="#1e293b"/><circle cx="134" cy="55" r="3" fill="#1e293b"/><path d="M 110 70 Q 120 76 130 70" stroke="#1e293b" stroke-width="1.5" fill="none"/><line x1="78" y1="80" x2="40" y2="40" stroke="#1e293b" stroke-width="3"/><line x1="162" y1="80" x2="200" y2="40" stroke="#1e293b" stroke-width="3"/><circle cx="40" cy="40" r="6" fill="#fda4af"/><circle cx="200" cy="40" r="6" fill="#fda4af"/><line x1="78" y1="80" x2="40" y2="60" stroke="#1e293b" stroke-width="1" stroke-dasharray="4,3" opacity="0.4"/><line x1="162" y1="80" x2="200" y2="60" stroke="#1e293b" stroke-width="1" stroke-dasharray="4,3" opacity="0.4"/><text x="120" y="150" text-anchor="middle" font-size="13" font-weight="700">${loc("팔을 놀라며 펼침","Arms spread in startle")}</text></g></svg>`;
+    return { baseId: "moroReflex", categoryKey: "pediatric", part: loc("신생아 반사","Newborn Reflex"), emoji: "👶",
+        title: loc("신생아 반사 식별","Identify the Newborn Reflex"),
+        desc: loc("머리가 갑자기 떨어질 때 팔이 외전되었다가 다시 모이는 그림 속 반사는?","Reflex shown: arms abduct then adduct in response to sudden head drop?"),
+        image: svg,
+        choices: shuffle([
+            { text: loc("Moro 반사 (놀람 반사)","Moro (startle) reflex"), effect: { hp: -2, rep: 22 }, log: loc("정답. 정상은 출생~4-6개월까지.","Correct. Normal from birth to 4-6 months.") },
+            { text: loc("Babinski 반사","Babinski reflex"), effect: { hp: -22, rep: -12 }, log: loc("Babinski는 발바닥 자극·발가락 부채꼴.","Babinski: stroke sole → toe fanning.") },
+            { text: loc("Rooting 반사","Rooting reflex"), effect: { hp: -22, rep: -12 }, log: loc("Rooting은 뺨 자극·고개 돌림.","Rooting: cheek stroke → head turn.") },
+            { text: loc("Tonic neck 반사","Tonic neck reflex"), effect: { hp: -22, rep: -12 }, log: loc("Tonic neck는 머리 회전·팔 펌프.","Tonic neck: head turn → arm extension same side.") }
+        ])
+    };
+}
+
 function generatePressureUlcerStageQuestion() {
     const svg = `<svg viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg"><rect width="600" height="200" fill="#fff8f7"/><g transform="translate(20,20)"><circle cx="50" cy="60" r="42" fill="#fecaca" stroke="#dc2626" stroke-width="2"/><text x="50" y="135" text-anchor="middle" font-size="14" font-weight="700" fill="#1e293b">A</text><text x="50" y="155" text-anchor="middle" font-size="11" fill="#64748b">${loc("발적·온감","Erythema/warmth")}</text></g><g transform="translate(170,20)"><ellipse cx="50" cy="60" rx="44" ry="34" fill="#fecaca"/><ellipse cx="50" cy="60" rx="22" ry="16" fill="#fda4af" stroke="#be123c" stroke-width="1.5"/><text x="50" y="135" text-anchor="middle" font-size="14" font-weight="700" fill="#1e293b">B</text><text x="50" y="155" text-anchor="middle" font-size="11" fill="#64748b">${loc("부분층 손실","Partial loss")}</text></g><g transform="translate(320,20)"><ellipse cx="50" cy="60" rx="46" ry="36" fill="#f87171"/><ellipse cx="50" cy="60" rx="28" ry="20" fill="#fef3c7" stroke="#a16207" stroke-width="1.5"/><circle cx="50" cy="60" r="10" fill="#dc2626"/><text x="50" y="135" text-anchor="middle" font-size="14" font-weight="700" fill="#1e293b">C</text><text x="50" y="155" text-anchor="middle" font-size="11" fill="#64748b">${loc("피하지방 노출","Subq fat exposed")}</text></g><g transform="translate(470,20)"><ellipse cx="50" cy="60" rx="46" ry="36" fill="#f87171"/><ellipse cx="50" cy="60" rx="30" ry="22" fill="#92400e" stroke="#1e293b" stroke-width="1.5"/><circle cx="50" cy="62" r="14" fill="#1e293b"/><text x="44" y="66" font-size="10" fill="white">${loc("뼈","Bone")}</text><text x="50" y="135" text-anchor="middle" font-size="14" font-weight="700" fill="#1e293b">D</text><text x="50" y="155" text-anchor="middle" font-size="11" fill="#64748b">${loc("뼈/근육 노출","Bone/muscle")}</text></g></svg>`;
     return { baseId: "pressureStage", categoryKey: "fundamentals", part: loc("욕창","Pressure Ulcer"), emoji: "🛌",
