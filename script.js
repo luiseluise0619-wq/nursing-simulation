@@ -2,6 +2,7 @@
 // 상태
 // =========================
 const MAX_PROGRESS_EVENTS = 20;
+const STORAGE_KEY = "nurseSim.v1";
 
 let gameState = {
     mode: "menu",
@@ -17,7 +18,215 @@ let gameState = {
     streak: 0,
     bestStreak: 0,
     bossesCleared: 0,
+    lang: "ko", // "ko" | "en"
+    lifetime: { totalQuizSolved: 0, bestStreak: 0, bestRep: 0, dutiesCompleted: 0 },
 };
+
+// =========================
+// i18n 헬퍼
+// =========================
+function loc(ko, en) { return gameState.lang === "en" ? en : ko; }
+function L(obj) { return obj?.[gameState.lang] ?? obj?.ko ?? ""; }
+
+const CATEGORY_KEYS = ["fundamentals", "adult", "maternal", "pediatric", "community", "psych", "management", "law"];
+const CATEGORY_NAMES = {
+    fundamentals: { ko: "기본간호학", en: "Fundamentals" },
+    adult:        { ko: "성인간호학", en: "Adult Health" },
+    maternal:     { ko: "모성간호학", en: "Maternity" },
+    pediatric:    { ko: "아동간호학", en: "Pediatric" },
+    community:    { ko: "지역사회간호학", en: "Community Health" },
+    psych:        { ko: "정신간호학", en: "Psychiatric" },
+    management:   { ko: "간호관리학", en: "Management" },
+    law:          { ko: "보건의약관계법규", en: "Health Laws" },
+    flavor:       { ko: "병동 일상", en: "Daily Ward" },
+    boss:         { ko: "🚨 위기상황", en: "🚨 Crisis" },
+};
+function catName(key) { return L(CATEGORY_NAMES[key]); }
+
+// 한글 카테고리명 → key (구버전 generator 호환용 정규화)
+const KO_TO_KEY = {
+    "기본간호학": "fundamentals", "성인간호학": "adult", "모성간호학": "maternal",
+    "아동간호학": "pediatric", "지역사회간호학": "community", "정신간호학": "psych",
+    "간호관리학": "management", "보건의약관계법규": "law",
+    "병동 일상": "flavor", "🚨 위기상황": "boss",
+};
+function normalizeEvent(ev) {
+    if (!ev) return ev;
+    if (!ev.categoryKey) ev.categoryKey = KO_TO_KEY[ev.category] || null;
+    if (ev.categoryKey && CATEGORY_NAMES[ev.categoryKey]) {
+        ev.category = catName(ev.categoryKey);
+    }
+    return ev;
+}
+
+// UI 문자열 사전
+const T = {
+    appTitle:       { ko: "간호사 시뮬레이터", en: "Nurse Simulator" },
+    subtitle:       { ko: "당신의 임상 판단력을 테스트하세요", en: "Test your clinical judgment" },
+    shiftLabel:     { ko: "근무 난이도 선택", en: "Select Shift Difficulty" },
+    shiftDay:       { ko: "☀️ Day · 기본", en: "☀️ Day · Easy" },
+    shiftEvening:   { ko: "🌆 Evening · 어려움", en: "🌆 Evening · Hard" },
+    shiftNight:     { ko: "🌙 Night · 지옥", en: "🌙 Night · Hell" },
+    startSurvival:  { ko: "🚑 실전 듀티 시작", en: "🚑 Start Live Shift" },
+    openTraining:   { ko: "📚 트레이닝 센터 (문제은행)", en: "📚 Training Center (Question Bank)" },
+    backHome:       { ko: "🏠 처음으로 돌아가기", en: "🏠 Back to Home" },
+    backMenu:       { ko: "메인 메뉴", en: "Main Menu" },
+    nextQuestion:   { ko: "다음 문제", en: "Next Question" },
+    changeSubject:  { ko: "과목 변경", en: "Change Subject" },
+    progressShift:  { ko: "듀티 진행도", en: "Shift Progress" },
+    progressTrain:  { ko: "학습 진행도", en: "Study Progress" },
+    progressIdle:   { ko: "진행도", en: "Progress" },
+    statShift:      { ko: "근무", en: "Shift" },
+    statStateLive:  { ko: "상태: 실전 모드", en: "State: Live Mode" },
+    statStateTrain: { ko: "상태: 트레이닝", en: "State: Training" },
+    statStateIdle:  { ko: "상태: 대기", en: "State: Idle" },
+    solvedBadge:    { ko: "학습 완료", en: "Solved" },
+    questionsLabel: { ko: "문제", en: "questions" },
+    rankLabel:      { ko: "랭크", en: "Rank" },
+    rankNew:        { ko: "신규", en: "Rookie" },
+    leftLabel:      { ko: "남은 문제", en: "Remaining" },
+    scoreNow:       { ko: "현재 점수", en: "Current Score" },
+    pointsUnit:     { ko: "점", en: "pts" },
+    correct:        { ko: "✅ 정답", en: "✅ Correct" },
+    wrong:          { ko: "❌ 오답", en: "❌ Wrong" },
+    promotionTitle: { ko: "📚 승급 심사 · 무한 랜덤 문제풀이", en: "📚 Promotion Exam · Infinite Random Quiz" },
+    finalHp:        { ko: "최종 체력", en: "Final HP" },
+    finalRep:       { ko: "최종 평판", en: "Final Reputation" },
+    eventsHandled:  { ko: "처리한 상황", en: "Events Handled" },
+    metaCount:      { ko: "누적", en: "Total" },
+    metaCombo:      { ko: "콤보", en: "Combo" },
+    metaBoss:       { ko: "보스", en: "Boss" },
+    bestCombo:      { ko: "최고 콤보", en: "Best Combo" },
+    dutyStart:      { ko: "듀티가 시작되었습니다. 첫 판단부터 중요합니다.", en: "Shift begins. Every decision matters from the start." },
+    quizModeStart:  { ko: "국가고시 8과목 트레이닝 모드입니다.", en: "Boards 8-subject training mode." },
+    trainingStart:  { ko: "기출 변형 풀이를 시작합니다.", en: "Starting question bank session." },
+    trainingTitle:  { ko: "국가고시 8과목 트레이닝", en: "Boards · 8 Subjects Training" },
+    trainingDesc:   { ko: "숫자와 상황이 계속 변하는 무한 랜덤 기출 변형(4지선다)이 제공됩니다.", en: "Infinite randomized boards-style 4-choice questions with varying numbers and scenarios." },
+    introTitle:     { ko: "듀티의 시작", en: "Shift Begins" },
+    introNight:     { ko: "어두운 복도, 절반은 꺼진 형광등. Night 듀티가 시작됩니다. 모니터 알람이 멀리서 울립니다.", en: "Dim corridor, half the fluorescents off. Night shift begins. A monitor alarm wails in the distance." },
+    introEvening:   { ko: "저녁 6시, 보호자 면회와 신규 입원이 동시에 몰리는 시간. Evening 듀티 시작.", en: "6 PM — visitors and new admissions surge in. Evening shift begins." },
+    introDay:       { ko: "병동 문이 열립니다. 햇살과 함께 첫 호출벨이 울립니다. Day 듀티 시작.", en: "The unit doors open. Sunlight pours in with the first call bell. Day shift begins." },
+    introA:         { ko: "심호흡하고 인계 핵심부터 정리한다", en: "Take a breath and review handoff highlights" },
+    introB:         { ko: "물품 카트부터 점검한다", en: "Check supply cart first" },
+    introC:         { ko: "차지널스에게 어제 야간 이슈를 묻는다", en: "Ask charge nurse about last night's issues" },
+    logIntroA:      { ko: "기본기부터 챙겼습니다.", en: "Solid fundamentals." },
+    logIntroB:      { ko: "준비성이 좋습니다.", en: "Good preparation." },
+    logIntroC:      { ko: "맥락 파악이 빠릅니다.", en: "Quick to grasp context." },
+    restTitle:      { ko: "잠깐의 여유", en: "A Brief Moment" },
+    restDesc:       { ko: "복도가 잠시 조용해졌습니다. 휴게실 의자가 부릅니다.", en: "The corridor falls quiet. The break-room chair is calling." },
+    restA:          { ko: "따뜻한 차 한 잔 마시기", en: "Sip a warm tea" },
+    restB:          { ko: "스트레칭으로 어깨 풀기", en: "Stretch your shoulders" },
+    restC:          { ko: "동료와 짧은 잡담", en: "Brief chat with a colleague" },
+    logRestA:       { ko: "체력을 회복했습니다.", en: "HP recovered." },
+    logRestB:       { ko: "몸이 가벼워졌습니다.", en: "Body feels lighter." },
+    logRestC:       { ko: "마음이 편해집니다.", en: "Mind eases." },
+    bossClear:      { ko: "👑 BOSS CLEAR · HP 회복", en: "👑 BOSS CLEAR · HP recovered" },
+    bossClearLog:   { ko: "👑 보스 클리어! HP +15", en: "👑 Boss cleared! HP +15" },
+    comboEndPrefix: { ko: "콤보", en: "Combo" },
+    comboEndSuffix: { ko: "종료", en: "ended" },
+    gameOverHpTitle:    { ko: "💀 체력 고갈", en: "💀 Burnout" },
+    gameOverHpDesc:     { ko: "번아웃 되었습니다. 환자 안전을 위해 퇴근하세요.", en: "You burned out. Clock out for patient safety." },
+    gameOverRepTitle:   { ko: "⚠️ 평판 실추", en: "⚠️ Reputation Collapse" },
+    gameOverRepDesc:    { ko: "치명적인 실수 누적으로 투약 사고 위기입니다.", en: "Critical errors stacked into a med-incident risk." },
+    endLegend:      { ko: "🏆 전설의 간호사", en: "🏆 Legendary Nurse" },
+    endLegendDesc:  { ko: "병원장 표창 후보로 추천됐습니다.", en: "Nominated for the CEO commendation." },
+    endHero:        { ko: "🌟 듀티의 영웅", en: "🌟 Shift Hero" },
+    endHeroDesc:    { ko: "동료들이 박수로 인계해줍니다.", en: "Colleagues applaud as you sign out." },
+    endAce:         { ko: "💪 에이스 듀티 클리어", en: "💪 Ace Shift Cleared" },
+    endAceDesc:     { ko: "확실한 1인분, 그 이상이었습니다.", en: "Way more than carrying your weight." },
+    endSafe:        { ko: "✅ 듀티 무사 완수", en: "✅ Shift Safely Completed" },
+    endSafeDesc:    { ko: "수고하셨습니다. 안전한 듀티였습니다.", en: "Well done. A safe shift." },
+    endSurvived:    { ko: "😮‍💨 겨우 살아남음", en: "😮‍💨 Barely Survived" },
+    endSurvivedDesc:{ ko: "오늘은 운이 좋았습니다. 내일은 더 잘해봐요.", en: "Lucky today. Aim higher tomorrow." },
+    endNeedsWork:   { ko: "📋 듀티 종료 · 개선 필요", en: "📋 Shift Ended · Needs Work" },
+    endNeedsWorkDesc:{ko: "복기와 재교육이 필요한 듀티였습니다.", en: "A shift that calls for review and retraining." },
+    quizDoneTitle:  { ko: "학습 종료", en: "Study Ended" },
+    quizDoneDesc:   { ko: "머리가 과열됐습니다. 오늘은 여기까지!", en: "Brain overheated. That's it for today!" },
+    rank0:          { ko: "신규 간호사 (SN/RN)", en: "New Grad RN" },
+    rank10:         { ko: "RN 2년차 (1인분 가능)", en: "RN Year 2" },
+    rank30:         { ko: "RN 5년차 (에이스)", en: "RN Year 5 · Ace" },
+    rank50:         { ko: "차지 널스 (Charge)", en: "Charge Nurse" },
+    rank100:        { ko: "수간호사 (HN)", en: "Head Nurse" },
+};
+function t(key) { return L(T[key]); }
+
+// =========================
+// 저장소 (localStorage)
+// =========================
+function saveSettings() {
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            lang: gameState.lang,
+            lifetime: gameState.lifetime,
+        }));
+    } catch (e) { /* private mode 등 무시 */ }
+}
+function loadSettings() {
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const data = JSON.parse(raw);
+        if (data.lang === "ko" || data.lang === "en") gameState.lang = data.lang;
+        if (data.lifetime) Object.assign(gameState.lifetime, data.lifetime);
+    } catch (e) { /* corrupt 무시 */ }
+}
+function setLang(lang) {
+    gameState.lang = lang === "en" ? "en" : "ko";
+    saveSettings();
+    syncLangButtons();
+    renderRoot();
+}
+function syncLangButtons() {
+    const ko = document.getElementById("lang-ko");
+    const en = document.getElementById("lang-en");
+    if (!ko || !en) return;
+    ko.classList.toggle("active", gameState.lang === "ko");
+    en.classList.toggle("active", gameState.lang === "en");
+    document.documentElement.lang = gameState.lang;
+}
+
+// =========================
+// 루트 렌더 (현재 모드에 따라)
+// =========================
+function renderRoot() {
+    if (gameState.mode === "menu") return renderMainMenu();
+    if (gameState.mode === "quiz_menu") return renderQuizMenu();
+    if (gameState.mode === "quiz") return renderNextQuizQuestion();
+    if (gameState.mode === "survival") return renderSurvivalEvent("random_hub");
+    return renderMainMenu();
+}
+
+function renderMainMenu() {
+    gameState.mode = "menu";
+    UI.topBar.classList.add("hidden");
+    UI.logBar.classList.add("hidden");
+    UI.inventory.classList.add("hidden");
+    UI.progressWrap.classList.add("hidden");
+    document.getElementById("progress-info").classList.add("hidden");
+    document.title = t("appTitle");
+
+    const shift = gameState.currentShift;
+    UI.gameArea.innerHTML = `
+        <div class="card menu-container">
+            <span class="scene-emoji">🏥</span>
+            <h2>${t("appTitle")}</h2>
+            <p class="subtitle">${t("subtitle")}</p>
+
+            <div class="shift-label">${t("shiftLabel")}</div>
+            <div style="margin-bottom: 22px;">
+                <button class="shift-option ${shift==='Day'?'active':''}" data-shift="Day" data-mult="1.0">${t("shiftDay")}</button>
+                <button class="shift-option ${shift==='Evening'?'active':''}" data-shift="Evening" data-mult="1.2">${t("shiftEvening")}</button>
+                <button class="shift-option ${shift==='Night'?'active':''}" data-shift="Night" data-mult="1.5">${t("shiftNight")}</button>
+            </div>
+
+            <button class="choice-btn primary" onclick="initSurvival()">${t("startSurvival")}</button>
+            <button class="choice-btn ghost center" onclick="renderQuizMenu()">${t("openTraining")}</button>
+        </div>
+    `;
+    UI.gameArea.querySelectorAll(".shift-option").forEach(btn => {
+        btn.addEventListener("click", (e) => setShift(btn.dataset.shift, parseFloat(btn.dataset.mult), btn));
+    });
+}
 
 const UI = {
     hp: document.getElementById("hp"),
@@ -80,25 +289,25 @@ function updateStats() {
     UI.progressFill.style.width = `${progress}%`;
     UI.progressPercent.textContent = `${Math.round(progress)}%`;
 
-    if (gameState.mode === "survival") UI.progressText.textContent = "듀티 진행도";
-    else if (gameState.mode === "quiz") UI.progressText.textContent = `학습 진행도 · ${gameState.quizCategory || ""}`;
-    else UI.progressText.textContent = "진행도";
+    if (gameState.mode === "survival") UI.progressText.textContent = t("progressShift");
+    else if (gameState.mode === "quiz") UI.progressText.textContent = `${t("progressTrain")} · ${gameState.quizCategory ? catName(gameState.quizCategory) : ""}`;
+    else UI.progressText.textContent = t("progressIdle");
 
     UI.inventory.innerHTML = "";
     const shiftBadge = document.createElement("span");
     shiftBadge.className = "badge accent";
-    shiftBadge.textContent = `근무: ${gameState.currentShift}`;
+    shiftBadge.textContent = `${t("statShift")}: ${gameState.currentShift}`;
     UI.inventory.appendChild(shiftBadge);
 
     const statusBadge = document.createElement("span");
     statusBadge.className = "badge";
-    statusBadge.textContent = gameState.mode === "survival" ? "상태: 실전 모드" : gameState.mode === "quiz" ? "상태: 트레이닝" : "상태: 대기";
+    statusBadge.textContent = gameState.mode === "survival" ? t("statStateLive") : gameState.mode === "quiz" ? t("statStateTrain") : t("statStateIdle");
     UI.inventory.appendChild(statusBadge);
 
     if (gameState.quizSolved > 0) {
         const solvedBadge = document.createElement("span");
         solvedBadge.className = "badge success";
-        solvedBadge.textContent = `학습 완료: ${gameState.quizSolved}문제`;
+        solvedBadge.textContent = `${t("solvedBadge")}: ${gameState.quizSolved} ${t("questionsLabel")}`;
         UI.inventory.appendChild(solvedBadge);
     }
 }
@@ -260,29 +469,25 @@ function generatePostpartumQuestion() { return { baseId: "postpartum", category:
 // =========================
 // 라우터 및 렌더링 (중복 방지 적용)
 // =========================
-function generateClinicalEventByCategory(category = null) {
+function generateClinicalEventByCategory(categoryKey = null) {
     let pool = [];
-    
-    // 24개의 생성기를 모두 돌려 조건(과목, 중복여부)에 맞는 문제를 pool에 담습니다.
     for (let generator of clinicalGenerators) {
         const ev = generator();
-        if ((!category || ev.category === category) && !recentlyUsed(ev.baseId)) {
+        normalizeEvent(ev);
+        if ((!categoryKey || ev.categoryKey === categoryKey) && !recentlyUsed(ev.baseId)) {
             pool.push(ev);
         }
     }
-
-    // 만약 풀이 비어있다면 (모든 문제가 최근 15번 안에 나왔다면) 기록을 초기화하고 다시 담습니다.
     if (pool.length === 0) {
         gameState.recentIds = [];
         for (let generator of clinicalGenerators) {
             const ev = generator();
-            if (!category || ev.category === category) {
+            normalizeEvent(ev);
+            if (!categoryKey || ev.categoryKey === categoryKey) {
                 pool.push(ev);
             }
         }
     }
-
-    // 풀에서 하나를 뽑고, Base ID를 기록합니다.
     const selected = pick(pool);
     rememberQuestion(selected.baseId);
     return selected;
@@ -438,80 +643,87 @@ function bossEventForCount(count) {
 function initSurvival() {
     resetStateForMode(); gameState.mode = "survival"; gameState.quizCategory = null;
     showCoreUI(); UI.logBar.innerHTML = "";
-    addLog("듀티가 시작되었습니다. 첫 판단부터 중요합니다.", "log-important");
+    addLog(t("dutyStart"), "log-important");
     renderSurvivalEvent("intro");
 }
 
 function renderQuizMenu() {
     gameState.mode = "quiz_menu"; resetStateForMode(); showCoreUI(); UI.logBar.innerHTML = "";
-    addLog("국가고시 8과목 트레이닝 모드입니다.", "log-important");
+    addLog(t("quizModeStart"), "log-important");
     updateStats();
 
-    const categories = ["기본간호학", "성인간호학", "모성간호학", "아동간호학", "지역사회간호학", "정신간호학", "간호관리학", "보건의약관계법규"];
     UI.gameArea.innerHTML = `
     <div class="scene-card card">
       <span class="scene-emoji">📖</span>
-      <h2 class="scene-title">국가고시 8과목 트레이닝</h2>
-      <p class="scene-desc">숫자와 상황이 계속 변하는 <strong>무한 랜덤 기출 변형 (4지선다)</strong>이 제공됩니다.</p>
+      <h2 class="scene-title">${t("trainingTitle")}</h2>
+      <p class="scene-desc">${t("trainingDesc")}</p>
       <div class="choice-list">
-        ${categories.map((cat) => `<button class="choice-btn primary" onclick="startQuiz('${cat}')">${cat}</button>`).join("")}
-        <button class="choice-btn center" onclick="location.reload()">메인 메뉴</button>
+        ${CATEGORY_KEYS.map((key) => `<button class="choice-btn primary" data-cat="${key}">${catName(key)}</button>`).join("")}
+        <button class="choice-btn center" onclick="goHome()">${t("backMenu")}</button>
       </div>
     </div>
   `;
+    UI.gameArea.querySelectorAll("[data-cat]").forEach(btn => {
+        btn.addEventListener("click", () => startQuiz(btn.dataset.cat));
+    });
 }
 
-function startQuiz(category) {
-    gameState.mode = "quiz"; gameState.quizCategory = category; gameState.quizSolved = 0;
-    UI.logBar.innerHTML = ""; addLog(`${category} 기출 변형 풀이를 시작합니다.`, "log-important");
+function startQuiz(categoryKey) {
+    gameState.mode = "quiz"; gameState.quizCategory = categoryKey; gameState.quizSolved = 0;
+    UI.logBar.innerHTML = ""; addLog(`${catName(categoryKey)} ${t("trainingStart")}`, "log-important");
     renderNextQuizQuestion();
+}
+
+function goHome() {
+    gameState.mode = "menu";
+    renderMainMenu();
 }
 
 function renderSurvivalEvent(eventId) {
     let ev;
     if (eventId === "intro") {
-        const introDesc = gameState.currentShift === "Night"
-            ? "어두운 복도, 절반은 꺼진 형광등. Night 듀티가 시작됩니다. 모니터 알람이 멀리서 울립니다."
-            : gameState.currentShift === "Evening"
-                ? "저녁 6시, 보호자 면회와 신규 입원이 동시에 몰리는 시간. Evening 듀티 시작."
-                : "병동 문이 열립니다. 햇살과 함께 첫 호출벨이 울립니다. Day 듀티 시작.";
+        const introDesc = gameState.currentShift === "Night" ? t("introNight")
+            : gameState.currentShift === "Evening" ? t("introEvening")
+            : t("introDay");
         ev = {
-            baseId: "intro", category: "", title: "듀티의 시작", emoji: "🏥", desc: introDesc,
+            baseId: "intro", categoryKey: null, category: "", title: t("introTitle"), emoji: "🏥", desc: introDesc,
             choices: shuffle([
-                { text: "심호흡하고 인계 핵심부터 정리한다", effect: { hp: -4, rep: 6 }, log: "기본기부터 챙겼습니다.", next: "random_hub" },
-                { text: "물품 카트부터 점검한다", effect: { hp: -2, rep: 3, item: "토니켓" }, log: "준비성이 좋습니다.", next: "random_hub" },
-                { text: "차지널스에게 어제 야간 이슈를 묻는다", effect: { hp: -3, rep: 8 }, log: "맥락 파악이 빠릅니다.", next: "random_hub" },
+                { text: t("introA"), effect: { hp: -4, rep: 6 }, log: t("logIntroA"), next: "random_hub" },
+                { text: t("introB"), effect: { hp: -2, rep: 3, item: "Tourniquet" }, log: t("logIntroB"), next: "random_hub" },
+                { text: t("introC"), effect: { hp: -3, rep: 8 }, log: t("logIntroC"), next: "random_hub" },
             ]),
         };
     } else {
         const upcomingCount = gameState.eventCount + 1;
         const boss = bossEventForCount(upcomingCount);
         if (boss) {
-            ev = boss;
+            ev = normalizeEvent(boss);
         } else {
             const r = Math.random();
             if (r < 0.7) {
                 ev = generateClinicalEventByCategory(null);
             } else if (r < 0.93) {
-                ev = pick(flavorEvents)();
+                ev = normalizeEvent(pick(flavorEvents)());
             } else {
-                ev = pick([
-                    { baseId: "rest", category: "병동 일상", part: "휴식", title: "잠깐의 여유", emoji: "☕", desc: "복도가 잠시 조용해졌습니다. 휴게실 의자가 부릅니다.", choices: shuffle([
-                        { text: "따뜻한 차 한 잔 마시기", effect: { hp: 18, rep: 2 }, log: "체력을 회복했습니다." },
-                        { text: "스트레칭으로 어깨 풀기", effect: { hp: 12, rep: 3 }, log: "몸이 가벼워졌습니다." },
-                        { text: "동료와 짧은 잡담", effect: { hp: 10, rep: 1 }, log: "마음이 편해집니다." }
-                    ]) }
-                ]);
+                ev = normalizeEvent({
+                    baseId: "rest", categoryKey: "flavor", part: loc("휴식", "Break"),
+                    title: t("restTitle"), emoji: "☕", desc: t("restDesc"),
+                    choices: shuffle([
+                        { text: t("restA"), effect: { hp: 18, rep: 2 }, log: t("logRestA") },
+                        { text: t("restB"), effect: { hp: 12, rep: 3 }, log: t("logRestB") },
+                        { text: t("restC"), effect: { hp: 10, rep: 1 }, log: t("logRestC") }
+                    ])
+                });
             }
         }
         gameState.eventCount += 1;
     }
     const meta = [
         `${gameState.currentShift}`,
-        `누적 ${gameState.eventCount}건`,
+        `${t("metaCount")} ${gameState.eventCount}`,
     ];
-    if (gameState.streak >= 2) meta.push(`🔥 콤보 ${gameState.streak}`);
-    if (gameState.bossesCleared > 0) meta.push(`👑 보스 ${gameState.bossesCleared}/3`);
+    if (gameState.streak >= 2) meta.push(`🔥 ${t("metaCombo")} ${gameState.streak}`);
+    if (gameState.bossesCleared > 0) meta.push(`👑 ${t("metaBoss")} ${gameState.bossesCleared}/3`);
     renderSceneCard(ev, { mode: "survival", meta });
 }
 
@@ -524,12 +736,12 @@ function handleSurvivalChoice(choice) {
     if (repDelta > 0) {
         gameState.streak += 1;
         if (gameState.streak > gameState.bestStreak) gameState.bestStreak = gameState.streak;
-        if (gameState.streak === 3) { gameState.rep += 5; showToast("🔥 콤보 3 · 평판 +5"); addLog("🔥 콤보 3 보너스 +5 평판", "log-important"); }
-        else if (gameState.streak === 5) { gameState.rep += 10; showToast("⚡ 콤보 5 · 평판 +10"); addLog("⚡ 콤보 5 보너스 +10 평판", "log-important"); }
-        else if (gameState.streak === 7) { gameState.rep += 18; gameState.hp = clamp(gameState.hp + 8, 0, 100); showToast("💎 무결점 7연속!"); addLog("💎 콤보 7 · 평판 +18, HP 회복", "log-important"); }
-        else if (gameState.streak === 10) { gameState.rep += 30; gameState.hp = clamp(gameState.hp + 15, 0, 100); showToast("🏆 콤보 10 · 전설"); addLog("🏆 콤보 10 · 평판 +30, HP 대폭 회복", "log-important"); }
+        if (gameState.streak === 3) { gameState.rep += 5; showToast(loc("🔥 콤보 3 · 평판 +5", "🔥 Combo 3 · +5 Rep")); addLog(loc("🔥 콤보 3 보너스 +5 평판", "🔥 Combo 3 bonus +5 Rep"), "log-important"); }
+        else if (gameState.streak === 5) { gameState.rep += 10; showToast(loc("⚡ 콤보 5 · 평판 +10", "⚡ Combo 5 · +10 Rep")); addLog(loc("⚡ 콤보 5 보너스 +10 평판", "⚡ Combo 5 bonus +10 Rep"), "log-important"); }
+        else if (gameState.streak === 7) { gameState.rep += 18; gameState.hp = clamp(gameState.hp + 8, 0, 100); showToast(loc("💎 무결점 7연속!", "💎 Flawless Combo 7!")); addLog(loc("💎 콤보 7 · 평판 +18, HP 회복", "💎 Combo 7 · +18 Rep, HP recovered"), "log-important"); }
+        else if (gameState.streak === 10) { gameState.rep += 30; gameState.hp = clamp(gameState.hp + 15, 0, 100); showToast(loc("🏆 콤보 10 · 전설", "🏆 Combo 10 · Legend")); addLog(loc("🏆 콤보 10 · 평판 +30, HP 대폭 회복", "🏆 Combo 10 · +30 Rep, big HP recovery"), "log-important"); }
     } else if (repDelta < 0) {
-        if (gameState.streak >= 3) addLog(`콤보 ${gameState.streak} 종료`, "log-important");
+        if (gameState.streak >= 3) addLog(`${t("comboEndPrefix")} ${gameState.streak} ${t("comboEndSuffix")}`, "log-important");
         gameState.streak = 0;
     }
 
@@ -537,24 +749,29 @@ function handleSurvivalChoice(choice) {
     if (choice.boss) {
         gameState.bossesCleared += 1;
         gameState.hp = clamp(gameState.hp + 15, 0, 100);
-        showToast("👑 BOSS CLEAR · HP 회복", "boss");
-        addLog("👑 보스 클리어! HP +15", "log-important");
+        showToast(t("bossClear"), "boss");
+        addLog(t("bossClearLog"), "log-important");
     }
 
     updateStats();
 
-    if (gameState.hp <= 0) return showGameOver("💀 체력 고갈", "번아웃 되었습니다. 환자 안전을 위해 퇴근하세요.");
-    if (gameState.rep < -60) return showGameOver("⚠️ 평판 실추", "치명적인 실수 누적으로 투약 사고 위기입니다.");
+    if (gameState.hp <= 0) return showGameOver(t("gameOverHpTitle"), t("gameOverHpDesc"));
+    if (gameState.rep < -60) return showGameOver(t("gameOverRepTitle"), t("gameOverRepDesc"));
     if (gameState.eventCount >= MAX_PROGRESS_EVENTS) {
         const allBosses = gameState.bossesCleared >= 3;
         let title, desc;
-        if (gameState.rep >= 250 && allBosses) { title = "🏆 전설의 간호사"; desc = "병원장 표창 후보로 추천됐습니다."; }
-        else if (gameState.rep >= 150 && allBosses) { title = "🌟 듀티의 영웅"; desc = "동료들이 박수로 인계해줍니다."; }
-        else if (gameState.rep >= 100) { title = "💪 에이스 듀티 클리어"; desc = "확실한 1인분, 그 이상이었습니다."; }
-        else if (gameState.rep >= 50) { title = "✅ 듀티 무사 완수"; desc = "수고하셨습니다. 안전한 듀티였습니다."; }
-        else if (gameState.rep >= 0) { title = "😮‍💨 겨우 살아남음"; desc = "오늘은 운이 좋았습니다. 내일은 더 잘해봐요."; }
-        else { title = "📋 듀티 종료 · 개선 필요"; desc = "복기와 재교육이 필요한 듀티였습니다."; }
-        desc += `\n\n최고 콤보 ${gameState.bestStreak} · 보스 ${gameState.bossesCleared}/3`;
+        if (gameState.rep >= 250 && allBosses) { title = t("endLegend"); desc = t("endLegendDesc"); }
+        else if (gameState.rep >= 150 && allBosses) { title = t("endHero"); desc = t("endHeroDesc"); }
+        else if (gameState.rep >= 100) { title = t("endAce"); desc = t("endAceDesc"); }
+        else if (gameState.rep >= 50) { title = t("endSafe"); desc = t("endSafeDesc"); }
+        else if (gameState.rep >= 0) { title = t("endSurvived"); desc = t("endSurvivedDesc"); }
+        else { title = t("endNeedsWork"); desc = t("endNeedsWorkDesc"); }
+        desc += `\n\n${t("bestCombo")} ${gameState.bestStreak} · ${t("metaBoss")} ${gameState.bossesCleared}/3`;
+        // 평생 통계 갱신
+        gameState.lifetime.dutiesCompleted += 1;
+        if (gameState.bestStreak > gameState.lifetime.bestStreak) gameState.lifetime.bestStreak = gameState.bestStreak;
+        if (gameState.rep > gameState.lifetime.bestRep) gameState.lifetime.bestRep = gameState.rep;
+        saveSettings();
         return showGameOver(title, desc);
     }
 
@@ -583,23 +800,33 @@ function handleQuizChoice(choice, ev) {
 
     document.getElementById("feedback-zone").innerHTML = `
     <div class="feedback-box ${isCorrect ? "correct" : "wrong"}">
-      <div class="feedback-title">${isCorrect ? "✅ 정답" : "❌ 오답"}</div>
-      <div class="feedback-text">${choice.log || "해설이 없습니다."}</div>
+      <div class="feedback-title">${isCorrect ? t("correct") : t("wrong")}</div>
+      <div class="feedback-text">${choice.log || loc("해설이 없습니다.", "No explanation.")}</div>
     </div>
     <div class="choice-list" style="margin-top:12px;">
-      <button class="choice-btn primary center" onclick="goNextQuiz()">다음 문제</button>
-      <button class="choice-btn center" onclick="renderQuizMenu()">과목 변경</button>
+      <button class="choice-btn primary center" onclick="goNextQuiz()">${t("nextQuestion")}</button>
+      <button class="choice-btn center" onclick="renderQuizMenu()">${t("changeSubject")}</button>
     </div>
   `;
 
-    if (isCorrect) { gameState.rep += 6; gameState.quizSolved += 1; addLog(`[정답] ${choice.log}`, "log-good"); } 
-    else { gameState.hp -= Math.round(4 * gameState.difficulty); addLog(`[오답] ${choice.log}`, "log-bad"); }
+    const correctTag = loc("[정답]", "[Correct]");
+    const wrongTag = loc("[오답]", "[Wrong]");
+    if (isCorrect) {
+        gameState.rep += 6;
+        gameState.quizSolved += 1;
+        gameState.lifetime.totalQuizSolved += 1;
+        saveSettings();
+        addLog(`${correctTag} ${choice.log}`, "log-good");
+    } else {
+        gameState.hp -= Math.round(4 * gameState.difficulty);
+        addLog(`${wrongTag} ${choice.log}`, "log-bad");
+    }
     gameState.hp = clamp(gameState.hp, 0, 100);
     updateStats();
 }
 
 function goNextQuiz() {
-    if (gameState.hp <= 0) return showGameOver("학습 종료", "머리가 과열됐습니다. 오늘은 여기까지!");
+    if (gameState.hp <= 0) return showGameOver(t("quizDoneTitle"), t("quizDoneDesc"));
     renderNextQuizQuestion();
 }
 
@@ -610,10 +837,17 @@ function showGameOver(title, desc) {
     document.getElementById("modal-title").textContent = title;
     document.getElementById("modal-desc").textContent = desc;
     document.getElementById("modal-stats").innerHTML = `
-    최종 체력: <span class="highlight">${clamp(gameState.hp, 0, 100)}</span><br>
-    최종 평판: <span class="highlight">${gameState.rep}</span><br>
-    처리한 상황: <span class="highlight">${gameState.eventCount}</span>건
+    ${t("finalHp")}: <span class="highlight">${clamp(gameState.hp, 0, 100)}</span><br>
+    ${t("finalRep")}: <span class="highlight">${gameState.rep}</span><br>
+    ${t("eventsHandled")}: <span class="highlight">${gameState.eventCount}</span>
   `;
+    document.getElementById("modal-promo-title").textContent = t("promotionTitle");
+    document.getElementById("modal-left-label").textContent = t("leftLabel");
+    document.getElementById("modal-rank-label").textContent = t("rankLabel");
+    document.getElementById("modal-score-label").textContent = t("scoreNow");
+    document.getElementById("modal-pts").textContent = t("pointsUnit");
+    document.getElementById("rank").textContent = t("rankNew");
+    document.getElementById("modal-home-btn").textContent = t("backHome");
     UI.modal.classList.add("active");
 
     let score = 0; let poolCount = 2000; let currentQ = null;
@@ -660,13 +894,22 @@ function showGameOver(title, desc) {
     };
 
     function updateRank() {
-        let rank = "신규 간호사 (SN/RN)";
-        if (score >= 10) rank = "RN 2년차 (1인분 가능)";
-        if (score >= 30) rank = "RN 5년차 (에이스)";
-        if (score >= 50) rank = "차지 널스 (Charge)";
-        if (score >= 100) rank = "수간호사 (HN)";
+        let rank = t("rank0");
+        if (score >= 10) rank = t("rank10");
+        if (score >= 30) rank = t("rank30");
+        if (score >= 50) rank = t("rank50");
+        if (score >= 100) rank = t("rank100");
         document.getElementById("rank").innerText = rank;
     }
 
     loadQuestion();
 }
+
+// =========================
+// 초기화
+// =========================
+loadSettings();
+window.addEventListener("DOMContentLoaded", () => {
+    syncLangButtons();
+    renderMainMenu();
+});

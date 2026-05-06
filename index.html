@@ -510,6 +510,38 @@
             font-weight: 500;
         }
 
+        /* Language toggle */
+        #lang-toggle {
+            position: fixed;
+            top: 12px;
+            right: 14px;
+            z-index: 60;
+            display: inline-flex;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 999px;
+            padding: 3px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border: 1px solid rgba(255,255,255,0.7);
+        }
+        #lang-toggle button {
+            border: none;
+            background: transparent;
+            font-size: 0.78rem;
+            font-weight: 700;
+            padding: 5px 11px;
+            border-radius: 999px;
+            cursor: pointer;
+            color: var(--text-light);
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+        #lang-toggle button.active {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            box-shadow: 0 2px 6px rgba(99,102,241,0.3);
+        }
+
         /* Toast notification (combo / boss alerts) */
         .toast {
             position: fixed;
@@ -551,6 +583,11 @@
 </head>
 <body>
 
+    <div id="lang-toggle">
+        <button id="lang-ko" class="active" onclick="setLang('ko')">한국어</button>
+        <button id="lang-en" onclick="setLang('en')">English</button>
+    </div>
+
     <div id="top-bar" class="hidden">
         <div>❤️ HP: <span id="hp" style="color:var(--success)">100</span></div>
         <div>⭐ 평판: <span id="rep">0</span></div>
@@ -560,29 +597,13 @@
         <div id="progress-fill"></div>
     </div>
     <div id="progress-info" class="hidden">
-        <span id="progress-text">진행도</span>
+        <span id="progress-text"></span>
         <span id="progress-percent">0%</span>
     </div>
 
     <div id="inventory-bar" class="hidden"></div>
 
-    <div id="game-area">
-        <div class="card menu-container">
-            <span class="scene-emoji">🏥</span>
-            <h2>간호사 시뮬레이터</h2>
-            <p class="subtitle">당신의 임상 판단력을 테스트하세요</p>
-
-            <div class="shift-label">근무 난이도 선택</div>
-            <div style="margin-bottom: 22px;">
-                <button class="shift-option active" onclick="setShift('Day', 1.0, this)">☀️ Day · 기본</button>
-                <button class="shift-option" onclick="setShift('Evening', 1.2, this)">🌆 Evening · 어려움</button>
-                <button class="shift-option" onclick="setShift('Night', 1.5, this)">🌙 Night · 지옥</button>
-            </div>
-
-            <button class="choice-btn primary" onclick="initSurvival()">🚑 실전 듀티 시작</button>
-            <button class="choice-btn ghost center" onclick="renderQuizMenu()">📚 트레이닝 센터 (문제은행)</button>
-        </div>
-    </div>
+    <div id="game-area"></div>
 
     <div id="log-bar" class="hidden"></div>
 
@@ -593,11 +614,11 @@
 
         <hr>
 
-        <h3>📚 승급 심사 · 무한 랜덤 문제풀이</h3>
+        <h3 id="modal-promo-title"></h3>
         <div class="quiz-panel">
             <div class="quiz-meta">
-                <span>남은 문제: <strong id="left" style="color:#fff">-</strong></span>
-                <span>랭크: <strong id="rank" style="color:var(--warning)">신규</strong></span>
+                <span><span id="modal-left-label"></span>: <strong id="left" style="color:#fff">-</strong></span>
+                <span><span id="modal-rank-label"></span>: <strong id="rank" style="color:var(--warning)"></strong></span>
             </div>
 
             <div id="question-box"></div>
@@ -605,10 +626,10 @@
 
             <div id="result"></div>
             <div style="text-align: center; margin-top: 10px;">
-                <span style="font-size: 0.9rem; color: #94a3b8;">현재 점수: <span id="score" style="color:#fff; font-weight:700;">0</span>점</span>
+                <span style="font-size: 0.9rem; color: #94a3b8;"><span id="modal-score-label"></span>: <span id="score" style="color:#fff; font-weight:700;">0</span><span id="modal-pts"></span></span>
             </div>
         </div>
-        <button class="choice-btn ghost center" style="margin-top: 22px; max-width: 360px; color:#e2e8f0; border-color: rgba(255,255,255,0.2);" onclick="location.reload()">🏠 처음으로 돌아가기</button>
+        <button id="modal-home-btn" class="choice-btn ghost center" style="margin-top: 22px; max-width: 360px; color:#e2e8f0; border-color: rgba(255,255,255,0.2);" onclick="location.reload()"></button>
     </div>
 
     <script src="script.js"></script>
