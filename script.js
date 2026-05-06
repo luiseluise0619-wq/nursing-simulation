@@ -14,6 +14,9 @@ let gameState = {
     quizCategory: null,
     quizSolved: 0,
     recentIds: [], // 중복 방지를 위한 Base ID 기록 배열
+    streak: 0,
+    bestStreak: 0,
+    bossesCleared: 0,
 };
 
 const UI = {
@@ -325,6 +328,111 @@ function setShift(shift, mult, el) {
 function resetStateForMode() {
     gameState.hp = 100; gameState.rep = 0; gameState.eventCount = 0;
     gameState.items = []; gameState.quizSolved = 0; gameState.recentIds = [];
+    gameState.streak = 0; gameState.bestStreak = 0; gameState.bossesCleared = 0;
+}
+
+// =========================
+// 토스트 알림 (콤보·보스용)
+// =========================
+function showToast(text, kind = "primary") {
+    const el = document.createElement("div");
+    el.className = `toast toast-${kind}`;
+    el.textContent = text;
+    document.body.appendChild(el);
+    requestAnimationFrame(() => el.classList.add("show"));
+    setTimeout(() => el.classList.remove("show"), 1700);
+    setTimeout(() => el.remove(), 2200);
+}
+
+// =========================
+// 생존모드 - 일상/플래버 이벤트
+// =========================
+const flavorEvents = [
+    () => ({ baseId: "guardian-rage", category: "병동 일상", part: "감정노동", emoji: "🗣️", title: "보호자의 분노", desc: "보호자가 \"왜 이렇게 오래 기다리게 해!\"라며 데스크 앞에서 큰 소리로 항의합니다. 다른 환자들이 쳐다봅니다.", choices: shuffle([
+        { text: "한 발 물러서서 공감하고 상황을 차분히 설명한다", effect: { hp: -4, rep: 10 }, log: "분노가 가라앉았습니다." },
+        { text: "규정과 절차를 단호하게 안내한다", effect: { hp: -6, rep: 4 }, log: "보호자가 일단 자리로 돌아갔습니다." },
+        { text: "동료에게 인계하고 잠시 호흡을 가다듬는다", effect: { hp: 6, rep: -3 }, log: "잠시 회복했지만 책임감이 흔들립니다." },
+        { text: "바쁜 척 자리를 피한다", effect: { hp: -12, rep: -16 }, log: "공식 민원이 접수됐습니다." }
+    ]) }),
+    () => ({ baseId: "newAdmission", category: "병동 일상", part: "신환", emoji: "🚪", title: "신환 입원", desc: "응급실에서 폐렴 의증 환자가 막 도착했습니다. 인계가 1분도 안 됩니다.", choices: shuffle([
+        { text: "활력징후부터 측정하며 인계 빈자리를 메운다", effect: { hp: -5, rep: 12 }, log: "기본기가 빛났습니다." },
+        { text: "낙상 위험 사정과 환경 정비를 먼저 한다", effect: { hp: -4, rep: 8 }, log: "안전 우선이 인정받았습니다." },
+        { text: "수액부터 우선 달고 사정은 나중에", effect: { hp: -10, rep: -6 }, log: "사정 없는 처치는 위험합니다." },
+        { text: "보호자에게 노트 작성을 부탁한다", effect: { hp: -3, rep: -15 }, log: "보호자가 황당해합니다." }
+    ]) }),
+    () => ({ baseId: "drMad", category: "병동 일상", part: "팀워크", emoji: "🥼", title: "의사의 짜증", desc: "주치의가 \"왜 처방 안 받았어?\"라며 짜증을 냅니다. 처방창은 아직 열려있지 않았습니다.", choices: shuffle([
+        { text: "\"방금 확인했는데 아직 미입력 상태입니다\"라고 사실대로 말한다", effect: { hp: -3, rep: 11 }, log: "정직이 통했습니다." },
+        { text: "\"확인하겠습니다\"라며 빠르게 처방을 다시 확인한다", effect: { hp: -5, rep: 6 }, log: "프로다운 응대였습니다." },
+        { text: "\"죄송합니다\"만 반복한다", effect: { hp: -10, rep: -3 }, log: "문제가 해결되지 않았습니다." },
+        { text: "감정적으로 맞받아친다", effect: { hp: -16, rep: -16 }, log: "분위기가 험악해집니다." }
+    ]) }),
+    () => ({ baseId: "fall-risk", category: "병동 일상", part: "환자 안전", emoji: "🛑", title: "낙상 위험 발견", desc: "옆 병실 환자가 침대 사이드레일을 내리고 일어서려 합니다.", choices: shuffle([
+        { text: "즉시 다가가 부축하고 사이드레일을 올린다", effect: { hp: -3, rep: 14 }, log: "낙상 사고를 막았습니다." },
+        { text: "보호자에게 즉시 알리고 호출벨을 가까이 둔다", effect: { hp: -4, rep: 9 }, log: "안전 환경이 강화됐습니다." },
+        { text: "\"누우세요\"라고 멀리서 외친다", effect: { hp: -16, rep: -14 }, log: "환자가 미끄러졌습니다." },
+        { text: "차팅 중이라 잠시 후에 가본다", effect: { hp: -22, rep: -22 }, log: "낙상 사고가 발생했습니다." }
+    ]) }),
+    () => ({ baseId: "snack", category: "병동 일상", part: "휴식", emoji: "🍙", title: "동료의 야식", desc: "동료가 컵라면과 김밥을 사왔습니다. \"같이 먹자\"고 권합니다.", choices: shuffle([
+        { text: "5분만 빠르게 먹고 일어선다", effect: { hp: 18, rep: 1 }, log: "체력이 회복됐습니다." },
+        { text: "고맙다고만 하고 일에 집중한다", effect: { hp: -3, rep: 5 }, log: "의지력이 빛났습니다." },
+        { text: "한 그릇 더 먹고 잠시 쉰다", effect: { hp: 10, rep: -5 }, log: "포만감에 집중력이 흐려집니다." },
+        { text: "수다떨며 30분간 휴식한다", effect: { hp: 22, rep: -12 }, log: "환자 호출이 누락됐습니다." }
+    ]) }),
+    () => ({ baseId: "missing-chart", category: "병동 일상", part: "기록", emoji: "📋", title: "차트 누락", desc: "오전 투약 기록 한 줄이 빠진 것을 발견했습니다.", choices: shuffle([
+        { text: "즉시 사실대로 추가 기록하고 보고한다", effect: { hp: -4, rep: 14 }, log: "투명성이 신뢰를 얻습니다." },
+        { text: "환자 상태부터 확인 후 기록한다", effect: { hp: -3, rep: 9 }, log: "안전 우선 접근입니다." },
+        { text: "눈 감고 모른 척한다", effect: { hp: -10, rep: -16 }, log: "도덕적 부담만 누적됩니다." },
+        { text: "몰래 임의로 기입한다", effect: { hp: -32, rep: -34 }, log: "기록 위조는 중대한 위반입니다." }
+    ]) }),
+    () => ({ baseId: "bathroom", category: "병동 일상", part: "본인케어", emoji: "🚻", title: "긴급한 신호", desc: "방광이 한계입니다. 호출벨이 동시에 두 개 울립니다.", choices: shuffle([
+        { text: "동료에게 호출 한 건을 인계하고 다녀온다", effect: { hp: 6, rep: 5 }, log: "팀워크가 빛났습니다." },
+        { text: "30초만 다녀온 뒤 호출에 응답한다", effect: { hp: 8, rep: -3 }, log: "기본 권리도 중요합니다." },
+        { text: "참고 호출부터 응답한다", effect: { hp: -16, rep: 7 }, log: "방광염 위험이 커졌습니다." },
+        { text: "둘 다 동시에 응답한다며 우왕좌왕", effect: { hp: -10, rep: -8 }, log: "대응이 늦어 환자가 불만을 토로했습니다." }
+    ]) }),
+    () => ({ baseId: "chargeNurse", category: "병동 일상", part: "보고", emoji: "📞", title: "차지널스 콜", desc: "차지널스가 \"환자 상태 1분 안에 정리해서 보고해\"라고 말합니다.", choices: shuffle([
+        { text: "SBAR 형식으로 핵심만 보고한다", effect: { hp: -3, rep: 14 }, log: "표준 보고가 빛났습니다." },
+        { text: "활력징후 위주로 간단히 보고한다", effect: { hp: -2, rep: 7 }, log: "무난한 보고였습니다." },
+        { text: "잘 모르겠다고 회피한다", effect: { hp: -10, rep: -16 }, log: "실력 부족이 드러났습니다." },
+        { text: "감정과 잡담까지 길게 늘어놓는다", effect: { hp: -8, rep: -6 }, log: "시간 낭비라는 평가입니다." }
+    ]) }),
+    () => ({ baseId: "thankyou", category: "병동 일상", part: "행운", emoji: "💌", title: "감사 카드", desc: "퇴원하는 환자가 손편지를 건네며 \"덕분에 살았어요\"라고 인사합니다.", choices: shuffle([
+        { text: "감사한 마음으로 인사받는다", effect: { hp: 10, rep: 18 }, log: "마음이 따뜻해집니다. 보람이 누적됐습니다." },
+        { text: "겸손하게 의사 덕분이라고 돌린다", effect: { hp: 6, rep: 8 }, log: "겸양이 인정받았습니다." },
+        { text: "어색해서 카드를 받지 않는다", effect: { hp: -2, rep: -4 }, log: "환자가 머쓱해합니다." },
+        { text: "바쁘다며 자리를 피한다", effect: { hp: -4, rep: -8 }, log: "감사 표현을 외면했습니다." }
+    ]) }),
+    () => ({ baseId: "newbie", category: "병동 일상", part: "선임 멘토링", emoji: "👶", title: "신규 간호사 도움 요청", desc: "신규 간호사가 IV 카테터를 3번 실패하고 울 것 같은 표정으로 도움을 청합니다.", choices: shuffle([
+        { text: "함께 가서 시범을 보이며 천천히 가르친다", effect: { hp: -5, rep: 16 }, log: "후배가 자신감을 얻었습니다." },
+        { text: "\"내가 대신 해줄게\" 하고 직접 처치한다", effect: { hp: -4, rep: 4 }, log: "당장은 해결됐지만 성장 기회를 뺏었습니다." },
+        { text: "\"3번이면 환자에게 미안해\"라며 핀잔준다", effect: { hp: -6, rep: -12 }, log: "후배의 자존감이 무너졌습니다." },
+        { text: "차팅 중이라 무시한다", effect: { hp: -8, rep: -14 }, log: "후배가 다른 동료에게 갔습니다." }
+    ]) }),
+];
+
+// =========================
+// 보스 이벤트 (eventCount 5/10/18)
+// =========================
+function bossEventForCount(count) {
+    if (count === 5) return { baseId: "boss-codeblue", category: "🚨 위기상황", part: "BOSS", emoji: "💥", title: "[BOSS] 코드 블루", desc: "병실에서 \"환자 의식 없어요!\"라는 외침. 모니터가 평탄선을 그립니다. 당신이 발견자입니다.", choices: shuffle([
+        { text: "의식·호흡 확인 즉시 가슴압박, 동료에게 코드블루 콜 요청", effect: { hp: -10, rep: 38 }, log: "신속한 대응으로 ROSC! 보스 클리어!", boss: true },
+        { text: "AED만 가지러 다녀온다", effect: { hp: -32, rep: -28 }, log: "가슴압박 공백이 생겼습니다." },
+        { text: "주치의에게 전화부터 한다", effect: { hp: -50, rep: -42 }, log: "골든타임을 놓쳤습니다." },
+        { text: "보호자에게 먼저 상황을 설명한다", effect: { hp: -50, rep: -45 }, log: "환자가 사망 위기에 빠졌습니다." }
+    ]) };
+    if (count === 10) return { baseId: "boss-vip", category: "🚨 위기상황", part: "BOSS", emoji: "👑", title: "[BOSS] VIP 환자", desc: "병원 이사장의 모친이 입원했습니다. 보호자가 \"24시간 1:1 간호, 회진 우선, 특별식\" 등 무리한 요구를 쏟아냅니다.", choices: shuffle([
+        { text: "환자 안전을 최우선으로 원칙대로 응대하며 정중히 설명한다", effect: { hp: -10, rep: 32 }, log: "전문성이 인정받았습니다. 보스 클리어!", boss: true },
+        { text: "수간호사에게 즉시 보고하여 대응 방향을 정한다", effect: { hp: -8, rep: 18 }, log: "차분한 보고체계로 위기를 넘겼습니다.", boss: true },
+        { text: "모든 요구를 무리해서 다 들어준다", effect: { hp: -28, rep: -16 }, log: "본인이 번아웃 직전이고 다른 환자가 방치됐습니다." },
+        { text: "VIP라 무서워서 회피한다", effect: { hp: -22, rep: -28 }, log: "민원이 접수됐습니다." }
+    ]) };
+    if (count === 18) return { baseId: "boss-mass", category: "🚨 위기상황", part: "BOSS", emoji: "🚑", title: "[BOSS] 다중외상 5명 동시 입실", desc: "교통사고로 환자 5명이 동시 도착. 인력은 당신과 신규 1명뿐입니다.", choices: shuffle([
+        { text: "START 분류로 적색·황색·녹색 트리아지 후 인력 배분", effect: { hp: -14, rep: 42 }, log: "훌륭한 트리아지로 모두 살렸습니다! 최종 보스 클리어!", boss: true },
+        { text: "눈에 띄는 출혈 환자부터 무작정 처치한다", effect: { hp: -32, rep: -22 }, log: "기도 폐쇄 환자가 방치됐습니다." },
+        { text: "신규에게 알아서 하라고 맡긴다", effect: { hp: -28, rep: -32 }, log: "리더십 부재로 사고가 발생했습니다." },
+        { text: "도착한 순서대로 처치한다", effect: { hp: -28, rep: -18 }, log: "트리아지 원칙을 어겼습니다." }
+    ]) };
+    return null;
 }
 
 function initSurvival() {
@@ -362,28 +470,93 @@ function startQuiz(category) {
 function renderSurvivalEvent(eventId) {
     let ev;
     if (eventId === "intro") {
+        const introDesc = gameState.currentShift === "Night"
+            ? "어두운 복도, 절반은 꺼진 형광등. Night 듀티가 시작됩니다. 모니터 알람이 멀리서 울립니다."
+            : gameState.currentShift === "Evening"
+                ? "저녁 6시, 보호자 면회와 신규 입원이 동시에 몰리는 시간. Evening 듀티 시작."
+                : "병동 문이 열립니다. 햇살과 함께 첫 호출벨이 울립니다. Day 듀티 시작.";
         ev = {
-            baseId: "intro", category: "", title: "듀티의 시작", emoji: "🏥", desc: "병동 문이 열리고 특유의 긴장감이 밀려옵니다.",
-            choices: [
+            baseId: "intro", category: "", title: "듀티의 시작", emoji: "🏥", desc: introDesc,
+            choices: shuffle([
                 { text: "심호흡하고 인계 핵심부터 정리한다", effect: { hp: -4, rep: 6 }, log: "기본기부터 챙겼습니다.", next: "random_hub" },
-                { text: "물품부터 챙긴다", effect: { hp: -2, item: "토니켓" }, log: "준비성이 좋습니다.", next: "random_hub" },
-            ],
+                { text: "물품 카트부터 점검한다", effect: { hp: -2, rep: 3, item: "토니켓" }, log: "준비성이 좋습니다.", next: "random_hub" },
+                { text: "차지널스에게 어제 야간 이슈를 묻는다", effect: { hp: -3, rep: 8 }, log: "맥락 파악이 빠릅니다.", next: "random_hub" },
+            ]),
         };
     } else {
-        const chooseClinical = Math.random() < 0.9;
-        ev = chooseClinical ? generateClinicalEventByCategory(null) : pick([{ baseId:"rest", title:"휴식", emoji:"☕", desc:"잠깐 쉴 틈이 생겼습니다.", choices:[{text:"물 마시기", effect:{hp:15, rep:0}, log:"체력을 회복했습니다."}, {text:"스트레칭", effect:{hp:10, rep:2}, log:"몸이 풀립니다."}]}]);
+        const upcomingCount = gameState.eventCount + 1;
+        const boss = bossEventForCount(upcomingCount);
+        if (boss) {
+            ev = boss;
+        } else {
+            const r = Math.random();
+            if (r < 0.7) {
+                ev = generateClinicalEventByCategory(null);
+            } else if (r < 0.93) {
+                ev = pick(flavorEvents)();
+            } else {
+                ev = pick([
+                    { baseId: "rest", category: "병동 일상", part: "휴식", title: "잠깐의 여유", emoji: "☕", desc: "복도가 잠시 조용해졌습니다. 휴게실 의자가 부릅니다.", choices: shuffle([
+                        { text: "따뜻한 차 한 잔 마시기", effect: { hp: 18, rep: 2 }, log: "체력을 회복했습니다." },
+                        { text: "스트레칭으로 어깨 풀기", effect: { hp: 12, rep: 3 }, log: "몸이 가벼워졌습니다." },
+                        { text: "동료와 짧은 잡담", effect: { hp: 10, rep: 1 }, log: "마음이 편해집니다." }
+                    ]) }
+                ]);
+            }
+        }
         gameState.eventCount += 1;
     }
-    renderSceneCard(ev, { mode: "survival", meta: [`난이도: ${gameState.currentShift}`, `누적: ${gameState.eventCount}건`] });
+    const meta = [
+        `${gameState.currentShift}`,
+        `누적 ${gameState.eventCount}건`,
+    ];
+    if (gameState.streak >= 2) meta.push(`🔥 콤보 ${gameState.streak}`);
+    if (gameState.bossesCleared > 0) meta.push(`👑 보스 ${gameState.bossesCleared}/3`);
+    renderSceneCard(ev, { mode: "survival", meta });
 }
 
 function handleSurvivalChoice(choice) {
     applyChoiceEffect(choice);
-    if (choice.log) addLog(choice.log, (choice.effect?.rep || 0) > 0 ? "log-good" : (choice.effect?.rep || 0) < 0 ? "log-bad" : "");
+    const repDelta = choice.effect?.rep || 0;
+    if (choice.log) addLog(choice.log, repDelta > 0 ? "log-good" : repDelta < 0 ? "log-bad" : "");
 
-    if (gameState.hp <= 0) return showGameOver("체력 고갈", "번아웃 되었습니다. 환자 안전을 위해 퇴근하세요.");
-    if (gameState.rep < -60) return showGameOver("평판 실추", "치명적인 실수 누적으로 투약 사고 위기입니다.");
-    if (gameState.eventCount >= MAX_PROGRESS_EVENTS) return showGameOver("듀티 무사 완수!", "수고하셨습니다. 당신은 훌륭한 간호사입니다.");
+    // 콤보(연속 정답) 트래킹
+    if (repDelta > 0) {
+        gameState.streak += 1;
+        if (gameState.streak > gameState.bestStreak) gameState.bestStreak = gameState.streak;
+        if (gameState.streak === 3) { gameState.rep += 5; showToast("🔥 콤보 3 · 평판 +5"); addLog("🔥 콤보 3 보너스 +5 평판", "log-important"); }
+        else if (gameState.streak === 5) { gameState.rep += 10; showToast("⚡ 콤보 5 · 평판 +10"); addLog("⚡ 콤보 5 보너스 +10 평판", "log-important"); }
+        else if (gameState.streak === 7) { gameState.rep += 18; gameState.hp = clamp(gameState.hp + 8, 0, 100); showToast("💎 무결점 7연속!"); addLog("💎 콤보 7 · 평판 +18, HP 회복", "log-important"); }
+        else if (gameState.streak === 10) { gameState.rep += 30; gameState.hp = clamp(gameState.hp + 15, 0, 100); showToast("🏆 콤보 10 · 전설"); addLog("🏆 콤보 10 · 평판 +30, HP 대폭 회복", "log-important"); }
+    } else if (repDelta < 0) {
+        if (gameState.streak >= 3) addLog(`콤보 ${gameState.streak} 종료`, "log-important");
+        gameState.streak = 0;
+    }
+
+    // 보스 클리어 보너스
+    if (choice.boss) {
+        gameState.bossesCleared += 1;
+        gameState.hp = clamp(gameState.hp + 15, 0, 100);
+        showToast("👑 BOSS CLEAR · HP 회복", "boss");
+        addLog("👑 보스 클리어! HP +15", "log-important");
+    }
+
+    updateStats();
+
+    if (gameState.hp <= 0) return showGameOver("💀 체력 고갈", "번아웃 되었습니다. 환자 안전을 위해 퇴근하세요.");
+    if (gameState.rep < -60) return showGameOver("⚠️ 평판 실추", "치명적인 실수 누적으로 투약 사고 위기입니다.");
+    if (gameState.eventCount >= MAX_PROGRESS_EVENTS) {
+        const allBosses = gameState.bossesCleared >= 3;
+        let title, desc;
+        if (gameState.rep >= 250 && allBosses) { title = "🏆 전설의 간호사"; desc = "병원장 표창 후보로 추천됐습니다."; }
+        else if (gameState.rep >= 150 && allBosses) { title = "🌟 듀티의 영웅"; desc = "동료들이 박수로 인계해줍니다."; }
+        else if (gameState.rep >= 100) { title = "💪 에이스 듀티 클리어"; desc = "확실한 1인분, 그 이상이었습니다."; }
+        else if (gameState.rep >= 50) { title = "✅ 듀티 무사 완수"; desc = "수고하셨습니다. 안전한 듀티였습니다."; }
+        else if (gameState.rep >= 0) { title = "😮‍💨 겨우 살아남음"; desc = "오늘은 운이 좋았습니다. 내일은 더 잘해봐요."; }
+        else { title = "📋 듀티 종료 · 개선 필요"; desc = "복기와 재교육이 필요한 듀티였습니다."; }
+        desc += `\n\n최고 콤보 ${gameState.bestStreak} · 보스 ${gameState.bossesCleared}/3`;
+        return showGameOver(title, desc);
+    }
 
     renderSurvivalEvent(choice.next || "random_hub");
 }
