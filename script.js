@@ -622,7 +622,10 @@ const clinicalGenerators = [
     generateRSVQuestion, generateSomatoformQuestion, generateDissociativeQuestion,
     generateBulimiaQuestion, generateHeatColdQuestion, generateCrutchGaitQuestion,
     generateHandHygieneTypesQuestion, generateROMTypesQuestion, generateHerdImmunityQuestion,
-    generateJustCultureQuestion
+    generateJustCultureQuestion,
+    // ===== 이미지 문제 1차: ECG 4 + 욕창 단계 =====
+    generateECGNSRQuestion, generateECGAFibQuestion, generateECGVTachQuestion,
+    generateECGAsystoleQuestion, generatePressureUlcerStageQuestion
 ];
 
 function generateABGAQuestion() {
@@ -916,6 +919,80 @@ function generateROMTypesQuestion() { return { baseId: "romTypes", categoryKey: 
 function generateHerdImmunityQuestion() { return { baseId: "herdImmunity", categoryKey: "community", part: loc("예방접종","Immunization"), emoji: "🛡️", title: loc("집단 면역","Herd Immunity"), desc: loc(`집단면역의 가장 중요한 의의는?`,`Most important significance of herd immunity?`), choices: shuffle([{ text: loc("백신 접종 불가능한 사람들도 간접적으로 보호받음","Indirectly protects those who can't be vaccinated"), effect: { hp: -2, rep: 22 }, log: loc("정답. 신생아·면역결핍자 등 취약군 보호.","Correct. Protects vulnerable groups (infants, immunocompromised).") }, { text: loc("백신을 안 맞아도 안전","No need for anyone to vaccinate"), effect: { hp: -32, rep: -22 }, log: loc("높은 접종률 유지가 전제.","Requires high coverage to maintain.") }, { text: loc("개별 환자만 보호","Protects only the individual"), effect: { hp: -28, rep: -20 }, log: loc("집단 차원의 의의가 핵심.","Population-level effect is the point.") }, { text: loc("질병 박멸 즉시 가능","Immediate disease eradication"), effect: { hp: -28, rep: -20 }, log: loc("박멸은 매우 어려움(천연두만 성공).","Eradication is very rare (only smallpox).") }]) }; }
 function generateJustCultureQuestion() { return { baseId: "justCulture", categoryKey: "management", part: loc("환자 안전","Patient Safety"), emoji: "⚖️", title: loc("정의 문화 vs 비난 문화","Just Culture vs Blame Culture"), desc: loc(`의료 사고 발생 시 \"정의 문화(Just Culture)\"의 핵심 원칙은?`,`Core principle of \"Just Culture\" when an incident occurs?`), choices: shuffle([{ text: loc("개인 처벌이 아닌 시스템 결함 분석에 초점, 단 의도적·반복적 위반은 책임","Focus on system flaws, not individual blame — but address willful/repeated violations"), effect: { hp: -2, rep: 22 }, log: loc("정답. 보고 문화·학습 문화의 토대.","Correct. Foundation of reporting/learning culture.") }, { text: loc("실수한 개인을 즉시 해고","Immediately fire the individual"), effect: { hp: -38, rep: -28 }, log: loc("비난 문화 - 보고 회피 유발.","Blame culture — discourages reporting.") }, { text: loc("모든 실수를 개인 책임으로 돌림","Make everything personal liability"), effect: { hp: -32, rep: -22 }, log: loc("심리적 안전감 파괴.","Destroys psychological safety.") }, { text: loc("실수를 모두 무시","Ignore all errors"), effect: { hp: -38, rep: -28 }, log: loc("재발 방지 불가.","No prevention of recurrence.") }]) }; }
 
+// ========= 이미지 문제 (인라인 SVG) =========
+const ECG_GRID = `<defs><pattern id="g" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M 20 0 L 0 0 0 20" fill="none" stroke="#fecaca" stroke-width="0.5"/></pattern></defs><rect width="600" height="120" fill="#fff5f5"/><rect width="600" height="120" fill="url(#g)"/>`;
+
+function generateECGNSRQuestion() {
+    const svg = `<svg viewBox="0 0 600 120" xmlns="http://www.w3.org/2000/svg">${ECG_GRID}<polyline fill="none" stroke="#dc2626" stroke-width="1.8" points="0,60 50,60 60,52 70,46 80,52 95,60 105,60 108,65 110,30 113,90 116,60 130,60 155,50 175,45 195,50 200,60 250,60 260,52 270,46 280,52 295,60 305,60 308,65 310,30 313,90 316,60 330,60 355,50 375,45 395,50 400,60 450,60 460,52 470,46 480,52 495,60 505,60 508,65 510,30 513,90 516,60 530,60 555,50 575,45 595,50 600,60"/></svg>`;
+    return { baseId: "ecgNsr", categoryKey: "adult", part: loc("ECG 판독","ECG Reading"), emoji: "📈",
+        title: loc("리듬 판독 #1","Rhythm Strip #1"),
+        desc: loc("아래 ECG 리듬 스트립을 판독하세요.","Interpret the ECG rhythm strip below."),
+        image: svg,
+        choices: shuffle([
+            { text: loc("정상 동성리듬(NSR)","Normal sinus rhythm (NSR)"), effect: { hp: -2, rep: 22 }, log: loc("정답. P-QRS-T가 규칙적이고 P:QRS=1:1.","Correct. Regular P-QRS-T with 1:1 P:QRS ratio.") },
+            { text: loc("심방세동","Atrial fibrillation"), effect: { hp: -22, rep: -12 }, log: loc("A-fib는 P파 없이 불규칙.","A-fib has no P waves and is irregular.") },
+            { text: loc("심실빈맥","Ventricular tachycardia"), effect: { hp: -25, rep: -15 }, log: loc("V-tach는 wide·규칙적·P 없음.","V-tach has wide QRS and no P waves.") },
+            { text: loc("심정지","Asystole"), effect: { hp: -28, rep: -20 }, log: loc("Asystole은 거의 평탄선.","Asystole is a flat line.") }
+        ])
+    };
+}
+function generateECGAFibQuestion() {
+    const svg = `<svg viewBox="0 0 600 120" xmlns="http://www.w3.org/2000/svg">${ECG_GRID}<polyline fill="none" stroke="#dc2626" stroke-width="1.8" points="0,62 15,58 30,64 45,57 60,63 75,58 90,62 95,40 100,90 105,60 130,60 145,57 160,63 175,58 190,62 205,57 220,63 230,40 235,90 240,60 280,60 295,58 310,64 325,58 340,62 355,58 365,40 370,90 375,60 410,60 425,58 440,63 455,58 470,62 485,58 495,40 500,90 505,60 540,60 555,58 570,63 585,58 600,62"/></svg>`;
+    return { baseId: "ecgAFib", categoryKey: "adult", part: loc("ECG 판독","ECG Reading"), emoji: "📊",
+        title: loc("리듬 판독 #2","Rhythm Strip #2"),
+        desc: loc("아래 ECG 리듬 스트립을 판독하세요. 가장 위험한 동반 합병증은?","Interpret this rhythm. What's the most concerning complication?"),
+        image: svg,
+        choices: shuffle([
+            { text: loc("심방세동 - 좌심방 혈전·뇌졸중 위험","Atrial fibrillation — LA thrombus / stroke risk"), effect: { hp: -3, rep: 22 }, log: loc("정답. P파 없음·불규칙 RR. CHA2DS2-VASc로 항응고.","Correct. No P waves, irregularly irregular. Anticoagulate per CHA2DS2-VASc.") },
+            { text: loc("정상 동성리듬","Normal sinus rhythm"), effect: { hp: -25, rep: -15 }, log: loc("불규칙성이 명백.","Clearly irregular.") },
+            { text: loc("심실빈맥","Ventricular tachycardia"), effect: { hp: -25, rep: -15 }, log: loc("V-tach는 wide QRS 규칙적.","V-tach has wide regular QRS.") },
+            { text: loc("심정지","Asystole"), effect: { hp: -28, rep: -20 }, log: loc("심실파동이 보임.","Ventricular complexes are visible.") }
+        ])
+    };
+}
+function generateECGVTachQuestion() {
+    const svg = `<svg viewBox="0 0 600 120" xmlns="http://www.w3.org/2000/svg">${ECG_GRID}<polyline fill="none" stroke="#dc2626" stroke-width="2.2" points="0,60 30,60 50,15 70,90 85,40 100,80 130,60 150,60 170,15 190,90 205,40 220,80 250,60 270,60 290,15 310,90 325,40 340,80 370,60 390,60 410,15 430,90 445,40 460,80 490,60 510,60 530,15 550,90 565,40 580,80 600,60"/></svg>`;
+    return { baseId: "ecgVTach", categoryKey: "adult", part: loc("ECG 응급","ECG Emergency"), emoji: "⚡",
+        title: loc("리듬 판독 #3","Rhythm Strip #3"),
+        desc: loc("환자에게 맥박이 없습니다. 아래 리듬을 판독하고 즉시 처치는?","No pulse. Interpret the rhythm and the immediate action?"),
+        image: svg,
+        choices: shuffle([
+            { text: loc("무맥성 심실빈맥(pVT) - 즉각 제세동","Pulseless V-tach — immediate defibrillation"), effect: { hp: -3, rep: 22 }, log: loc("정답. 무맥성 VT/VF는 충격 가능 리듬.","Correct. Pulseless VT/VF are shockable rhythms.") },
+            { text: loc("정상 동성리듬·관찰","Normal sinus rhythm — observe"), effect: { hp: -45, rep: -32 }, log: loc("Wide·규칙적 - V-tach.","Wide and regular — V-tach.") },
+            { text: loc("심방세동·항응고제","Atrial fibrillation — anticoagulate"), effect: { hp: -45, rep: -32 }, log: loc("진단 오류 - 응급을 놓침.","Wrong dx — misses emergency.") },
+            { text: loc("Atropine만 투여","Atropine only"), effect: { hp: -42, rep: -30 }, log: loc("Atropine은 서맥용.","Atropine is for bradycardia.") }
+        ])
+    };
+}
+function generateECGAsystoleQuestion() {
+    const svg = `<svg viewBox="0 0 600 120" xmlns="http://www.w3.org/2000/svg">${ECG_GRID}<polyline fill="none" stroke="#dc2626" stroke-width="1.8" points="0,60 60,60 120,61 180,59 240,60 300,60 360,61 420,59 480,60 540,60 600,60"/></svg>`;
+    return { baseId: "ecgAsystole", categoryKey: "adult", part: loc("ECG 응급","ECG Emergency"), emoji: "💀",
+        title: loc("리듬 판독 #4","Rhythm Strip #4"),
+        desc: loc("아래 리듬을 판독하고 즉시 처치는?","Interpret this rhythm and the immediate action?"),
+        image: svg,
+        choices: shuffle([
+            { text: loc("심정지(Asystole) - 고품질 CPR + Epinephrine, 충격 금기","Asystole — high-quality CPR + epinephrine, NO shock"), effect: { hp: -3, rep: 22 }, log: loc("정답. Asystole은 충격 불가능 리듬.","Correct. Asystole is a non-shockable rhythm.") },
+            { text: loc("즉시 제세동","Immediate defibrillation"), effect: { hp: -45, rep: -32 }, log: loc("Asystole은 충격 금기.","Asystole is non-shockable.") },
+            { text: loc("정상 - 관찰","Normal — observe"), effect: { hp: -50, rep: -38 }, log: loc("심정지 응급입니다.","Cardiac arrest emergency.") },
+            { text: loc("Atropine만으로 회복 시도","Atropine alone for resuscitation"), effect: { hp: -38, rep: -28 }, log: loc("Atropine은 서맥용.","Atropine is for bradycardia.") }
+        ])
+    };
+}
+function generatePressureUlcerStageQuestion() {
+    const svg = `<svg viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg"><rect width="600" height="200" fill="#fff8f7"/><g transform="translate(20,20)"><circle cx="50" cy="60" r="42" fill="#fecaca" stroke="#dc2626" stroke-width="2"/><text x="50" y="135" text-anchor="middle" font-size="14" font-weight="700" fill="#1e293b">A</text><text x="50" y="155" text-anchor="middle" font-size="11" fill="#64748b">${loc("발적·온감","Erythema/warmth")}</text></g><g transform="translate(170,20)"><ellipse cx="50" cy="60" rx="44" ry="34" fill="#fecaca"/><ellipse cx="50" cy="60" rx="22" ry="16" fill="#fda4af" stroke="#be123c" stroke-width="1.5"/><text x="50" y="135" text-anchor="middle" font-size="14" font-weight="700" fill="#1e293b">B</text><text x="50" y="155" text-anchor="middle" font-size="11" fill="#64748b">${loc("부분층 손실","Partial loss")}</text></g><g transform="translate(320,20)"><ellipse cx="50" cy="60" rx="46" ry="36" fill="#f87171"/><ellipse cx="50" cy="60" rx="28" ry="20" fill="#fef3c7" stroke="#a16207" stroke-width="1.5"/><circle cx="50" cy="60" r="10" fill="#dc2626"/><text x="50" y="135" text-anchor="middle" font-size="14" font-weight="700" fill="#1e293b">C</text><text x="50" y="155" text-anchor="middle" font-size="11" fill="#64748b">${loc("피하지방 노출","Subq fat exposed")}</text></g><g transform="translate(470,20)"><ellipse cx="50" cy="60" rx="46" ry="36" fill="#f87171"/><ellipse cx="50" cy="60" rx="30" ry="22" fill="#92400e" stroke="#1e293b" stroke-width="1.5"/><circle cx="50" cy="62" r="14" fill="#1e293b"/><text x="44" y="66" font-size="10" fill="white">${loc("뼈","Bone")}</text><text x="50" y="135" text-anchor="middle" font-size="14" font-weight="700" fill="#1e293b">D</text><text x="50" y="155" text-anchor="middle" font-size="11" fill="#64748b">${loc("뼈/근육 노출","Bone/muscle")}</text></g></svg>`;
+    return { baseId: "pressureStage", categoryKey: "fundamentals", part: loc("욕창","Pressure Ulcer"), emoji: "🛌",
+        title: loc("욕창 단계 식별","Identify the Pressure Ulcer Stage"),
+        desc: loc("그림 D는 뼈/근육이 노출된 상태입니다. 어느 단계인가요?","Diagram D shows exposed bone/muscle. Which stage?"),
+        image: svg,
+        choices: shuffle([
+            { text: loc("4단계 - 뼈·근육·힘줄 노출","Stage 4 — bone, muscle, tendon exposed"), effect: { hp: -3, rep: 22 }, log: loc("정답. 4단계는 깊은 전층 손실로 골수염 위험.","Correct. Stage 4 = deep full-thickness loss with osteomyelitis risk.") },
+            { text: loc("1단계 - 비창백성 발적","Stage 1 — non-blanchable erythema"), effect: { hp: -25, rep: -15 }, log: loc("1단계는 표피 무손상.","Stage 1: skin intact.") },
+            { text: loc("2단계 - 부분층 손실","Stage 2 — partial-thickness loss"), effect: { hp: -25, rep: -15 }, log: loc("2단계는 표피·진피 일부.","Stage 2: epidermis + partial dermis.") },
+            { text: loc("3단계 - 전층 손실, 피하지방까지","Stage 3 — full-thickness, subq fat visible"), effect: { hp: -25, rep: -15 }, log: loc("3단계는 뼈·근육 노출 없음.","Stage 3: no bone/muscle exposed.") }
+        ])
+    };
+}
+
 // =========================
 // 라우터 및 렌더링 (중복 방지 적용)
 // =========================
@@ -949,11 +1026,13 @@ function renderSceneCard(ev, options = {}) {
     const tag = ev.category ? `<div class="category-tag">${ev.category}${ev.part ? ` <span class="part">· ${ev.part}</span>` : ""}</div>` : "";
     const metaRow = meta.length ? `<div class="meta-row">${meta.map((m) => `<span class="meta-chip">${m}</span>`).join("")}</div>` : "";
 
+    const imageBlock = ev.image ? `<div class="scene-image">${ev.image}</div>` : "";
     UI.gameArea.innerHTML = `
     <div class="scene-card card">
       ${tag}${metaRow}
       <span class="scene-emoji">${ev.emoji || "🩺"}</span>
       <h2 class="scene-title">${questionIndex !== null ? `[Q${questionIndex}] ` : ""}${ev.title}</h2>
+      ${imageBlock}
       <p class="scene-desc">${ev.desc}</p>
       <div class="choice-list" id="choice-list"></div>
       <div id="feedback-zone"></div>
