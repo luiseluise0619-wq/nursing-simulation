@@ -7,11 +7,14 @@ A free bilingual (KO/EN) PWA for nursing study — randomized board-style questi
 
 ## Features
 
-- **113 randomized clinical questions** across 8 nursing-board subjects (Fundamentals, Adult, Maternal, Pediatric, Community, Psychiatric, Management, Health Laws)
+- **153 randomized clinical questions** across 8 nursing-board subjects (Fundamentals, Adult, Maternal, Pediatric, Community, Psychiatric, Management, Health Laws)
 - **Bilingual KO/EN** — full UI and content translation, instant toggle, persisted preference
-- **Survival shift mode** — 20 events per shift with 3 boss encounters (Code Blue, VIP, Mass Casualty), combo system, and 18 daily ward flavor events
-- **12 narrative endings** — happy / sad / bittersweet / easter-egg branches based on accuracy, bosses, key story choices (mentoring, ethics, code blue outcome…)
+- **Survival shift mode** — 20 events per shift with 3 boss encounters (Code Blue, VIP, Mass Casualty), combo system, and **30 daily ward flavor events**
+- **13 narrative endings** — happy / sad / bittersweet / easter-egg branches based on accuracy, bosses, key story choices (mentoring, ethics, code blue outcome…)
 - **Training mode** — pick any of the 8 subjects and grind randomized questions; correct answer + rationale shown after every wrong pick
+- **🔁 Wrong-answer review (오답노트)** — wrong answers auto-saved; review them on demand, mastered ones auto-removed
+- **⭐ Bookmarks** — star any question during quiz to revisit later
+- **⏱️ Timed Mock Exam** — 30 questions in 30 minutes with countdown timer
 - **Lifetime stats** — total solved, best combo, best reputation, duties completed (persisted)
 - **Offline-first PWA** — installable on iOS/Android/desktop, works without network after first load
 - **Zero backend** — pure static site, all state in `localStorage`
@@ -65,13 +68,13 @@ Honest list of what's missing — useful as backlog, also useful for setting exp
 - Rationales are short; deeper references (e.g., journal citation, image, table) are not provided.
 - A few answers reflect **traditional board teaching** (MI MONA, glaucoma miotic, pancreatitis meperidine) where modern guidelines have evolved. Kept aligned with current Korean Boards answer keys.
 
-**Study tools (the most-requested missing)**
-- ❌ **No spaced repetition (SRS)** — wrong answers aren't re-shown more often. Anki-style scheduling is on the wishlist.
-- ❌ **No wrong-answer review** — past mistakes aren't queued for review.
-- ❌ **No timed exam mode** (e.g., 250 questions in 280 minutes like the actual Boards).
-- ❌ **No subtopic filter** within a category (e.g., "show me only IICP-related Adult questions").
-- ❌ **No bookmarks / flag-for-later**.
-- ❌ **No image-based questions** (ECG strips, wound photos, drug images, etc.).
+**Study tools (most-requested — now SHIPPED in v1.3)**
+- ✅ **Wrong-answer review (오답노트)** — auto-tracked, review on demand, mastered ones auto-removed
+- ✅ **Bookmarks** — star any question during quiz, review starred later
+- ✅ **Timed exam mode** — 30 questions × 30 minutes with countdown timer
+- 🟡 **Spaced repetition (SRS)** — wrong-answer review is "spaced lite". Full Leitner-box scheduling still on wishlist.
+- ❌ **No subtopic filter** within a category (use baseId search if you fork the code).
+- ❌ **No image-based questions** (ECG strips, wound photos, drug images).
 
 **Platform**
 - 🟡 **PNG icons missing** — only `icons/icon.svg`. Generate 192/512 PNG before iOS App Store submission (tools: Inkscape, rsvg-convert, online).
