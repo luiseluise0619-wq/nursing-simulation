@@ -790,7 +790,12 @@ const clinicalGenerators = [
     generateWellsScoreQuestion, generateSleepApneaQuestion, generateSpirometryQuestion,
     generateCOPoisoningQuestion, generateInfluenzaVaccineQuestion, generateMRSAIsolationQuestion,
     generateCDiffQuestion, generateMERSCOVQuestion, generateBordertelosisQuestion,
-    generateNeedleSafetyQuestion
+    generateNeedleSafetyQuestion,
+    // ===== 배치 14: 다중 시나리오 (각 4-6 변이) 10문제 =====
+    generateAgeVitalSignsQuestion, generateImmunizationByAgeQuestion, generatePostopComplicationQuestion,
+    generateLabAbnormalQuestion, generatePregnancyTrimesterQuestion, generateChemoSideEffectVarsQuestion,
+    generatePsychDelusionTypesQuestion, generateNutritionalDeficiencyQuestion, generateBLSPriorityQuestion,
+    generateAntibioticClassQuestion
 ];
 
 function generateABGAQuestion() {
@@ -1353,6 +1358,215 @@ function generateCDiffQuestion() { return { baseId: "cdiff", categoryKey: "adult
 function generateMERSCOVQuestion() { return { baseId: "mersCov", categoryKey: "community", part: loc("신종 감염","Emerging Infection"), emoji: "😷", title: loc("MERS-CoV 격리","MERS-CoV Isolation"), desc: loc(`MERS 의심 환자의 격리 기준은?`,`Isolation precaution for suspected MERS?`), choices: shuffle([{ text: loc("공기주의 + 접촉주의 + 표준주의 + N95","Airborne + contact + standard + N95"), effect: { hp: -3, rep: 22 }, log: loc("정답. 음압격리실·1인실.","Correct. Negative-pressure private room.") }, { text: loc("표준주의만","Standard only"), effect: { hp: -45, rep: -32 }, log: loc("심각한 감염 위험.","Serious transmission risk.") }, { text: loc("비말주의만","Droplet only"), effect: { hp: -32, rep: -22 }, log: loc("공기·접촉도 필요.","Need airborne+contact too.") }, { text: loc("격리 불필요","No isolation"), effect: { hp: -45, rep: -32 }, log: loc("심각한 위반.","Serious violation.") }]) }; }
 function generateBordertelosisQuestion() { return { baseId: "lyme", categoryKey: "community", part: loc("벡터 매개 감염","Vector-Borne"), emoji: "🦟", title: loc("라임병","Lyme Disease"), desc: loc(`사슴 진드기에 물린 후 \"황소눈(target)\" 발진이 나타난 환자의 1차 치료는?`,`Bull's-eye rash after deer tick bite. First-line treatment?`), choices: shuffle([{ text: loc("Doxycycline 경구 14~21일","Oral doxycycline 14-21 days"), effect: { hp: -2, rep: 22 }, log: loc("정답. 임신부·8세 미만은 Amoxicillin.","Correct. Amoxicillin if pregnant or <8 yrs.") }, { text: loc("관찰만","Just observe"), effect: { hp: -38, rep: -28 }, log: loc("만성 라임병 위험.","Chronic Lyme risk.") }, { text: loc("Acyclovir","Acyclovir"), effect: { hp: -25, rep: -15 }, log: loc("바이러스용.","For viruses.") }, { text: loc("스테로이드","Steroids"), effect: { hp: -32, rep: -22 }, log: loc("감염 악화.","Worsens infection.") }]) }; }
 function generateNeedleSafetyQuestion() { return { baseId: "needleSafety", categoryKey: "fundamentals", part: loc("바늘 안전","Needle Safety"), emoji: "💉", title: loc("바늘 안전 처리","Needle Safety"), desc: loc(`사용한 주삿바늘 처리 시 가장 안전한 방법은?`,`Safest method for handling a used needle?`), choices: shuffle([{ text: loc("재캡핑하지 말고 즉시 sharps container에 폐기","Do NOT recap; dispose directly in sharps container"), effect: { hp: -2, rep: 22 }, log: loc("정답. 재캡핑이 가장 흔한 자상 원인.","Correct. Recapping is #1 needlestick cause.") }, { text: loc("두 손으로 재캡핑 후 폐기","Two-handed recap, then dispose"), effect: { hp: -38, rep: -28 }, log: loc("절대 금기.","Absolutely contraindicated.") }, { text: loc("일반 휴지통에 폐기","Toss in regular trash"), effect: { hp: -45, rep: -32 }, log: loc("환경미화원 노출 위험.","Risk to sanitation workers.") }, { text: loc("물에 담가 소독","Soak in water"), effect: { hp: -32, rep: -22 }, log: loc("부적절.","Inappropriate.") }]) }; }
+
+// ========= 배치 14: 다중 시나리오 (각 4-6 변이) 10문제 =========
+function generateAgeVitalSignsQuestion() {
+    const ages = [
+        { ageKo: "신생아(0-1개월)", ageEn: "Newborn (0-1 mo)", correctKo: "심박 100~205, 호흡 30~60", correctEn: "HR 100-205, RR 30-60" },
+        { ageKo: "영아(1-12개월)", ageEn: "Infant (1-12 mo)", correctKo: "심박 100~180, 호흡 24~40", correctEn: "HR 100-180, RR 24-40" },
+        { ageKo: "유아(1-3세)", ageEn: "Toddler (1-3 yr)", correctKo: "심박 80~140, 호흡 20~30", correctEn: "HR 80-140, RR 20-30" },
+        { ageKo: "학령전(3-6세)", ageEn: "Preschool (3-6 yr)", correctKo: "심박 70~120, 호흡 20~28", correctEn: "HR 70-120, RR 20-28" },
+        { ageKo: "학령기(6-12세)", ageEn: "School age (6-12)", correctKo: "심박 65~110, 호흡 18~25", correctEn: "HR 65-110, RR 18-25" },
+        { ageKo: "청소년(12세+)", ageEn: "Adolescent (12+)", correctKo: "심박 60~100, 호흡 12~20", correctEn: "HR 60-100, RR 12-20" },
+    ];
+    const target = pick(ages);
+    const wrong = ages.filter(a => a !== target);
+    return { baseId: "ageVitals", categoryKey: "pediatric", part: loc("연령별 활력징후","Age VS"), emoji: "👶",
+        title: loc("연령별 정상 활력징후","Age-Specific Normal VS"),
+        desc: loc(`${loc(target.ageKo, target.ageEn)}의 정상 심박수·호흡수 범위는?`,`Normal HR/RR for ${loc(target.ageKo, target.ageEn)}?`),
+        choices: shuffle([
+            { text: loc(target.correctKo, target.correctEn), effect: { hp: -2, rep: 22 }, log: loc("정답.","Correct.") },
+            { text: loc(wrong[0].correctKo, wrong[0].correctEn), effect: { hp: -22, rep: -12 }, log: loc("다른 연령대.","Different age group.") },
+            { text: loc(wrong[1].correctKo, wrong[1].correctEn), effect: { hp: -22, rep: -12 }, log: loc("다른 연령대.","Different age group.") },
+            { text: loc(wrong[2].correctKo, wrong[2].correctEn), effect: { hp: -22, rep: -12 }, log: loc("다른 연령대.","Different age group.") }
+        ])
+    };
+}
+function generateImmunizationByAgeQuestion() {
+    const schedules = [
+        { ageKo: "출생", ageEn: "Birth", correctKo: "B형간염 1차", correctEn: "Hepatitis B (1st dose)" },
+        { ageKo: "4주 이내", ageEn: "Within 4 weeks", correctKo: "BCG (결핵)", correctEn: "BCG (tuberculosis)" },
+        { ageKo: "2개월", ageEn: "2 months", correctKo: "DTaP/IPV/Hib/PCV/Rotavirus 1차", correctEn: "DTaP/IPV/Hib/PCV/Rotavirus (1st)" },
+        { ageKo: "12-15개월", ageEn: "12-15 months", correctKo: "MMR + 수두 1차", correctEn: "MMR + Varicella (1st)" },
+        { ageKo: "만 4-6세", ageEn: "4-6 years", correctKo: "DTaP/IPV/MMR/수두 추가접종", correctEn: "DTaP/IPV/MMR/Varicella boosters" },
+    ];
+    const target = pick(schedules);
+    const wrong = schedules.filter(s => s !== target);
+    return { baseId: "immunByAge", categoryKey: "pediatric", part: loc("예방접종","Immunization"), emoji: "💉",
+        title: loc("연령별 예방접종","Age-Based Immunization"),
+        desc: loc(`${loc(target.ageKo, target.ageEn)}에 시행하는 표준 예방접종은?`,`Routine immunization at ${loc(target.ageKo, target.ageEn)}?`),
+        choices: shuffle([
+            { text: loc(target.correctKo, target.correctEn), effect: { hp: -2, rep: 22 }, log: loc("정답.","Correct.") },
+            { text: loc(wrong[0].correctKo, wrong[0].correctEn), effect: { hp: -22, rep: -12 }, log: loc("다른 시기.","Different age.") },
+            { text: loc(wrong[1].correctKo, wrong[1].correctEn), effect: { hp: -22, rep: -12 }, log: loc("다른 시기.","Different age.") },
+            { text: loc(wrong[2].correctKo, wrong[2].correctEn), effect: { hp: -22, rep: -12 }, log: loc("다른 시기.","Different age.") }
+        ])
+    };
+}
+function generatePostopComplicationQuestion() {
+    const days = [
+        { dayKo: "수술 24시간 이내", dayEn: "Within 24 hours", correctKo: "출혈·쇼크 모니터링", correctEn: "Monitor for bleeding/shock" },
+        { dayKo: "수술 1-2일", dayEn: "POD 1-2", correctKo: "무기폐·폐렴 예방(IS·심호흡)", correctEn: "Prevent atelectasis (IS, deep breathing)" },
+        { dayKo: "수술 3-5일", dayEn: "POD 3-5", correctKo: "감염 징후·DVT", correctEn: "Infection signs + DVT" },
+        { dayKo: "수술 5-7일", dayEn: "POD 5-7", correctKo: "상처 열개 위험", correctEn: "Wound dehiscence risk" },
+        { dayKo: "수술 1-2주", dayEn: "Week 1-2", correctKo: "재활·보행 격려", correctEn: "Rehabilitation, ambulation" },
+    ];
+    const target = pick(days);
+    const wrong = days.filter(d => d !== target);
+    return { baseId: "postopByDay", categoryKey: "adult", part: loc("수술 후 간호","Postop Care"), emoji: "🏨",
+        title: loc("수술 후 일자별 우선순위","Postop Day Priority"),
+        desc: loc(`${loc(target.dayKo, target.dayEn)} 수술 후 환자에서 가장 우선 사정해야 할 것은?`,`Top assessment priority ${loc(target.dayKo, target.dayEn)} after surgery?`),
+        choices: shuffle([
+            { text: loc(target.correctKo, target.correctEn), effect: { hp: -2, rep: 22 }, log: loc("정답.","Correct.") },
+            { text: loc(wrong[0].correctKo, wrong[0].correctEn), effect: { hp: -22, rep: -12 }, log: loc("다른 시기 우선순위.","Priority for different day.") },
+            { text: loc(wrong[1].correctKo, wrong[1].correctEn), effect: { hp: -22, rep: -12 }, log: loc("다른 시기 우선순위.","Priority for different day.") },
+            { text: loc(wrong[2].correctKo, wrong[2].correctEn), effect: { hp: -22, rep: -12 }, log: loc("다른 시기 우선순위.","Priority for different day.") }
+        ])
+    };
+}
+function generateLabAbnormalQuestion() {
+    const labs = [
+        { lab: "Sodium", valKo: "120 mEq/L", valEn: "120 mEq/L", normalKo: "135-145", correctKo: "저나트륨혈증 - 발작·뇌부종 위험", correctEn: "Hyponatremia — seizure, cerebral edema risk" },
+        { lab: "Potassium", valKo: "6.5 mEq/L", valEn: "6.5 mEq/L", normalKo: "3.5-5.0", correctKo: "고칼륨혈증 - 부정맥·심정지 위험", correctEn: "Hyperkalemia — arrhythmia, arrest risk" },
+        { lab: "Calcium", valKo: "7.2 mg/dL", valEn: "7.2 mg/dL", normalKo: "8.5-10.5", correctKo: "저칼슘혈증 - 후두경련·테타니", correctEn: "Hypocalcemia — laryngospasm, tetany" },
+        { lab: "Magnesium", valKo: "1.0 mg/dL", valEn: "1.0 mg/dL", normalKo: "1.7-2.2", correctKo: "저마그네슘혈증 - 부정맥·발작", correctEn: "Hypomagnesemia — arrhythmia, seizure" },
+        { lab: "Glucose", valKo: "45 mg/dL", valEn: "45 mg/dL", normalKo: "70-110", correctKo: "저혈당 - 즉시 포도당 투여", correctEn: "Hypoglycemia — give glucose now" },
+    ];
+    const target = pick(labs);
+    const wrong = labs.filter(l => l !== target);
+    return { baseId: "labAbnormal", categoryKey: "adult", part: loc("검사 해석","Lab Interpretation"), emoji: "🧪",
+        title: loc("이상 검사 해석","Abnormal Lab Interpretation"),
+        desc: loc(`${target.lab} ${loc(target.valKo, target.valEn)}(정상 ${target.normalKo})인 환자의 가장 우선되는 임상 의의는?`,`${target.lab} ${loc(target.valKo, target.valEn)} (normal ${target.normalKo}). Top clinical significance?`),
+        choices: shuffle([
+            { text: loc(target.correctKo, target.correctEn), effect: { hp: -2, rep: 22 }, log: loc("정답.","Correct.") },
+            { text: loc(wrong[0].correctKo, wrong[0].correctEn), effect: { hp: -22, rep: -12 }, log: loc("다른 검사 결과.","Different lab.") },
+            { text: loc(wrong[1].correctKo, wrong[1].correctEn), effect: { hp: -22, rep: -12 }, log: loc("다른 검사 결과.","Different lab.") },
+            { text: loc(wrong[2].correctKo, wrong[2].correctEn), effect: { hp: -22, rep: -12 }, log: loc("다른 검사 결과.","Different lab.") }
+        ])
+    };
+}
+function generatePregnancyTrimesterQuestion() {
+    const trimesters = [
+        { triKo: "1삼분기(0~13주)", triEn: "1st (0-13 wk)", correctKo: "엽산 보충·기형 위험·입덧 관리", correctEn: "Folic acid + teratogen risk + nausea care" },
+        { triKo: "2삼분기(14~27주)", triEn: "2nd (14-27 wk)", correctKo: "안태기·태동 인지·다운/이분척추 선별", correctEn: "Quickening, Down/spina bifida screening" },
+        { triKo: "3삼분기(28주~)", triEn: "3rd (28+ wk)", correctKo: "임신성 고혈압·당뇨 선별·태동 모니터링", correctEn: "PIH/GDM screening, fetal kick counts" },
+    ];
+    const target = pick(trimesters);
+    const wrong = trimesters.filter(t => t !== target);
+    return { baseId: "pregTrimester", categoryKey: "maternal", part: loc("산전관리","Antepartum Care"), emoji: "🤰",
+        title: loc("임신 삼분기별 핵심","Trimester-Specific Care"),
+        desc: loc(`${loc(target.triKo, target.triEn)} 산모의 핵심 간호·교육은?`,`Key care/teaching for ${loc(target.triKo, target.triEn)} pregnancy?`),
+        choices: shuffle([
+            { text: loc(target.correctKo, target.correctEn), effect: { hp: -2, rep: 22 }, log: loc("정답.","Correct.") },
+            { text: loc(wrong[0].correctKo, wrong[0].correctEn), effect: { hp: -22, rep: -12 }, log: loc("다른 삼분기.","Different trimester.") },
+            { text: loc(wrong[1].correctKo, wrong[1].correctEn), effect: { hp: -22, rep: -12 }, log: loc("다른 삼분기.","Different trimester.") },
+            { text: loc("매일 강한 운동 권장","Encourage vigorous daily exercise"), effect: { hp: -25, rep: -15 }, log: loc("절대 금기 행동.","Inappropriate action.") }
+        ])
+    };
+}
+function generateChemoSideEffectVarsQuestion() {
+    const drugs = [
+        { drugKo: "Doxorubicin", drugEn: "Doxorubicin", correctKo: "심독성 - LVEF 모니터", correctEn: "Cardiotoxicity — monitor LVEF" },
+        { drugKo: "Cisplatin", drugEn: "Cisplatin", correctKo: "신독성·이독성 - BUN/Cr·청력 모니터", correctEn: "Nephro/ototoxicity — BUN/Cr, hearing" },
+        { drugKo: "Vincristine", drugEn: "Vincristine", correctKo: "신경독성 - 사지 저림·발기능 변화", correctEn: "Neurotoxicity — paresthesia, foot drop" },
+        { drugKo: "Bleomycin", drugEn: "Bleomycin", correctKo: "폐섬유증 - PFT 모니터", correctEn: "Pulmonary fibrosis — monitor PFTs" },
+        { drugKo: "Methotrexate", drugEn: "Methotrexate", correctKo: "골수억제·간독성 - Leucovorin 구조", correctEn: "Marrow/hepatotoxicity — leucovorin rescue" },
+    ];
+    const target = pick(drugs);
+    const wrong = drugs.filter(d => d !== target);
+    return { baseId: "chemoSideEffect", categoryKey: "adult", part: loc("항암제 부작용","Chemo Side Effects"), emoji: "💊",
+        title: loc("항암제별 특이 부작용","Drug-Specific Chemo Toxicity"),
+        desc: loc(`${loc(target.drugKo, target.drugEn)}의 특징적·약물별 고유 부작용은?`,`Drug-specific toxicity of ${loc(target.drugKo, target.drugEn)}?`),
+        choices: shuffle([
+            { text: loc(target.correctKo, target.correctEn), effect: { hp: -2, rep: 22 }, log: loc("정답.","Correct.") },
+            { text: loc(wrong[0].correctKo, wrong[0].correctEn), effect: { hp: -22, rep: -12 }, log: loc("다른 약물의 특징.","Different drug.") },
+            { text: loc(wrong[1].correctKo, wrong[1].correctEn), effect: { hp: -22, rep: -12 }, log: loc("다른 약물의 특징.","Different drug.") },
+            { text: loc(wrong[2].correctKo, wrong[2].correctEn), effect: { hp: -22, rep: -12 }, log: loc("다른 약물의 특징.","Different drug.") }
+        ])
+    };
+}
+function generatePsychDelusionTypesQuestion() {
+    const types = [
+        { delKo: "피해망상 - \"누가 나를 죽이려 한다\"", delEn: "Persecutory — 'Someone is trying to kill me'", correctKo: "공감하되 망상은 부정·논쟁 안 함, 안전 사정", correctEn: "Empathize without arguing, assess safety" },
+        { delKo: "과대망상 - \"나는 세계를 구할 메시아다\"", delEn: "Grandiose — 'I am the savior'", correctKo: "조현병·양극성 의심, 환자 자존감 보호하며 현실 검증", correctEn: "Suspect schizophrenia/bipolar; reality test gently" },
+        { delKo: "관계망상 - \"TV가 나에게 메시지를 보낸다\"", delEn: "Referential — 'TV is sending me messages'", correctKo: "환자의 두려움 인정, 자극 줄이기·약물 검토", correctEn: "Acknowledge fear, reduce stimuli, review meds" },
+        { delKo: "신체망상 - \"내 장기가 썩고 있다\"", delEn: "Somatic — 'My organs are rotting'", correctKo: "신체 호소 진지하게, 의학적 검사로 배제 후 정신과 협진", correctEn: "Take seriously, rule out medically, then refer to psych" },
+    ];
+    const target = pick(types);
+    const wrong = types.filter(t => t !== target);
+    return { baseId: "delusionTypes", categoryKey: "psych", part: loc("망상 유형","Delusion Types"), emoji: "🧠",
+        title: loc("망상 유형별 대응","Type-Specific Delusion Care"),
+        desc: loc(`환자가 \"${loc(target.delKo, target.delEn)}\"라고 말한다. 가장 적절한 1차 간호는?`,`Patient says "${loc(target.delKo, target.delEn)}". Best initial care?`),
+        choices: shuffle([
+            { text: loc(target.correctKo, target.correctEn), effect: { hp: -2, rep: 22 }, log: loc("정답.","Correct.") },
+            { text: loc(wrong[0].correctKo, wrong[0].correctEn), effect: { hp: -22, rep: -12 }, log: loc("다른 유형 대응.","For a different delusion type.") },
+            { text: loc("논리적으로 망상이 거짓임을 증명","Logically prove the delusion is false"), effect: { hp: -28, rep: -20 }, log: loc("망상은 논리로 풀리지 않음.","Delusions don't yield to logic.") },
+            { text: loc("환자의 말을 무시하고 다른 주제","Ignore and change subject"), effect: { hp: -25, rep: -15 }, log: loc("비치료적.","Non-therapeutic.") }
+        ])
+    };
+}
+function generateNutritionalDeficiencyQuestion() {
+    const defs = [
+        { vitKo: "비타민 B12", vitEn: "Vitamin B12", correctKo: "거대적아구성 빈혈 + 신경병증", correctEn: "Megaloblastic anemia + neuropathy" },
+        { vitKo: "엽산(Folate)", vitEn: "Folate", correctKo: "거대적아구성 빈혈, 신경계 정상, 임신 시 신경관 결손", correctEn: "Megaloblastic anemia, neuro spared, NTD in pregnancy" },
+        { vitKo: "철분", vitEn: "Iron", correctKo: "소구성 저색소성 빈혈 + 피로·창백", correctEn: "Microcytic hypochromic anemia + fatigue/pallor" },
+        { vitKo: "비타민 D", vitEn: "Vitamin D", correctKo: "성인 골연화증·소아 구루병", correctEn: "Adult osteomalacia, child rickets" },
+        { vitKo: "비타민 K", vitEn: "Vitamin K", correctKo: "출혈 경향 - PT 연장", correctEn: "Bleeding tendency — prolonged PT" },
+    ];
+    const target = pick(defs);
+    const wrong = defs.filter(d => d !== target);
+    return { baseId: "nutritionalDef", categoryKey: "adult", part: loc("영양 결핍","Nutritional Deficiency"), emoji: "🥗",
+        title: loc("영양소 결핍 임상","Nutrient Deficiency"),
+        desc: loc(`${loc(target.vitKo, target.vitEn)} 결핍의 가장 특징적인 임상 양상은?`,`Most characteristic clinical picture of ${loc(target.vitKo, target.vitEn)} deficiency?`),
+        choices: shuffle([
+            { text: loc(target.correctKo, target.correctEn), effect: { hp: -2, rep: 22 }, log: loc("정답.","Correct.") },
+            { text: loc(wrong[0].correctKo, wrong[0].correctEn), effect: { hp: -22, rep: -12 }, log: loc("다른 영양소 결핍.","Different nutrient.") },
+            { text: loc(wrong[1].correctKo, wrong[1].correctEn), effect: { hp: -22, rep: -12 }, log: loc("다른 영양소 결핍.","Different nutrient.") },
+            { text: loc(wrong[2].correctKo, wrong[2].correctEn), effect: { hp: -22, rep: -12 }, log: loc("다른 영양소 결핍.","Different nutrient.") }
+        ])
+    };
+}
+function generateBLSPriorityQuestion() {
+    const scenarios = [
+        { sceneKo: "성인 환자가 갑자기 쓰러짐", sceneEn: "Adult collapses suddenly", correctKo: "반응 확인 → 도움 요청·119 → 가슴압박 30:2", correctEn: "Check response → call 911/team → 30:2 compressions" },
+        { sceneKo: "1세 영아가 무반응", sceneEn: "1-year-old infant unresponsive", correctKo: "반응 확인 → 가슴압박 30:2 (1인) 또는 15:2 (2인+)", correctEn: "Check response → 30:2 (1 rescuer) or 15:2 (2+ rescuers)" },
+        { sceneKo: "성인이 음식이 목에 걸려 말 못함", sceneEn: "Adult choking, can't speak", correctKo: "Heimlich(복부밀어내기), 의식 잃으면 CPR", correctEn: "Heimlich (abdominal thrusts); CPR if unconscious" },
+        { sceneKo: "익수 직후 무반응", sceneEn: "Just-rescued drowning, unresponsive", correctKo: "5회 인공호흡 먼저 → 그 후 표준 CPR", correctEn: "5 rescue breaths first → then standard CPR" },
+    ];
+    const target = pick(scenarios);
+    const wrong = scenarios.filter(s => s !== target);
+    return { baseId: "blsPriority", categoryKey: "fundamentals", part: loc("BLS","Basic Life Support"), emoji: "🚑",
+        title: loc("BLS 시나리오 우선순위","BLS Scenario Priority"),
+        desc: loc(`상황: ${loc(target.sceneKo, target.sceneEn)}. 1차 처치는?`,`Scenario: ${loc(target.sceneKo, target.sceneEn)}. First action?`),
+        choices: shuffle([
+            { text: loc(target.correctKo, target.correctEn), effect: { hp: -2, rep: 22 }, log: loc("정답.","Correct.") },
+            { text: loc(wrong[0].correctKo, wrong[0].correctEn), effect: { hp: -22, rep: -12 }, log: loc("다른 시나리오.","Different scenario.") },
+            { text: loc(wrong[1].correctKo, wrong[1].correctEn), effect: { hp: -22, rep: -12 }, log: loc("다른 시나리오.","Different scenario.") },
+            { text: loc("관찰만 하며 응급 도움 대기","Just observe and wait"), effect: { hp: -42, rep: -32 }, log: loc("응급 - 즉시 행동.","Emergency — act now.") }
+        ])
+    };
+}
+function generateAntibioticClassQuestion() {
+    const abx = [
+        { drugKo: "Aminoglycosides (Gentamicin 등)", drugEn: "Aminoglycosides (Gentamicin)", correctKo: "신독성·이독성 - peak/trough 모니터", correctEn: "Nephro/ototoxic — monitor peak/trough" },
+        { drugKo: "Vancomycin", drugEn: "Vancomycin", correctKo: "Red Man·신독성·이독성·trough 모니터", correctEn: "Red man, nephro/ototoxic, trough monitoring" },
+        { drugKo: "Fluoroquinolones (Cipro 등)", drugEn: "Fluoroquinolones (Cipro)", correctKo: "건염·QT 연장·소아 금기", correctEn: "Tendinitis, QT prolongation, avoid in kids" },
+        { drugKo: "Sulfonamides (Bactrim)", drugEn: "Sulfonamides (Bactrim)", correctKo: "Stevens-Johnson·신결정·고칼륨", correctEn: "SJS, crystalluria, hyperkalemia" },
+        { drugKo: "Tetracyclines", drugEn: "Tetracyclines", correctKo: "광과민성·치아 착색·임신·8세 미만 금기", correctEn: "Photosensitivity, teeth staining, avoid in pregnancy/<8 yr" },
+    ];
+    const target = pick(abx);
+    const wrong = abx.filter(a => a !== target);
+    return { baseId: "abxClass", categoryKey: "adult", part: loc("항생제 부작용","Antibiotic Side Effects"), emoji: "💊",
+        title: loc("항생제 계열별 부작용","Class-Specific Antibiotic Effects"),
+        desc: loc(`${loc(target.drugKo, target.drugEn)}의 주요 부작용·모니터링 포인트는?`,`Main side effect/monitoring of ${loc(target.drugKo, target.drugEn)}?`),
+        choices: shuffle([
+            { text: loc(target.correctKo, target.correctEn), effect: { hp: -2, rep: 22 }, log: loc("정답.","Correct.") },
+            { text: loc(wrong[0].correctKo, wrong[0].correctEn), effect: { hp: -22, rep: -12 }, log: loc("다른 계열.","Different class.") },
+            { text: loc(wrong[1].correctKo, wrong[1].correctEn), effect: { hp: -22, rep: -12 }, log: loc("다른 계열.","Different class.") },
+            { text: loc(wrong[2].correctKo, wrong[2].correctEn), effect: { hp: -22, rep: -12 }, log: loc("다른 계열.","Different class.") }
+        ])
+    };
+}
 
 // ========= 이미지 문제 2차: 10개 추가 =========
 function generatePainScaleQuestion() {
