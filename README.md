@@ -7,14 +7,16 @@ A free bilingual (KO/EN) PWA for nursing study — randomized board-style questi
 
 ## Features
 
-- **153 randomized clinical questions** across 8 nursing-board subjects (Fundamentals, Adult, Maternal, Pediatric, Community, Psychiatric, Management, Health Laws)
+- **203 randomized clinical questions** (193 text + **10 image-based** SVG questions for ECG rhythms, pressure-ulcer staging, triage colors, Rule of Nines, heart anatomy, body positioning, newborn reflexes) across 8 nursing-board subjects
 - **Bilingual KO/EN** — full UI and content translation, instant toggle, persisted preference
 - **Survival shift mode** — 20 events per shift with 3 boss encounters (Code Blue, VIP, Mass Casualty), combo system, and **30 daily ward flavor events**
-- **13 narrative endings** — happy / sad / bittersweet / easter-egg branches based on accuracy, bosses, key story choices (mentoring, ethics, code blue outcome…)
-- **Training mode** — pick any of the 8 subjects and grind randomized questions; correct answer + rationale shown after every wrong pick
-- **🔁 Wrong-answer review (오답노트)** — wrong answers auto-saved; review them on demand, mastered ones auto-removed
+- **13 narrative endings** — happy / sad / bittersweet / easter-egg branches based on accuracy, bosses, key story choices
+- **Training mode** — 8 subjects + **subtopic filter** (e.g., within Adult Nursing, drill only "Cardiovascular" or "Endocrine")
+- **🧠 Spaced Repetition (SRS Leitner 5-box)** — proper Leitner scheduling (immediate / 1 day / 3 days / 7 days / 14 days). Correct → box +1, wrong → box 1. Only due cards shown.
+- **🔁 Wrong-answer review (오답노트)** — wrong answers auto-saved; review on demand; mastered ones auto-removed
 - **⭐ Bookmarks** — star any question during quiz to revisit later
 - **⏱️ Timed Mock Exam** — 30 questions in 30 minutes with countdown timer
+- **🖼️ Image-based questions** — inline SVG ECG strips, anatomical diagrams, position diagrams. No external images, fully offline.
 - **Lifetime stats** — total solved, best combo, best reputation, duties completed (persisted)
 - **Offline-first PWA** — installable on iOS/Android/desktop, works without network after first load
 - **Zero backend** — pure static site, all state in `localStorage`
@@ -68,13 +70,13 @@ Honest list of what's missing — useful as backlog, also useful for setting exp
 - Rationales are short; deeper references (e.g., journal citation, image, table) are not provided.
 - A few answers reflect **traditional board teaching** (MI MONA, glaucoma miotic, pancreatitis meperidine) where modern guidelines have evolved. Kept aligned with current Korean Boards answer keys.
 
-**Study tools (most-requested — now SHIPPED in v1.3)**
+**Study tools (now ALL shipped as of v1.4)**
 - ✅ **Wrong-answer review (오답노트)** — auto-tracked, review on demand, mastered ones auto-removed
 - ✅ **Bookmarks** — star any question during quiz, review starred later
 - ✅ **Timed exam mode** — 30 questions × 30 minutes with countdown timer
-- 🟡 **Spaced repetition (SRS)** — wrong-answer review is "spaced lite". Full Leitner-box scheduling still on wishlist.
-- ❌ **No subtopic filter** within a category (use baseId search if you fork the code).
-- ❌ **No image-based questions** (ECG strips, wound photos, drug images).
+- ✅ **Spaced repetition (SRS Leitner)** — proper 5-box scheduling (0/1/3/7/14 days). Correct → up a box, wrong → box 1.
+- ✅ **Subtopic filter** — pick a category, then drill into a specific `part` (e.g., Adult → Cardiovascular only)
+- ✅ **Image-based questions** — 10 SVG image questions (ECG, pressure ulcer, triage, anatomy, positioning, reflexes)
 
 **Platform**
 - 🟡 **PNG icons missing** — only `icons/icon.svg`. Generate 192/512 PNG before iOS App Store submission (tools: Inkscape, rsvg-convert, online).
