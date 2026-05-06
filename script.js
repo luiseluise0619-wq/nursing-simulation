@@ -795,7 +795,12 @@ const clinicalGenerators = [
     generateAgeVitalSignsQuestion, generateImmunizationByAgeQuestion, generatePostopComplicationQuestion,
     generateLabAbnormalQuestion, generatePregnancyTrimesterQuestion, generateChemoSideEffectVarsQuestion,
     generatePsychDelusionTypesQuestion, generateNutritionalDeficiencyQuestion, generateBLSPriorityQuestion,
-    generateAntibioticClassQuestion
+    generateAntibioticClassQuestion,
+    // ===== 배치 15: 다중 시나리오 10문제 =====
+    generateBabyDevelopmentQuestion, generateGriefStagesVarsQuestion, generateThyroidLabQuestion,
+    generateMurmurLocationQuestion, generateBurnAreaCalcQuestion, generateInsulinTimingQuestion,
+    generateOxygenDeviceFlowQuestion, generatePainTeachingTypeQuestion, generateContraceptionQuestion,
+    generateInfectionPrecautionVarsQuestion
 ];
 
 function generateABGAQuestion() {
@@ -1564,6 +1569,203 @@ function generateAntibioticClassQuestion() {
             { text: loc(wrong[0].correctKo, wrong[0].correctEn), effect: { hp: -22, rep: -12 }, log: loc("다른 계열.","Different class.") },
             { text: loc(wrong[1].correctKo, wrong[1].correctEn), effect: { hp: -22, rep: -12 }, log: loc("다른 계열.","Different class.") },
             { text: loc(wrong[2].correctKo, wrong[2].correctEn), effect: { hp: -22, rep: -12 }, log: loc("다른 계열.","Different class.") }
+        ])
+    };
+}
+
+// ========= 배치 15: 다중 시나리오 10문제 =========
+function generateBabyDevelopmentQuestion() {
+    const ms = [
+        { ageKo: "2개월", ageEn: "2 months", correctKo: "사회적 미소·고개 들기", correctEn: "Social smile, head lift" },
+        { ageKo: "4개월", ageEn: "4 months", correctKo: "옹알이·머리 가눔·구르기", correctEn: "Cooing, head control, rolling" },
+        { ageKo: "9개월", ageEn: "9 months", correctKo: "기어다님·낯가림", correctEn: "Crawling, stranger anxiety" },
+        { ageKo: "18개월", ageEn: "18 months", correctKo: "10단어·계단 오르기", correctEn: "10 words, climbs stairs" },
+        { ageKo: "3세", ageEn: "3 years", correctKo: "세발자전거·완전한 문장", correctEn: "Tricycle, full sentences" },
+    ];
+    const t = pick(ms); const w = ms.filter(m => m !== t);
+    return { baseId: "babyDevel", categoryKey: "pediatric", part: loc("발달 지표","Developmental Milestones"), emoji: "👶",
+        title: loc("연령별 발달 지표","Age-Specific Milestones"),
+        desc: loc(`${loc(t.ageKo, t.ageEn)} 영유아의 정상 발달 지표는?`,`Normal milestones at ${loc(t.ageKo, t.ageEn)}?`),
+        choices: shuffle([
+            { text: loc(t.correctKo, t.correctEn), effect: { hp: -2, rep: 22 }, log: loc("정답.","Correct.") },
+            { text: loc(w[0].correctKo, w[0].correctEn), effect: { hp: -22, rep: -12 }, log: loc("다른 시기.","Different age.") },
+            { text: loc(w[1].correctKo, w[1].correctEn), effect: { hp: -22, rep: -12 }, log: loc("다른 시기.","Different age.") },
+            { text: loc(w[2].correctKo, w[2].correctEn), effect: { hp: -22, rep: -12 }, log: loc("다른 시기.","Different age.") }
+        ])
+    };
+}
+function generateGriefStagesVarsQuestion() {
+    const stages = [
+        { quoteKo: "\"이게 사실이 아닐 거야\"", quoteEn: "\"This can't be true\"", correctKo: "부정(Denial)", correctEn: "Denial" },
+        { quoteKo: "\"왜 하필 나야! 불공평해\"", quoteEn: "\"Why me! It's unfair\"", correctKo: "분노(Anger)", correctEn: "Anger" },
+        { quoteKo: "\"손주 결혼식까지만 살게 해주세요\"", quoteEn: "\"Just let me see the grandkids' wedding\"", correctKo: "타협(Bargaining)", correctEn: "Bargaining" },
+        { quoteKo: "환자가 식사·대화 없이 무기력함", quoteEn: "Patient withdrawn, not eating or talking", correctKo: "우울(Depression)", correctEn: "Depression" },
+        { quoteKo: "\"이제 마음의 준비가 됐어요\"", quoteEn: "\"I'm ready now\"", correctKo: "수용(Acceptance)", correctEn: "Acceptance" },
+    ];
+    const t = pick(stages); const w = stages.filter(s => s !== t);
+    return { baseId: "griefStagesVars", categoryKey: "psych", part: loc("애도 단계","Grief Stages"), emoji: "💔",
+        title: loc("Kübler-Ross 단계 식별","Identify K-R Stage"),
+        desc: loc(`말기 환자가 ${loc(t.quoteKo, t.quoteEn)} 보인다. 어느 단계?`,`Terminal patient: ${loc(t.quoteKo, t.quoteEn)}. Which stage?`),
+        choices: shuffle([
+            { text: loc(t.correctKo, t.correctEn), effect: { hp: -2, rep: 22 }, log: loc("정답.","Correct.") },
+            { text: loc(w[0].correctKo, w[0].correctEn), effect: { hp: -22, rep: -12 }, log: loc("다른 단계.","Different stage.") },
+            { text: loc(w[1].correctKo, w[1].correctEn), effect: { hp: -22, rep: -12 }, log: loc("다른 단계.","Different stage.") },
+            { text: loc(w[2].correctKo, w[2].correctEn), effect: { hp: -22, rep: -12 }, log: loc("다른 단계.","Different stage.") }
+        ])
+    };
+}
+function generateThyroidLabQuestion() {
+    const cases = [
+        { tshKo: "TSH 0.1, T4 18", tshEn: "TSH 0.1, T4 18", correctKo: "원발성 갑상선기능항진증", correctEn: "Primary hyperthyroidism" },
+        { tshKo: "TSH 12, T4 4", tshEn: "TSH 12, T4 4", correctKo: "원발성 갑상선기능저하증", correctEn: "Primary hypothyroidism" },
+        { tshKo: "TSH 8, T4 정상", tshEn: "TSH 8, T4 normal", correctKo: "잠재성 갑상선기능저하", correctEn: "Subclinical hypothyroidism" },
+        { tshKo: "TSH 0.3, T4 정상", tshEn: "TSH 0.3, T4 normal", correctKo: "잠재성 갑상선기능항진", correctEn: "Subclinical hyperthyroidism" },
+    ];
+    const t = pick(cases); const w = cases.filter(c => c !== t);
+    return { baseId: "thyroidLab", categoryKey: "adult", part: loc("갑상선 검사","Thyroid Labs"), emoji: "🦋",
+        title: loc("TSH/T4 해석","TSH/T4 Interpretation"),
+        desc: loc(`${loc(t.tshKo, t.tshEn)}인 환자의 진단은?`,`Patient with ${loc(t.tshKo, t.tshEn)}. Diagnosis?`),
+        choices: shuffle([
+            { text: loc(t.correctKo, t.correctEn), effect: { hp: -2, rep: 22 }, log: loc("정답.","Correct.") },
+            { text: loc(w[0].correctKo, w[0].correctEn), effect: { hp: -22, rep: -12 }, log: loc("검사 패턴 다름.","Different lab pattern.") },
+            { text: loc(w[1].correctKo, w[1].correctEn), effect: { hp: -22, rep: -12 }, log: loc("검사 패턴 다름.","Different lab pattern.") },
+            { text: loc(w[2].correctKo, w[2].correctEn), effect: { hp: -22, rep: -12 }, log: loc("검사 패턴 다름.","Different lab pattern.") }
+        ])
+    };
+}
+function generateMurmurLocationQuestion() {
+    const cases = [
+        { locKo: "우상흉골연 2번째 늑간 수축기", locEn: "RUSB 2nd ICS systolic", correctKo: "대동맥판 협착(AS)", correctEn: "Aortic stenosis (AS)" },
+        { locKo: "심첨부 이완기", locEn: "Apex diastolic", correctKo: "승모판 협착(MS)", correctEn: "Mitral stenosis (MS)" },
+        { locKo: "심첨부 수축기 - 액와 방사", locEn: "Apex systolic, radiates to axilla", correctKo: "승모판 역류(MR)", correctEn: "Mitral regurgitation (MR)" },
+        { locKo: "좌상흉골연 이완기", locEn: "LUSB diastolic", correctKo: "대동맥판 역류(AR)", correctEn: "Aortic regurgitation (AR)" },
+    ];
+    const t = pick(cases); const w = cases.filter(c => c !== t);
+    return { baseId: "murmurLoc", categoryKey: "adult", part: loc("심잡음","Heart Murmur"), emoji: "🎵",
+        title: loc("심잡음 위치별 진단","Murmur by Location"),
+        desc: loc(`${loc(t.locKo, t.locEn)} 잡음이 들리는 환자의 가능성 높은 진단은?`,`Murmur at ${loc(t.locKo, t.locEn)}. Most likely?`),
+        choices: shuffle([
+            { text: loc(t.correctKo, t.correctEn), effect: { hp: -2, rep: 22 }, log: loc("정답.","Correct.") },
+            { text: loc(w[0].correctKo, w[0].correctEn), effect: { hp: -22, rep: -12 }, log: loc("다른 잡음.","Different murmur.") },
+            { text: loc(w[1].correctKo, w[1].correctEn), effect: { hp: -22, rep: -12 }, log: loc("다른 잡음.","Different murmur.") },
+            { text: loc(w[2].correctKo, w[2].correctEn), effect: { hp: -22, rep: -12 }, log: loc("다른 잡음.","Different murmur.") }
+        ])
+    };
+}
+function generateBurnAreaCalcQuestion() {
+    const cases = [
+        { areaKo: "양 팔 전체 + 머리 전체", areaEn: "Both whole arms + whole head", correctKo: "27% (9% × 3)", correctEn: "27% (9% × 3)" },
+        { areaKo: "몸통 앞 전체 + 한쪽 다리 앞", areaEn: "Anterior trunk + anterior of one leg", correctKo: "27% (18% + 9%)", correctEn: "27% (18% + 9%)" },
+        { areaKo: "양 다리 전체", areaEn: "Both whole legs", correctKo: "36% (18% × 2)", correctEn: "36% (18% × 2)" },
+        { areaKo: "회음부 + 한쪽 팔 전체", areaEn: "Perineum + one whole arm", correctKo: "10% (1% + 9%)", correctEn: "10% (1% + 9%)" },
+    ];
+    const t = pick(cases); const w = cases.filter(c => c !== t);
+    return { baseId: "burnAreaCalc", categoryKey: "adult", part: loc("화상 면적","Burn TBSA"), emoji: "🔥",
+        title: loc("9의 법칙 계산","Rule of Nines Calculation"),
+        desc: loc(`성인 환자가 ${loc(t.areaKo, t.areaEn)}에 화상을 입었다. 총 %TBSA는?`,`Adult burn over ${loc(t.areaKo, t.areaEn)}. Total %TBSA?`),
+        choices: shuffle([
+            { text: loc(t.correctKo, t.correctEn), effect: { hp: -2, rep: 22 }, log: loc("정답.","Correct.") },
+            { text: loc(w[0].correctKo, w[0].correctEn), effect: { hp: -22, rep: -12 }, log: loc("계산 오류.","Calculation error.") },
+            { text: loc(w[1].correctKo, w[1].correctEn), effect: { hp: -22, rep: -12 }, log: loc("계산 오류.","Calculation error.") },
+            { text: loc(w[2].correctKo, w[2].correctEn), effect: { hp: -22, rep: -12 }, log: loc("계산 오류.","Calculation error.") }
+        ])
+    };
+}
+function generateInsulinTimingQuestion() {
+    const cases = [
+        { insKo: "Lispro/Aspart (초속효성)", insEn: "Lispro/Aspart (rapid)", correctKo: "식사 직전(15분 전 이내)", correctEn: "Right before meal (within 15 min)" },
+        { insKo: "Regular (속효성)", insEn: "Regular (short-acting)", correctKo: "식사 30분 전", correctEn: "30 min before meal" },
+        { insKo: "NPH (중간형)", insEn: "NPH (intermediate)", correctKo: "아침·저녁 식전 또는 자기 전", correctEn: "Before breakfast/dinner or bedtime" },
+        { insKo: "Glargine (지속형)", insEn: "Glargine (long-acting)", correctKo: "하루 1번 같은 시간 (식사와 무관)", correctEn: "Once daily at same time (regardless of meals)" },
+    ];
+    const t = pick(cases); const w = cases.filter(c => c !== t);
+    return { baseId: "insulinTiming", categoryKey: "adult", part: loc("인슐린 투여","Insulin Timing"), emoji: "💉",
+        title: loc("인슐린 종류별 투여 시간","Insulin Timing by Type"),
+        desc: loc(`${loc(t.insKo, t.insEn)} 인슐린의 적절한 투여 시점은?`,`When to administer ${loc(t.insKo, t.insEn)} insulin?`),
+        choices: shuffle([
+            { text: loc(t.correctKo, t.correctEn), effect: { hp: -2, rep: 22 }, log: loc("정답.","Correct.") },
+            { text: loc(w[0].correctKo, w[0].correctEn), effect: { hp: -22, rep: -12 }, log: loc("다른 종류.","Different type.") },
+            { text: loc(w[1].correctKo, w[1].correctEn), effect: { hp: -22, rep: -12 }, log: loc("다른 종류.","Different type.") },
+            { text: loc(w[2].correctKo, w[2].correctEn), effect: { hp: -22, rep: -12 }, log: loc("다른 종류.","Different type.") }
+        ])
+    };
+}
+function generateOxygenDeviceFlowQuestion() {
+    const cases = [
+        { deviceKo: "비강캐뉼라 2 L/min", deviceEn: "Nasal cannula 2 L/min", correctKo: "약 28% FiO2", correctEn: "~28% FiO2" },
+        { deviceKo: "비강캐뉼라 4 L/min", deviceEn: "Nasal cannula 4 L/min", correctKo: "약 36% FiO2", correctEn: "~36% FiO2" },
+        { deviceKo: "단순 마스크 6-10 L/min", deviceEn: "Simple mask 6-10 L/min", correctKo: "약 35-50% FiO2", correctEn: "~35-50% FiO2" },
+        { deviceKo: "비재호흡 마스크 10-15 L/min", deviceEn: "Non-rebreather 10-15 L/min", correctKo: "약 60-100% FiO2", correctEn: "~60-100% FiO2" },
+        { deviceKo: "Venturi 마스크 24% 설정", deviceEn: "Venturi mask 24% setting", correctKo: "정확히 24% FiO2", correctEn: "Precisely 24% FiO2" },
+    ];
+    const t = pick(cases); const w = cases.filter(c => c !== t);
+    return { baseId: "oxygenFlow", categoryKey: "fundamentals", part: loc("산소요법","Oxygen Therapy"), emoji: "🫁",
+        title: loc("산소 기구별 FiO2","FiO2 by Oxygen Device"),
+        desc: loc(`${loc(t.deviceKo, t.deviceEn)}로 공급되는 대략적 FiO2는?`,`Approximate FiO2 with ${loc(t.deviceKo, t.deviceEn)}?`),
+        choices: shuffle([
+            { text: loc(t.correctKo, t.correctEn), effect: { hp: -2, rep: 22 }, log: loc("정답.","Correct.") },
+            { text: loc(w[0].correctKo, w[0].correctEn), effect: { hp: -22, rep: -12 }, log: loc("다른 기구.","Different device.") },
+            { text: loc(w[1].correctKo, w[1].correctEn), effect: { hp: -22, rep: -12 }, log: loc("다른 기구.","Different device.") },
+            { text: loc(w[2].correctKo, w[2].correctEn), effect: { hp: -22, rep: -12 }, log: loc("다른 기구.","Different device.") }
+        ])
+    };
+}
+function generatePainTeachingTypeQuestion() {
+    const cases = [
+        { typeKo: "급성 수술 후 통증", typeEn: "Acute postoperative pain", correctKo: "정해진 시간 진통제·환자조절진통(PCA)·다중 약물", correctEn: "Scheduled analgesics, PCA, multimodal" },
+        { typeKo: "만성 비암성 통증", typeEn: "Chronic non-cancer pain", correctKo: "비약물 우선·비아편제 1차·기능 향상 목표", correctEn: "Non-pharm first, non-opioid first-line, function-focused" },
+        { typeKo: "암성 통증", typeEn: "Cancer pain", correctKo: "WHO 사다리·정해진 간격·돌발통 예비량", correctEn: "WHO ladder, scheduled, breakthrough doses" },
+        { typeKo: "신경병성 통증", typeEn: "Neuropathic pain", correctKo: "Gabapentin·Duloxetine·TCA가 1차", correctEn: "Gabapentin, duloxetine, TCAs first-line" },
+    ];
+    const t = pick(cases); const w = cases.filter(c => c !== t);
+    return { baseId: "painTeachingType", categoryKey: "fundamentals", part: loc("통증 관리","Pain Management"), emoji: "🩹",
+        title: loc("통증 유형별 관리","Type-Specific Pain Management"),
+        desc: loc(`${loc(t.typeKo, t.typeEn)} 환자의 핵심 약물·전략은?`,`Key meds/strategy for ${loc(t.typeKo, t.typeEn)}?`),
+        choices: shuffle([
+            { text: loc(t.correctKo, t.correctEn), effect: { hp: -2, rep: 22 }, log: loc("정답.","Correct.") },
+            { text: loc(w[0].correctKo, w[0].correctEn), effect: { hp: -22, rep: -12 }, log: loc("다른 유형.","Different type.") },
+            { text: loc(w[1].correctKo, w[1].correctEn), effect: { hp: -22, rep: -12 }, log: loc("다른 유형.","Different type.") },
+            { text: loc(w[2].correctKo, w[2].correctEn), effect: { hp: -22, rep: -12 }, log: loc("다른 유형.","Different type.") }
+        ])
+    };
+}
+function generateContraceptionQuestion() {
+    const cases = [
+        { methodKo: "복합 경구피임약", methodEn: "Combined oral contraceptives", correctKo: "흡연 35세+ 금기·DVT/MI 위험", correctEn: "Contraindicated if smoker + 35+, DVT/MI risk" },
+        { methodKo: "구리 IUD", methodEn: "Copper IUD", correctKo: "10년 사용·월경량 증가·골반 감염 후 금기", correctEn: "10-yr use, heavier menses, contraind. after PID" },
+        { methodKo: "DMPA(Depo-Provera)", methodEn: "DMPA (Depo-Provera)", correctKo: "3개월 1회 주사·골밀도 감소·체중 증가", correctEn: "Quarterly injection, BMD loss, weight gain" },
+        { methodKo: "응급 피임약(레보놀게스트렐)", methodEn: "Emergency (levonorgestrel)", correctKo: "성관계 후 72시간 이내 효과적", correctEn: "Effective within 72 hours of intercourse" },
+    ];
+    const t = pick(cases); const w = cases.filter(c => c !== t);
+    return { baseId: "contraception", categoryKey: "maternal", part: loc("피임","Contraception"), emoji: "💊",
+        title: loc("피임법 특징","Contraceptive Features"),
+        desc: loc(`${loc(t.methodKo, t.methodEn)}의 특징·주의점은?`,`Features/cautions for ${loc(t.methodKo, t.methodEn)}?`),
+        choices: shuffle([
+            { text: loc(t.correctKo, t.correctEn), effect: { hp: -2, rep: 22 }, log: loc("정답.","Correct.") },
+            { text: loc(w[0].correctKo, w[0].correctEn), effect: { hp: -22, rep: -12 }, log: loc("다른 방법.","Different method.") },
+            { text: loc(w[1].correctKo, w[1].correctEn), effect: { hp: -22, rep: -12 }, log: loc("다른 방법.","Different method.") },
+            { text: loc(w[2].correctKo, w[2].correctEn), effect: { hp: -22, rep: -12 }, log: loc("다른 방법.","Different method.") }
+        ])
+    };
+}
+function generateInfectionPrecautionVarsQuestion() {
+    const cases = [
+        { dxKo: "수두(Varicella)", dxEn: "Varicella", correctKo: "공기주의 + 접촉주의", correctEn: "Airborne + Contact" },
+        { dxKo: "결핵 활동성", dxEn: "Active TB", correctKo: "공기주의 (음압실·N95)", correctEn: "Airborne (negative-pressure, N95)" },
+        { dxKo: "백일해", dxEn: "Pertussis", correctKo: "비말주의", correctEn: "Droplet" },
+        { dxKo: "MRSA", dxEn: "MRSA", correctKo: "접촉주의", correctEn: "Contact" },
+        { dxKo: "C. difficile", dxEn: "C. difficile", correctKo: "접촉주의 + 비누·물 손씻기 (알코올 무효)", correctEn: "Contact + soap-and-water (alcohol ineffective)" },
+        { dxKo: "Norovirus", dxEn: "Norovirus", correctKo: "접촉주의 + 비누·물 손씻기", correctEn: "Contact + soap-and-water" },
+    ];
+    const t = pick(cases); const w = cases.filter(c => c !== t);
+    return { baseId: "infectionPrecVars", categoryKey: "fundamentals", part: loc("감염 격리","Infection Precaution"), emoji: "🦠",
+        title: loc("질환별 격리 지침","Disease-Specific Precaution"),
+        desc: loc(`${loc(t.dxKo, t.dxEn)} 환자에게 적용해야 할 격리 지침은?`,`Precaution for ${loc(t.dxKo, t.dxEn)}?`),
+        choices: shuffle([
+            { text: loc(t.correctKo, t.correctEn), effect: { hp: -2, rep: 22 }, log: loc("정답.","Correct.") },
+            { text: loc(w[0].correctKo, w[0].correctEn), effect: { hp: -22, rep: -12 }, log: loc("다른 질환.","Different disease.") },
+            { text: loc(w[1].correctKo, w[1].correctEn), effect: { hp: -22, rep: -12 }, log: loc("다른 질환.","Different disease.") },
+            { text: loc("표준주의만","Standard only"), effect: { hp: -28, rep: -20 }, log: loc("표준주의만으론 부족.","Standard alone insufficient.") }
         ])
     };
 }
