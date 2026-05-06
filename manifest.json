@@ -1,0 +1,28 @@
+{
+  "name": "Nurse Simulator",
+  "short_name": "NurseSim",
+  "description": "Practice clinical judgment with 90+ NCLEX/Korean Boards-style randomized questions across 8 nursing subjects, plus a survival shift-mode with bosses and combos.",
+  "lang": "en",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fdf2f8",
+  "theme_color": "#6366f1",
+  "icons": [
+    {
+      "src": "./icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "./icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["education", "medical"],
+  "prefer_related_applications": false
+}

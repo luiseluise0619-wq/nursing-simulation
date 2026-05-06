@@ -20,6 +20,7 @@ let gameState = {
     bossesCleared: 0,
     lang: "ko", // "ko" | "en"
     lifetime: { totalQuizSolved: 0, bestStreak: 0, bestRep: 0, dutiesCompleted: 0 },
+    disclaimerAccepted: false,
 };
 
 // =========================
@@ -147,6 +148,33 @@ const T = {
     rank30:         { ko: "RN 5년차 (에이스)", en: "RN Year 5 · Ace" },
     rank50:         { ko: "차지 널스 (Charge)", en: "Charge Nurse" },
     rank100:        { ko: "수간호사 (HN)", en: "Head Nurse" },
+
+    disclaimerTitle:  { ko: "⚠️ 의료 정보 면책고지", en: "⚠️ Medical Disclaimer" },
+    disclaimerBody:   {
+        ko: "이 앱은 간호 학습 보조 도구로 제공됩니다. 실제 임상 의사결정의 근거로 사용해서는 안 되며, 모든 임상 행위는 면허 의료인의 판단과 소속 기관의 지침을 따라야 합니다.\n\n문제·해설은 일반적 가이드라인을 기반으로 작성되었으며 정확성을 보장하지 않습니다. 응급 상황에서는 즉시 의료 전문가의 도움을 받으세요.",
+        en: "This app is provided solely as an educational aid for nursing study. It must not be used to guide actual clinical decision-making. All clinical actions must follow your licensed clinician's judgment and your institution's protocols.\n\nQuestions and rationales are based on general guidelines and accuracy is not guaranteed. Seek qualified medical help immediately in any emergency."
+    },
+    disclaimerAccept: { ko: "이해했습니다 · 시작하기", en: "I Understand · Start" },
+    disclaimerClose:  { ko: "닫기", en: "Close" },
+
+    settingsTitle:    { ko: "⚙️ 설정 · 정보", en: "⚙️ Settings · About" },
+    statsHeading:     { ko: "📊 통계", en: "📊 Statistics" },
+    statTotalSolved:  { ko: "누적 풀이", en: "Total Solved" },
+    statBestStreak:   { ko: "최고 콤보", en: "Best Combo" },
+    statBestRep:      { ko: "최고 평판", en: "Best Reputation" },
+    statDuties:       { ko: "완수 듀티", en: "Duties Completed" },
+    settingsLanguage: { ko: "언어 / Language", en: "Language" },
+    settingsReset:    { ko: "🗑️ 통계 초기화", en: "🗑️ Reset Statistics" },
+    settingsResetConfirm: { ko: "정말 모든 통계를 초기화하시겠습니까? 이 작업은 되돌릴 수 없습니다.", en: "Reset all statistics? This cannot be undone." },
+    settingsResetDone:{ ko: "✅ 통계가 초기화되었습니다", en: "✅ Statistics reset" },
+    settingsDisclaim: { ko: "📜 면책고지 다시 보기", en: "📜 View Disclaimer" },
+    settingsAbout:    { ko: "ℹ️ 앱 정보", en: "ℹ️ About" },
+    aboutBody:        {
+        ko: "Nurse Simulator v1.0\n간호 학습용 무료 시뮬레이터\n\n• 90+ 무한 랜덤 문제\n• 8개 과목 (국시 기반)\n• 보스 · 콤보 · 일상 이벤트\n• 한·영 양 언어 지원\n\n© 2025 · Educational use only",
+        en: "Nurse Simulator v1.0\nA free nursing study simulator.\n\n• 90+ randomized questions\n• 8 board-exam subjects\n• Bosses · combos · daily events\n• Bilingual KO/EN\n\n© 2025 · Educational use only"
+    },
+    settingsButton:   { ko: "⚙️ 설정", en: "⚙️ Settings" },
+    backToMenu:       { ko: "← 메뉴로", en: "← Back to Menu" },
 };
 function t(key) { return L(T[key]); }
 
@@ -158,6 +186,7 @@ function saveSettings() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify({
             lang: gameState.lang,
             lifetime: gameState.lifetime,
+            disclaimerAccepted: gameState.disclaimerAccepted,
         }));
     } catch (e) { /* private mode 등 무시 */ }
 }
@@ -168,7 +197,12 @@ function loadSettings() {
         const data = JSON.parse(raw);
         if (data.lang === "ko" || data.lang === "en") gameState.lang = data.lang;
         if (data.lifetime) Object.assign(gameState.lifetime, data.lifetime);
+        if (data.disclaimerAccepted) gameState.disclaimerAccepted = true;
     } catch (e) { /* corrupt 무시 */ }
+}
+function resetLifetimeStats() {
+    gameState.lifetime = { totalQuizSolved: 0, bestStreak: 0, bestRep: 0, dutiesCompleted: 0 };
+    saveSettings();
 }
 function setLang(lang) {
     gameState.lang = lang === "en" ? "en" : "ko";
@@ -190,6 +224,7 @@ function syncLangButtons() {
 // =========================
 function renderRoot() {
     if (gameState.mode === "menu") return renderMainMenu();
+    if (gameState.mode === "settings") return renderSettings();
     if (gameState.mode === "quiz_menu") return renderQuizMenu();
     if (gameState.mode === "quiz") return renderNextQuizQuestion();
     if (gameState.mode === "survival") return renderSurvivalEvent("random_hub");
@@ -206,11 +241,21 @@ function renderMainMenu() {
     document.title = t("appTitle");
 
     const shift = gameState.currentShift;
+    const lt = gameState.lifetime;
+    const hasStats = lt.totalQuizSolved > 0 || lt.dutiesCompleted > 0 || lt.bestStreak > 0;
+    const statsRow = hasStats
+        ? `<div class="lifetime-stats">
+             <span class="stat-pill">📚 ${lt.totalQuizSolved}</span>
+             <span class="stat-pill">🔥 ${lt.bestStreak}</span>
+             <span class="stat-pill">🏆 ${lt.dutiesCompleted}</span>
+           </div>` : "";
+
     UI.gameArea.innerHTML = `
         <div class="card menu-container">
             <span class="scene-emoji">🏥</span>
             <h2>${t("appTitle")}</h2>
             <p class="subtitle">${t("subtitle")}</p>
+            ${statsRow}
 
             <div class="shift-label">${t("shiftLabel")}</div>
             <div style="margin-bottom: 22px;">
@@ -221,11 +266,88 @@ function renderMainMenu() {
 
             <button class="choice-btn primary" onclick="initSurvival()">${t("startSurvival")}</button>
             <button class="choice-btn ghost center" onclick="renderQuizMenu()">${t("openTraining")}</button>
+            <button class="choice-btn ghost center" style="margin-top: 4px; font-size: 0.85rem;" onclick="renderSettings()">${t("settingsButton")}</button>
         </div>
     `;
     UI.gameArea.querySelectorAll(".shift-option").forEach(btn => {
-        btn.addEventListener("click", (e) => setShift(btn.dataset.shift, parseFloat(btn.dataset.mult), btn));
+        btn.addEventListener("click", () => setShift(btn.dataset.shift, parseFloat(btn.dataset.mult), btn));
     });
+}
+
+// =========================
+// 설정 / 정보 화면
+// =========================
+function renderSettings() {
+    gameState.mode = "settings";
+    UI.topBar.classList.add("hidden");
+    UI.logBar.classList.add("hidden");
+    UI.inventory.classList.add("hidden");
+    UI.progressWrap.classList.add("hidden");
+    document.getElementById("progress-info").classList.add("hidden");
+
+    const lt = gameState.lifetime;
+    UI.gameArea.innerHTML = `
+        <div class="card">
+            <h2 class="scene-title">${t("settingsTitle")}</h2>
+
+            <div class="settings-section">
+                <div class="settings-label">${t("statsHeading")}</div>
+                <div class="stats-grid">
+                    <div class="stat-card"><div class="stat-num">${lt.totalQuizSolved}</div><div class="stat-lbl">${t("statTotalSolved")}</div></div>
+                    <div class="stat-card"><div class="stat-num">${lt.bestStreak}</div><div class="stat-lbl">${t("statBestStreak")}</div></div>
+                    <div class="stat-card"><div class="stat-num">${lt.bestRep}</div><div class="stat-lbl">${t("statBestRep")}</div></div>
+                    <div class="stat-card"><div class="stat-num">${lt.dutiesCompleted}</div><div class="stat-lbl">${t("statDuties")}</div></div>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <div class="settings-label">${t("settingsLanguage")}</div>
+                <div>
+                    <button class="shift-option ${gameState.lang==='ko'?'active':''}" onclick="setLang('ko')">한국어</button>
+                    <button class="shift-option ${gameState.lang==='en'?'active':''}" onclick="setLang('en')">English</button>
+                </div>
+            </div>
+
+            <div class="settings-section">
+                <button class="choice-btn ghost" onclick="confirmReset()">${t("settingsReset")}</button>
+                <button class="choice-btn ghost" onclick="showDisclaimer(false)">${t("settingsDisclaim")}</button>
+                <button class="choice-btn ghost" onclick="showAbout()">${t("settingsAbout")}</button>
+            </div>
+
+            <button class="choice-btn primary" onclick="goHome()" style="margin-top: 8px;">${t("backToMenu")}</button>
+        </div>
+    `;
+}
+
+function confirmReset() {
+    if (confirm(t("settingsResetConfirm"))) {
+        resetLifetimeStats();
+        renderSettings();
+        showToast(t("settingsResetDone"));
+    }
+}
+
+function showAbout() {
+    alert(t("aboutBody"));
+}
+
+// =========================
+// 의료 면책고지 모달
+// =========================
+function showDisclaimer(isFirstLaunch) {
+    const overlay = document.getElementById("disclaimer-overlay");
+    document.getElementById("disclaimer-title").textContent = t("disclaimerTitle");
+    document.getElementById("disclaimer-body").textContent = t("disclaimerBody");
+    const btn = document.getElementById("disclaimer-btn");
+    btn.textContent = isFirstLaunch ? t("disclaimerAccept") : t("disclaimerClose");
+    btn.onclick = () => {
+        if (isFirstLaunch) {
+            gameState.disclaimerAccepted = true;
+            saveSettings();
+        }
+        overlay.classList.remove("active");
+    };
+    overlay.classList.add("active");
 }
 
 const UI = {
@@ -996,4 +1118,15 @@ loadSettings();
 window.addEventListener("DOMContentLoaded", () => {
     syncLangButtons();
     renderMainMenu();
+    if (!gameState.disclaimerAccepted) {
+        // 첫 실행 시 의료 면책고지 강제 노출
+        setTimeout(() => showDisclaimer(true), 200);
+    }
 });
+
+// 서비스 워커 등록 (오프라인 PWA)
+if ("serviceWorker" in navigator && location.protocol !== "file:") {
+    window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./service-worker.js").catch(() => {});
+    });
+}

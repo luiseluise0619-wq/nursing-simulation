@@ -1,0 +1,48 @@
+// Nurse Simulator service worker — cache-first offline shell
+const CACHE_NAME = 'nurse-sim-v1.0.0';
+const ASSETS = [
+    './',
+    './index.html',
+    './script.js',
+    './manifest.json',
+    './icons/icon.svg',
+    'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css',
+];
+
+self.addEventListener('install', (event) => {
+    event.waitUntil(
+        caches.open(CACHE_NAME).then((cache) =>
+            // Some external assets may fail to cache; tolerate per-asset errors.
+            Promise.all(ASSETS.map((url) => cache.add(url).catch(() => {})))
+        )
+    );
+    self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+    event.waitUntil(
+        caches.keys().then((keys) =>
+            Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
+        )
+    );
+    self.clients.claim();
+});
+
+self.addEventListener('fetch', (event) => {
+    if (event.request.method !== 'GET') return;
+    const url = new URL(event.request.url);
+    // Skip cross-origin non-static requests (e.g., analytics)
+    if (url.origin !== self.location.origin && !url.hostname.endsWith('jsdelivr.net')) return;
+
+    event.respondWith(
+        caches.match(event.request).then((cached) => {
+            if (cached) return cached;
+            return fetch(event.request).then((response) => {
+                if (!response || response.status !== 200) return response;
+                const clone = response.clone();
+                caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+                return response;
+            }).catch(() => caches.match('./index.html'));
+        })
+    );
+});
