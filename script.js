@@ -20,6 +20,16 @@ let gameState = {
     bossesCleared: 0,
     correctCount: 0,
     wrongCount: 0,
+    narrative: {
+        codeBlueFailed: false,
+        vipFailed: false,
+        massFailed: false,
+        savedCodeBlue: false,
+        helpedNewbie: false,
+        acceptedThanks: false,
+        sharedMeal: false,
+        ethicsViolation: false,
+    },
     lang: "ko", // "ko" | "en"
     lifetime: { totalQuizSolved: 0, bestStreak: 0, bestRep: 0, dutiesCompleted: 0 },
     disclaimerAccepted: false,
@@ -152,7 +162,35 @@ const T = {
     accuracyLabel:  { ko: "정답률", en: "Accuracy" },
     correctLabel:   { ko: "정답", en: "Correct" },
     wrongLabel:     { ko: "오답", en: "Wrong" },
-    rulesHeading:   { ko: "🎯 엔딩 기준", en: "🎯 Ending Criteria" },
+    rulesHeading:   { ko: "🎯 엔딩 분기", en: "🎯 Ending Branches" },
+
+    // ===== Narrative endings (story branches) =====
+    endPromotion:        { ko: "🌟 수간호사 승진", en: "🌟 Promoted to Head Nurse" },
+    endPromotionDesc:    { ko: "보스 셋 모두 성공·정답률 95% 이상. 다음 분기, 당신의 책상에 'Head Nurse' 명패가 놓인다.", en: "All 3 bosses cleared and 95%+ accuracy. Next quarter, a 'Head Nurse' nameplate sits on your desk." },
+    endBeloved:          { ko: "💝 사랑받는 멘토", en: "💝 Beloved Mentor" },
+    endBelovedDesc:      { ko: "신규를 끌어주고 환자의 감사도 받았다. 동료들이 당신을 '우리 팀의 멘토'라 부른다.", en: "You guided the new grad and received a patient's thanks. Colleagues call you 'our team's mentor.'" },
+    endHeroLetter:       { ko: "💌 환자의 손편지", en: "💌 A Patient's Letter" },
+    endHeroLetterDesc:   { ko: "전신마취에서 깨어난 환자가 당신 이름으로 손편지를 보내왔다. 보람이 가슴에 새겨진다.", en: "A patient emerging from anesthesia mailed a handwritten letter with your name. Fulfillment etched in your heart." },
+    endNewBond:          { ko: "☕ 새로운 인연", en: "☕ A New Bond" },
+    endNewBondDesc:      { ko: "야식을 같이 먹은 동료와 다음 주 카페 약속이 잡혔다. 듀티가 끝나자 마음이 가벼워진다.", en: "You and the coworker who shared snacks have a coffee date next week. The shift ends with a lighter heart." },
+    endBurnout:          { ko: "🌅 번아웃 · 휴식 발령", en: "🌅 Burnout · On Leave" },
+    endBurnoutDesc:      { ko: "수치는 좋았지만 몸이 무너졌다. 수간호사가 일주일 쉬라고 직권 발령했다.", en: "Numbers were good but your body collapsed. The head nurse signs you off for a week." },
+    endGradSchool:       { ko: "🎓 대학원 진학", en: "🎓 Off to Grad School" },
+    endGradSchoolDesc:   { ko: "임상이 답이 아닐 수도. 당신은 대학원 입학 원서를 쓰기 시작한다.", en: "Maybe clinical isn't the only path. You start drafting a graduate-school application." },
+    endSteadyAce:        { ko: "💪 든든한 에이스", en: "💪 The Steady Ace" },
+    endSteadyAceDescNew: { ko: "튀지는 않지만 누구나 같이 일하고 싶어 하는 간호사가 됐다.", en: "Not flashy, but the nurse everyone wants on their team." },
+    endSafeShift:        { ko: "✅ 무사 완수", en: "✅ Safely Completed" },
+    endSafeShiftDescNew: { ko: "큰 사고 없이 인계가 끝났다. 평범하지만 그게 어렵다.", en: "Handoff complete without major incidents. Ordinary — but ordinary is hard." },
+    endNeedsStudy:       { ko: "🤔 다시 책상 앞으로", en: "🤔 Back to the Books" },
+    endNeedsStudyDesc:   { ko: "이번 듀티는 학습이 부족했다. 약점부터 다시 펼쳐보자.", en: "This shift exposed weak spots. Open the books to your gaps first." },
+    endLostPatient:      { ko: "⚰️ 잃은 한 사람", en: "⚰️ One Life Lost" },
+    endLostPatientDesc:  { ko: "코드 블루에서 골든타임을 놓쳤다. 가족 앞에 설 면목이 없다. 한동안 임상에서 멀어진다.", en: "Golden time lost in the Code Blue. You can't face the family. You step away from clinical for a while." },
+    endEthics:           { ko: "⚖️ 기록 위조 적발", en: "⚖️ Falsified Records Uncovered" },
+    endEthicsDesc:       { ko: "투약 기록 위조가 적발됐다. 사고 위원회에 회부되고 면허가 흔들린다.", en: "Falsified records were discovered. Incident committee, license at risk." },
+    endInvestigation:    { ko: "⚖️ 사고 조사위원회 회부", en: "⚖️ Incident Committee Review" },
+    endInvestigationDesc:{ ko: "치명적 실수가 누적돼 조사위원회가 열린다. 면허 정지 가능성도 거론된다.", en: "Critical errors trigger an incident committee. License suspension is on the table." },
+    endRetrainNew:       { ko: "📋 재교육 명령", en: "📋 Mandatory Retraining" },
+    endRetrainDescNew:   { ko: "내일은 비번. 모레부터 1주일 재교육 의무.", en: "Tomorrow off. The day after, mandatory week-long retraining." },
     correctAnswer:  { ko: "✅ 정답", en: "✅ Correct Answer" },
     yourChoice:     { ko: "당신의 선택", en: "Your Choice" },
     rationaleLabel: { ko: "해설", en: "Rationale" },
@@ -493,7 +531,15 @@ const clinicalGenerators = [
     generateConflictQuestion, generateNursingDeliveryQuestion, generateMaternalLawQuestion,
     generateMentalHealthLawQuestion, generateEmergencyLawQuestion, generateBloodTypeQuestion,
     generateBPHQuestion, generateCKDDialysisQuestion, generateGallstoneQuestion,
-    generatePostpartumQuestion
+    generatePostpartumQuestion,
+    // 신규 추가 20문제
+    generateLithiumQuestion, generateEPSQuestion, generateMAOIQuestion,
+    generateAnorexiaQuestion, generateNaloxoneQuestion, generateAnaphylaxisRxQuestion,
+    generateChestTubeQuestion, generateOstomyQuestion, generateCentralLineQuestion,
+    generatePacemakerQuestion, generateGDMQuestion, generatePPDQuestion,
+    generateHEGQuestion, generateEpisiotomyQuestion, generateNeonatalHypoQuestion,
+    generateSickleCellQuestion, generateLeukemiaPedsQuestion, generateLeadPoisonQuestion,
+    generateRestraintLawQuestion, generateHomeHealthQuestion
 ];
 
 function generateABGAQuestion() {
@@ -675,6 +721,28 @@ function generateCKDDialysisQuestion() { return { baseId: "dialysis", categoryKe
 function generateGallstoneQuestion() { return { baseId: "gallstone", categoryKey: "adult", part: loc("소화기","GI"), emoji: "🥚", title: loc("담석증 식이","Cholelithiasis Diet"), desc: loc(`담석증 환자에게 권장되는 식이로 옳은 것은?`,`Recommended diet for cholelithiasis?`), choices: shuffle([{ text: loc("저지방, 저콜레스테롤 식이","Low-fat, low-cholesterol diet"), effect: { hp: -2, rep: 20 }, log: loc("정답. 지방은 담낭 수축을 유발해 통증을 일으킵니다.","Correct. Fat triggers gallbladder contraction and pain.") }, { text: loc("고지방 고열량 식이","High-fat, high-calorie diet"), effect: { hp: -30, rep: -20 }, log: loc("통증 발작을 유발합니다.","Triggers pain attacks.") }, { text: loc("고단백 동물성 지방 위주 식이","High-protein animal-fat-heavy diet"), effect: { hp: -25, rep: -15 }, log: loc("콜레스테롤이 결석 형성을 촉진합니다.","Cholesterol drives stone formation.") }, { text: loc("튀김과 베이컨, 버터를 충분히 섭취","Plenty of fried foods, bacon, and butter"), effect: { hp: -30, rep: -20 }, log: loc("포화지방이 과다합니다.","Excess saturated fat.") }]) }; }
 function generatePostpartumQuestion() { return { baseId: "postpartum", categoryKey: "maternal", part: loc("산후","Postpartum"), emoji: "🤱", title: loc("자궁퇴축 사정","Uterine Involution"), desc: loc(`정상 분만 24시간 후 산모의 자궁저부 위치는?`,`Position of the fundus 24 hours after a normal delivery?`), choices: shuffle([{ text: loc("배꼽 부위(제와 높이)","At the umbilicus"), effect: { hp: -2, rep: 20 }, log: loc("정답. 분만 직후 제와부 → 매일 1cm씩 하강합니다.","Correct. At umbilicus right after birth, descends ~1 cm/day.") }, { text: loc("검상돌기 위","Above the xiphoid"), effect: { hp: -20, rep: -10 }, log: loc("이 위치는 비정상입니다.","Abnormal position.") }, { text: loc("치골결합 아래","Below the symphysis pubis"), effect: { hp: -20, rep: -10 }, log: loc("10일 이후 위치입니다.","Position seen after 10 days.") }, { text: loc("배꼽 위 5cm","5 cm above umbilicus"), effect: { hp: -20, rep: -10 }, log: loc("역행성 퇴축 의심 위치입니다.","Suggests subinvolution.") }]) }; }
 
+// ========= 신규 임상 문제 (20개) =========
+function generateLithiumQuestion() { return { baseId: "lithium", categoryKey: "psych", part: loc("리튬 중독","Lithium Toxicity"), emoji: "💊", title: loc("리튬 독성 징후","Lithium Toxicity Signs"), desc: loc(`양극성 환자가 리튬 복용 중 진전, 구토, 의식 혼탁을 호소한다. 가장 의심되는 상황은?`,`A bipolar patient on lithium develops tremor, vomiting, and altered consciousness. Most likely?`), choices: shuffle([{ text: loc("리튬 독성 - 즉시 약물 중단 후 혈중 농도 측정","Lithium toxicity — hold drug and check serum level"), effect: { hp: -3, rep: 22 }, log: loc("정답. 치료 농도 0.6~1.2 mEq/L, 1.5↑ 독성. 즉각 중단·수액·전해질 보정.","Correct. Therapeutic 0.6–1.2 mEq/L; toxic ≥1.5. Hold, hydrate, correct electrolytes.") }, { text: loc("내성이 생긴 것이므로 용량을 늘린다","Tolerance — increase the dose"), effect: { hp: -40, rep: -30 }, log: loc("절대 금기. 사망 위험.","Absolutely contraindicated — fatal risk.") }, { text: loc("정상 부작용이므로 그대로 유지","Normal side effect — continue"), effect: { hp: -30, rep: -20 }, log: loc("독성 징후를 놓치면 심각합니다.","Missing toxicity is dangerous.") }, { text: loc("저염식이 필요하다고 교육한다","Teach low-sodium diet"), effect: { hp: -30, rep: -20 }, log: loc("저염은 오히려 리튬 농도를 올립니다.","Low sodium raises lithium levels.") }]) }; }
+function generateEPSQuestion() { return { baseId: "eps", categoryKey: "psych", part: loc("추체외로 증상","EPS"), emoji: "🤖", title: loc("항정신병약 EPS","Antipsychotic EPS"), desc: loc(`Haloperidol 투여 후 환자가 목과 안구가 위로 강하게 비틀어지며 침을 흘린다. 우선 처치는?`,`After Haloperidol, the patient's neck and eyes twist upward forcefully and they drool. Priority?`), choices: shuffle([{ text: loc("Benztropine 또는 Diphenhydramine 즉시 IM 투여","Immediate IM Benztropine or Diphenhydramine"), effect: { hp: -3, rep: 22 }, log: loc("정답. 급성 근긴장이상의 1차 처치입니다.","Correct. First-line for acute dystonia.") }, { text: loc("호전될 때까지 환자를 침상에 묶어둔다","Restrain the patient until it resolves"), effect: { hp: -40, rep: -30 }, log: loc("억제는 부적절합니다.","Restraint is inappropriate.") }, { text: loc("같은 약물을 추가 투여한다","Give another dose of the same drug"), effect: { hp: -45, rep: -35 }, log: loc("증상을 악화시킵니다.","Worsens symptoms.") }, { text: loc("관찰만 하며 다음 회진을 기다린다","Just observe and wait for next round"), effect: { hp: -25, rep: -15 }, log: loc("기도 폐쇄 위험이 있습니다.","Airway compromise risk.") }]) }; }
+function generateMAOIQuestion() { return { baseId: "maoi", categoryKey: "psych", part: loc("MAOI 식이","MAOI Diet"), emoji: "🍷", title: loc("MAOI 복용 환자 식이","MAOI Patient Diet"), desc: loc(`MAOI(Phenelzine) 복용 환자에게 절대 피해야 할 식품은?`,`Which food must a patient on an MAOI (Phenelzine) absolutely avoid?`), choices: shuffle([{ text: loc("숙성 치즈, 와인, 절인 청어 등 티라민 함유 식품","Aged cheese, wine, pickled herring (tyramine-rich foods)"), effect: { hp: -3, rep: 22 }, log: loc("정답. 티라민과 MAOI 병용 시 고혈압 위기 발생.","Correct. Tyramine + MAOI causes hypertensive crisis.") }, { text: loc("바나나, 사과 등 신선한 과일","Fresh fruits like banana, apple"), effect: { hp: -25, rep: -15 }, log: loc("일반적으로 안전합니다.","Generally safe.") }, { text: loc("탄산음료","Carbonated drinks"), effect: { hp: -25, rep: -15 }, log: loc("MAOI와 직접 관련 없습니다.","Not directly related to MAOI.") }, { text: loc("쌀과 빵","Rice and bread"), effect: { hp: -25, rep: -15 }, log: loc("일반적으로 안전합니다.","Generally safe.") }]) }; }
+function generateAnorexiaQuestion() { return { baseId: "anorexia", categoryKey: "psych", part: loc("섭식장애","Eating Disorder"), emoji: "🍽️", title: loc("거식증 재영양 증후군","Refeeding Syndrome"), desc: loc(`심한 영양실조 거식증 환자에게 급하게 다량 영양 공급 시 가장 위험한 합병증은?`,`Most dangerous complication of rapid aggressive refeeding in severe anorexia?`), choices: shuffle([{ text: loc("재영양 증후군(저인산혈증·심부전)","Refeeding syndrome (hypophosphatemia, heart failure)"), effect: { hp: -3, rep: 22 }, log: loc("정답. 천천히 시작해 인·칼륨·마그네슘을 모니터링합니다.","Correct. Start slow and monitor phos/K/Mg.") }, { text: loc("일시적 변비","Transient constipation"), effect: { hp: -25, rep: -15 }, log: loc("주된 위험이 아닙니다.","Not the primary risk.") }, { text: loc("간단한 과체중","Simple weight gain"), effect: { hp: -30, rep: -20 }, log: loc("위험 평가에 부적절합니다.","Misjudges severity.") }, { text: loc("일시적 발열","Transient fever"), effect: { hp: -25, rep: -15 }, log: loc("핵심 위험이 아닙니다.","Not the key risk.") }]) }; }
+function generateNaloxoneQuestion() { return { baseId: "naloxone", categoryKey: "adult", part: loc("응급/약리","Emergency/Pharm"), emoji: "💉", title: loc("아편제 과량 응급","Opioid Overdose"), desc: loc(`아편제 과량으로 호흡 6회/분, 동공 핀포인트, 의식 없는 환자에 즉시 투여할 약물은?`,`Opioid overdose: RR 6/min, pinpoint pupils, unresponsive. Drug of choice?`), choices: shuffle([{ text: loc("Naloxone (Narcan) IV/IM","Naloxone (Narcan) IV/IM"), effect: { hp: -3, rep: 22 }, log: loc("정답. 아편제 길항제로 호흡 회복을 유도합니다.","Correct. Opioid antagonist, restores respiration.") }, { text: loc("Flumazenil","Flumazenil"), effect: { hp: -30, rep: -20 }, log: loc("벤조디아제핀 길항제입니다.","That's a benzodiazepine antagonist.") }, { text: loc("Atropine","Atropine"), effect: { hp: -30, rep: -20 }, log: loc("서맥/콜린성 위기에 사용합니다.","Used for bradycardia/cholinergic crisis.") }, { text: loc("Activated charcoal","Activated charcoal"), effect: { hp: -25, rep: -15 }, log: loc("의식 없는 환자에게 흡인 위험이 큽니다.","Aspiration risk in unconscious patient.") }]) }; }
+function generateAnaphylaxisRxQuestion() { return { baseId: "anaphylaxisRx", categoryKey: "adult", part: loc("응급/약리","Emergency/Pharm"), emoji: "💉", title: loc("아나필락시스 1차 약물","Anaphylaxis First-Line"), desc: loc(`벌침에 쏘인 환자가 호흡곤란·천명·저혈압을 호소한다. 가장 먼저 투여할 약물·경로는?`,`Bee sting → dyspnea, wheezing, hypotension. First drug and route?`), choices: shuffle([{ text: loc("Epinephrine 1:1000 IM (대퇴부 외측)","IM epinephrine 1:1000 (vastus lateralis)"), effect: { hp: -3, rep: 22 }, log: loc("정답. 아나필락시스의 절대 1차 처치입니다.","Correct. Absolute first-line for anaphylaxis.") }, { text: loc("Diphenhydramine PO","Oral diphenhydramine"), effect: { hp: -40, rep: -30 }, log: loc("보조약이며, 단독 사용은 사망 위험.","Adjunct only — fatal risk if used alone.") }, { text: loc("Methylprednisolone IV","IV methylprednisolone"), effect: { hp: -30, rep: -20 }, log: loc("후기 반응 예방용 보조약입니다.","Adjunct for late-phase reaction.") }, { text: loc("Albuterol nebulizer","Nebulized albuterol"), effect: { hp: -30, rep: -20 }, log: loc("기관지 확장에만 효과적이며 단독으로 부족.","Bronchodilator only — insufficient alone.") }]) }; }
+function generateChestTubeQuestion() { return { baseId: "chestTube", categoryKey: "adult", part: loc("흉관 배액","Chest Tube"), emoji: "🫁", title: loc("흉관 배액기","Chest Tube Drainage"), desc: loc(`흉관 배액기 수통에서 거품(bubbling)이 지속적으로 보일 때 가장 먼저 의심할 것은?`,`Continuous bubbling in the water-seal chamber. First suspicion?`), choices: shuffle([{ text: loc("배액 시스템 또는 환자 측의 공기 누출","Air leak in the system or at the patient"), effect: { hp: -3, rep: 22 }, log: loc("정답. 연결부터 흉부삽입부까지 누출을 점검합니다.","Correct. Check from connections to insertion site.") }, { text: loc("흉관이 정상 작동 중이므로 무시","Normal — ignore it"), effect: { hp: -30, rep: -20 }, log: loc("지속적 거품은 비정상입니다.","Continuous bubbling is abnormal.") }, { text: loc("환자의 호흡 곤란을 즉시 의심","Immediately assume respiratory failure"), effect: { hp: -20, rep: -10 }, log: loc("점검이 먼저입니다.","Check first.") }, { text: loc("배액기 줄을 무조건 잠근다","Clamp the chest tube tubing"), effect: { hp: -40, rep: -30 }, log: loc("긴장성 기흉을 유발할 수 있어 금기.","Can cause tension pneumothorax — contraindicated.") }]) }; }
+function generateOstomyQuestion() { return { baseId: "ostomy", categoryKey: "fundamentals", part: loc("장루 간호","Ostomy Care"), emoji: "🩹", title: loc("결장루 stoma 색깔","Colostomy Stoma Color"), desc: loc(`결장루 간호 시 정상 stoma 색깔은?`,`Normal color of a healthy colostomy stoma?`), choices: shuffle([{ text: loc("선홍색 또는 분홍색(beefy red)","Bright/beefy red or pink"), effect: { hp: -2, rep: 20 }, log: loc("정답. 검붉거나 창백·검은색은 허혈 의심.","Correct. Dusky/pale/black = ischemia suspected.") }, { text: loc("검은색이 정상","Black is normal"), effect: { hp: -40, rep: -30 }, log: loc("괴사 의심으로 즉각 보고가 필요합니다.","Suggests necrosis — report immediately.") }, { text: loc("회색이 정상","Gray is normal"), effect: { hp: -35, rep: -25 }, log: loc("허혈 의심입니다.","Ischemia suspected.") }, { text: loc("노란색이 정상","Yellow is normal"), effect: { hp: -30, rep: -20 }, log: loc("정상 색이 아닙니다.","Not normal color.") }]) }; }
+function generateCentralLineQuestion() { return { baseId: "centralLine", categoryKey: "fundamentals", part: loc("중심정맥관","Central Line"), emoji: "💉", title: loc("CVC 감염 예방","CVC Infection Prevention"), desc: loc(`중심정맥관 삽입 시 감염을 가장 효과적으로 예방하는 번들 항목은?`,`Most effective bundle item to prevent CVC-related bloodstream infection?`), choices: shuffle([{ text: loc("Maximum sterile barrier(전신 멸균드레이프), 손위생, 클로르헥시딘 소독, 적절한 부위 선택, 매일 필요성 평가","Max sterile barrier, hand hygiene, chlorhexidine, optimal site, daily necessity review"), effect: { hp: -2, rep: 22 }, log: loc("정답. CDC/IHI 5요소 번들입니다.","Correct. CDC/IHI 5-element bundle.") }, { text: loc("도덴(povidone)이 클로르헥시딘보다 우수","Povidone is superior to chlorhexidine"), effect: { hp: -25, rep: -15 }, log: loc("클로르헥시딘이 1차 권장입니다.","Chlorhexidine is first-line.") }, { text: loc("적절한 부위는 대퇴정맥","Femoral vein is ideal"), effect: { hp: -25, rep: -15 }, log: loc("대퇴는 감염 위험이 가장 높아 회피.","Femoral has highest infection risk — avoid.") }, { text: loc("멸균 장갑만 착용하면 충분","Sterile gloves alone are enough"), effect: { hp: -30, rep: -20 }, log: loc("Maximum barrier가 표준입니다.","Maximum barrier is standard.") }]) }; }
+function generatePacemakerQuestion() { return { baseId: "pacemaker", categoryKey: "adult", part: loc("심장","Cardiac"), emoji: "🔋", title: loc("심박조율기 환자 교육","Pacemaker Patient Teaching"), desc: loc(`인공심박조율기를 막 삽입한 환자에게 가장 중요한 교육 내용은?`,`Most important teaching for a newly implanted pacemaker patient?`), choices: shuffle([{ text: loc("매일 맥박을 측정하고 강한 자기장(MRI 등)·미세 진동을 피하며 의료ID를 휴대한다","Check pulse daily, avoid strong magnets (e.g., MRI) and microwaves at close range, carry medical ID"), effect: { hp: -2, rep: 22 }, log: loc("정답. 작동 점검과 자기장 회피가 핵심입니다.","Correct. Pulse checks and avoiding magnetic interference are key.") }, { text: loc("시술한 쪽 팔을 즉시 들어올려 운동한다","Raise the operative arm immediately and exercise"), effect: { hp: -30, rep: -20 }, log: loc("3~4주간 시술측 팔 거상은 제한합니다.","Avoid lifting the operative arm for 3–4 weeks.") }, { text: loc("배터리 교체는 평생 필요 없다","Battery never needs replacement"), effect: { hp: -25, rep: -15 }, log: loc("5~10년마다 교체 필요.","Replaced every 5–10 years.") }, { text: loc("심한 운동을 즉시 시작해도 된다","Resume vigorous exercise immediately"), effect: { hp: -25, rep: -15 }, log: loc("점진적 회복이 필요합니다.","Gradual return to activity.") }]) }; }
+function generateGDMQuestion() { return { baseId: "gdm", categoryKey: "maternal", part: loc("임신성 당뇨","GDM"), emoji: "🤰", title: loc("임신성 당뇨 선별","GDM Screening"), desc: loc(`임신성 당뇨 선별을 위한 표준 검사 시기는?`,`Standard timing for gestational diabetes screening?`), choices: shuffle([{ text: loc("임신 24~28주 사이 50g GCT 또는 75g OGTT","24–28 weeks (50g GCT or 75g OGTT)"), effect: { hp: -2, rep: 20 }, log: loc("정답. 표준 권장 시점입니다.","Correct. Standard recommended window.") }, { text: loc("임신 8주 이내","Before 8 weeks"), effect: { hp: -25, rep: -15 }, log: loc("이른 시점입니다(고위험군 별도 평가).","Too early (high-risk get earlier separate eval).") }, { text: loc("분만 직전","Just before delivery"), effect: { hp: -25, rep: -15 }, log: loc("관리 기간이 부족합니다.","Insufficient management window.") }, { text: loc("산후 6주","6 weeks postpartum"), effect: { hp: -25, rep: -15 }, log: loc("산후 평가 시점입니다.","Postpartum follow-up timing.") }]) }; }
+function generatePPDQuestion() { return { baseId: "ppd", categoryKey: "maternal", part: loc("산후 우울","Postpartum Depression"), emoji: "😢", title: loc("산후 우울 vs 베이비블루스","PPD vs Baby Blues"), desc: loc(`분만 4주 후에도 자녀 돌봄 무관심·불면·죄책감이 지속되는 산모에 대한 가장 적절한 중재는?`,`4 weeks postpartum: persistent disinterest in baby care, insomnia, guilt. Best intervention?`), choices: shuffle([{ text: loc("산후 우울증 평가(EPDS) 후 정신과 의뢰","Edinburgh Postpartum Depression Scale + psychiatric referral"), effect: { hp: -3, rep: 22 }, log: loc("정답. 2주 이상 지속되면 전문 평가가 필요합니다.","Correct. Persistent ≥2 weeks needs expert evaluation.") }, { text: loc("정상 베이비블루스이므로 관찰만","Normal baby blues — just observe"), effect: { hp: -30, rep: -20 }, log: loc("베이비블루스는 보통 2주 이내 호전됩니다.","Baby blues usually resolve within 2 weeks.") }, { text: loc("아이를 격리하고 산모 혼자 두기","Separate the baby and isolate the mother"), effect: { hp: -35, rep: -25 }, log: loc("부적절한 중재입니다.","Inappropriate intervention.") }, { text: loc("강한 운동을 강제한다","Force vigorous exercise"), effect: { hp: -25, rep: -15 }, log: loc("강제는 비치료적입니다.","Coercion is non-therapeutic.") }]) }; }
+function generateHEGQuestion() { return { baseId: "heg", categoryKey: "maternal", part: loc("임신오조","Hyperemesis"), emoji: "🤢", title: loc("임신오조","Hyperemesis Gravidarum"), desc: loc(`임신 12주 산모가 지속적 구토로 체중 5% 감소·케톤뇨를 보인다. 1차 중재는?`,`12-week pregnant patient: persistent vomiting, 5% weight loss, ketonuria. First intervention?`), choices: shuffle([{ text: loc("정맥 수액 보충 + 비타민 B6/Doxylamine","IV fluids + Vit B6 / Doxylamine"), effect: { hp: -3, rep: 22 }, log: loc("정답. 탈수 보정과 1차 항구토 약제입니다.","Correct. Rehydration and first-line antiemetic.") }, { text: loc("절대 금식으로 5일간 지속","Strict NPO for 5 days"), effect: { hp: -35, rep: -25 }, log: loc("탈수·전해질 불균형이 악화됩니다.","Worsens dehydration/electrolytes.") }, { text: loc("항우울제 즉시 투여","Immediate antidepressant"), effect: { hp: -30, rep: -20 }, log: loc("적응증이 다릅니다.","Wrong indication.") }, { text: loc("대량 경구 수분 강요","Force massive oral fluids"), effect: { hp: -25, rep: -15 }, log: loc("토할 가능성이 큽니다.","Likely to vomit.") }]) }; }
+function generateEpisiotomyQuestion() { return { baseId: "episiotomy", categoryKey: "maternal", part: loc("회음 절개","Episiotomy"), emoji: "🩹", title: loc("회음 사정 REEDA","REEDA Assessment"), desc: loc(`회음 절개 부위 사정에 사용하는 REEDA의 \"E\" 두 가지 항목은?`,`Two "E" components in the REEDA episiotomy assessment?`), choices: shuffle([{ text: loc("Edema(부종), Ecchymosis(반상출혈)","Edema, Ecchymosis"), effect: { hp: -2, rep: 20 }, log: loc("정답. R-E-E-D-A: 발적·부종·반상출혈·분비물·접합.","Correct. R-E-E-D-A: Redness, Edema, Ecchymosis, Discharge, Approximation.") }, { text: loc("Erythema, Eruption","Erythema, Eruption"), effect: { hp: -25, rep: -15 }, log: loc("두 번째 E는 Ecchymosis입니다.","Second E is Ecchymosis.") }, { text: loc("Edema, Erosion","Edema, Erosion"), effect: { hp: -25, rep: -15 }, log: loc("Erosion은 포함되지 않습니다.","Erosion is not part of REEDA.") }, { text: loc("Excretion, Eruption","Excretion, Eruption"), effect: { hp: -25, rep: -15 }, log: loc("REEDA 항목이 아닙니다.","Not REEDA items.") }]) }; }
+function generateNeonatalHypoQuestion() { return { baseId: "neonatalHypo", categoryKey: "pediatric", part: loc("신생아 저혈당","Neonatal Hypoglycemia"), emoji: "👶", title: loc("신생아 저혈당","Neonatal Hypoglycemia"), desc: loc(`출생 직후 신생아의 혈당이 35 mg/dL이며 무증상이다. 1차 중재는?`,`Just-born infant has glucose 35 mg/dL and is asymptomatic. First action?`), choices: shuffle([{ text: loc("즉시 모유수유/조제 수유 후 30~60분 뒤 재측정","Feed (breast/formula) and recheck in 30–60 min"), effect: { hp: -2, rep: 22 }, log: loc("정답. 무증상 경증은 우선 수유 후 재평가.","Correct. Asymptomatic mild — feed first, then recheck.") }, { text: loc("12시간 금식하며 관찰","NPO for 12 hours and observe"), effect: { hp: -35, rep: -25 }, log: loc("저혈당이 악화됩니다.","Worsens hypoglycemia.") }, { text: loc("무조건 IV 50% 포도당 푸시","Push 50% dextrose IV regardless"), effect: { hp: -30, rep: -20 }, log: loc("증상 있는 중증에만 적용합니다.","Only for symptomatic severe cases.") }, { text: loc("정상이므로 무시","Normal — ignore"), effect: { hp: -35, rep: -25 }, log: loc("정상 한계 미만(<40)입니다.","Below normal threshold (<40).") }]) }; }
+function generateSickleCellQuestion() { return { baseId: "sickleCell", categoryKey: "pediatric", part: loc("겸상적혈구 위기","Sickle Cell Crisis"), emoji: "🩸", title: loc("겸상적혈구 통증위기","Sickle Cell Pain Crisis"), desc: loc(`겸상적혈구 환아가 심한 통증과 발열로 응급실에 왔다. 핵심 중재 3가지는?`,`Sickle cell child arrives with severe pain and fever. Core 3 interventions?`), choices: shuffle([{ text: loc("적극적 수액·산소·통증조절(아편제 포함)","Aggressive hydration, oxygen, pain control (including opioids)"), effect: { hp: -3, rep: 22 }, log: loc("정답. 통증위기의 표준 3요소입니다.","Correct. Standard triad for vaso-occlusive crisis.") }, { text: loc("탈수 유도와 산소 차단","Dehydrate and withhold oxygen"), effect: { hp: -45, rep: -35 }, log: loc("위기를 악화시킵니다.","Worsens the crisis.") }, { text: loc("아세트아미노펜만 사용·아편제 금지","Only acetaminophen; never opioids"), effect: { hp: -30, rep: -20 }, log: loc("심한 통증에는 아편제가 적응증입니다.","Opioids are indicated for severe pain.") }, { text: loc("운동을 격려해 적혈구 순환을 개선","Encourage exercise to improve circulation"), effect: { hp: -30, rep: -20 }, log: loc("산소 요구를 늘려 악화됩니다.","Increases O2 demand — worsens.") }]) }; }
+function generateLeukemiaPedsQuestion() { return { baseId: "leukemiaPeds", categoryKey: "pediatric", part: loc("백혈병","Leukemia"), emoji: "🧒", title: loc("소아 백혈병 감염예방","Pediatric Leukemia Infection Prevention"), desc: loc(`항암치료 중 호중구감소증인 소아에게 가장 중요한 교육 내용은?`,`Most important teaching for a child with chemo-induced neutropenia?`), choices: shuffle([{ text: loc("생화·생채소·날음식 회피, 손위생, 사람 많은 곳 회피","Avoid fresh flowers, raw vegetables, raw foods; hand hygiene; avoid crowds"), effect: { hp: -2, rep: 22 }, log: loc("정답. 호중구감소 식이·환경 표준입니다.","Correct. Standard neutropenic precautions.") }, { text: loc("생백신을 적극 권장","Encourage live vaccines"), effect: { hp: -45, rep: -35 }, log: loc("생백신은 절대 금기.","Live vaccines absolutely contraindicated.") }, { text: loc("어린이집 등원 권장","Encourage daycare attendance"), effect: { hp: -35, rep: -25 }, log: loc("감염 위험이 큽니다.","High infection risk.") }, { text: loc("특별한 주의 필요 없음","No special precautions needed"), effect: { hp: -40, rep: -30 }, log: loc("매우 위험합니다.","Very dangerous.") }]) }; }
+function generateLeadPoisonQuestion() { return { baseId: "leadPoison", categoryKey: "pediatric", part: loc("납 중독","Lead Poisoning"), emoji: "🧪", title: loc("아동 납 중독","Pediatric Lead Poisoning"), desc: loc(`5세 아동의 혈중 납 수치가 45 μg/dL이다. 가장 우선되는 중재는?`,`A 5-year-old's blood lead level is 45 μg/dL. Top priority intervention?`), choices: shuffle([{ text: loc("납 노출원 제거 + 킬레이션 치료(예: Succimer/EDTA)","Remove lead source + chelation therapy (e.g., Succimer/EDTA)"), effect: { hp: -3, rep: 22 }, log: loc("정답. 45+ μg/dL는 킬레이션 적응증입니다.","Correct. ≥45 μg/dL warrants chelation.") }, { text: loc("정상이므로 추적관찰만","Normal — just monitor"), effect: { hp: -40, rep: -30 }, log: loc("중등도 중독 수치입니다.","This is moderate toxicity.") }, { text: loc("우유만 권장","Recommend milk only"), effect: { hp: -30, rep: -20 }, log: loc("부적절한 단독 중재.","Insufficient as sole intervention.") }, { text: loc("석회 보충제 추가","Add lime supplement"), effect: { hp: -30, rep: -20 }, log: loc("효과 없습니다.","Ineffective.") }]) }; }
+function generateRestraintLawQuestion() { return { baseId: "restraintLaw", categoryKey: "law", part: loc("신체보호대","Restraints"), emoji: "📜", title: loc("신체보호대 적용 원칙","Restraint Use Principle"), desc: loc(`신체보호대 적용에 대한 법적·윤리적 원칙으로 옳은 것은?`,`Correct legal/ethical principle for applying restraints?`), choices: shuffle([{ text: loc("최소한의 시간만 적용, 의사 처방·동의서·정기 사정·문서화 필수","Use only minimum time; physician order, consent, regular reassessment, documentation required"), effect: { hp: -2, rep: 22 }, log: loc("정답. 환자 안전과 인권 보호의 균형이 핵심입니다.","Correct. Balance patient safety and rights.") }, { text: loc("간호사 단독 판단으로 24시간 이상 적용 가능","Nurse can apply alone for over 24 hours"), effect: { hp: -45, rep: -35 }, log: loc("의사 처방·정기 갱신이 필수입니다.","Physician order and renewal are required.") }, { text: loc("관찰 없이 끈으로 단단히 묶어둔다","Tie tightly without monitoring"), effect: { hp: -50, rep: -40 }, log: loc("심각한 인권 침해이며 의료사고입니다.","Serious rights violation and incident.") }, { text: loc("동의서 없이 적용해도 무방","Apply without consent"), effect: { hp: -40, rep: -30 }, log: loc("응급 상황 외에는 동의가 필요합니다.","Consent required outside emergencies.") }]) }; }
+function generateHomeHealthQuestion() { return { baseId: "homeHealth", categoryKey: "community", part: loc("가정간호","Home Health"), emoji: "🏠", title: loc("가정 방문 간호","Home Health Visit"), desc: loc(`가정 방문 간호 시 첫 방문에서 가장 우선되는 사정은?`,`Most important assessment on a first home visit?`), choices: shuffle([{ text: loc("환자/가족 안전과 환경 위험요소(낙상·감염)","Patient/family safety and environmental hazards (falls, infection)"), effect: { hp: -2, rep: 20 }, log: loc("정답. 가정환경 안전이 임상 결과의 1차 결정요인입니다.","Correct. Home safety is a primary outcome determinant.") }, { text: loc("환자의 정서 상태만","Only emotional state"), effect: { hp: -25, rep: -15 }, log: loc("부분적 평가입니다.","Only a partial assessment.") }, { text: loc("가족의 경제적 능력","Family's financial status"), effect: { hp: -25, rep: -15 }, log: loc("우선순위가 아닙니다.","Not the priority.") }, { text: loc("가족력 위주의 의료기록","Mainly family medical history"), effect: { hp: -25, rep: -15 }, log: loc("환경·안전이 먼저입니다.","Safety/environment come first.") }]) }; }
+
 // =========================
 // 라우터 및 렌더링 (중복 방지 적용)
 // =========================
@@ -744,6 +812,75 @@ function resetStateForMode() {
     gameState.items = []; gameState.quizSolved = 0; gameState.recentIds = [];
     gameState.streak = 0; gameState.bestStreak = 0; gameState.bossesCleared = 0;
     gameState.correctCount = 0; gameState.wrongCount = 0;
+    gameState.narrative = {
+        codeBlueFailed: false, vipFailed: false, massFailed: false, savedCodeBlue: false,
+        helpedNewbie: false, acceptedThanks: false, sharedMeal: false, ethicsViolation: false,
+    };
+}
+
+// 12가지 스토리 엔딩 결정 — narrative 플래그 + 정답률 + 보스 + HP 종합
+function decideEnding() {
+    const correct = gameState.correctCount;
+    const wrong = gameState.wrongCount;
+    const total = correct + wrong;
+    const accuracy = total > 0 ? Math.round((correct / total) * 100) : 0;
+    const bosses = gameState.bossesCleared;
+    const hp = gameState.hp;
+    const rep = gameState.rep;
+    const streak = gameState.bestStreak;
+    const n = gameState.narrative;
+
+    // ====== SAD ENDINGS (응급/윤리 — 우선) ======
+    if (n.ethicsViolation)
+        return { title: t("endEthics"), desc: t("endEthicsDesc"), accuracy };
+    if (n.codeBlueFailed)
+        return { title: t("endLostPatient"), desc: t("endLostPatientDesc"), accuracy };
+    if (rep < 0 || hp <= 10)
+        return { title: t("endInvestigation"), desc: t("endInvestigationDesc"), accuracy };
+    if (accuracy < 20)
+        return { title: t("endRetrainNew"), desc: t("endRetrainDescNew"), accuracy };
+
+    // ====== HAPPY ENDINGS ======
+    if (accuracy >= 95 && bosses === 3 && hp >= 50)
+        return { title: t("endPromotion"), desc: t("endPromotionDesc"), accuracy };
+    if (accuracy >= 85 && bosses >= 2 && n.helpedNewbie && n.acceptedThanks)
+        return { title: t("endBeloved"), desc: t("endBelovedDesc"), accuracy };
+    if (accuracy >= 80 && bosses >= 2)
+        return { title: t("endHeroLetter"), desc: t("endHeroLetterDesc"), accuracy };
+
+    // ====== EASTER EGG ======
+    if (n.sharedMeal && accuracy >= 70 && streak >= 5)
+        return { title: t("endNewBond"), desc: t("endNewBondDesc"), accuracy };
+
+    // ====== BITTERSWEET ======
+    if (hp < 30 && accuracy >= 50)
+        return { title: t("endBurnout"), desc: t("endBurnoutDesc"), accuracy };
+    if (accuracy >= 60 && accuracy <= 80 && streak >= 7 && hp < 50)
+        return { title: t("endGradSchool"), desc: t("endGradSchoolDesc"), accuracy };
+
+    // ====== NEUTRAL TIERS ======
+    if (accuracy >= 65)
+        return { title: t("endSteadyAce"), desc: t("endSteadyAceDescNew"), accuracy };
+    if (accuracy >= 50)
+        return { title: t("endSafeShift"), desc: t("endSafeShiftDescNew"), accuracy };
+    if (accuracy >= 30)
+        return { title: t("endNeedsStudy"), desc: t("endNeedsStudyDesc"), accuracy };
+
+    return { title: t("endRetrainNew"), desc: t("endRetrainDescNew"), accuracy };
+}
+
+// 선택에 따라 스토리 플래그를 추적
+function captureNarrative(ev, choice) {
+    if (!ev || !choice) return;
+    const n = gameState.narrative;
+    const isCorrect = (choice.effect?.rep || 0) > 0;
+    if (ev.baseId === "boss-codeblue") { if (choice.boss) n.savedCodeBlue = true; else n.codeBlueFailed = true; }
+    if (ev.baseId === "boss-vip")      { if (!choice.boss) n.vipFailed = true; }
+    if (ev.baseId === "boss-mass")     { if (!choice.boss) n.massFailed = true; }
+    if (ev.baseId === "newbie"         && isCorrect)                      n.helpedNewbie = true;
+    if (ev.baseId === "thankyou"       && (choice.effect?.rep || 0) >= 18) n.acceptedThanks = true;
+    if (ev.baseId === "snack"          && (choice.effect?.hp   || 0) >= 18) n.sharedMeal = true;
+    if (ev.baseId === "missing-chart"  && (choice.effect?.rep || 0) <= -30) n.ethicsViolation = true;
 }
 
 // =========================
@@ -822,6 +959,55 @@ const flavorEvents = [
         { text: loc("\"내가 대신 해줄게\" 하고 직접 처치한다","Say \"I'll do it for you\" and handle it yourself"), effect: { hp: -4, rep: 4 }, log: loc("당장은 해결됐지만 성장 기회를 뺏었습니다.","Solves the moment but steals their growth.") },
         { text: loc("\"3번이면 환자에게 미안해\"라며 핀잔준다","Scold them: \"Three tries — apologize to the patient\""), effect: { hp: -6, rep: -12 }, log: loc("후배의 자존감이 무너졌습니다.","Junior's self-esteem crumbles.") },
         { text: loc("차팅 중이라 무시한다","Ignore them — you're charting"), effect: { hp: -8, rep: -14 }, log: loc("후배가 다른 동료에게 갔습니다.","The junior turns to another colleague.") }
+    ]) }),
+    // ===== 신규 일상 이벤트 8개 =====
+    () => ({ baseId: "ivPumpDown", categoryKey: "flavor", part: loc("장비 고장","Equipment Failure"), emoji: "🔌", title: loc("IV 펌프 고장","IV Pump Failure"), desc: loc("정맥주입 펌프가 갑자기 작동을 멈추며 알람이 울립니다. 환자의 항생제가 들어가야 하는 시간입니다.","The IV pump suddenly stops with an alarm. The antibiotic should be infusing right now."), choices: shuffle([
+        { text: loc("즉시 다른 펌프로 교체하고 BME에 신고","Swap to another pump immediately and notify biomed"), effect: { hp: -4, rep: 14 }, log: loc("환자 치료 흐름이 유지됐습니다.","Patient's treatment flow is preserved.") },
+        { text: loc("우선 수액 흐름을 수동으로 조절하고 펌프 점검을 요청","Run gravity drip manually first, then call for pump check"), effect: { hp: -6, rep: 8 }, log: loc("임시 조치가 적절했습니다.","A reasonable temporary fix.") },
+        { text: loc("알람을 끄고 그대로 둔다","Silence the alarm and leave it"), effect: { hp: -22, rep: -22 }, log: loc("처방 누락으로 사고 위험이 큽니다.","Missed dose — high incident risk.") },
+        { text: loc("환자에게 알림 없이 항생제를 건너뛴다","Skip the antibiotic without telling the patient"), effect: { hp: -32, rep: -28 }, log: loc("처방 위반이며 안전 문제입니다.","Order violation and safety issue.") }
+    ]) }),
+    () => ({ baseId: "drugShortage", categoryKey: "flavor", part: loc("약품 부족","Drug Shortage"), emoji: "📦", title: loc("약품 재고 부족","Drug Shortage"), desc: loc("처방된 약물이 약국에 재고 없음으로 표시됩니다. 환자는 곧 진통제가 필요합니다.","The pharmacy shows the prescribed drug is out of stock. The patient will need pain control soon."), choices: shuffle([
+        { text: loc("의사·약사에게 동등 효능 대체약 처방을 즉시 요청","Immediately request an equivalent substitute from physician/pharmacist"), effect: { hp: -3, rep: 14 }, log: loc("표준 절차에 따라 빠르게 해결됐습니다.","Resolved quickly via standard pathway.") },
+        { text: loc("환자가 호소할 때까지 기다린다","Wait until the patient complains"), effect: { hp: -15, rep: -10 }, log: loc("통증 관리가 지연됐습니다.","Pain management delayed.") },
+        { text: loc("다른 환자 약을 빌려서 사용한다","Borrow another patient's medication"), effect: { hp: -40, rep: -34 }, log: loc("절대 금기. 약물 관리 위반입니다.","Absolutely contraindicated. Medication violation.") },
+        { text: loc("기록만 남기고 회진 시 보고","Just document and report at rounds"), effect: { hp: -10, rep: -8 }, log: loc("적극적 개입이 부족했습니다.","Insufficient proactive action.") }
+    ]) }),
+    () => ({ baseId: "alarmFatigue", categoryKey: "flavor", part: loc("알람 폭주","Alarm Fatigue"), emoji: "🚨", title: loc("동시 다중 알람","Simultaneous Multi-Alarms"), desc: loc("4명의 환자 모니터에서 동시에 알람이 울립니다. SpO2·심박수·혈압 모두 변동합니다.","Four patient monitors alarm simultaneously — SpO2, HR, BP all fluctuating."), choices: shuffle([
+        { text: loc("ABC 우선순위로 환자별 사정·분류 후 가장 위급한 환자부터","Triage by ABC priority, then attend the most critical first"), effect: { hp: -5, rep: 18 }, log: loc("우선순위 판단이 빛났습니다.","Priority judgment shines.") },
+        { text: loc("모든 알람을 일괄로 끄고 천천히 확인","Silence all alarms at once and check slowly"), effect: { hp: -35, rep: -28 }, log: loc("실제 응급을 놓칠 수 있습니다.","May miss a true emergency.") },
+        { text: loc("동료에게 도움을 요청하지 않고 혼자 처리","Try to handle it all alone without asking for help"), effect: { hp: -20, rep: -10 }, log: loc("팀 호출이 더 안전합니다.","Calling for help is safer.") },
+        { text: loc("가장 가까운 환자부터 처리","Just handle the nearest patient first"), effect: { hp: -22, rep: -14 }, log: loc("우선순위 원칙을 어겼습니다.","Violates triage principle.") }
+    ]) }),
+    () => ({ baseId: "endOfLife", categoryKey: "flavor", part: loc("임종 케어","End-of-Life"), emoji: "🕯️", title: loc("가족 회의","Family Meeting"), desc: loc("말기 환자의 가족이 \"고통스럽지 않게 해 주세요\"라며 통증 조절을 부탁합니다.","The dying patient's family pleads, \"Please keep them comfortable.\""), choices: shuffle([
+        { text: loc("처방된 진통제·항불안제로 편안함을 유지하고 가족 곁에 머물게 한다","Use ordered analgesics/anxiolytics for comfort and let family stay close"), effect: { hp: -3, rep: 18 }, log: loc("호스피스 원칙에 부합합니다.","Aligns with hospice principles.") },
+        { text: loc("호흡 억제 우려로 진통제를 모두 끊는다","Withhold all analgesics fearing respiratory depression"), effect: { hp: -28, rep: -22 }, log: loc("말기 환자에게 통증 완화가 우선입니다.","Comfort takes precedence at end of life.") },
+        { text: loc("가족을 모두 병실 밖으로 내보낸다","Send all family out of the room"), effect: { hp: -25, rep: -20 }, log: loc("가족 동행이 임종 케어의 핵심입니다.","Family presence is central to dying care.") },
+        { text: loc("\"이제 곧 끝납니다\" 같은 단정적 발언을 한다","Make blunt statements like \"It'll be over soon\""), effect: { hp: -20, rep: -16 }, log: loc("부적절한 의사소통입니다.","Inappropriate communication.") }
+    ]) }),
+    () => ({ baseId: "itCrash", categoryKey: "flavor", part: loc("EMR 다운","EMR Crash"), emoji: "💻", title: loc("전자의무기록 다운","EMR Down"), desc: loc("EMR이 다운됐습니다. 모든 처방·기록이 보이지 않습니다.","The EMR is down. All orders and records are inaccessible."), choices: shuffle([
+        { text: loc("종이 백업 양식으로 전환 + IT·약국·의사 동시 통보","Switch to paper downtime forms; notify IT, pharmacy, physicians"), effect: { hp: -5, rep: 16 }, log: loc("표준 다운타임 프로토콜입니다.","Standard downtime protocol.") },
+        { text: loc("기억에 의존해서 임의로 약을 투여한다","Give meds from memory"), effect: { hp: -45, rep: -38 }, log: loc("심각한 투약 사고 위험.","Serious med-error risk.") },
+        { text: loc("EMR 복구까지 모든 업무를 중단","Halt all care until EMR is back"), effect: { hp: -28, rep: -20 }, log: loc("환자 안전이 위협됩니다.","Compromises patient safety.") },
+        { text: loc("환자에게 \"전산 고장\"이라고만 말하고 회피","Just tell patients \"system is down\" and avoid duties"), effect: { hp: -20, rep: -14 }, log: loc("책임 회피입니다.","Avoidance of duty.") }
+    ]) }),
+    () => ({ baseId: "mvcMass", categoryKey: "flavor", part: loc("기상 재난","Weather Disaster"), emoji: "🌪️", title: loc("폭우 다수 입실","Storm Mass Admission"), desc: loc("폭우로 사고가 속출. 응급실에서 신환 8명이 한꺼번에 올라옵니다. 보스 트리아지는 아니지만 인력은 빡빡합니다.","Severe storm: 8 new admissions land on your unit at once. Not the boss event, but staff is stretched."), choices: shuffle([
+        { text: loc("팀별 분담과 ABC 우선순위로 빠르게 흡수","Distribute by team and absorb by ABC priority"), effect: { hp: -8, rep: 18 }, log: loc("위기 관리가 매끄러웠습니다.","Smooth crisis management.") },
+        { text: loc("수간호사에게 즉시 추가 인력 요청","Immediately request more staff from head nurse"), effect: { hp: -5, rep: 14 }, log: loc("적절한 보고체계 사용.","Used the right escalation chain.") },
+        { text: loc("들어온 순서대로 천천히 처리","Just process in arrival order, slowly"), effect: { hp: -25, rep: -18 }, log: loc("중증환자가 방치될 수 있습니다.","Critical patients may be neglected.") },
+        { text: loc("일단 자리를 비우고 휴게실로","Step out to the break room first"), effect: { hp: -20, rep: -22 }, log: loc("책임 회피입니다.","Abandoning duty.") }
+    ]) }),
+    () => ({ baseId: "preceptorBossy", categoryKey: "flavor", part: loc("선임 갈등","Senior Conflict"), emoji: "😤", title: loc("프리셉터 갈등","Preceptor Conflict"), desc: loc("프리셉터(선임)가 환자 앞에서 \"이것도 못해?\"라며 큰 소리로 핀잔을 줍니다.","Your preceptor scolds you in front of the patient: \"You can't even do this?\""), choices: shuffle([
+        { text: loc("환자 앞에서는 차분히 응대하고, 후에 따로 대화 요청","Respond calmly in front of the patient, request a private debrief later"), effect: { hp: -6, rep: 14 }, log: loc("프로다운 처신.","Professional handling.") },
+        { text: loc("그 자리에서 즉시 반박하고 언쟁","Argue back on the spot"), effect: { hp: -18, rep: -14 }, log: loc("환자 신뢰가 깨졌습니다.","Patient trust is shattered.") },
+        { text: loc("울며 자리를 떠난다","Walk away in tears"), effect: { hp: -16, rep: -10 }, log: loc("환자 관리가 중단됐습니다.","Patient care was interrupted.") },
+        { text: loc("수간호사에게 익명 신고","Anonymous report to the head nurse"), effect: { hp: -8, rep: 4 }, log: loc("절차는 정당하나 직접 대화가 우선이었습니다.","Valid channel, but direct talk first would've been better.") }
+    ]) }),
+    () => ({ baseId: "needleStick", categoryKey: "flavor", part: loc("바늘찔림","Needlestick"), emoji: "💉", title: loc("바늘찔림 사고","Needlestick Injury"), desc: loc("HIV 양성 환자에게 정맥주사 후 손가락에 바늘이 찔렸습니다. 출혈 중입니다.","After IV on an HIV+ patient, the needle stuck your finger. It's bleeding."), choices: shuffle([
+        { text: loc("즉시 흐르는 물로 5분 세척 후 사고 신고·PEP 시작","Wash under running water 5 min, report incident, start PEP"), effect: { hp: -8, rep: 18 }, log: loc("표준 노출 후 처치입니다.","Standard post-exposure protocol.") },
+        { text: loc("아무에게도 말하지 않고 일을 계속한다","Tell no one and keep working"), effect: { hp: -32, rep: -32 }, log: loc("자신과 미래 환자가 위험에 노출.","Endangers self and future patients.") },
+        { text: loc("상처 부위를 입으로 빨아낸다","Suck the wound to extract blood"), effect: { hp: -28, rep: -20 }, log: loc("점막 노출 위험을 증가시킵니다.","Increases mucosal exposure risk.") },
+        { text: loc("드레싱만 하고 PEP 결정은 다음 주에","Just bandage; decide on PEP next week"), effect: { hp: -25, rep: -18 }, log: loc("PEP은 가능한 빨리 시작해야 합니다(이상적: 2시간 내).","PEP must start ASAP — ideally within 2 hours.") }
     ]) }),
 ];
 
@@ -961,6 +1147,9 @@ function handleSurvivalChoice(choice, ev) {
         else if (repDelta < 0) gameState.wrongCount += 1;
     }
 
+    // 스토리 플래그 캡처 (엔딩 분기 결정용)
+    captureNarrative(ev, choice);
+
     // 오답 시 정답 안내 (학습 효과)
     if (repDelta < 0 && ev && ev.choices) {
         const correctChoice = ev.choices.find(c => (c.effect?.rep || 0) > 0);
@@ -996,29 +1185,14 @@ function handleSurvivalChoice(choice, ev) {
     if (gameState.hp <= 0) return showGameOver(t("gameOverHpTitle"), t("gameOverHpDesc"));
     if (gameState.rep < -60) return showGameOver(t("gameOverRepTitle"), t("gameOverRepDesc"));
     if (gameState.eventCount >= MAX_PROGRESS_EVENTS) {
-        const correct = gameState.correctCount;
-        const wrong = gameState.wrongCount;
-        const total = correct + wrong;
-        const accuracy = total > 0 ? Math.round((correct / total) * 100) : 0;
-        const bosses = gameState.bossesCleared;
-
-        let title, desc;
-        if (accuracy >= 95 && bosses === 3)         { title = t("endLegend");    desc = t("endLegendDesc"); }
-        else if (accuracy >= 85 && bosses >= 2)     { title = t("endHero");      desc = t("endHeroDesc"); }
-        else if (accuracy >= 75)                    { title = t("endMaster");    desc = t("endMasterDesc"); }
-        else if (accuracy >= 65)                    { title = t("endAce");       desc = t("endAceDesc"); }
-        else if (accuracy >= 55)                    { title = t("endVeteran");   desc = t("endVeteranDesc"); }
-        else if (accuracy >= 45)                    { title = t("endSafe");      desc = t("endSafeDesc"); }
-        else if (accuracy >= 30)                    { title = t("endSurvived");  desc = t("endSurvivedDesc"); }
-        else if (accuracy >= 15)                    { title = t("endNeedsWork"); desc = t("endNeedsWorkDesc"); }
-        else                                        { title = t("endRetrain");   desc = t("endRetrainDesc"); }
-        desc += `\n\n${t("accuracyLabel")}: ${correct}/${total} (${accuracy}%) · ${t("bestCombo")} ${gameState.bestStreak} · ${t("metaBoss")} ${gameState.bossesCleared}/3`;
+        const ending = decideEnding();
+        let desc = ending.desc + `\n\n${t("accuracyLabel")}: ${gameState.correctCount}/${gameState.correctCount + gameState.wrongCount} (${ending.accuracy}%) · ${t("bestCombo")} ${gameState.bestStreak} · ${t("metaBoss")} ${gameState.bossesCleared}/3`;
         // 평생 통계 갱신
         gameState.lifetime.dutiesCompleted += 1;
         if (gameState.bestStreak > gameState.lifetime.bestStreak) gameState.lifetime.bestStreak = gameState.bestStreak;
         if (gameState.rep > gameState.lifetime.bestRep) gameState.lifetime.bestRep = gameState.rep;
         saveSettings();
-        return showGameOver(title, desc);
+        return showGameOver(ending.title, desc);
     }
 
     renderSurvivalEvent(choice.next || "random_hub");
@@ -1120,15 +1294,19 @@ function showGameOver(title, desc) {
     <div class="ending-rules-block">
       <div class="ending-rules-title">${t("rulesHeading")}</div>
       <div class="ending-rules-grid">
-        <div>🏆 ${loc("전설","Legendary")}</div><div>≥95% · ${loc("보스 3/3","Boss 3/3")}</div>
-        <div>🌟 ${loc("영웅","Hero")}</div><div>≥85% · ${loc("보스 2+","Boss 2+")}</div>
-        <div>💎 ${loc("마스터","Master")}</div><div>≥75%</div>
-        <div>💪 ${loc("에이스","Ace")}</div><div>≥65%</div>
-        <div>⭐ ${loc("베테랑","Veteran")}</div><div>≥55%</div>
-        <div>✅ ${loc("무사","Safe")}</div><div>≥45%</div>
-        <div>😮‍💨 ${loc("통과","Survived")}</div><div>≥30%</div>
-        <div>🤔 ${loc("학습 필요","Needs Study")}</div><div>≥15%</div>
-        <div>📋 ${loc("재교육","Retrain")}</div><div>&lt;15%</div>
+        <div>🌟 ${loc("승진","Promotion")}</div><div>95%+ · ${loc("보스 3/3","Boss 3/3")}</div>
+        <div>💝 ${loc("멘토","Mentor")}</div><div>85%+ · ${loc("멘토링·감사","Mentor·Thanks")}</div>
+        <div>💌 ${loc("손편지","Letter")}</div><div>80%+ · ${loc("보스 2+","Boss 2+")}</div>
+        <div>☕ ${loc("새 인연","New Bond")}</div><div>${loc("야식+콤보5+70%","Snack+Combo5+70%")}</div>
+        <div>💪 ${loc("든든한 에이스","Steady Ace")}</div><div>≥65%</div>
+        <div>✅ ${loc("무사 완수","Safe")}</div><div>≥50%</div>
+        <div>🎓 ${loc("대학원","Grad School")}</div><div>${loc("60-80%·HP낮음·콤보7+","60-80%·low HP·combo 7+")}</div>
+        <div>🌅 ${loc("번아웃","Burnout")}</div><div>${loc("50%+·HP<30","50%+·HP<30")}</div>
+        <div>🤔 ${loc("학습 필요","Needs Study")}</div><div>≥30%</div>
+        <div>📋 ${loc("재교육","Retrain")}</div><div>&lt;20%</div>
+        <div>⚰️ ${loc("환자 사망","Patient Lost")}</div><div>${loc("코드블루 실패","Code Blue failed")}</div>
+        <div>⚖️ ${loc("기록 위조","Falsified Records")}</div><div>${loc("차트 임의 기입","Chart fabrication")}</div>
+        <div>⚖️ ${loc("사고 위원회","Incident Review")}</div><div>${loc("평판<0 또는 HP=0","Rep<0 or HP=0")}</div>
       </div>
     </div>
   `;

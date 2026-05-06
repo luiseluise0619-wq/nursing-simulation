@@ -7,11 +7,12 @@ A free bilingual (KO/EN) PWA for nursing study — randomized board-style questi
 
 ## Features
 
-- **90+ randomized questions** across 8 nursing-board subjects (Fundamentals, Adult, Maternal, Pediatric, Community, Psychiatric, Management, Health Laws)
+- **113 randomized clinical questions** across 8 nursing-board subjects (Fundamentals, Adult, Maternal, Pediatric, Community, Psychiatric, Management, Health Laws)
 - **Bilingual KO/EN** — full UI and content translation, instant toggle, persisted preference
-- **Survival shift mode** — 20 events per shift with 3 boss encounters (Code Blue, VIP, Mass Casualty), combo system, and 10 daily ward flavor events
-- **Training mode** — pick any of the 8 subjects and grind randomized questions with rationale feedback
-- **Lifetime stats** — total solved, best combo, best reputation, duties completed
+- **Survival shift mode** — 20 events per shift with 3 boss encounters (Code Blue, VIP, Mass Casualty), combo system, and 18 daily ward flavor events
+- **12 narrative endings** — happy / sad / bittersweet / easter-egg branches based on accuracy, bosses, key story choices (mentoring, ethics, code blue outcome…)
+- **Training mode** — pick any of the 8 subjects and grind randomized questions; correct answer + rationale shown after every wrong pick
+- **Lifetime stats** — total solved, best combo, best reputation, duties completed (persisted)
 - **Offline-first PWA** — installable on iOS/Android/desktop, works without network after first load
 - **Zero backend** — pure static site, all state in `localStorage`
 
@@ -53,6 +54,44 @@ python3 -m http.server 8000
 - **Mobile**: open the deployed URL → browser menu → "Add to Home Screen"
 - **Desktop Chrome**: address-bar install icon (▾)
 - **iOS Safari**: Share → "Add to Home Screen"
+
+## Known limitations & roadmap
+
+Honest list of what's missing — useful as backlog, also useful for setting expectations with users:
+
+**Content**
+- 113 questions is solid for a free study aid but **far below commercial bank apps (1,000–5,000)**. Keep adding ~50/year for serious comparison.
+- No "5-year past exam" verbatim coverage — questions are *style* equivalents, not exact reproductions of past Korean Boards items.
+- Rationales are short; deeper references (e.g., journal citation, image, table) are not provided.
+- A few answers reflect **traditional board teaching** (MI MONA, glaucoma miotic, pancreatitis meperidine) where modern guidelines have evolved. Kept aligned with current Korean Boards answer keys.
+
+**Study tools (the most-requested missing)**
+- ❌ **No spaced repetition (SRS)** — wrong answers aren't re-shown more often. Anki-style scheduling is on the wishlist.
+- ❌ **No wrong-answer review** — past mistakes aren't queued for review.
+- ❌ **No timed exam mode** (e.g., 250 questions in 280 minutes like the actual Boards).
+- ❌ **No subtopic filter** within a category (e.g., "show me only IICP-related Adult questions").
+- ❌ **No bookmarks / flag-for-later**.
+- ❌ **No image-based questions** (ECG strips, wound photos, drug images, etc.).
+
+**Platform**
+- 🟡 **PNG icons missing** — only `icons/icon.svg`. Generate 192/512 PNG before iOS App Store submission (tools: Inkscape, rsvg-convert, online).
+- ❌ **No Capacitor / native wrapper** — for Play/App Store you'd wrap with Capacitor or PWA Builder.
+- ❌ **No analytics** (intentional for v1, but means no insight into which questions confuse users).
+- ❌ **No accounts / cloud sync** — switching device loses progress.
+- ❌ **No social features** (share scores, leaderboard).
+
+**Production polish**
+- 🟡 Privacy policy, terms of service text — required by Play/App Store; not included.
+- 🟡 Medical content review by licensed RN/MD recommended before mass distribution (current disclaimer covers educational use).
+- 🟡 Production OG/Twitter card image (currently uses SVG icon, may not render on all platforms).
+
+**Suggested roadmap**
+1. **v1.1**: Add wrong-answer review + bookmark/flag — 1 week
+2. **v1.2**: Spaced repetition (Leitner-style buckets in localStorage) — 1 week
+3. **v1.3**: Timed exam mode (mock NCLEX/Boards) — 3 days
+4. **v1.4**: 50 more questions, including image-based via SVG — 2 weeks
+5. **v1.5**: Capacitor wrap → Play Store TestFlight → public — 1-2 weeks
+6. **v2.0**: Optional cloud sync (Supabase free tier), spaced repetition with cloud backup
 
 ## Pre-launch checklist
 
