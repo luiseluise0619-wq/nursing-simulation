@@ -1,11 +1,17 @@
 // Nurse Simulator service worker — cache-first offline shell
-const CACHE_NAME = 'nurse-sim-v1.4.0';
+const CACHE_NAME = 'nurse-sim-v1.5.0';
 const ASSETS = [
     './',
     './index.html',
     './script.js',
     './manifest.json',
     './icons/icon.svg',
+    './icons/icon-192.png',
+    './icons/icon-512.png',
+    './icons/icon-512-maskable.png',
+    './icons/apple-touch-icon.png',
+    './icons/favicon-32.png',
+    './icons/favicon-64.png',
     'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css',
 ];
 

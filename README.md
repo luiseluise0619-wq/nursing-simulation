@@ -7,7 +7,7 @@ A free bilingual (KO/EN) PWA for nursing study — randomized board-style questi
 
 ## Features
 
-- **203 randomized clinical questions** (193 text + **10 image-based** SVG questions for ECG rhythms, pressure-ulcer staging, triage colors, Rule of Nines, heart anatomy, body positioning, newborn reflexes) across 8 nursing-board subjects
+- **234 randomized clinical questions** (224 text + **10 image-based** SVG questions for ECG rhythms, pressure-ulcer staging, triage colors, Rule of Nines, heart anatomy, body positioning, newborn reflexes) across 8 nursing-board subjects
 - **Bilingual KO/EN** — full UI and content translation, instant toggle, persisted preference
 - **Survival shift mode** — 20 events per shift with 3 boss encounters (Code Blue, VIP, Mass Casualty), combo system, and **30 daily ward flavor events**
 - **13 narrative endings** — happy / sad / bittersweet / easter-egg branches based on accuracy, bosses, key story choices

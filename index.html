@@ -11,8 +11,10 @@
 
     <!-- PWA -->
     <link rel="manifest" href="./manifest.json">
+    <link rel="icon" type="image/png" sizes="32x32" href="./icons/favicon-32.png">
+    <link rel="icon" type="image/png" sizes="64x64" href="./icons/favicon-64.png">
     <link rel="icon" type="image/svg+xml" href="./icons/icon.svg">
-    <link rel="apple-touch-icon" href="./icons/icon.svg">
+    <link rel="apple-touch-icon" sizes="180x180" href="./icons/apple-touch-icon.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="NurseSim">
@@ -792,9 +794,9 @@
 </head>
 <body>
 
-    <div id="lang-toggle">
-        <button id="lang-ko" class="active" onclick="setLang('ko')">한국어</button>
-        <button id="lang-en" onclick="setLang('en')">English</button>
+    <div id="lang-toggle" role="group" aria-label="Language toggle">
+        <button id="lang-ko" class="active" onclick="setLang('ko')" aria-label="한국어로 전환" aria-pressed="true">한국어</button>
+        <button id="lang-en" onclick="setLang('en')" aria-label="Switch to English" aria-pressed="false">English</button>
     </div>
 
     <div id="top-bar" class="hidden">
