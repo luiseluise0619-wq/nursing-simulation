@@ -1,13 +1,13 @@
 # Nurse Simulator · 간호사 시뮬레이터
 
-A free bilingual (KO/EN) PWA for nursing study — 508 randomized board-style questions (75 SVG image-based) plus a survival "shift" mode with bosses and combos. **v3.0 — soft neumorphic / sage-green design.**
+A free bilingual (KO/EN) PWA for nursing study — 548 randomized board-style questions (75 SVG image-based) plus a survival "shift" mode with bosses and combos. **v3.1 — soft neumorphic / sage-green design.**
 
 [![PWA](https://img.shields.io/badge/PWA-installable-6366f1)](#install)
 [![License](https://img.shields.io/badge/license-Educational%20Use-blue)](#license)
 
 ## Features
 
-- **508 randomized clinical questions** (433 text + **75 image-based** SVG questions covering ECG strips, anatomy diagrams, charts, scales, positioning, and procedure visuals) across 8 nursing-board subjects, including **NCLEX-style** delegation, HIPAA, and drug calculation questions
+- **548 randomized clinical questions** (473 text + **75 image-based** SVG questions covering ECG strips, anatomy diagrams, charts, scales, positioning, and procedure visuals) across 8 nursing-board subjects, including **NCLEX-style** delegation, HIPAA, and drug calculation questions
 - **Bilingual KO/EN** — full UI and content translation, instant toggle, persisted preference
 - **Survival shift mode** — 20 events per shift with 3 boss encounters (Code Blue, VIP, Mass Casualty), combo system, and **30 daily ward flavor events**
 - **13 narrative endings** — happy / sad / bittersweet / easter-egg branches based on accuracy, bosses, key story choices

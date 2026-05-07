@@ -871,7 +871,30 @@ const clinicalGenerators = [
     generateNMSQuestion, generateLamictalRashQuestion,
     generateAcuteAbdomenQuestion, generateBowelSoundsQuestion, generateOmegaCarbQuestion,
     generateNeurovascularChecksQuestion, generateThyroidectomyPostQuestion, generateNeonatalThermoregulationQuestion,
-    generateAtrialFlutterEcgQuestion, generateBPMeasurementQuestion
+    generateAtrialFlutterEcgQuestion, generateBPMeasurementQuestion,
+    // ===== 배치 26: 비-성인 카테고리 보강 (40문제) =====
+    // 관리 +8
+    generateSentinelEventQuestion, generateSwissCheeseQuestion, generateConflictResolutionQuestion,
+    generateNursingProcessQuestion, generateMagnetMagnetQuestion, generateMedicationReconQuestion,
+    generateSurveyDataQuestion, generateAcuityClassificationQuestion,
+    // 법규 +7
+    generateInformedConsentLawQuestion, generateMinorConsentQuestion, generateScopeOfPracticeQuestion,
+    generateLivingWillQuestion, generateRefusalRightQuestion, generateIncidentReportQuestion,
+    generateNurseLicensureQuestion,
+    // 지역사회 +6
+    generatePrimaryPreventionQuestion, generateOccupationalHealthQuestion, generateBioterrorismAnthraxQuestion,
+    generateMaternalChildHealthQuestion, generateRabiesPrevQuestion, generateSmokingCessationQuestion,
+    // 모성 +6
+    generatePregTrimesterFlukeQuestion, generateHELLPSyndromeQuestion, generateContractionStressTestQuestion,
+    generateNeonatalAbstinenceQuestion, generateLamazeBreathingQuestion, generateRubellaTeachQuestion,
+    // 소아 +5
+    generateInfantAirwayQuestion, generateAcuteOMQuestion, generatePedFeverManageQuestion,
+    generateImmuneThrombocytopenicQuestion, generatePedDevAutismQuestion,
+    // 정신 +5
+    generateTherapeuticCommQuestion, generateMSEcomponentsQuestion, generateAlcoholCAGEQuestion,
+    generateMilieuTherapyQuestion, generateGriefAbnormalQuestion,
+    // 기본 +3
+    generateMedicationCalcDimAnalQuestion, generateRestraintEvalQuestion, generateSubcutaneousSiteQuestion
 ];
 
 function generateABGAQuestion() {
@@ -3479,6 +3502,501 @@ function generateNeonatalThermoregulationQuestion() {
             { text: loc("찬 물로 목욕","Cold-water bath"), effect: { hp: -45, rep: -35 }, log: loc("저체온.","Hypothermia.") },
             { text: loc("실내 에어컨","Air conditioning"), effect: { hp: -38, rep: -28 }, log: loc("저체온 위험.","Hypothermia.") },
             { text: loc("벗겨서 실온에 두기","Leave naked at room temp"), effect: { hp: -32, rep: -22 }, log: loc("증발 손실.","Evaporative loss.") }
+        ])
+    };
+}
+
+// ========= 배치 26: 비-성인 카테고리 보강 (관리/법규/지역사회/모성/소아/정신/기본) =========
+// --- 관리 (management) +8 ---
+function generateSentinelEventQuestion() {
+    return { baseId: "sentinelEvent", categoryKey: "management", part: loc("환자안전","Patient Safety"), emoji: "🚨",
+        title: loc("적신호 사건(Sentinel Event)","Sentinel Event"),
+        desc: loc("Joint Commission이 정의하는 \"sentinel event\"는?","JCAHO definition of \"sentinel event\"?"),
+        choices: shuffle([
+            { text: loc("환자에게 사망/영구손상 등 심각한 위해를 초래한 예기치 못한 사건","Unanticipated event causing death or severe permanent harm"), effect: { hp: -2, rep: 22 }, log: loc("정답. 즉시 RCA 시행 의무.","Correct. Triggers mandatory RCA.") },
+            { text: loc("경미한 투약 오류","Minor medication discrepancy"), effect: { hp: -28, rep: -20 }, log: loc("적신호 아님.","Not sentinel.") },
+            { text: loc("환자 만족도 하락","Drop in satisfaction scores"), effect: { hp: -28, rep: -20 }, log: loc("아님.","Not sentinel.") },
+            { text: loc("간호사 결근","Nurse absenteeism"), effect: { hp: -32, rep: -22 }, log: loc("아님.","Not sentinel.") }
+        ])
+    };
+}
+function generateSwissCheeseQuestion() {
+    return { baseId: "swissCheese", categoryKey: "management", part: loc("안전 모델","Safety Model"), emoji: "🧀",
+        title: loc("스위스 치즈 모델","Swiss Cheese Model"),
+        desc: loc("Reason의 스위스 치즈 모델이 시사하는 것은?","What does Reason's Swiss Cheese model imply?"),
+        choices: shuffle([
+            { text: loc("사고는 다층 방어선의 동시 결함으로 발생","Accidents result from alignment of holes across layered defenses"), effect: { hp: -2, rep: 22 }, log: loc("정답. 시스템적 접근.","Correct. Systems perspective.") },
+            { text: loc("사고는 한 사람의 부주의로만 발생","One person's carelessness causes accidents"), effect: { hp: -32, rep: -22 }, log: loc("개인 비난 모델.","Blame model.") },
+            { text: loc("사고는 불가피하므로 예방 불가","Accidents are inevitable; no prevention"), effect: { hp: -38, rep: -28 }, log: loc("반대.","Opposite.") },
+            { text: loc("사고는 환자 탓","Patient's fault"), effect: { hp: -42, rep: -32 }, log: loc("부적절.","Inappropriate.") }
+        ])
+    };
+}
+function generateConflictResolutionQuestion() {
+    return { baseId: "conflictCollab", categoryKey: "management", part: loc("갈등 해결","Conflict Resolution"), emoji: "🤝",
+        title: loc("갈등 해결 - 협력(Collaborating)","Conflict — Collaborating"),
+        desc: loc("두 간호사가 인력 배정으로 다툰다. \"win-win\" 결과를 위한 가장 효과적인 전략은?","Two nurses disagree on staffing. Most effective strategy for win-win?"),
+        choices: shuffle([
+            { text: loc("협력(Collaborating) - 양측 욕구를 모두 충족하는 해결책 모색","Collaborating — find a solution meeting both needs"), effect: { hp: -2, rep: 22 }, log: loc("정답. win-win 전략.","Correct. Win-win.") },
+            { text: loc("회피(Avoiding) - 무시","Avoiding — ignore"), effect: { hp: -28, rep: -20 }, log: loc("lose-lose.","Lose-lose.") },
+            { text: loc("강압(Forcing) - 한쪽 입장 관철","Forcing — push one side"), effect: { hp: -25, rep: -15 }, log: loc("win-lose.","Win-lose.") },
+            { text: loc("순응(Accommodating) - 한쪽이 양보","Accommodating — yield"), effect: { hp: -22, rep: -12 }, log: loc("일시적.","Short-term only.") }
+        ])
+    };
+}
+function generateNursingProcessQuestion() {
+    return { baseId: "nursingProcessFirst", categoryKey: "management", part: loc("간호과정","Nursing Process"), emoji: "📋",
+        title: loc("간호과정의 첫 단계","First Step of Nursing Process"),
+        desc: loc("간호과정(ADPIE)의 \"가장 첫\" 단계는?","First step of the nursing process (ADPIE)?"),
+        choices: shuffle([
+            { text: loc("사정(Assessment) - 자료 수집","Assessment — data collection"), effect: { hp: -2, rep: 22 }, log: loc("정답. ADPIE 순서.","Correct. ADPIE order.") },
+            { text: loc("진단(Diagnosis)","Diagnosis"), effect: { hp: -25, rep: -15 }, log: loc("두 번째.","Second.") },
+            { text: loc("계획(Planning)","Planning"), effect: { hp: -25, rep: -15 }, log: loc("세 번째.","Third.") },
+            { text: loc("평가(Evaluation)","Evaluation"), effect: { hp: -28, rep: -20 }, log: loc("마지막.","Last.") }
+        ])
+    };
+}
+function generateMagnetMagnetQuestion() {
+    return { baseId: "magnetForcesOf", categoryKey: "management", part: loc("Magnet 인증","Magnet Recognition"), emoji: "🧲",
+        title: loc("Magnet Hospital의 핵심","Magnet Hospital Core"),
+        desc: loc("ANCC Magnet 인증을 받은 병원의 핵심 특징은?","Defining feature of an ANCC Magnet-recognized hospital?"),
+        choices: shuffle([
+            { text: loc("간호사가 의사결정에 적극 참여하고 자율성·전문성을 인정받는 환경","Nurses actively participate in decisions, with autonomy and professional recognition"), effect: { hp: -2, rep: 22 }, log: loc("정답. \"force\"는 변혁적 리더십·구조적 임파워먼트.","Correct. Forces include transformational leadership and empowerment.") },
+            { text: loc("간호사 인력 비용 최소화","Lowest possible nurse staffing cost"), effect: { hp: -32, rep: -22 }, log: loc("반대.","Opposite.") },
+            { text: loc("의사 주도의 위계 구조","Strict physician hierarchy"), effect: { hp: -28, rep: -20 }, log: loc("간호 자율성 저하.","Reduces nursing autonomy.") },
+            { text: loc("최첨단 장비만 보유","Latest equipment only"), effect: { hp: -25, rep: -15 }, log: loc("문화 요소.","It's about culture.") }
+        ])
+    };
+}
+function generateMedicationReconQuestion() {
+    return { baseId: "medRecon", categoryKey: "management", part: loc("투약 안전","Medication Safety"), emoji: "💊",
+        title: loc("투약 조정(Medication Reconciliation)","Medication Reconciliation"),
+        desc: loc("투약 조정(med rec)이 \"가장 중요한\" 시점은?","When is medication reconciliation MOST critical?"),
+        choices: shuffle([
+            { text: loc("입원·전동·퇴원 등 진료 이행 시점","At care transitions (admission/transfer/discharge)"), effect: { hp: -2, rep: 22 }, log: loc("정답. 이행 시점에 오류 위험 최대.","Correct. Errors peak at handoffs.") },
+            { text: loc("환자 사망 후","After patient death"), effect: { hp: -42, rep: -32 }, log: loc("의미 없음.","Pointless.") },
+            { text: loc("연 1회","Once a year"), effect: { hp: -32, rep: -22 }, log: loc("부족.","Insufficient.") },
+            { text: loc("의사 요청 시만","Only on physician request"), effect: { hp: -28, rep: -20 }, log: loc("간호 책임.","Nursing responsibility.") }
+        ])
+    };
+}
+function generateSurveyDataQuestion() {
+    return { baseId: "qiData", categoryKey: "management", part: loc("질 향상","Quality Improvement"), emoji: "📊",
+        title: loc("PDSA 사이클","PDSA Cycle"),
+        desc: loc("질 향상(QI)에서 PDSA의 \"S\"는 무엇인가?","In QI's PDSA cycle, what is \"S\"?"),
+        choices: shuffle([
+            { text: loc("Study - 결과 분석","Study — analyze the result"), effect: { hp: -2, rep: 22 }, log: loc("정답. Plan-Do-Study-Act.","Correct. Plan-Do-Study-Act.") },
+            { text: loc("Stop","Stop"), effect: { hp: -32, rep: -22 }, log: loc("아님.","Wrong.") },
+            { text: loc("Survey","Survey"), effect: { hp: -28, rep: -20 }, log: loc("아님.","Wrong.") },
+            { text: loc("Standardize","Standardize"), effect: { hp: -22, rep: -12 }, log: loc("\"A\" 단계와 혼동.","Confused with \"A\".") }
+        ])
+    };
+}
+function generateAcuityClassificationQuestion() {
+    return { baseId: "acuityClassify", categoryKey: "management", part: loc("환자 분류","Acuity"), emoji: "🏥",
+        title: loc("환자 분류 시스템 목적","Purpose of Acuity Classification"),
+        desc: loc("간호 환자분류시스템(acuity)의 \"주된\" 목적은?","Primary purpose of nursing acuity classification?"),
+        choices: shuffle([
+            { text: loc("환자 요구도에 따라 적정 인력 배치","Match staffing to patient needs"), effect: { hp: -2, rep: 22 }, log: loc("정답. 안전·효율 균형.","Correct. Balance safety and efficiency.") },
+            { text: loc("환자 차별","Patient discrimination"), effect: { hp: -42, rep: -32 }, log: loc("부적절.","Inappropriate.") },
+            { text: loc("의료비 인상","Increase billing"), effect: { hp: -32, rep: -22 }, log: loc("주된 목적 아님.","Not the main purpose.") },
+            { text: loc("간호사 평가","Nurse evaluation"), effect: { hp: -28, rep: -20 }, log: loc("부수적.","Secondary.") }
+        ])
+    };
+}
+
+// --- 법규 (law) +7 ---
+function generateInformedConsentLawQuestion() {
+    return { baseId: "consentLawCapacity", categoryKey: "law", part: loc("동의 능력","Consent Capacity"), emoji: "📝",
+        title: loc("의사결정 능력 - 누구의 동의?","Decision-Making Capacity"),
+        desc: loc("응급실에 의식 불명·신원불명의 성인 환자가 도착했다. 생명을 구하기 위한 처치에 대한 동의는?","ED arrives unconscious adult with no ID. Consent for life-saving care?"),
+        choices: shuffle([
+            { text: loc("응급 시 추정동의(Implied consent)","Implied consent in emergencies"), effect: { hp: -2, rep: 22 }, log: loc("정답. 합리적 환자라면 동의했을 것이라 가정.","Correct. Reasonable person doctrine.") },
+            { text: loc("처치 보류, 가족 도착까지 대기","Withhold care until family arrives"), effect: { hp: -42, rep: -32 }, log: loc("위험.","Dangerous.") },
+            { text: loc("법원에 후견인 신청","Petition court for guardian"), effect: { hp: -32, rep: -22 }, log: loc("응급 시 부적절.","Not for emergency.") },
+            { text: loc("간호사가 대리 서명","Nurse signs as proxy"), effect: { hp: -38, rep: -28 }, log: loc("권한 없음.","No authority.") }
+        ])
+    };
+}
+function generateMinorConsentQuestion() {
+    return { baseId: "minorConsent", categoryKey: "law", part: loc("미성년자 동의","Minor Consent"), emoji: "👦",
+        title: loc("미성년자의 의료동의","Minor Medical Consent"),
+        desc: loc("16세 청소년이 비밀 유지를 요구하며 STD 검사를 원한다. 일반적으로 어떻게 해야 하는가?","16-yr-old requests confidential STD testing. General approach?"),
+        choices: shuffle([
+            { text: loc("STD 검사·치료는 일반적으로 미성년자 단독 동의 가능","STD testing/treatment is typically a minor's right"), effect: { hp: -2, rep: 22 }, log: loc("정답. 대부분 주에서 \"성숙한 미성년자\" 또는 STD 예외 인정.","Correct. \"Mature minor\"/STD carve-out widely recognized.") },
+            { text: loc("부모 동의 없이는 처치 불가","Cannot treat without parental consent"), effect: { hp: -28, rep: -20 }, log: loc("STD는 예외.","STDs are an exception.") },
+            { text: loc("부모에게 즉시 알림","Notify parents immediately"), effect: { hp: -32, rep: -22 }, log: loc("비밀유지 위반.","Breach of confidentiality.") },
+            { text: loc("법원 명령 대기","Wait for court order"), effect: { hp: -38, rep: -28 }, log: loc("불필요.","Unnecessary.") }
+        ])
+    };
+}
+function generateScopeOfPracticeQuestion() {
+    return { baseId: "scopePractice", categoryKey: "law", part: loc("간호업무 범위","Scope of Practice"), emoji: "📜",
+        title: loc("간호업무 범위(Scope of Practice)","Scope of Practice"),
+        desc: loc("RN이 자신의 업무 범위를 결정하는 가장 권위 있는 자료는?","Most authoritative source defining an RN's scope of practice?"),
+        choices: shuffle([
+            { text: loc("주(state) 간호사법","State Nurse Practice Act"), effect: { hp: -2, rep: 22 }, log: loc("정답. 법적으로 우선.","Correct. Legally binding.") },
+            { text: loc("병원 내부 정책","Hospital policy"), effect: { hp: -22, rep: -12 }, log: loc("법보다 하위.","Subordinate to law.") },
+            { text: loc("의사의 의견","Physician's opinion"), effect: { hp: -28, rep: -20 }, log: loc("의사가 정할 수 없음.","MD does not define.") },
+            { text: loc("간호학교 교과서","Nursing textbook"), effect: { hp: -25, rep: -15 }, log: loc("교육 자료일 뿐.","Educational only.") }
+        ])
+    };
+}
+function generateLivingWillQuestion() {
+    return { baseId: "livingWillDef", categoryKey: "law", part: loc("사전의료","Advance Care"), emoji: "📜",
+        title: loc("Living Will과 DPOA 차이","Living Will vs DPOA"),
+        desc: loc("\"Living will\"과 \"의료대리인 위임장(DPOA-HC)\"의 핵심 차이는?","Core difference between Living Will and DPOA-HC?"),
+        choices: shuffle([
+            { text: loc("Living Will은 환자가 원하는/원치 않는 처치를 \"문서\"로, DPOA는 \"대리인을 지정\"","Living Will = document of patient's wishes; DPOA = appoints a proxy"), effect: { hp: -2, rep: 22 }, log: loc("정답. 둘 다 사전의료의향에 속함.","Correct. Both are advance directives.") },
+            { text: loc("같은 문서","Same thing"), effect: { hp: -32, rep: -22 }, log: loc("다름.","Different.") },
+            { text: loc("Living Will은 사후 재산 처분","Living Will = estate distribution"), effect: { hp: -38, rep: -28 }, log: loc("그건 일반 유언.","That's a regular will.") },
+            { text: loc("DPOA는 재산만 다룸","DPOA only handles property"), effect: { hp: -28, rep: -20 }, log: loc("DPOA-HC는 의료용.","DPOA-HC is medical.") }
+        ])
+    };
+}
+function generateRefusalRightQuestion() {
+    return { baseId: "refusalRight", categoryKey: "law", part: loc("환자권리","Patient Rights"), emoji: "🚫",
+        title: loc("치료 거부권","Right to Refuse Treatment"),
+        desc: loc("의식이 명료하고 능력이 있는 성인 환자가 생명을 구하는 수혈을 거부한다(종교적 이유). 간호사의 적절한 행동은?","Alert, capable adult refuses life-saving transfusion (religious). Nurse's appropriate action?"),
+        choices: shuffle([
+            { text: loc("환자의 결정 존중, 위험 설명 후 문서화, 의사에게 보고","Respect decision, document risks explained, notify MD"), effect: { hp: -2, rep: 22 }, log: loc("정답. 자율성 우선.","Correct. Autonomy.") },
+            { text: loc("환자 동의 없이 강제 수혈","Force the transfusion"), effect: { hp: -45, rep: -35 }, log: loc("폭행죄.","Battery.") },
+            { text: loc("환자에게 거부 시 처치 거부 위협","Threaten to refuse care"), effect: { hp: -38, rep: -28 }, log: loc("강요.","Coercion.") },
+            { text: loc("가족이 동의하면 시행","Proceed if family agrees"), effect: { hp: -32, rep: -22 }, log: loc("능력 있는 환자 의사 우선.","Patient's wish prevails.") }
+        ])
+    };
+}
+function generateIncidentReportQuestion() {
+    return { baseId: "incidentReport", categoryKey: "law", part: loc("사고 보고","Incident Reporting"), emoji: "📋",
+        title: loc("사고 보고서(Incident Report) 원칙","Incident Report Principles"),
+        desc: loc("투약 오류 후 사고보고서 작성 시 \"올바른\" 원칙은?","Correct principle for completing an incident report?"),
+        choices: shuffle([
+            { text: loc("객관적 사실만 기록, 환자 차트에는 사실만 적고 IR 별도 보관","Record objective facts only; chart facts only; IR stays separate"), effect: { hp: -2, rep: 22 }, log: loc("정답. IR은 QI용, 차트와 별개.","Correct. IR is for QI, separate from chart.") },
+            { text: loc("환자 차트에 \"사고보고서 작성됨\"이라고 기재","Note in chart \"incident report filed\""), effect: { hp: -32, rep: -22 }, log: loc("법적 노출.","Legal exposure.") },
+            { text: loc("의견·비난 포함","Include opinions/blame"), effect: { hp: -38, rep: -28 }, log: loc("객관 사실만.","Facts only.") },
+            { text: loc("작성 안 함 (감추기)","Don't file (cover up)"), effect: { hp: -45, rep: -35 }, log: loc("법적·윤리적 위반.","Legal/ethical breach.") }
+        ])
+    };
+}
+function generateNurseLicensureQuestion() {
+    return { baseId: "nurseLicensure", categoryKey: "law", part: loc("면허","Licensure"), emoji: "📃",
+        title: loc("간호사 면허 - 다른 주에서 근무","Nursing Licensure — Other State"),
+        desc: loc("간호사가 미국에서 다른 주로 일시 근무할 때 가장 효율적으로 사용 가능한 제도는?","For temporary nursing work across US states, what's the most efficient mechanism?"),
+        choices: shuffle([
+            { text: loc("Nurse Licensure Compact (NLC) - 다중 주 면허","Nurse Licensure Compact (multistate)"), effect: { hp: -2, rep: 22 }, log: loc("정답. NLC 가입주 간 단일 면허.","Correct. Single license across NLC states.") },
+            { text: loc("매번 주별 신규 면허 발급","New license each time per state"), effect: { hp: -22, rep: -12 }, log: loc("비효율.","Inefficient.") },
+            { text: loc("면허 없이 가능","Allowed without license"), effect: { hp: -42, rep: -32 }, log: loc("불법.","Illegal.") },
+            { text: loc("RN 시험 재응시","Retake NCLEX"), effect: { hp: -32, rep: -22 }, log: loc("불필요.","Unnecessary.") }
+        ])
+    };
+}
+
+// --- 지역사회 (community) +6 ---
+function generatePrimaryPreventionQuestion() {
+    return { baseId: "primaryPrevExample", categoryKey: "community", part: loc("예방 단계","Prevention Levels"), emoji: "🛡️",
+        title: loc("1차 예방 사례","1° Prevention Example"),
+        desc: loc("다음 중 \"1차 예방\"의 사례는?","Which is a primary prevention example?"),
+        choices: shuffle([
+            { text: loc("HPV 백신 접종","HPV vaccination"), effect: { hp: -2, rep: 22 }, log: loc("정답. 질환 발생 전 예방.","Correct. Prevents disease before onset.") },
+            { text: loc("자궁경부암 Pap smear","Pap smear screening"), effect: { hp: -25, rep: -15 }, log: loc("2차 예방(조기 발견).","Secondary (early detection).") },
+            { text: loc("뇌졸중 환자 재활","Post-stroke rehab"), effect: { hp: -25, rep: -15 }, log: loc("3차 예방.","Tertiary.") },
+            { text: loc("당뇨 합병증 관리","Managing diabetic complications"), effect: { hp: -25, rep: -15 }, log: loc("3차 예방.","Tertiary.") }
+        ])
+    };
+}
+function generateOccupationalHealthQuestion() {
+    return { baseId: "occHealthRespEx", categoryKey: "community", part: loc("산업보건","Occupational Health"), emoji: "🦺",
+        title: loc("산업간호 - 호흡기 보호 우선순위","Occupational — Respiratory Protection Hierarchy"),
+        desc: loc("작업장 분진 노출 통제의 \"최우선\" 단계는?","Highest priority in controlling workplace dust exposure?"),
+        choices: shuffle([
+            { text: loc("공학적 통제 (환기·격리 등 발생원 제거)","Engineering controls (ventilation, source elimination)"), effect: { hp: -2, rep: 22 }, log: loc("정답. 위계: 제거 > 대체 > 공학 > 행정 > PPE.","Correct. Hierarchy: elimination > substitution > engineering > admin > PPE.") },
+            { text: loc("개인보호구 지급","Issue PPE"), effect: { hp: -22, rep: -12 }, log: loc("최후 수단.","Last resort.") },
+            { text: loc("작업자 교육","Worker training"), effect: { hp: -22, rep: -12 }, log: loc("행정 통제.","Admin control.") },
+            { text: loc("정기 건강검진","Periodic check-ups"), effect: { hp: -25, rep: -15 }, log: loc("발생 후 감지.","Detects after occurrence.") }
+        ])
+    };
+}
+function generateBioterrorismAnthraxQuestion() {
+    return { baseId: "anthraxInhalation", categoryKey: "community", part: loc("생물테러","Bioterrorism"), emoji: "☣️",
+        title: loc("흡입 탄저 - 첫 처치","Inhalational Anthrax — First Action"),
+        desc: loc("흡입 탄저 노출 의심 환자에게 가장 우선 시작할 처치는?","Suspected inhalational anthrax exposure — first action?"),
+        choices: shuffle([
+            { text: loc("Ciprofloxacin 또는 Doxycycline 즉시 시작","Immediate ciprofloxacin or doxycycline"), effect: { hp: -2, rep: 22 }, log: loc("정답. 노출 후 60일.","Correct. 60-day course.") },
+            { text: loc("증상 나타날 때까지 대기","Wait for symptoms"), effect: { hp: -42, rep: -32 }, log: loc("치명률 ↑↑.","Mortality skyrockets.") },
+            { text: loc("페니실린만","Penicillin only"), effect: { hp: -28, rep: -20 }, log: loc("내성 가능성, 1차 아님.","Possible resistance.") },
+            { text: loc("백신만","Vaccine alone"), effect: { hp: -32, rep: -22 }, log: loc("백신 + 항생제.","Vaccine + antibiotic.") }
+        ])
+    };
+}
+function generateMaternalChildHealthQuestion() {
+    return { baseId: "wicProgram", categoryKey: "community", part: loc("취약계층","Vulnerable Population"), emoji: "🍼",
+        title: loc("WIC 프로그램 대상","WIC Program Eligibility"),
+        desc: loc("미국 WIC(여성·영유아·아동) 프로그램의 \"대상이 아닌\" 사람은?","Who is NOT typically eligible for the US WIC program?"),
+        choices: shuffle([
+            { text: loc("65세 노인 남성","65-yr-old elderly man"), effect: { hp: -2, rep: 22 }, log: loc("정답. WIC는 임산부·산모·5세 미만 아동.","Correct. WIC = pregnant/postpartum women & children <5.") },
+            { text: loc("임산부","Pregnant woman"), effect: { hp: -25, rep: -15 }, log: loc("대상.","Eligible.") },
+            { text: loc("3세 아동","3-yr-old child"), effect: { hp: -25, rep: -15 }, log: loc("대상.","Eligible.") },
+            { text: loc("수유 중 산모","Breastfeeding mother"), effect: { hp: -25, rep: -15 }, log: loc("대상.","Eligible.") }
+        ])
+    };
+}
+function generateRabiesPrevQuestion() {
+    return { baseId: "rabiesPostExp", categoryKey: "community", part: loc("동물 교상","Animal Bite"), emoji: "🐕",
+        title: loc("광견병 노출 후 예방","Rabies Post-Exposure Prophylaxis"),
+        desc: loc("야생 너구리에게 물린 환자에게 \"가장 먼저\" 시행할 것은?","Patient bitten by a wild raccoon — first action?"),
+        choices: shuffle([
+            { text: loc("상처 비누·물로 15분 세척, 이후 광견병 면역글로불린(HRIG) + 백신","Wash wound with soap/water for 15 min; then HRIG + vaccine"), effect: { hp: -2, rep: 22 }, log: loc("정답. 광견병 예방의 핵심은 빠른 세척 + PEP.","Correct. Wash + PEP is essential.") },
+            { text: loc("증상 나타나기까지 관찰","Watch for symptoms"), effect: { hp: -45, rep: -35 }, log: loc("발병 후 100% 사망.","100% fatal once symptomatic.") },
+            { text: loc("항생제만","Antibiotics only"), effect: { hp: -32, rep: -22 }, log: loc("광견병에 무효.","Ineffective for rabies.") },
+            { text: loc("백신만 (HRIG 생략)","Vaccine alone (skip HRIG)"), effect: { hp: -28, rep: -20 }, log: loc("HRIG 필요.","HRIG required.") }
+        ])
+    };
+}
+function generateSmokingCessationQuestion() {
+    return { baseId: "smoking5As", categoryKey: "community", part: loc("금연","Smoking Cessation"), emoji: "🚭",
+        title: loc("금연 상담 - 5A","5 As of Smoking Cessation"),
+        desc: loc("USPSTF 권장 금연 상담 \"5 A\"에 포함되지 않는 것은?","Which is NOT one of the USPSTF 5 As of smoking cessation?"),
+        choices: shuffle([
+            { text: loc("Avoid (회피)","Avoid"), effect: { hp: -2, rep: 22 }, log: loc("정답. 5A: Ask, Advise, Assess, Assist, Arrange.","Correct. 5As: Ask, Advise, Assess, Assist, Arrange.") },
+            { text: loc("Ask (흡연 여부 묻기)","Ask"), effect: { hp: -25, rep: -15 }, log: loc("5A 포함.","Part of 5As.") },
+            { text: loc("Advise (금연 권고)","Advise"), effect: { hp: -25, rep: -15 }, log: loc("5A 포함.","Part of 5As.") },
+            { text: loc("Arrange (추후 약속)","Arrange follow-up"), effect: { hp: -25, rep: -15 }, log: loc("5A 포함.","Part of 5As.") }
+        ])
+    };
+}
+
+// --- 모성 (maternal) +6 ---
+function generatePregTrimesterFlukeQuestion() {
+    return { baseId: "preeclampsiaCriteria", categoryKey: "maternal", part: loc("자간전증","Preeclampsia"), emoji: "🤰",
+        title: loc("자간전증 진단 기준","Preeclampsia Diagnostic Criteria"),
+        desc: loc("임신 22주 산모의 자간전증을 \"확진\"하는 데 필요한 조합은?","What combo confirms preeclampsia at 22 wk gestation?"),
+        choices: shuffle([
+            { text: loc("BP ≥140/90 (2회 이상) + 단백뇨 또는 장기침범","BP ≥140/90 (×2) + proteinuria or end-organ involvement"), effect: { hp: -2, rep: 22 }, log: loc("정답. 20주 이후 새로 발생.","Correct. New-onset after 20 wk.") },
+            { text: loc("부종만으로","Edema alone"), effect: { hp: -32, rep: -22 }, log: loc("불충분.","Insufficient.") },
+            { text: loc("두통만으로","Headache alone"), effect: { hp: -32, rep: -22 }, log: loc("불충분.","Insufficient.") },
+            { text: loc("BP만 정상이면 무관","If BP normal, no concern"), effect: { hp: -38, rep: -28 }, log: loc("BP는 핵심.","BP is core criterion.") }
+        ])
+    };
+}
+function generateHELLPSyndromeQuestion() {
+    return { baseId: "hellpSyndrome", categoryKey: "maternal", part: loc("HELLP","HELLP"), emoji: "🩸",
+        title: loc("HELLP 증후군","HELLP Syndrome"),
+        desc: loc("자간전증 산모에서 우상복부 통증·LDH↑·혈소판 ↓ 80,000. 의심되는 진단은?","Preeclamptic patient with RUQ pain, ↑LDH, plt 80,000. Suspect?"),
+        choices: shuffle([
+            { text: loc("HELLP - 즉시 분만 고려","HELLP — consider immediate delivery"), effect: { hp: -3, rep: 22 }, log: loc("정답. Hemolysis·Elevated LFT·Low Plt.","Correct. Hemolysis, Elevated LFTs, Low Platelets.") },
+            { text: loc("정상 임신","Normal pregnancy"), effect: { hp: -42, rep: -32 }, log: loc("응급.","Emergency.") },
+            { text: loc("임신성 당뇨","Gestational diabetes"), effect: { hp: -32, rep: -22 }, log: loc("관련 없음.","Unrelated.") },
+            { text: loc("입덧","Hyperemesis"), effect: { hp: -32, rep: -22 }, log: loc("다른 양상.","Different.") }
+        ])
+    };
+}
+function generateContractionStressTestQuestion() {
+    return { baseId: "lateDecel", categoryKey: "maternal", part: loc("태아 모니터링","Fetal Monitoring"), emoji: "📈",
+        title: loc("후기 감속(late deceleration)","Late Deceleration"),
+        desc: loc("분만 중 후기 감속(late deceleration)이 반복적으로 나타난다. 가장 우선 처치는?","Recurrent late decels in labor. First action?"),
+        choices: shuffle([
+            { text: loc("좌측위, 산소공급, 옥시토신 중단, 수액 ↑, 의사 보고","Left side, O2, stop oxytocin, IV fluids, notify MD"), effect: { hp: -3, rep: 22 }, log: loc("정답. 자궁태반 부전 의심.","Correct. Suggests uteroplacental insufficiency.") },
+            { text: loc("산모 보행","Encourage ambulation"), effect: { hp: -32, rep: -22 }, log: loc("응급.","Emergency.") },
+            { text: loc("관찰","Just observe"), effect: { hp: -42, rep: -32 }, log: loc("위험 신호.","Red flag.") },
+            { text: loc("옥시토신 증량","Increase oxytocin"), effect: { hp: -45, rep: -35 }, log: loc("악화.","Worsens.") }
+        ])
+    };
+}
+function generateNeonatalAbstinenceQuestion() {
+    return { baseId: "nasFinnegan", categoryKey: "maternal", part: loc("신생아 금단","Neonatal Abstinence"), emoji: "👶",
+        title: loc("신생아 금단증후군 (NAS)","Neonatal Abstinence Syndrome"),
+        desc: loc("산모가 임신 중 헤로인을 사용했다. 신생아 사정 시 가장 우선 모니터링할 것은?","Mother used heroin during pregnancy. Priority monitoring for neonate?"),
+        choices: shuffle([
+            { text: loc("Finnegan 점수 - 진전·고긴장·울음·수유 곤란","Finnegan scoring — tremor, hypertonia, crying, feeding"), effect: { hp: -2, rep: 22 }, log: loc("정답. NAS 표준 도구.","Correct. Standard NAS tool.") },
+            { text: loc("정상 산모용 평가","Normal newborn assessment"), effect: { hp: -32, rep: -22 }, log: loc("불충분.","Insufficient.") },
+            { text: loc("관찰만","Observe only"), effect: { hp: -32, rep: -22 }, log: loc("적극 모니터링.","Active monitoring needed.") },
+            { text: loc("출생 직후 퇴원","Discharge right away"), effect: { hp: -45, rep: -35 }, log: loc("위험.","Dangerous.") }
+        ])
+    };
+}
+function generateLamazeBreathingQuestion() {
+    return { baseId: "epiduralBP", categoryKey: "maternal", part: loc("경막외 마취","Epidural"), emoji: "💉",
+        title: loc("경막외 마취 후 모니터링","Post-Epidural Monitoring"),
+        desc: loc("분만 중 경막외 마취 후 산모 BP 80/50, 태아심박 110→90으로 감소. 우선 행동은?","After epidural in labor: maternal BP 80/50, FHR drops 110→90. First action?"),
+        choices: shuffle([
+            { text: loc("좌측위, IV 수액 볼루스, 산소공급, 의사 보고","Left lateral, IV bolus, O2, notify MD"), effect: { hp: -3, rep: 22 }, log: loc("정답. 저혈압 → 자궁태반 관류 ↓.","Correct. Hypotension → ↓uteroplacental flow.") },
+            { text: loc("앙와위 유지","Keep supine"), effect: { hp: -32, rep: -22 }, log: loc("대정맥 압박 악화.","Worsens IVC compression.") },
+            { text: loc("경막외 용량 증량","Increase epidural rate"), effect: { hp: -45, rep: -35 }, log: loc("BP 더 ↓.","Worsens BP.") },
+            { text: loc("관찰","Observe"), effect: { hp: -38, rep: -28 }, log: loc("응급.","Emergency.") }
+        ])
+    };
+}
+function generateRubellaTeachQuestion() {
+    return { baseId: "rubellaPostpartum", categoryKey: "maternal", part: loc("산후 예방접종","Postpartum Vaccination"), emoji: "💉",
+        title: loc("산후 풍진 백신 교육","Postpartum Rubella Vaccine Teaching"),
+        desc: loc("풍진 면역이 없는 산모에게 산후 풍진(MMR) 백신을 투여한다. 핵심 교육은?","Non-immune postpartum mother gets MMR. Key teaching?"),
+        choices: shuffle([
+            { text: loc("4주간 임신 피하기 (생백신·태아 위험)","Avoid pregnancy for 4 weeks (live vaccine, fetal risk)"), effect: { hp: -2, rep: 22 }, log: loc("정답. 모유수유는 가능.","Correct. Breastfeeding is OK.") },
+            { text: loc("모유수유 금지","Stop breastfeeding"), effect: { hp: -28, rep: -20 }, log: loc("가능.","Allowed.") },
+            { text: loc("당장 임신 가능","Can conceive immediately"), effect: { hp: -38, rep: -28 }, log: loc("기형 위험.","Teratogenic risk.") },
+            { text: loc("백신 불요","No vaccine needed"), effect: { hp: -32, rep: -22 }, log: loc("필요.","It's needed.") }
+        ])
+    };
+}
+
+// --- 소아 (pediatric) +5 ---
+function generateInfantAirwayQuestion() {
+    return { baseId: "infantChoking", categoryKey: "pediatric", part: loc("기도 폐쇄","Choking"), emoji: "👶",
+        title: loc("영아 기도폐쇄 처치","Infant Foreign Body Airway"),
+        desc: loc("영아(<1세)가 갑자기 청색증·기침 못함. 의식 있을 때 처치는?","Infant (<1 yr) suddenly cyanotic, can't cough. Conscious. Action?"),
+        choices: shuffle([
+            { text: loc("등 두드리기 5회 + 가슴 압박 5회 반복","5 back blows + 5 chest thrusts, alternating"), effect: { hp: -2, rep: 22 }, log: loc("정답. 영아는 복부 압박 금지(간 손상).","Correct. No abdominal thrusts in infants (liver injury).") },
+            { text: loc("Heimlich(복부 밀어 올리기)","Heimlich (abdominal thrust)"), effect: { hp: -42, rep: -32 }, log: loc("간 손상.","Liver injury.") },
+            { text: loc("입에 손가락 넣어 빼기","Blind finger sweep"), effect: { hp: -38, rep: -28 }, log: loc("이물 더 깊이.","Pushes deeper.") },
+            { text: loc("물 마시게 하기","Give water"), effect: { hp: -45, rep: -35 }, log: loc("흡인.","Aspiration.") }
+        ])
+    };
+}
+function generateAcuteOMQuestion() {
+    return { baseId: "otitisExternaVsMedia", categoryKey: "pediatric", part: loc("귀 감염","Ear Infection"), emoji: "👂",
+        title: loc("외이도염 vs 중이염","Otitis Externa vs Media"),
+        desc: loc("이주(tragus)를 누르거나 귀를 당길 때 통증이 \"증가\"하는 것은?","Pain WORSENED by tragal pressure or pulling on the ear suggests?"),
+        choices: shuffle([
+            { text: loc("외이도염(otitis externa)","Otitis externa"), effect: { hp: -2, rep: 22 }, log: loc("정답. 외이도 염증의 특징.","Correct. Hallmark of external canal inflammation.") },
+            { text: loc("중이염(otitis media)","Otitis media"), effect: { hp: -25, rep: -15 }, log: loc("이주 압통은 OE.","Tragal tenderness = OE.") },
+            { text: loc("내이염","Otitis interna"), effect: { hp: -25, rep: -15 }, log: loc("어지럼이 특징.","Vertigo is hallmark.") },
+            { text: loc("정상","Normal"), effect: { hp: -32, rep: -22 }, log: loc("이주 통증은 비정상.","Tragal pain abnormal.") }
+        ])
+    };
+}
+function generatePedFeverManageQuestion() {
+    return { baseId: "pedFever3mo", categoryKey: "pediatric", part: loc("발열","Fever"), emoji: "🌡️",
+        title: loc("3개월 미만 영아 발열","Fever in <3-Month-Old"),
+        desc: loc("생후 6주 영아가 직장체온 38.2°C로 측정됐다. 우선 처치는?","6-week-old infant with rectal temp 38.2°C. First action?"),
+        choices: shuffle([
+            { text: loc("즉시 응급실로 - 패혈증 검사 시행","Immediate ED — full septic workup"), effect: { hp: -2, rep: 22 }, log: loc("정답. <3개월·발열은 응급.","Correct. <3 mo + fever = emergency.") },
+            { text: loc("해열제 투여 후 관찰","Antipyretic and observe"), effect: { hp: -38, rep: -28 }, log: loc("위험.","Dangerous.") },
+            { text: loc("따뜻하게 옷 입혀 재우기","Bundle up and let sleep"), effect: { hp: -42, rep: -32 }, log: loc("악화.","Worsens.") },
+            { text: loc("내일 재방문","Return tomorrow"), effect: { hp: -45, rep: -35 }, log: loc("매우 위험.","Very dangerous.") }
+        ])
+    };
+}
+function generateImmuneThrombocytopenicQuestion() {
+    return { baseId: "ITPpedRx", categoryKey: "pediatric", part: loc("ITP","ITP"), emoji: "🩸",
+        title: loc("소아 ITP 환아 활동 제한","Pediatric ITP Activity Restriction"),
+        desc: loc("ITP로 혈소판 25,000인 학령기 아동에게 가장 적절한 활동 교육은?","School-age child with ITP, plt 25,000. Best activity teaching?"),
+        choices: shuffle([
+            { text: loc("접촉 스포츠·머리 외상 위험 활동 피하기","Avoid contact sports and head-injury risk activities"), effect: { hp: -2, rep: 22 }, log: loc("정답. 출혈 위험 ↑.","Correct. Bleeding risk.") },
+            { text: loc("정상 활동 가능","Normal activity is fine"), effect: { hp: -32, rep: -22 }, log: loc("출혈 위험.","Bleeding risk.") },
+            { text: loc("절대 침대 안정","Strict bed rest"), effect: { hp: -25, rep: -15 }, log: loc("과도.","Excessive.") },
+            { text: loc("아스피린 복용","Take aspirin"), effect: { hp: -45, rep: -35 }, log: loc("출혈 악화.","Worsens bleeding.") }
+        ])
+    };
+}
+function generatePedDevAutismQuestion() {
+    return { baseId: "autismRedFlag", categoryKey: "pediatric", part: loc("발달 평가","Developmental"), emoji: "🧒",
+        title: loc("자폐 의심 발달 적신호","Autism Red Flag"),
+        desc: loc("18개월 아동에서 자폐 스펙트럼을 의심할 \"적신호\"가 아닌 것은?","Which is NOT a red flag for autism in an 18-month-old?"),
+        choices: shuffle([
+            { text: loc("이름 부르면 가끔 돌아본다","Sometimes turns when name called"), effect: { hp: -2, rep: 22 }, log: loc("정답. 정상 발달 가능.","Correct. Can be normal.") },
+            { text: loc("눈 맞춤 결여","No eye contact"), effect: { hp: -25, rep: -15 }, log: loc("적신호.","Red flag.") },
+            { text: loc("사회적 미소 없음","No social smile"), effect: { hp: -25, rep: -15 }, log: loc("적신호.","Red flag.") },
+            { text: loc("반복 행동(rocking)","Repetitive rocking"), effect: { hp: -25, rep: -15 }, log: loc("적신호.","Red flag.") }
+        ])
+    };
+}
+
+// --- 정신 (psych) +5 ---
+function generateTherapeuticCommQuestion() {
+    return { baseId: "therapComm", categoryKey: "psych", part: loc("치료적 의사소통","Therapeutic Communication"), emoji: "💬",
+        title: loc("치료적 의사소통 - 가장 좋은 응답","Therapeutic Communication — Best Response"),
+        desc: loc("우울증 환자가 \"이제 더 이상 살 가치가 없어요\"라고 말한다. 가장 치료적인 반응은?","Depressed patient says \"Life's not worth living anymore.\" Most therapeutic response?"),
+        choices: shuffle([
+            { text: loc("\"자살할 생각이 있으신가요?\" 직접적 질문","Direct question: \"Are you thinking of killing yourself?\""), effect: { hp: -2, rep: 22 }, log: loc("정답. 직접 질문은 자살 위험을 사정하는 표준.","Correct. Direct asking is standard for suicide assessment.") },
+            { text: loc("\"그런 말씀 마세요, 좋아질 거예요\"","\"Don't say that, things will get better\""), effect: { hp: -32, rep: -22 }, log: loc("축소화.","Minimizes.") },
+            { text: loc("화제 전환","Change the subject"), effect: { hp: -38, rep: -28 }, log: loc("방어적 회피.","Avoidance.") },
+            { text: loc("\"왜 그렇게 느끼세요?\"","\"Why do you feel that way?\""), effect: { hp: -25, rep: -15 }, log: loc("\"왜\"는 방어 유발.","\"Why\" puts on defense.") }
+        ])
+    };
+}
+function generateMSEcomponentsQuestion() {
+    return { baseId: "mseInsight", categoryKey: "psych", part: loc("정신상태 검사","Mental Status Exam"), emoji: "🧠",
+        title: loc("정신상태 검사 - 통찰력","MSE — Insight"),
+        desc: loc("\"환자가 자신의 질병을 인식·이해하는 정도\"를 평가하는 MSE 항목은?","MSE component for \"patient's awareness/understanding of their illness\"?"),
+        choices: shuffle([
+            { text: loc("통찰력(Insight)","Insight"), effect: { hp: -2, rep: 22 }, log: loc("정답. 정신과 예후 예측 인자.","Correct. Predicts prognosis.") },
+            { text: loc("판단력(Judgment)","Judgment"), effect: { hp: -25, rep: -15 }, log: loc("의사결정 능력.","Decision-making.") },
+            { text: loc("기분(Mood)","Mood"), effect: { hp: -28, rep: -20 }, log: loc("주관적 감정.","Subjective emotion.") },
+            { text: loc("정동(Affect)","Affect"), effect: { hp: -28, rep: -20 }, log: loc("관찰 가능한 표현.","Observable expression.") }
+        ])
+    };
+}
+function generateAlcoholCAGEQuestion() {
+    return { baseId: "cageScreen", categoryKey: "psych", part: loc("알코올 선별","Alcohol Screening"), emoji: "🍷",
+        title: loc("CAGE 선별 도구","CAGE Screening Tool"),
+        desc: loc("알코올 사용 장애 선별 도구 \"CAGE\"의 \"E\"는?","In CAGE alcohol screening, what is \"E\"?"),
+        choices: shuffle([
+            { text: loc("Eye-opener (아침 해장술)","Eye-opener (morning drink)"), effect: { hp: -2, rep: 22 }, log: loc("정답. C-A-G-E.","Correct. C-A-G-E.") },
+            { text: loc("Eat (음식)","Eat"), effect: { hp: -28, rep: -20 }, log: loc("아님.","Wrong.") },
+            { text: loc("Exit (탈출)","Exit"), effect: { hp: -28, rep: -20 }, log: loc("아님.","Wrong.") },
+            { text: loc("Energy","Energy"), effect: { hp: -32, rep: -22 }, log: loc("아님.","Wrong.") }
+        ])
+    };
+}
+function generateMilieuTherapyQuestion() {
+    return { baseId: "milieuTherapy", categoryKey: "psych", part: loc("치료적 환경","Therapeutic Milieu"), emoji: "🏥",
+        title: loc("치료적 환경(Milieu Therapy)","Therapeutic Milieu"),
+        desc: loc("정신과 병동의 \"milieu therapy\"의 핵심 원칙은?","Core principle of psychiatric unit milieu therapy?"),
+        choices: shuffle([
+            { text: loc("환경 자체가 치료의 도구가 되도록 안전·구조·치료적 상호작용 조성","The environment itself is therapeutic — safety, structure, healing interactions"), effect: { hp: -2, rep: 22 }, log: loc("정답. 환자 간 상호작용도 치료적.","Correct. Patient interactions are therapeutic too.") },
+            { text: loc("환자를 격리해 자극 차단","Isolate patients to reduce stimuli"), effect: { hp: -32, rep: -22 }, log: loc("반대 개념.","Opposite.") },
+            { text: loc("의사만 치료자","Only physicians treat"), effect: { hp: -28, rep: -20 }, log: loc("팀 접근.","Team approach.") },
+            { text: loc("환자의 개별성 무시","Ignore individuality"), effect: { hp: -38, rep: -28 }, log: loc("부적절.","Inappropriate.") }
+        ])
+    };
+}
+function generateGriefAbnormalQuestion() {
+    return { baseId: "complicatedGrief", categoryKey: "psych", part: loc("애도","Grief"), emoji: "💔",
+        title: loc("정상 애도와 복합 애도 감별","Normal vs Complicated Grief"),
+        desc: loc("배우자 사망 후 1년이 지나도 일상생활 마비, 강박적 그리움, 자살 사고가 지속된다. 가장 가능성 높은 진단은?","One year after spouse's death: paralyzed daily life, intense longing, suicidal thoughts. Most likely?"),
+        choices: shuffle([
+            { text: loc("복합 애도(Complicated/Prolonged grief) - 전문 치료 필요","Complicated/prolonged grief — needs treatment"), effect: { hp: -2, rep: 22 }, log: loc("정답. 1년 이상 지속·기능 손상 = 비정상.","Correct. >1 yr + dysfunction = abnormal.") },
+            { text: loc("정상 애도","Normal grief"), effect: { hp: -32, rep: -22 }, log: loc("정상은 보통 6-12개월에 호전.","Normal usually improves by 6-12 mo.") },
+            { text: loc("치매","Dementia"), effect: { hp: -28, rep: -20 }, log: loc("인지장애 양상 다름.","Different pattern.") },
+            { text: loc("ADHD","ADHD"), effect: { hp: -32, rep: -22 }, log: loc("관련 없음.","Unrelated.") }
+        ])
+    };
+}
+
+// --- 기본 (fundamentals) +3 ---
+function generateMedicationCalcDimAnalQuestion() {
+    return { baseId: "medCalcDimAnal", categoryKey: "fundamentals", part: loc("약물 계산","Med Calc"), emoji: "🧮",
+        title: loc("약물 계산 - 차원분석","Medication Dose Calculation"),
+        desc: loc("의사 처방: morphine 4 mg IV. 보유 약: morphine 10 mg/mL. 투여할 부피는?","Order: morphine 4 mg IV. Stock: morphine 10 mg/mL. Volume to give?"),
+        choices: shuffle([
+            { text: loc("0.4 mL","0.4 mL"), effect: { hp: -2, rep: 22 }, log: loc("정답. 4 mg ÷ 10 mg/mL = 0.4 mL.","Correct. 4 ÷ 10 = 0.4 mL.") },
+            { text: loc("4 mL","4 mL"), effect: { hp: -38, rep: -28 }, log: loc("10배 과량.","10× overdose.") },
+            { text: loc("1 mL","1 mL"), effect: { hp: -32, rep: -22 }, log: loc("계산 오류.","Error.") },
+            { text: loc("2.5 mL","2.5 mL"), effect: { hp: -32, rep: -22 }, log: loc("계산 오류.","Error.") }
+        ])
+    };
+}
+function generateRestraintEvalQuestion() {
+    return { baseId: "restraintCheck", categoryKey: "fundamentals", part: loc("억제대","Restraints"), emoji: "🚫",
+        title: loc("억제대 사용 시 평가 빈도","Restraint Reassessment Frequency"),
+        desc: loc("폭력적 행동에 대한 신체 억제대를 적용한 성인 환자의 \"순환·피부\" 사정 빈도는?","Adult in violent-behavior physical restraint — frequency of circulation/skin checks?"),
+        choices: shuffle([
+            { text: loc("최소 매 15-30분마다","At least every 15-30 minutes"), effect: { hp: -2, rep: 22 }, log: loc("정답. 폭력적 억제는 자주 사정.","Correct. Frequent assessment for violent restraint.") },
+            { text: loc("매 4시간마다","Every 4 hours"), effect: { hp: -32, rep: -22 }, log: loc("부적절.","Inadequate.") },
+            { text: loc("매 12시간마다","Every 12 hours"), effect: { hp: -42, rep: -32 }, log: loc("위험.","Dangerous.") },
+            { text: loc("환자 호소 시만","Only when patient complains"), effect: { hp: -38, rep: -28 }, log: loc("의사소통 어려울 수 있음.","May be unable to communicate.") }
+        ])
+    };
+}
+function generateSubcutaneousSiteQuestion() {
+    return { baseId: "scInsulinSite", categoryKey: "fundamentals", part: loc("피하 주사","SC Injection"), emoji: "💉",
+        title: loc("인슐린 부위별 흡수 속도","Insulin Absorption by Site"),
+        desc: loc("같은 인슐린을 피하 주사할 때 흡수가 \"가장 빠른\" 부위는?","Where is SC insulin absorbed FASTEST?"),
+        choices: shuffle([
+            { text: loc("복부(배꼽 주위 제외)","Abdomen (avoiding around umbilicus)"), effect: { hp: -2, rep: 22 }, log: loc("정답. 복부 > 팔 > 허벅지 > 엉덩이.","Correct. Abdomen > arm > thigh > buttock.") },
+            { text: loc("엉덩이","Buttock"), effect: { hp: -25, rep: -15 }, log: loc("가장 느림.","Slowest.") },
+            { text: loc("허벅지","Thigh"), effect: { hp: -22, rep: -12 }, log: loc("중간.","Intermediate.") },
+            { text: loc("발목","Ankle"), effect: { hp: -32, rep: -22 }, log: loc("부적절.","Inappropriate.") }
         ])
     };
 }
