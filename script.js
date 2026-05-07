@@ -3363,7 +3363,7 @@ function renderQuizMenu() {
       <p class="scene-desc">${t("trainingDesc")}</p>
       <div class="choice-list">
         ${CATEGORY_KEYS.map((key) => `<button class="choice-btn primary" data-cat="${key}">${catName(key)}</button>`).join("")}
-        <hr style="border:0; border-top:1px dashed rgba(99,102,241,0.2); margin: 14px 0 10px;">
+        <hr style="border:0; border-top:1px dashed rgba(100,116,139,0.25); margin: 14px 0 10px;">
         <button class="choice-btn ghost" data-tool="srs">${t("srsBtn")} <span class="tool-count">${dueCount}</span></button>
         <button class="choice-btn ghost" data-tool="wrong">${t("wrongReviewBtn")} <span class="tool-count">${wrongCount}</span></button>
         <button class="choice-btn ghost" data-tool="bookmark">${t("bookmarkBtn")} <span class="tool-count">${bookmarkCount}</span></button>
@@ -3780,7 +3780,7 @@ function showGameOver(title, desc) {
     ${t("correctLabel")} <span class="highlight">${correct}</span> /
     ${t("wrongLabel")} <span class="highlight">${wrong}</span> ·
     ${t("accuracyLabel")}: <span class="highlight">${acc}%</span>
-    <hr style="border:0; border-top:1px solid rgba(255,255,255,0.12); margin:10px 0;">
+    <hr style="border:0; border-top:1px solid rgba(100,116,139,0.18); margin:10px 0;">
     <div class="ending-rules-block">
       <div class="ending-rules-title">${t("rulesHeading")}</div>
       <div class="ending-rules-grid">
