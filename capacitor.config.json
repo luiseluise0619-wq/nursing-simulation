@@ -1,0 +1,30 @@
+{
+  "appId": "io.github.nursesim",
+  "appName": "Nurse Simulator",
+  "webDir": ".",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": false,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": false
+  },
+  "ios": {
+    "contentInset": "always",
+    "scrollEnabled": true
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1500,
+      "launchAutoHide": true,
+      "backgroundColor": "#fdf2f8",
+      "showSpinner": false
+    },
+    "StatusBar": {
+      "style": "default",
+      "backgroundColor": "#6366f1"
+    }
+  }
+}

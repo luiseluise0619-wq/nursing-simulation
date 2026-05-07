@@ -7,7 +7,7 @@ A free bilingual (KO/EN) PWA for nursing study — randomized board-style questi
 
 ## Features
 
-- **404 randomized clinical questions** (354 text + **50 image-based** SVG questions covering ECG strips, pressure-ulcer staging, triage, Rule of Nines, heart/lung/eye anatomy, positioning, reflexes, pain scale, insulin syringe, wound types/colors, burn depth, GCS, crutch gait, DTR, IV drip calc, auscultation areas, IM sites, posturing, pupils, AED, fontanelle, ostomy, pulse points, conduction system, cervical dilation, skin turgor, Battle sign, CVC ports, fundal descent, ABO chart, abdominal signs, infant dehydration, ear-pull technique, spirometry curves, ST segment, spinal levels, NG placement, liver position, bladder distension, dermatomes, BP cuff size) — across 8 nursing-board subjects, including **NCLEX-style** delegation, HIPAA, and drug calculation questions
+- **436 randomized clinical questions** (375 text + **61 image-based** SVG questions covering ECG strips, anatomy diagrams, charts, scales, positioning, and procedure visuals) across 8 nursing-board subjects, including **NCLEX-style** delegation, HIPAA, and drug calculation questions
 - **Bilingual KO/EN** — full UI and content translation, instant toggle, persisted preference
 - **Survival shift mode** — 20 events per shift with 3 boss encounters (Code Blue, VIP, Mass Casualty), combo system, and **30 daily ward flavor events**
 - **13 narrative endings** — happy / sad / bittersweet / easter-egg branches based on accuracy, bosses, key story choices
@@ -128,6 +128,16 @@ Build/sign/publish from Xcode or Android Studio. For ads, integrate `@capacitor-
 - Terms of service URL
 - Medical disclaimer (already in app — first-launch modal)
 - Optional: medical professional review sign-off
+
+## Medical-review export
+
+To send all questions to a clinician for review:
+
+```bash
+node tools/export-questions.js > questions-for-review.csv
+```
+
+The CSV contains every question in both KO and EN (24 columns including question text, all 4 choices with correct flag, rationale, image flag, and blank `review_status`/`reviewer_notes` columns). Open in Excel/Numbers/Sheets, distribute to RN/MD reviewers.
 
 ## Pre-launch checklist
 
