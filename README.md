@@ -1,13 +1,13 @@
 # Nurse Simulator · 간호사 시뮬레이터
 
-A free bilingual (KO/EN) PWA for nursing study — randomized board-style questions plus a survival "shift" mode with bosses and combos.
+A free bilingual (KO/EN) PWA for nursing study — 508 randomized board-style questions (75 SVG image-based) plus a survival "shift" mode with bosses and combos. **v3.0 — soft neumorphic / sage-green design.**
 
 [![PWA](https://img.shields.io/badge/PWA-installable-6366f1)](#install)
 [![License](https://img.shields.io/badge/license-Educational%20Use-blue)](#license)
 
 ## Features
 
-- **488 randomized clinical questions** (415 text + **73 image-based** SVG questions covering ECG strips, anatomy diagrams, charts, scales, positioning, and procedure visuals) across 8 nursing-board subjects, including **NCLEX-style** delegation, HIPAA, and drug calculation questions
+- **508 randomized clinical questions** (433 text + **75 image-based** SVG questions covering ECG strips, anatomy diagrams, charts, scales, positioning, and procedure visuals) across 8 nursing-board subjects, including **NCLEX-style** delegation, HIPAA, and drug calculation questions
 - **Bilingual KO/EN** — full UI and content translation, instant toggle, persisted preference
 - **Survival shift mode** — 20 events per shift with 3 boss encounters (Code Blue, VIP, Mass Casualty), combo system, and **30 daily ward flavor events**
 - **13 narrative endings** — happy / sad / bittersweet / easter-egg branches based on accuracy, bosses, key story choices
@@ -65,25 +65,25 @@ python3 -m http.server 8000
 Honest list of what's missing — useful as backlog, also useful for setting expectations with users:
 
 **Content**
-- 113 questions is solid for a free study aid but **far below commercial bank apps (1,000–5,000)**. Keep adding ~50/year for serious comparison.
+- 508 questions covers most Korean Boards topics; **still below commercial bank apps (1,000–5,000)**. Continue adding ~50/year.
 - No "5-year past exam" verbatim coverage — questions are *style* equivalents, not exact reproductions of past Korean Boards items.
 - Rationales are short; deeper references (e.g., journal citation, image, table) are not provided.
 - A few answers reflect **traditional board teaching** (MI MONA, glaucoma miotic, pancreatitis meperidine) where modern guidelines have evolved. Kept aligned with current Korean Boards answer keys.
 
-**Study tools (now ALL shipped as of v1.4)**
+**Study tools (shipped)**
 - ✅ **Wrong-answer review (오답노트)** — auto-tracked, review on demand, mastered ones auto-removed
 - ✅ **Bookmarks** — star any question during quiz, review starred later
 - ✅ **Timed exam mode** — 30 questions × 30 minutes with countdown timer
 - ✅ **Spaced repetition (SRS Leitner)** — proper 5-box scheduling (0/1/3/7/14 days). Correct → up a box, wrong → box 1.
 - ✅ **Subtopic filter** — pick a category, then drill into a specific `part` (e.g., Adult → Cardiovascular only)
-- ✅ **Image-based questions** — 10 SVG image questions (ECG, pressure ulcer, triage, anatomy, positioning, reflexes)
+- ✅ **Image-based questions** — 75 SVG image questions (ECG, pressure ulcer, triage, anatomy, positioning, reflexes, scales, drug calc)
 
 **Platform**
-- 🟡 **PNG icons missing** — only `icons/icon.svg`. Generate 192/512 PNG before iOS App Store submission (tools: Inkscape, rsvg-convert, online).
-- ❌ **No Capacitor / native wrapper** — for Play/App Store you'd wrap with Capacitor or PWA Builder.
-- ❌ **No analytics** (intentional for v1, but means no insight into which questions confuse users).
-- ❌ **No accounts / cloud sync** — switching device loses progress.
-- ❌ **No social features** (share scores, leaderboard).
+- ✅ **PNG icons** — favicon-32, favicon-64, icon-192, icon-512, icon-512-maskable, apple-touch-icon
+- ✅ **Capacitor config** included (`capacitor.config.json`); wrap as native iOS/Android app
+- ❌ **No analytics** (intentional for v3, but means no insight into which questions confuse users)
+- ❌ **No accounts / cloud sync** — switching device loses progress
+- ❌ **No social features** (share scores, leaderboard)
 
 **Production polish**
 - 🟡 Privacy policy, terms of service text — required by Play/App Store; not included.
