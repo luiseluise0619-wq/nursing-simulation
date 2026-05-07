@@ -800,7 +800,12 @@ const clinicalGenerators = [
     generateBabyDevelopmentQuestion, generateGriefStagesVarsQuestion, generateThyroidLabQuestion,
     generateMurmurLocationQuestion, generateBurnAreaCalcQuestion, generateInsulinTimingQuestion,
     generateOxygenDeviceFlowQuestion, generatePainTeachingTypeQuestion, generateContraceptionQuestion,
-    generateInfectionPrecautionVarsQuestion
+    generateInfectionPrecautionVarsQuestion,
+    // ===== 이미지 문제 3차: 10개 추가 (총 30개 이미지) =====
+    generateAuscultationAreasQuestion, generateIMSitesQuestion, generatePostureQuestion,
+    generatePupilExamQuestion, generateAEDPadsQuestion, generateFontanelleQuestion,
+    generateOstomyTypesQuestion, generateWoundColorQuestion, generateRespDistressPostureQuestion,
+    generatePulsePointsQuestion
 ];
 
 function generateABGAQuestion() {
@@ -1766,6 +1771,149 @@ function generateInfectionPrecautionVarsQuestion() {
             { text: loc(w[0].correctKo, w[0].correctEn), effect: { hp: -22, rep: -12 }, log: loc("다른 질환.","Different disease.") },
             { text: loc(w[1].correctKo, w[1].correctEn), effect: { hp: -22, rep: -12 }, log: loc("다른 질환.","Different disease.") },
             { text: loc("표준주의만","Standard only"), effect: { hp: -28, rep: -20 }, log: loc("표준주의만으론 부족.","Standard alone insufficient.") }
+        ])
+    };
+}
+
+// ========= 이미지 문제 3차: 10개 추가 =========
+function generateAuscultationAreasQuestion() {
+    const svg = `<svg viewBox="0 0 600 240" xmlns="http://www.w3.org/2000/svg"><rect width="600" height="240" fill="#fef3f7"/><g transform="translate(150,20)"><path d="M 50 10 Q 30 60 60 100 L 70 200 Q 100 220 130 220 Q 160 220 190 200 L 200 100 Q 230 60 200 10 Q 175 -5 150 10 Q 125 -5 100 10 Q 75 -5 50 10 Z" fill="#fecaca" stroke="#991b1b" stroke-width="2"/><circle cx="80" cy="60" r="12" fill="#dc2626"/><text x="80" y="65" text-anchor="middle" font-size="11" fill="white" font-weight="700">A</text><circle cx="170" cy="60" r="12" fill="#dc2626"/><text x="170" y="65" text-anchor="middle" font-size="11" fill="white" font-weight="700">B</text><circle cx="125" cy="100" r="12" fill="#dc2626"/><text x="125" y="105" text-anchor="middle" font-size="11" fill="white" font-weight="700">C</text><circle cx="155" cy="135" r="12" fill="#dc2626"/><text x="155" y="140" text-anchor="middle" font-size="11" fill="white" font-weight="700">D</text><circle cx="115" cy="170" r="12" fill="#dc2626"/><text x="115" y="175" text-anchor="middle" font-size="11" fill="white" font-weight="700">E</text></g><text x="470" y="40" font-size="11">${loc("APE To Man","APE To Man")}</text><text x="470" y="58" font-size="10" fill="#64748b">A: ${loc("대동맥","Aortic")}</text><text x="470" y="75" font-size="10" fill="#64748b">B: ${loc("폐동맥","Pulmonic")}</text><text x="470" y="92" font-size="10" fill="#64748b">C: ${loc("Erb's","Erb's")}</text><text x="470" y="109" font-size="10" fill="#64748b">D: ${loc("삼첨판","Tricuspid")}</text><text x="470" y="126" font-size="10" fill="#64748b">E: ${loc("승모판","Mitral")}</text></svg>`;
+    return { baseId: "auscultationAreas", categoryKey: "adult", part: loc("심청진","Cardiac Auscultation"), emoji: "🩺",
+        title: loc("심음 청진 부위","Heart Auscultation Areas"),
+        desc: loc("승모판 협착의 이완기 잡음을 가장 잘 들을 수 있는 부위는?","Best location to hear the diastolic murmur of mitral stenosis?"),
+        image: svg,
+        choices: shuffle([
+            { text: loc("E (심첨부, 승모판)","E (Apex, Mitral)"), effect: { hp: -2, rep: 22 }, log: loc("정답. 승모판은 심첨부.","Correct. Mitral = apex.") },
+            { text: loc("A (우상흉골연, 대동맥)","A (RUSB, Aortic)"), effect: { hp: -22, rep: -12 }, log: loc("AS 잡음을 듣는 곳.","Hear AS here.") },
+            { text: loc("B (좌상흉골연, 폐동맥)","B (LUSB, Pulmonic)"), effect: { hp: -22, rep: -12 }, log: loc("PS 잡음.","Pulmonic stenosis.") },
+            { text: loc("D (좌하흉골연, 삼첨판)","D (LLSB, Tricuspid)"), effect: { hp: -22, rep: -12 }, log: loc("VSD·삼첨 역류.","VSD/TR.") }
+        ])
+    };
+}
+function generateIMSitesQuestion() {
+    const svg = `<svg viewBox="0 0 600 240" xmlns="http://www.w3.org/2000/svg"><rect width="600" height="240" fill="#f0f9ff"/><g transform="translate(50,20)"><circle cx="60" cy="40" r="22" fill="#fed7aa" stroke="#9a3412"/><rect x="38" y="62" width="44" height="80" fill="#fecaca" stroke="#991b1b" rx="4"/><rect x="20" y="80" width="20" height="60" fill="#fecaca" stroke="#991b1b" rx="4"/><rect x="80" y="80" width="20" height="60" fill="#fecaca" stroke="#991b1b" rx="4"/><rect x="40" y="140" width="20" height="60" fill="#fecaca" stroke="#991b1b" rx="4"/><rect x="60" y="140" width="20" height="60" fill="#fecaca" stroke="#991b1b" rx="4"/><circle cx="30" cy="92" r="6" fill="#dc2626"/><text x="30" y="96" text-anchor="middle" font-size="9" fill="white" font-weight="700">A</text><circle cx="55" cy="160" r="6" fill="#dc2626"/><text x="55" y="164" text-anchor="middle" font-size="9" fill="white" font-weight="700">B</text><text x="60" y="225" text-anchor="middle" font-size="11" font-weight="700">${loc("성인","Adult")}</text></g><g transform="translate(280,20)"><circle cx="60" cy="40" r="22" fill="#fed7aa" stroke="#9a3412"/><rect x="38" y="62" width="44" height="80" fill="#fecaca" stroke="#991b1b" rx="4"/><rect x="20" y="80" width="20" height="50" fill="#fecaca" stroke="#991b1b" rx="4"/><rect x="80" y="80" width="20" height="50" fill="#fecaca" stroke="#991b1b" rx="4"/><rect x="40" y="140" width="20" height="60" fill="#fecaca" stroke="#991b1b" rx="4"/><rect x="60" y="140" width="20" height="60" fill="#fecaca" stroke="#991b1b" rx="4"/><circle cx="50" cy="160" r="6" fill="#dc2626"/><text x="50" y="164" text-anchor="middle" font-size="9" fill="white" font-weight="700">C</text><text x="60" y="225" text-anchor="middle" font-size="11" font-weight="700">${loc("영아","Infant")}</text></g><g transform="translate(450,30)"><text x="0" y="20" font-size="11" font-weight="700">${loc("부위","Sites")}</text><text x="0" y="42" font-size="10" fill="#64748b">A: ${loc("삼각근","Deltoid")}</text><text x="0" y="60" font-size="10" fill="#64748b">B: ${loc("배둔부","Ventrogluteal")}</text><text x="0" y="78" font-size="10" fill="#64748b">C: ${loc("외측광근","Vastus lateralis")}</text></g></svg>`;
+    return { baseId: "imSites", categoryKey: "fundamentals", part: loc("근육주사 부위","IM Injection Site"), emoji: "💉",
+        title: loc("IM 주사 부위 선택","Choose IM Site"),
+        desc: loc("12개월 미만 영아에게 가장 안전한 IM 주사 부위는?","Safest IM injection site for infant <12 months?"),
+        image: svg,
+        choices: shuffle([
+            { text: loc("C (외측광근, vastus lateralis)","C (Vastus lateralis)"), effect: { hp: -2, rep: 22 }, log: loc("정답. 영아는 둔근 발달 미완성으로 외측광근이 표준.","Correct. Infant gluteal muscle is underdeveloped.") },
+            { text: loc("A (삼각근)","A (Deltoid)"), effect: { hp: -28, rep: -20 }, log: loc("영아는 근육량 부족.","Insufficient muscle mass in infants.") },
+            { text: loc("B (배둔부)","B (Ventrogluteal)"), effect: { hp: -22, rep: -12 }, log: loc("성인·소아의 첫 선택, 영아는 X.","First-line for adults/children, not infants.") },
+            { text: loc("등둔부(Dorsogluteal)","Dorsogluteal"), effect: { hp: -32, rep: -22 }, log: loc("좌골신경 손상 위험으로 권장 안 함.","Sciatic nerve risk — discouraged.") }
+        ])
+    };
+}
+function generatePostureQuestion() {
+    const svg = `<svg viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg"><rect width="600" height="200" fill="#fff5f5"/><g transform="translate(40,30)"><rect x="0" y="100" width="160" height="14" fill="#94a3b8"/><circle cx="40" cy="60" r="14" fill="#fed7aa"/><rect x="35" y="70" width="50" height="50" fill="#fecaca" stroke="#991b1b" rx="3"/><line x1="35" y1="78" x2="15" y2="100" stroke="#1e293b" stroke-width="3"/><line x1="85" y1="78" x2="105" y2="100" stroke="#1e293b" stroke-width="3"/><line x1="20" y1="100" x2="20" y2="60" stroke="#1e293b" stroke-width="3"/><line x1="100" y1="100" x2="100" y2="60" stroke="#1e293b" stroke-width="3"/><text x="60" y="155" text-anchor="middle" font-size="13" font-weight="700">A</text><text x="60" y="175" text-anchor="middle" font-size="10" fill="#64748b">${loc("팔 굴곡, 다리 내전·신전","Arms flexed, legs ext")}</text></g><g transform="translate(220,30)"><rect x="0" y="100" width="160" height="14" fill="#94a3b8"/><circle cx="40" cy="60" r="14" fill="#fed7aa"/><rect x="35" y="70" width="50" height="50" fill="#fecaca" stroke="#991b1b" rx="3"/><line x1="35" y1="100" x2="15" y2="78" stroke="#1e293b" stroke-width="3"/><line x1="85" y1="100" x2="105" y2="78" stroke="#1e293b" stroke-width="3"/><line x1="20" y1="100" x2="20" y2="60" stroke="#1e293b" stroke-width="3"/><line x1="100" y1="100" x2="100" y2="60" stroke="#1e293b" stroke-width="3"/><text x="60" y="155" text-anchor="middle" font-size="13" font-weight="700">B</text><text x="60" y="175" text-anchor="middle" font-size="10" fill="#64748b">${loc("팔 신전·내회전","Arms ext, internally rot")}</text></g><g transform="translate(400,30)"><rect x="0" y="100" width="160" height="14" fill="#94a3b8"/><circle cx="40" cy="60" r="14" fill="#fed7aa"/><rect x="35" y="70" width="50" height="50" fill="#fecaca" stroke="#991b1b" rx="3"/><line x1="35" y1="78" x2="15" y2="60" stroke="#1e293b" stroke-width="3"/><line x1="85" y1="78" x2="105" y2="60" stroke="#1e293b" stroke-width="3"/><line x1="20" y1="100" x2="50" y2="80" stroke="#1e293b" stroke-width="3"/><line x1="100" y1="100" x2="70" y2="80" stroke="#1e293b" stroke-width="3"/><text x="60" y="155" text-anchor="middle" font-size="13" font-weight="700">C</text><text x="60" y="175" text-anchor="middle" font-size="10" fill="#64748b">${loc("정상","Normal")}</text></g></svg>`;
+    return { baseId: "decerebratePosture", categoryKey: "adult", part: loc("의식 사정","Consciousness"), emoji: "🧠",
+        title: loc("이상 자세 식별","Abnormal Posturing"),
+        desc: loc("그림 B는 팔이 신전·내회전된 자세입니다. 무엇이며 임상 의의는?","Diagram B: arms extended, internally rotated. Name and significance?"),
+        image: svg,
+        choices: shuffle([
+            { text: loc("Decerebrate(제뇌경직) - 뇌간 손상, 더 나쁜 예후","Decerebrate — brainstem injury, worse prognosis"), effect: { hp: -3, rep: 22 }, log: loc("정답. 중뇌·교 수준 손상.","Correct. Midbrain/pons damage.") },
+            { text: loc("Decorticate(제피질경직) - 그림 A","Decorticate — that's diagram A"), effect: { hp: -22, rep: -12 }, log: loc("A는 decorticate.","A is decorticate.") },
+            { text: loc("정상 자세","Normal"), effect: { hp: -32, rep: -22 }, log: loc("심각한 신경 손상.","Severe neuro damage.") },
+            { text: loc("발작 후 자세","Postictal"), effect: { hp: -28, rep: -20 }, log: loc("발작 후엔 보통 이완성.","Usually flaccid post-seizure.") }
+        ])
+    };
+}
+function generatePupilExamQuestion() {
+    const pupil = (cx, irisR, pupilR) => `<circle cx="${cx}" cy="40" r="22" fill="white" stroke="#1e293b" stroke-width="1.5"/><circle cx="${cx}" cy="40" r="${irisR}" fill="#3b82f6"/><circle cx="${cx}" cy="40" r="${pupilR}" fill="#1e293b"/>`;
+    const svg = `<svg viewBox="0 0 600 130" xmlns="http://www.w3.org/2000/svg"><rect width="600" height="130" fill="#fff"/><g transform="translate(20,10)">${pupil(40, 16, 5)}<text x="40" y="80" text-anchor="middle" font-size="13" font-weight="700">A</text><text x="40" y="100" text-anchor="middle" font-size="10" fill="#64748b">${loc("정상 3-5mm","Normal 3-5mm")}</text></g><g transform="translate(160,10)">${pupil(40, 16, 1.5)}<text x="40" y="80" text-anchor="middle" font-size="13" font-weight="700">B</text><text x="40" y="100" text-anchor="middle" font-size="10" fill="#64748b">${loc("바늘구멍 <2mm","Pinpoint <2mm")}</text></g><g transform="translate(300,10)">${pupil(40, 16, 11)}<text x="40" y="80" text-anchor="middle" font-size="13" font-weight="700">C</text><text x="40" y="100" text-anchor="middle" font-size="10" fill="#64748b">${loc("산동 >7mm","Dilated >7mm")}</text></g><g transform="translate(440,10)">${pupil(30, 16, 4)}${pupil(100, 16, 11)}<text x="65" y="80" text-anchor="middle" font-size="13" font-weight="700">D</text><text x="65" y="100" text-anchor="middle" font-size="10" fill="#64748b">${loc("부동 동공","Anisocoria")}</text></g></svg>`;
+    return { baseId: "pupilExam", categoryKey: "adult", part: loc("동공 사정","Pupil Exam"), emoji: "👁️",
+        title: loc("동공 소견 식별","Pupil Findings"),
+        desc: loc("아편제 과량 환자에서 가장 흔히 보이는 동공 소견은?","Most common pupil finding in opioid overdose?"),
+        image: svg,
+        choices: shuffle([
+            { text: loc("B (바늘구멍 동공, miosis)","B (Pinpoint, miosis)"), effect: { hp: -2, rep: 22 }, log: loc("정답. 아편제는 부교감 자극 → miosis.","Correct. Opioids cause miosis.") },
+            { text: loc("C (산동, mydriasis)","C (Mydriasis)"), effect: { hp: -22, rep: -12 }, log: loc("교감 항진제·항콜린제·MDMA에서.","Sympathomimetics, anticholinergics.") },
+            { text: loc("D (부동 동공)","D (Anisocoria)"), effect: { hp: -25, rep: -15 }, log: loc("뇌압 상승·뇌탈출 시.","Increased ICP/herniation.") },
+            { text: loc("A (정상)","A (Normal)"), effect: { hp: -28, rep: -20 }, log: loc("아편제는 비정상.","Opioids cause abnormality.") }
+        ])
+    };
+}
+function generateAEDPadsQuestion() {
+    const svg = `<svg viewBox="0 0 600 220" xmlns="http://www.w3.org/2000/svg"><rect width="600" height="220" fill="#fef9c3"/><g transform="translate(160,20)"><rect x="0" y="20" width="280" height="180" fill="#fecaca" stroke="#991b1b" stroke-width="2" rx="20"/><circle cx="50" cy="65" r="14" fill="#fff" stroke="#1e293b"/><circle cx="230" cy="65" r="14" fill="#fff" stroke="#1e293b"/><rect x="40" y="40" width="50" height="40" fill="#fbbf24" stroke="#1e293b" stroke-width="2" rx="4"/><text x="65" y="65" text-anchor="middle" font-size="12" font-weight="700">A</text><rect x="200" y="120" width="60" height="50" fill="#fbbf24" stroke="#1e293b" stroke-width="2" rx="4"/><text x="230" y="150" text-anchor="middle" font-size="12" font-weight="700">B</text><text x="140" y="215" text-anchor="middle" font-size="11" fill="#64748b">${loc("성인 AED 패드 위치","Adult AED Pad Placement")}</text></g></svg>`;
+    return { baseId: "aedPads", categoryKey: "fundamentals", part: loc("AED","AED"), emoji: "⚡",
+        title: loc("AED 패드 위치","AED Pad Placement"),
+        desc: loc("성인 환자 AED 사용 시 두 패드의 정확한 위치는?","Correct AED pad placement on adult?"),
+        image: svg,
+        choices: shuffle([
+            { text: loc("A: 우측 상흉부 빗장뼈 아래, B: 좌측 외측 흉부 (앞-외측)","A: right upper chest below clavicle, B: left lateral chest"), effect: { hp: -2, rep: 22 }, log: loc("정답. 심장 사이로 전류가 흐르도록 배치.","Correct. Allows current across the heart.") },
+            { text: loc("두 패드 모두 흉골 정중앙","Both pads on sternum midline"), effect: { hp: -32, rep: -22 }, log: loc("전류가 심장을 통과하지 않음.","Current bypasses the heart.") },
+            { text: loc("두 패드를 등에 부착","Both on back"), effect: { hp: -38, rep: -28 }, log: loc("심실 자극 안 됨.","Won't capture ventricles.") },
+            { text: loc("패드 위치는 무관","Position doesn't matter"), effect: { hp: -45, rep: -32 }, log: loc("심각한 오해.","Serious misconception.") }
+        ])
+    };
+}
+function generateFontanelleQuestion() {
+    const svg = `<svg viewBox="0 0 600 240" xmlns="http://www.w3.org/2000/svg"><rect width="600" height="240" fill="#fef3f7"/><g transform="translate(40,20)"><ellipse cx="80" cy="100" rx="70" ry="80" fill="#fed7aa" stroke="#9a3412" stroke-width="2"/><polygon points="80,40 65,80 95,80" fill="#fbbf24" stroke="#92400e" stroke-width="1.5"/><polygon points="80,150 70,170 90,170" fill="#fbbf24" stroke="#92400e" stroke-width="1.5"/><text x="80" y="65" text-anchor="middle" font-size="11" font-weight="700">A</text><text x="80" y="167" text-anchor="middle" font-size="11" font-weight="700">B</text><text x="80" y="220" text-anchor="middle" font-size="11" fill="#64748b">${loc("정상 신생아","Normal Newborn")}</text></g><g transform="translate(260,30)"><text x="0" y="20" font-size="11" font-weight="700">${loc("폐쇄 시기","Closure Time")}</text><text x="0" y="42" font-size="11">A: ${loc("대천문 (전방)","Anterior fontanel")}</text><text x="20" y="60" font-size="10" fill="#64748b">${loc("12-18개월에 폐쇄","Closes 12-18 months")}</text><text x="0" y="82" font-size="11">B: ${loc("소천문 (후방)","Posterior fontanel")}</text><text x="20" y="100" font-size="10" fill="#64748b">${loc("2-3개월에 폐쇄","Closes 2-3 months")}</text><text x="0" y="135" font-size="11" font-weight="700" fill="#dc2626">${loc("이상 소견","Abnormal")}</text><text x="0" y="155" font-size="10">${loc("• 함몰 = 탈수","• Sunken = dehydration")}</text><text x="0" y="173" font-size="10">${loc("• 팽창 = 뇌압 ↑","• Bulging = ICP ↑")}</text></g></svg>`;
+    return { baseId: "fontanelle", categoryKey: "pediatric", part: loc("천문","Fontanelle"), emoji: "👶",
+        title: loc("천문 폐쇄 시기","Fontanelle Closure"),
+        desc: loc("후천문(B)이 정상적으로 폐쇄되는 시기는?","When does the posterior fontanelle (B) normally close?"),
+        image: svg,
+        choices: shuffle([
+            { text: loc("2~3개월","2-3 months"), effect: { hp: -2, rep: 22 }, log: loc("정답. 대천문은 12-18개월.","Correct. Anterior closes at 12-18 months.") },
+            { text: loc("12~18개월","12-18 months"), effect: { hp: -22, rep: -12 }, log: loc("대천문 폐쇄 시기.","That's the anterior.") },
+            { text: loc("출생 시","At birth"), effect: { hp: -25, rep: -15 }, log: loc("정상 신생아는 둘 다 열려 있음.","Both open at birth.") },
+            { text: loc("3년","3 years"), effect: { hp: -28, rep: -20 }, log: loc("너무 늦음.","Too late.") }
+        ])
+    };
+}
+function generateOstomyTypesQuestion() {
+    const svg = `<svg viewBox="0 0 600 240" xmlns="http://www.w3.org/2000/svg"><rect width="600" height="240" fill="#fff5f5"/><g transform="translate(20,20)"><rect width="170" height="180" fill="#fde68a" rx="10"/><circle cx="50" cy="90" r="14" fill="#dc2626" stroke="#7f1d1d" stroke-width="2"/><circle cx="50" cy="90" r="6" fill="#7f1d1d"/><text x="85" y="55" text-anchor="middle" font-size="13" font-weight="700">A</text><text x="85" y="155" text-anchor="middle" font-size="10" fill="#64748b">${loc("우상복부, 액상","RUQ, liquid")}</text></g><g transform="translate(215,20)"><rect width="170" height="180" fill="#fde68a" rx="10"/><circle cx="120" cy="100" r="14" fill="#dc2626" stroke="#7f1d1d" stroke-width="2"/><circle cx="120" cy="100" r="6" fill="#7f1d1d"/><text x="85" y="55" text-anchor="middle" font-size="13" font-weight="700">B</text><text x="85" y="155" text-anchor="middle" font-size="10" fill="#64748b">${loc("좌하복부, 형성된 변","LLQ, formed stool")}</text></g><g transform="translate(410,20)"><rect width="170" height="180" fill="#fde68a" rx="10"/><circle cx="85" cy="120" r="14" fill="#fbbf24" stroke="#92400e" stroke-width="2"/><circle cx="85" cy="120" r="6" fill="#92400e"/><text x="85" y="55" text-anchor="middle" font-size="13" font-weight="700">C</text><text x="85" y="155" text-anchor="middle" font-size="10" fill="#64748b">${loc("정중하복부, 노란색","Lower midline, yellow")}</text></g></svg>`;
+    return { baseId: "ostomyTypes", categoryKey: "fundamentals", part: loc("장루","Ostomy"), emoji: "🩹",
+        title: loc("장루 유형 식별","Identify Ostomy Type"),
+        desc: loc("그림 B (좌하복부·형성된 변)는 어떤 종류의 장루인가요?","Diagram B (LLQ, formed stool). What type of ostomy?"),
+        image: svg,
+        choices: shuffle([
+            { text: loc("S상결장루(Sigmoid colostomy)","Sigmoid colostomy"), effect: { hp: -2, rep: 22 }, log: loc("정답. LLQ + 형성된 변 = sigmoid.","Correct. LLQ + formed stool = sigmoid.") },
+            { text: loc("회장루(Ileostomy)","Ileostomy"), effect: { hp: -22, rep: -12 }, log: loc("RUQ + 액상 = A.","RUQ + liquid = A.") },
+            { text: loc("요루(Urostomy)","Urostomy"), effect: { hp: -22, rep: -12 }, log: loc("정중·노란 소변 = C.","Midline + yellow urine = C.") },
+            { text: loc("위루(Gastrostomy)","Gastrostomy"), effect: { hp: -25, rep: -15 }, log: loc("위에 있고 영양 공급용.","On stomach for feeding.") }
+        ])
+    };
+}
+function generateWoundColorQuestion() {
+    const svg = `<svg viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg"><rect width="600" height="200" fill="#fff5f5"/><g transform="translate(20,20)"><rect width="140" height="140" fill="#fde68a" rx="8"/><ellipse cx="70" cy="70" rx="40" ry="30" fill="#dc2626"/><text x="70" y="125" text-anchor="middle" font-size="13" font-weight="700">A</text><text x="70" y="175" text-anchor="middle" font-size="10" fill="#64748b">${loc("선홍색","Red")}</text></g><g transform="translate(170,20)"><rect width="140" height="140" fill="#fde68a" rx="8"/><ellipse cx="70" cy="70" rx="40" ry="30" fill="#facc15"/><text x="70" y="125" text-anchor="middle" font-size="13" font-weight="700">B</text><text x="70" y="175" text-anchor="middle" font-size="10" fill="#64748b">${loc("노란색·조직","Yellow slough")}</text></g><g transform="translate(320,20)"><rect width="140" height="140" fill="#fde68a" rx="8"/><ellipse cx="70" cy="70" rx="40" ry="30" fill="#1e293b"/><text x="70" y="125" text-anchor="middle" font-size="13" font-weight="700">C</text><text x="70" y="175" text-anchor="middle" font-size="10" fill="#64748b">${loc("검은색·괴사","Black eschar")}</text></g><g transform="translate(470,20)"><rect width="110" height="140" fill="#fde68a" rx="8"/><ellipse cx="55" cy="70" rx="35" ry="25" fill="#fda4af"/><text x="55" y="125" text-anchor="middle" font-size="13" font-weight="700">D</text><text x="55" y="175" text-anchor="middle" font-size="10" fill="#64748b">${loc("핑크·표피","Pink/epithelialized")}</text></g></svg>`;
+    return { baseId: "woundColor", categoryKey: "fundamentals", part: loc("상처 사정","Wound Assessment"), emoji: "🩹",
+        title: loc("상처 색깔 분류 (RYB)","Wound Color (RYB)"),
+        desc: loc("검은색 괴사 조직(C)이 보이는 상처에서 가장 우선되는 처치는?","Wound with black eschar (C). Top priority intervention?"),
+        image: svg,
+        choices: shuffle([
+            { text: loc("괴사조직 제거(debridement) - 효소·자가용해·외과","Debridement — enzymatic, autolytic, or surgical"), effect: { hp: -3, rep: 22 }, log: loc("정답. 검은색은 죽은 조직, 치유 차단.","Correct. Black = dead tissue, blocks healing.") },
+            { text: loc("그대로 보존","Preserve as is"), effect: { hp: -38, rep: -28 }, log: loc("감염원·치유 차단.","Becomes infection source/blocks healing.") },
+            { text: loc("얼음 적용","Apply ice"), effect: { hp: -32, rep: -22 }, log: loc("관련 없음.","Unrelated.") },
+            { text: loc("뜨거운 물로 씻기","Wash with hot water"), effect: { hp: -32, rep: -22 }, log: loc("화상 위험.","Burn risk.") }
+        ])
+    };
+}
+function generateRespDistressPostureQuestion() {
+    const svg = `<svg viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg"><rect width="600" height="200" fill="#f0f9ff"/><g transform="translate(40,40)"><rect x="0" y="100" width="120" height="14" fill="#94a3b8"/><line x1="60" y1="100" x2="60" y2="60" stroke="#1e293b" stroke-width="3"/><circle cx="60" cy="50" r="10" fill="#fed7aa"/><line x1="60" y1="65" x2="40" y2="100" stroke="#1e293b" stroke-width="3"/><line x1="60" y1="65" x2="80" y2="100" stroke="#1e293b" stroke-width="3"/><text x="60" y="155" text-anchor="middle" font-size="13" font-weight="700">A</text><text x="60" y="175" text-anchor="middle" font-size="10" fill="#64748b">${loc("앙와위","Supine")}</text></g><g transform="translate(220,30)"><rect x="0" y="120" width="120" height="14" fill="#94a3b8"/><circle cx="60" cy="40" r="10" fill="#fed7aa"/><line x1="60" y1="50" x2="60" y2="90" stroke="#1e293b" stroke-width="3"/><line x1="60" y1="60" x2="30" y2="100" stroke="#1e293b" stroke-width="3"/><line x1="60" y1="60" x2="90" y2="100" stroke="#1e293b" stroke-width="3"/><line x1="30" y1="100" x2="20" y2="120" stroke="#1e293b" stroke-width="3"/><line x1="90" y1="100" x2="100" y2="120" stroke="#1e293b" stroke-width="3"/><line x1="60" y1="90" x2="40" y2="120" stroke="#1e293b" stroke-width="3"/><line x1="60" y1="90" x2="80" y2="120" stroke="#1e293b" stroke-width="3"/><text x="60" y="155" text-anchor="middle" font-size="13" font-weight="700">B</text><text x="60" y="175" text-anchor="middle" font-size="10" fill="#64748b">${loc("3중 자세(Tripod)","Tripod position")}</text></g><g transform="translate(420,30)"><rect x="0" y="120" width="120" height="14" fill="#94a3b8"/><circle cx="40" cy="60" r="10" fill="#fed7aa"/><line x1="40" y1="70" x2="80" y2="100" stroke="#1e293b" stroke-width="3"/><line x1="80" y1="100" x2="100" y2="120" stroke="#1e293b" stroke-width="3"/><line x1="40" y1="80" x2="20" y2="120" stroke="#1e293b" stroke-width="3"/><text x="60" y="155" text-anchor="middle" font-size="13" font-weight="700">C</text><text x="60" y="175" text-anchor="middle" font-size="10" fill="#64748b">${loc("좌위 + 베개","Sit + pillow")}</text></g></svg>`;
+    return { baseId: "respDistressPosture", categoryKey: "adult", part: loc("호흡곤란 자세","Respiratory Distress Posture"), emoji: "🫁",
+        title: loc("호흡 곤란 환자 자세","Respiratory Distress Position"),
+        desc: loc("천식 발작·후두개염·심한 폐기종 환자에서 호흡을 돕는 그림 속 자세는?","Position assumed by patients with severe asthma, epiglottitis, or COPD?"),
+        image: svg,
+        choices: shuffle([
+            { text: loc("B (3중 자세, Tripod) - 보조호흡근 활용","B (Tripod) — uses accessory muscles"), effect: { hp: -2, rep: 22 }, log: loc("정답. 호흡 곤란의 적색 깃발.","Correct. Red flag for distress.") },
+            { text: loc("A (앙와위)","A (Supine)"), effect: { hp: -28, rep: -20 }, log: loc("앙와위는 호흡 더 어렵게.","Supine worsens breathing.") },
+            { text: loc("C (좌위 + 베개, Orthopneic)","C (Orthopneic)"), effect: { hp: -22, rep: -12 }, log: loc("CHF 폐부종에 흔함.","Common in CHF/pulmonary edema.") },
+            { text: loc("측와위","Lateral"), effect: { hp: -25, rep: -15 }, log: loc("호흡곤란 응대로 부적절.","Inappropriate for respiratory distress.") }
+        ])
+    };
+}
+function generatePulsePointsQuestion() {
+    const svg = `<svg viewBox="0 0 600 240" xmlns="http://www.w3.org/2000/svg"><rect width="600" height="240" fill="#fef3f7"/><g transform="translate(220,20)"><circle cx="80" cy="30" r="22" fill="#fed7aa" stroke="#9a3412" stroke-width="2"/><rect x="58" y="52" width="44" height="80" fill="#fecaca" stroke="#991b1b" stroke-width="2" rx="4"/><rect x="40" y="60" width="20" height="80" fill="#fecaca" stroke="#991b1b" stroke-width="2" rx="4"/><rect x="100" y="60" width="20" height="80" fill="#fecaca" stroke="#991b1b" stroke-width="2" rx="4"/><rect x="62" y="135" width="16" height="80" fill="#fecaca" stroke="#991b1b" stroke-width="2" rx="4"/><rect x="82" y="135" width="16" height="80" fill="#fecaca" stroke="#991b1b" stroke-width="2" rx="4"/><circle cx="65" cy="48" r="5" fill="#dc2626"/><text x="65" y="52" text-anchor="middle" font-size="9" fill="white" font-weight="700">A</text><circle cx="44" cy="135" r="5" fill="#dc2626"/><text x="44" y="139" text-anchor="middle" font-size="9" fill="white" font-weight="700">B</text><circle cx="63" cy="142" r="5" fill="#dc2626"/><text x="63" y="146" text-anchor="middle" font-size="9" fill="white" font-weight="700">C</text><circle cx="78" cy="215" r="5" fill="#dc2626"/><text x="78" y="219" text-anchor="middle" font-size="9" fill="white" font-weight="700">D</text></g><g transform="translate(450,30)"><text x="0" y="20" font-size="11" font-weight="700">${loc("맥박 부위","Pulse Points")}</text><text x="0" y="42" font-size="10">A: ${loc("경동맥","Carotid")}</text><text x="0" y="60" font-size="10">B: ${loc("요골동맥","Radial")}</text><text x="0" y="78" font-size="10">C: ${loc("대퇴동맥","Femoral")}</text><text x="0" y="96" font-size="10">D: ${loc("후경골/족배","Post tib/Dorsalis")}</text></g></svg>`;
+    return { baseId: "pulsePoints", categoryKey: "fundamentals", part: loc("맥박 사정","Pulse Assessment"), emoji: "🩺",
+        title: loc("CPR 시 사용하는 맥박 부위","Pulse Used in CPR"),
+        desc: loc("성인 CPR 시 맥박 확인에 사용되는 부위는?","Which pulse is checked during adult CPR?"),
+        image: svg,
+        choices: shuffle([
+            { text: loc("A (경동맥, Carotid)","A (Carotid)"), effect: { hp: -2, rep: 22 }, log: loc("정답. 영아는 상완 동맥(Brachial).","Correct. Infants use brachial.") },
+            { text: loc("B (요골동맥)","B (Radial)"), effect: { hp: -25, rep: -15 }, log: loc("저혈압 시 안 만져질 수 있음.","May not be palpable in hypotension.") },
+            { text: loc("C (대퇴동맥)","C (Femoral)"), effect: { hp: -25, rep: -15 }, log: loc("두 번째 선택이지만 경동맥이 표준.","Second-choice; carotid is standard.") },
+            { text: loc("D (족배·후경골)","D (Dorsalis pedis/post tib)"), effect: { hp: -28, rep: -20 }, log: loc("말초 평가용.","For peripheral assessment.") }
         ])
     };
 }
