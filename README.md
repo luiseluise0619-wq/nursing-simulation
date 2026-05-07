@@ -7,7 +7,7 @@ A free bilingual (KO/EN) PWA for nursing study — randomized board-style questi
 
 ## Features
 
-- **364 randomized clinical questions** (334 text + **30 image-based** SVG questions: ECG rhythms, pressure-ulcer staging, triage colors, Rule of Nines, heart anatomy, body positioning, newborn reflexes, Wong-Baker pain scale, insulin syringe, wound types, burn depth, GCS chart, lung lobes, crutch gait, prone positioning, DTR grading, IV drip calculation, heart auscultation areas, IM injection sites, decerebrate/decorticate posturing, pupil exam, AED pad placement, fontanelle assessment, ostomy types, wound RYB color, respiratory distress posture, pulse points) across 8 nursing-board subjects
+- **404 randomized clinical questions** (354 text + **50 image-based** SVG questions covering ECG strips, pressure-ulcer staging, triage, Rule of Nines, heart/lung/eye anatomy, positioning, reflexes, pain scale, insulin syringe, wound types/colors, burn depth, GCS, crutch gait, DTR, IV drip calc, auscultation areas, IM sites, posturing, pupils, AED, fontanelle, ostomy, pulse points, conduction system, cervical dilation, skin turgor, Battle sign, CVC ports, fundal descent, ABO chart, abdominal signs, infant dehydration, ear-pull technique, spirometry curves, ST segment, spinal levels, NG placement, liver position, bladder distension, dermatomes, BP cuff size) — across 8 nursing-board subjects, including **NCLEX-style** delegation, HIPAA, and drug calculation questions
 - **Bilingual KO/EN** — full UI and content translation, instant toggle, persisted preference
 - **Survival shift mode** — 20 events per shift with 3 boss encounters (Code Blue, VIP, Mass Casualty), combo system, and **30 daily ward flavor events**
 - **13 narrative endings** — happy / sad / bittersweet / easter-egg branches based on accuracy, bosses, key story choices
@@ -97,6 +97,37 @@ Honest list of what's missing — useful as backlog, also useful for setting exp
 4. **v1.4**: 50 more questions, including image-based via SVG — 2 weeks
 5. **v1.5**: Capacitor wrap → Play Store TestFlight → public — 1-2 weeks
 6. **v2.0**: Optional cloud sync (Supabase free tier), spaced repetition with cloud backup
+
+## Native app build (Capacitor)
+
+To wrap as a native iOS/Android app for Play Store / App Store:
+
+```bash
+# 1. Install Capacitor
+npm install @capacitor/core @capacitor/cli @capacitor/ios @capacitor/android
+
+# 2. Initialize (run once)
+npx cap init "Nurse Simulator" com.yourname.nursesim --web-dir=.
+
+# 3. Add platforms
+npx cap add ios
+npx cap add android
+
+# 4. Sync your web assets into native projects
+npx cap sync
+
+# 5. Open in native IDE
+npx cap open ios       # Xcode (macOS only)
+npx cap open android   # Android Studio
+```
+
+Build/sign/publish from Xcode or Android Studio. For ads, integrate `@capacitor-community/admob`. For IAP, integrate `@capacitor-community/in-app-purchases`.
+
+**Required before store submission:**
+- Privacy policy URL (the app collects no remote data, but Stores require a published policy)
+- Terms of service URL
+- Medical disclaimer (already in app — first-launch modal)
+- Optional: medical professional review sign-off
 
 ## Pre-launch checklist
 
