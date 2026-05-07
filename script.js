@@ -845,7 +845,14 @@ const clinicalGenerators = [
     generateACEInhibitorQuestion, generateITPQuestion, generateAnorexiaTreatmentQuestion,
     generatePTSDTherapyQuestion,
     generateTrachAnatomyQuestion, generatePulseGradingQuestion, generateSkinLesionsQuestion,
-    generateInfantCPRLandmarkQuestion, generateEyedropPositionQuestion
+    generateInfantCPRLandmarkQuestion, generateEyedropPositionQuestion,
+    // ===== 배치 23: 텍스트 10 + 이미지 5 =====
+    generateAVNRTQuestion, generateHIVPostExposureQuestion, generateHypercalcemiaQuestion,
+    generateChestTubeBubbleQuestion, generateRSITubeQuestion, generateNursingDxPriorityQuestion,
+    generateMethotrexateQuestion, generatePulseOxLimitsQuestion, generatePostpartumHemorrhageQuestion,
+    generateClostridiumDiffPrecQuestion,
+    generateNGTubeMarkingQuestion, generateBLSCompressionDepthQuestion, generateInjectionAngleQuestion,
+    generateBraydenScaleQuestion, generateBabinskiQuestion
 ];
 
 function generateABGAQuestion() {
@@ -2743,6 +2750,200 @@ function generatePressureUlcerStageQuestion() {
             { text: loc("1단계 - 비창백성 발적","Stage 1 — non-blanchable erythema"), effect: { hp: -25, rep: -15 }, log: loc("1단계는 표피 무손상.","Stage 1: skin intact.") },
             { text: loc("2단계 - 부분층 손실","Stage 2 — partial-thickness loss"), effect: { hp: -25, rep: -15 }, log: loc("2단계는 표피·진피 일부.","Stage 2: epidermis + partial dermis.") },
             { text: loc("3단계 - 전층 손실, 피하지방까지","Stage 3 — full-thickness, subq fat visible"), effect: { hp: -25, rep: -15 }, log: loc("3단계는 뼈·근육 노출 없음.","Stage 3: no bone/muscle exposed.") }
+        ])
+    };
+}
+
+// ========= 배치 23: 텍스트 10문제 =========
+function generateAVNRTQuestion() {
+    return { baseId: "avnrt", categoryKey: "adult", part: loc("부정맥","Arrhythmia"), emoji: "💓",
+        title: loc("발작성 상심실성 빈맥(PSVT)","Paroxysmal Supraventricular Tachycardia"),
+        desc: loc("안정 환자에서 갑작스럽게 시작된 협심실성(QRS narrow) 빈맥(HR 180). 1차 처치는?","Stable patient, sudden-onset narrow-complex tachycardia at HR 180. First-line?"),
+        choices: shuffle([
+            { text: loc("미주신경 자극(발살바·얼음물 얼굴)","Vagal maneuvers (Valsalva, ice to face)"), effect: { hp: -2, rep: 22 }, log: loc("정답. 안정 환자에서 1차. 실패 시 아데노신.","Correct. First-line if stable; then adenosine.") },
+            { text: loc("즉시 동시화 심율동 전환","Immediate synchronized cardioversion"), effect: { hp: -28, rep: -20 }, log: loc("불안정 시에만.","Only if unstable.") },
+            { text: loc("아미오다론 정맥 정주","IV amiodarone"), effect: { hp: -22, rep: -12 }, log: loc("아데노신·BB·CCB 우선.","Adenosine/BB/CCB preferred.") },
+            { text: loc("리도카인 정주","IV lidocaine"), effect: { hp: -22, rep: -12 }, log: loc("리도카인은 심실성 부정맥용.","Lidocaine is for ventricular.") }
+        ])
+    };
+}
+function generateHIVPostExposureQuestion() {
+    return { baseId: "hivPep", categoryKey: "fundamentals", part: loc("바늘 자상","Needlestick"), emoji: "💉",
+        title: loc("HIV 노출 후 예방요법(PEP)","HIV Post-Exposure Prophylaxis"),
+        desc: loc("HIV 양성 환자 채혈 후 바늘에 찔린 간호사. 가장 우선되는 조치는?","Nurse stuck with a needle after drawing blood from an HIV+ patient. First priority?"),
+        choices: shuffle([
+            { text: loc("즉시 비누·물로 세척 후 가능한 빨리(이상적 2시간 이내) PEP 시작","Wash with soap and water, start PEP ASAP (ideally within 2 hours)"), effect: { hp: -2, rep: 22 }, log: loc("정답. 노출 후 72시간 이내, 빠를수록 효과적.","Correct. Within 72h, sooner is better.") },
+            { text: loc("상처 부위를 짜내고 알코올로 닦기","Squeeze the wound and wipe with alcohol"), effect: { hp: -25, rep: -15 }, log: loc("짜내기·자극은 권장되지 않음.","Squeezing not recommended.") },
+            { text: loc("HIV 검사 결과(2주 후)까지 처치 보류","Wait for 2-week HIV result before action"), effect: { hp: -38, rep: -28 }, log: loc("PEP 지연은 효과 ↓.","Delay reduces efficacy.") },
+            { text: loc("증상이 나타날 때만 PEP 시작","Start PEP only if symptoms appear"), effect: { hp: -38, rep: -28 }, log: loc("PEP는 노출 직후 즉시.","PEP is immediate.") }
+        ])
+    };
+}
+function generateHypercalcemiaQuestion() {
+    return { baseId: "hypercalcemia", categoryKey: "adult", part: loc("전해질","Electrolyte"), emoji: "🦴",
+        title: loc("고칼슘혈증","Hypercalcemia"),
+        desc: loc("Ca 13.2 mg/dL, 다발성 골수종 환자. 무력감·다뇨·변비·혼동 호소. 1차 처치는?","Ca 13.2 mg/dL, multiple myeloma; weakness, polyuria, constipation, confusion. First action?"),
+        choices: shuffle([
+            { text: loc("생리식염수 정주 + 루프 이뇨제","IV normal saline + loop diuretic"), effect: { hp: -2, rep: 22 }, log: loc("정답. 수분공급 후 furosemide로 칼슘 배설.","Correct. Hydrate, then furosemide promotes Ca excretion.") },
+            { text: loc("티아지드 이뇨제 투여","Give thiazide diuretic"), effect: { hp: -32, rep: -22 }, log: loc("티아지드는 칼슘 정체 → 악화.","Thiazides retain calcium.") },
+            { text: loc("칼슘 글루코네이트 정주","IV calcium gluconate"), effect: { hp: -38, rep: -28 }, log: loc("이미 고칼슘.","Already high.") },
+            { text: loc("우유·유제품 보충","Push milk and dairy"), effect: { hp: -30, rep: -20 }, log: loc("칼슘 섭취 ↑.","Increases calcium.") }
+        ])
+    };
+}
+function generateChestTubeBubbleQuestion() {
+    return { baseId: "chestTubeBubble", categoryKey: "adult", part: loc("흉관","Chest Tube"), emoji: "🩺",
+        title: loc("흉관 수액밀봉실의 지속 거품","Continuous Bubbling in Water-Seal Chamber"),
+        desc: loc("환자의 흉관 수액밀봉실(water-seal chamber)에서 호흡과 무관하게 \"지속적인\" 거품이 나타남. 의미는?","Continuous bubbling in the water-seal chamber unrelated to respiration. Meaning?"),
+        choices: shuffle([
+            { text: loc("시스템에 공기 누출 - 연결부터 환자 쪽으로 차례로 잠시 막아 위치 확인","Air leak in the system — clamp briefly from connection toward patient to locate"), effect: { hp: -2, rep: 22 }, log: loc("정답. 막았을 때 거품이 멈추면 그 부위 위쪽이 누출원.","Correct. Bubbling stops above the leak source.") },
+            { text: loc("정상 - 처치 불요","Normal — no action"), effect: { hp: -32, rep: -22 }, log: loc("정상은 호흡과 함께 변동.","Normal fluctuates with breathing.") },
+            { text: loc("배액관을 즉시 제거","Pull the chest tube immediately"), effect: { hp: -45, rep: -35 }, log: loc("긴장성 기흉 위험.","Risk of tension pneumothorax.") },
+            { text: loc("흡인 압력을 0으로 낮추기","Set suction to 0"), effect: { hp: -28, rep: -20 }, log: loc("거품 원인 해결 안 됨.","Doesn't address cause.") }
+        ])
+    };
+}
+function generateRSITubeQuestion() {
+    return { baseId: "rsiTube", categoryKey: "fundamentals", part: loc("기관내삽관","Intubation"), emoji: "🫁",
+        title: loc("기관내삽관 후 위치 확인","Confirming Endotracheal Tube Placement"),
+        desc: loc("응급실에서 기관내삽관을 마쳤다. 가장 신뢰할 수 있는 위치 확인 방법은?","After ED intubation, the most reliable confirmation method is?"),
+        choices: shuffle([
+            { text: loc("호기말 이산화탄소 측정(파형 캡노그래피)","Waveform capnography (end-tidal CO2)"), effect: { hp: -2, rep: 22 }, log: loc("정답. 표준. 흉부 X선은 깊이 확인용.","Correct. Standard; CXR confirms depth.") },
+            { text: loc("양측 호흡음 청진만","Bilateral breath sounds alone"), effect: { hp: -22, rep: -12 }, log: loc("필수지만 단독으로는 불충분.","Necessary but not sufficient.") },
+            { text: loc("산소포화도 상승","Rising SpO2"), effect: { hp: -22, rep: -12 }, log: loc("지연되어 부정확.","Delayed, unreliable.") },
+            { text: loc("위 부위 청진음","Stomach sound"), effect: { hp: -25, rep: -15 }, log: loc("식도 삽관 확인용.","Detects esophageal misplacement.") }
+        ])
+    };
+}
+function generateNursingDxPriorityQuestion() {
+    return { baseId: "dxPriority", categoryKey: "fundamentals", part: loc("간호진단 우선순위","Dx Priority"), emoji: "📋",
+        title: loc("간호진단 우선순위","Nursing Diagnosis Priority"),
+        desc: loc("다음 4가지 간호진단 중 가장 먼저 해결해야 하는 것은?","Which of these 4 nursing diagnoses must be addressed first?"),
+        choices: shuffle([
+            { text: loc("비효율적 기도청결과 관련된 가스교환장애","Impaired gas exchange r/t ineffective airway clearance"), effect: { hp: -2, rep: 22 }, log: loc("정답. ABC 원칙 - 기도/호흡 최우선.","Correct. ABC priority — airway/breathing first.") },
+            { text: loc("부동과 관련된 피부통합성 장애 위험","Risk for impaired skin integrity r/t immobility"), effect: { hp: -22, rep: -12 }, log: loc("위험 진단은 후순위.","Risk dx is later.") },
+            { text: loc("질병 과정과 관련된 지식 부족","Deficient knowledge r/t disease process"), effect: { hp: -22, rep: -12 }, log: loc("교육은 후순위.","Education is later.") },
+            { text: loc("입원과 관련된 불안","Anxiety r/t hospitalization"), effect: { hp: -22, rep: -12 }, log: loc("심리는 후순위.","Psychosocial is later.") }
+        ])
+    };
+}
+function generateMethotrexateQuestion() {
+    return { baseId: "methotrexate", categoryKey: "adult", part: loc("항암제","Chemotherapy"), emoji: "💊",
+        title: loc("Methotrexate 독성 해독제","Methotrexate Toxicity Antidote"),
+        desc: loc("고용량 메토트렉세이트 투여 후 점막염·골수억제 발생. 어떤 약을 투여해야 하는가?","After high-dose methotrexate: mucositis and myelosuppression. Which rescue agent?"),
+        choices: shuffle([
+            { text: loc("Leucovorin (folinic acid)","Leucovorin (folinic acid)"), effect: { hp: -2, rep: 22 }, log: loc("정답. 정상 세포 구조. 엽산은 무효.","Correct. Rescues normal cells; folic acid does not work.") },
+            { text: loc("Vitamin K","Vitamin K"), effect: { hp: -28, rep: -20 }, log: loc("와파린 해독제.","Warfarin antidote.") },
+            { text: loc("N-Acetylcysteine","N-Acetylcysteine"), effect: { hp: -28, rep: -20 }, log: loc("아세트아미노펜 해독제.","Acetaminophen antidote.") },
+            { text: loc("Protamine","Protamine"), effect: { hp: -28, rep: -20 }, log: loc("헤파린 해독제.","Heparin antidote.") }
+        ])
+    };
+}
+function generatePulseOxLimitsQuestion() {
+    return { baseId: "pulseOxLimit", categoryKey: "fundamentals", part: loc("산소포화도","Pulse Oximetry"), emoji: "🩺",
+        title: loc("맥박산소포화도의 한계","Limitations of Pulse Oximetry"),
+        desc: loc("어떤 조건에서 맥박산소포화도(SpO2) 수치가 부정확할 수 있는가?","In which condition might SpO2 reading be inaccurate?"),
+        choices: shuffle([
+            { text: loc("일산화탄소 중독(CO 중독)","Carbon monoxide poisoning"), effect: { hp: -2, rep: 22 }, log: loc("정답. SpO2는 COHb를 SaO2로 잘못 읽어 정상으로 표시. 동맥혈가스(co-oximetry) 필요.","Correct. SpO2 misreads COHb as SaO2; need co-oximetry.") },
+            { text: loc("정상 활력징후","Normal vitals"), effect: { hp: -22, rep: -12 }, log: loc("정상에서는 정확.","Accurate when normal.") },
+            { text: loc("수면","Sleep"), effect: { hp: -22, rep: -12 }, log: loc("수면 자체는 영향 없음.","Sleep itself doesn't affect.") },
+            { text: loc("사지에 부종 없음","No limb edema"), effect: { hp: -22, rep: -12 }, log: loc("부종은 부정확 원인이지만 \"없음\"은 OK.","Edema reduces accuracy; absence is fine.") }
+        ])
+    };
+}
+function generatePostpartumHemorrhageQuestion() {
+    return { baseId: "pphPriority", categoryKey: "maternal", part: loc("산후출혈","PPH"), emoji: "🩸",
+        title: loc("산후출혈 1차 처치","First-line for Postpartum Hemorrhage"),
+        desc: loc("질식 분만 30분 후 자궁이 이완되고 출혈 600 mL. 가장 먼저 해야 할 일은?","30 min after vaginal delivery: boggy uterus, 600 mL blood loss. First action?"),
+        choices: shuffle([
+            { text: loc("자궁저 마사지(fundal massage)","Fundal massage"), effect: { hp: -2, rep: 22 }, log: loc("정답. 자궁이완성 출혈의 1차 처치. 옥시토신 동시 투여.","Correct. First for atony; co-administer oxytocin.") },
+            { text: loc("즉시 응급수술 준비","Prepare for emergency surgery"), effect: { hp: -25, rep: -15 }, log: loc("내과적 처치 우선.","Medical management first.") },
+            { text: loc("앙와위로 다리 올리기","Trendelenburg"), effect: { hp: -22, rep: -12 }, log: loc("출혈원 처치가 우선.","Address the source.") },
+            { text: loc("산모 격리","Isolate the mother"), effect: { hp: -38, rep: -28 }, log: loc("부적절.","Inappropriate.") }
+        ])
+    };
+}
+function generateClostridiumDiffPrecQuestion() {
+    return { baseId: "cdiffSoap", categoryKey: "fundamentals", part: loc("감염 예방","Infection Prevention"), emoji: "🧼",
+        title: loc("C. difficile 손위생","C. difficile Hand Hygiene"),
+        desc: loc("C. difficile 감염 환자의 처치 후 가장 적절한 손위생 방법은?","After caring for a C. difficile patient, what is the proper hand hygiene?"),
+        choices: shuffle([
+            { text: loc("비누와 흐르는 물로 씻기","Wash with soap and running water"), effect: { hp: -2, rep: 22 }, log: loc("정답. 알코올 젤은 포자에 무효.","Correct. Alcohol gel doesn't kill spores.") },
+            { text: loc("알코올 손소독제","Alcohol-based hand rub"), effect: { hp: -32, rep: -22 }, log: loc("포자에 무효.","Ineffective against spores.") },
+            { text: loc("일반 손세척 후 알코올 젤","Wash, then alcohol gel"), effect: { hp: -22, rep: -12 }, log: loc("비누·물만으로 충분.","Soap and water alone suffice.") },
+            { text: loc("손위생 불요(장갑 착용 시)","No hand hygiene if gloves were worn"), effect: { hp: -42, rep: -32 }, log: loc("장갑 후에도 손위생 필수.","Hand hygiene required after gloves.") }
+        ])
+    };
+}
+
+// ========= 배치 23 이미지 5문제 =========
+function generateNGTubeMarkingQuestion() {
+    const svg = `<svg viewBox="0 0 600 220" xmlns="http://www.w3.org/2000/svg"><rect width="600" height="220" fill="#f0f9ff"/><g transform="translate(80,30)"><path d="M 60 30 Q 30 50 40 130 L 60 160 L 100 160 L 110 130 Q 130 90 110 50 Q 100 30 60 30 Z" fill="#fed7aa" stroke="#9a3412" stroke-width="2"/><circle cx="65" cy="70" r="4" fill="#1e293b"/><circle cx="95" cy="70" r="4" fill="#1e293b"/><path d="M 65 90 Q 80 100 95 90" stroke="#1e293b" stroke-width="2" fill="none"/><line x1="40" y1="160" x2="40" y2="190" stroke="#1e293b" stroke-width="3"/><line x1="120" y1="160" x2="120" y2="190" stroke="#1e293b" stroke-width="3"/><text x="80" y="210" font-size="11" text-anchor="middle">${loc("코끝","Nose tip")} → ${loc("귓볼","Earlobe")} → ${loc("검상돌기","Xiphoid")}</text></g><g transform="translate(280,30)"><line x1="60" y1="20" x2="60" y2="170" stroke="#3b82f6" stroke-width="6"/><circle cx="60" cy="20" r="6" fill="#3b82f6"/><text x="80" y="25" font-size="11" font-weight="700" fill="#3b82f6">A</text><circle cx="60" cy="80" r="6" fill="#10b981"/><text x="80" y="85" font-size="11" font-weight="700" fill="#10b981">B</text><circle cx="60" cy="170" r="6" fill="#dc2626"/><text x="80" y="175" font-size="11" font-weight="700" fill="#dc2626">C</text><text x="160" y="100" font-size="11">${loc("측정 경로 도식","Measurement path")}</text></g></svg>`;
+    return { baseId: "ngTubeMark", categoryKey: "fundamentals", part: loc("위관 측정","NG Measurement"), emoji: "📏",
+        title: loc("위관 삽입 길이 측정 (NEX)","NG Tube Length Measurement (NEX)"),
+        desc: loc("성인 위관(NG tube) 삽입 시 외부에서 측정하는 표준 거리는?","Standard external measurement for adult NG tube placement?"),
+        image: svg,
+        choices: shuffle([
+            { text: loc("코끝 → 귓볼 → 검상돌기 (NEX)","Nose tip → earlobe → xiphoid (NEX)"), effect: { hp: -2, rep: 22 }, log: loc("정답. NEX = Nose-Ear-Xiphoid.","Correct. NEX = Nose-Ear-Xiphoid.") },
+            { text: loc("코끝 → 입 → 배꼽","Nose → mouth → umbilicus"), effect: { hp: -28, rep: -20 }, log: loc("배꼽까지면 너무 길다.","Umbilicus is too far.") },
+            { text: loc("입 → 검상돌기","Mouth → xiphoid"), effect: { hp: -28, rep: -20 }, log: loc("코로 시작.","Start at the nose.") },
+            { text: loc("귀 → 어깨","Ear → shoulder"), effect: { hp: -32, rep: -22 }, log: loc("부적절한 측정.","Wrong landmarks.") }
+        ])
+    };
+}
+function generateBLSCompressionDepthQuestion() {
+    const svg = `<svg viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg"><rect width="600" height="200" fill="#fef3f7"/><g transform="translate(40,30)"><rect width="160" height="120" fill="#fff" stroke="#1e293b" stroke-width="2" rx="6"/><text x="80" y="28" text-anchor="middle" font-size="14" font-weight="800">${loc("성인","Adult")}</text><text x="80" y="60" text-anchor="middle" font-size="22" font-weight="900" fill="#dc2626">5 cm</text><text x="80" y="85" text-anchor="middle" font-size="11" fill="#64748b">${loc("최대 6cm","≤6 cm")}</text><text x="80" y="105" text-anchor="middle" font-size="11" fill="#64748b">${loc("100-120/min","100-120/min")}</text></g><g transform="translate(220,30)"><rect width="160" height="120" fill="#fff" stroke="#1e293b" stroke-width="2" rx="6"/><text x="80" y="28" text-anchor="middle" font-size="14" font-weight="800">${loc("소아","Child")}</text><text x="80" y="60" text-anchor="middle" font-size="22" font-weight="900" fill="#dc2626">${loc("가슴 1/3","1/3 chest")}</text><text x="80" y="85" text-anchor="middle" font-size="11" fill="#64748b">${loc("약 5cm","~5 cm")}</text><text x="80" y="105" text-anchor="middle" font-size="11" fill="#64748b">${loc("100-120/min","100-120/min")}</text></g><g transform="translate(400,30)"><rect width="160" height="120" fill="#fff" stroke="#1e293b" stroke-width="2" rx="6"/><text x="80" y="28" text-anchor="middle" font-size="14" font-weight="800">${loc("영아","Infant")}</text><text x="80" y="60" text-anchor="middle" font-size="22" font-weight="900" fill="#dc2626">${loc("가슴 1/3","1/3 chest")}</text><text x="80" y="85" text-anchor="middle" font-size="11" fill="#64748b">${loc("약 4cm","~4 cm")}</text><text x="80" y="105" text-anchor="middle" font-size="11" fill="#64748b">${loc("100-120/min","100-120/min")}</text></g></svg>`;
+    return { baseId: "blsDepth", categoryKey: "fundamentals", part: loc("BLS 깊이","BLS Depth"), emoji: "🫀",
+        title: loc("BLS 가슴압박 깊이","BLS Compression Depth"),
+        desc: loc("성인 환자에서 권장되는 가슴압박 깊이는?","Recommended compression depth for an adult?"),
+        image: svg,
+        choices: shuffle([
+            { text: loc("최소 5 cm (최대 6 cm 이하)","At least 5 cm (no more than 6 cm)"), effect: { hp: -2, rep: 22 }, log: loc("정답. AHA 가이드라인.","Correct. Per AHA.") },
+            { text: loc("2 cm","2 cm"), effect: { hp: -32, rep: -22 }, log: loc("너무 얕음.","Too shallow.") },
+            { text: loc("8 cm 이상","8 cm or more"), effect: { hp: -32, rep: -22 }, log: loc("늑골 골절 위험.","Risk of rib fractures.") },
+            { text: loc("10 cm","10 cm"), effect: { hp: -38, rep: -28 }, log: loc("위험.","Dangerous.") }
+        ])
+    };
+}
+function generateInjectionAngleQuestion() {
+    const svg = `<svg viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg"><rect width="600" height="200" fill="#f0f9ff"/><g transform="translate(20,40)"><rect x="0" y="80" width="180" height="60" fill="#fde68a" stroke="#92400e" stroke-width="2"/><rect x="0" y="100" width="180" height="40" fill="#fed7aa"/><rect x="0" y="120" width="180" height="20" fill="#dc2626"/><line x1="20" y1="40" x2="100" y2="115" stroke="#1e293b" stroke-width="2"/><text x="100" y="40" text-anchor="middle" font-size="13" font-weight="700">A: 90°</text><text x="90" y="170" text-anchor="middle" font-size="10" fill="#64748b">${loc("근육층까지","To muscle")}</text></g><g transform="translate(210,40)"><rect x="0" y="80" width="180" height="60" fill="#fde68a" stroke="#92400e" stroke-width="2"/><rect x="0" y="100" width="180" height="40" fill="#fed7aa"/><rect x="0" y="120" width="180" height="20" fill="#dc2626"/><line x1="40" y1="50" x2="105" y2="105" stroke="#1e293b" stroke-width="2"/><text x="100" y="40" text-anchor="middle" font-size="13" font-weight="700">B: 45°</text><text x="90" y="170" text-anchor="middle" font-size="10" fill="#64748b">${loc("피하지방까지","To subq")}</text></g><g transform="translate(410,40)"><rect x="0" y="80" width="170" height="60" fill="#fde68a" stroke="#92400e" stroke-width="2"/><rect x="0" y="100" width="170" height="40" fill="#fed7aa"/><line x1="20" y1="80" x2="100" y2="92" stroke="#1e293b" stroke-width="2"/><text x="90" y="40" text-anchor="middle" font-size="13" font-weight="700">C: 10-15°</text><text x="85" y="170" text-anchor="middle" font-size="10" fill="#64748b">${loc("진피 내","Intradermal")}</text></g></svg>`;
+    return { baseId: "injectionAngle", categoryKey: "fundamentals", part: loc("주사 각도","Injection Angle"), emoji: "💉",
+        title: loc("주사 각도 식별","Identify Injection Angle"),
+        desc: loc("그림 C(10-15°, 진피 내)는 어느 주사법인가?","Diagram C (10-15°, intradermal). Which type?"),
+        image: svg,
+        choices: shuffle([
+            { text: loc("PPD/투베르쿨린 검사 (피내주사)","PPD/Mantoux (intradermal)"), effect: { hp: -2, rep: 22 }, log: loc("정답. 약 10-15°. 작은 수포(bleb) 형성.","Correct. 10-15°; forms a bleb.") },
+            { text: loc("근육주사 (IM)","Intramuscular (IM)"), effect: { hp: -25, rep: -15 }, log: loc("IM은 90°.","IM is 90°.") },
+            { text: loc("피하주사 (SC)","Subcutaneous (SC)"), effect: { hp: -25, rep: -15 }, log: loc("SC는 45° 또는 90°.","SC is 45° or 90°.") },
+            { text: loc("정맥주사 (IV)","Intravenous (IV)"), effect: { hp: -28, rep: -20 }, log: loc("IV는 그림에 없음.","IV not shown.") }
+        ])
+    };
+}
+function generateBraydenScaleQuestion() {
+    const svg = `<svg viewBox="0 0 600 220" xmlns="http://www.w3.org/2000/svg"><rect width="600" height="220" fill="#fff8f7"/><g transform="translate(20,20)"><rect width="560" height="40" fill="#fff" stroke="#1e293b" stroke-width="2"/><text x="280" y="27" text-anchor="middle" font-size="14" font-weight="800">${loc("Braden Scale (욕창 위험)","Braden Scale (Pressure Risk)")}</text></g><g transform="translate(20,70)"><rect width="100" height="40" fill="#fee2e2" stroke="#991b1b"/><text x="50" y="27" text-anchor="middle" font-size="11">≤ 9</text><text x="50" y="38" text-anchor="middle" font-size="9">${loc("매우 고위험","Very high")}</text></g><g transform="translate(125,70)"><rect width="100" height="40" fill="#fed7aa" stroke="#9a3412"/><text x="50" y="27" text-anchor="middle" font-size="11">10-12</text><text x="50" y="38" text-anchor="middle" font-size="9">${loc("고위험","High")}</text></g><g transform="translate(230,70)"><rect width="100" height="40" fill="#fef3c7" stroke="#a16207"/><text x="50" y="27" text-anchor="middle" font-size="11">13-14</text><text x="50" y="38" text-anchor="middle" font-size="9">${loc("중등도","Moderate")}</text></g><g transform="translate(335,70)"><rect width="100" height="40" fill="#fef9c3" stroke="#854d0e"/><text x="50" y="27" text-anchor="middle" font-size="11">15-18</text><text x="50" y="38" text-anchor="middle" font-size="9">${loc("저위험","Low")}</text></g><g transform="translate(440,70)"><rect width="120" height="40" fill="#dcfce7" stroke="#166534"/><text x="60" y="27" text-anchor="middle" font-size="11">19-23</text><text x="60" y="38" text-anchor="middle" font-size="9">${loc("위험 없음","No risk")}</text></g><g transform="translate(20,120)"><rect width="560" height="40" fill="#fde68a" stroke="#92400e"/><text x="280" y="27" text-anchor="middle" font-size="13" font-weight="700">${loc("환자 점수: 11점","Patient Score: 11")}</text></g></svg>`;
+    return { baseId: "bradenScale", categoryKey: "fundamentals", part: loc("욕창 위험","Pressure Risk"), emoji: "🛌",
+        title: loc("Braden Scale 해석","Interpret the Braden Scale"),
+        desc: loc("환자 점수가 11점이다. 위험 수준과 적절한 처치는?","Patient scores 11. Risk level and intervention?"),
+        image: svg,
+        choices: shuffle([
+            { text: loc("고위험 - 2시간마다 체위변경, 압력 분산 매트리스","High risk — turn q2h, pressure-redistribution mattress"), effect: { hp: -2, rep: 22 }, log: loc("정답. 10-12 = 고위험.","Correct. 10-12 = high risk.") },
+            { text: loc("위험 없음 - 추가 처치 불요","No risk — no extra action"), effect: { hp: -38, rep: -28 }, log: loc("11점은 고위험.","11 is high risk.") },
+            { text: loc("저위험 - 일반 간호","Low risk — routine care"), effect: { hp: -32, rep: -22 }, log: loc("점수 해석 오류.","Misread score.") },
+            { text: loc("중등도 - 4시간마다 체위변경","Moderate — turn q4h"), effect: { hp: -25, rep: -15 }, log: loc("13-14가 중등도.","13-14 is moderate.") }
+        ])
+    };
+}
+function generateBabinskiQuestion() {
+    const svg = `<svg viewBox="0 0 600 220" xmlns="http://www.w3.org/2000/svg"><rect width="600" height="220" fill="#f0f9ff"/><g transform="translate(40,30)"><path d="M 20 100 L 200 100 L 220 80 L 240 90 L 240 110 L 220 120 L 200 120 L 200 130 L 20 130 Z" fill="#fed7aa" stroke="#9a3412" stroke-width="2"/><path d="M 220 80 L 240 60" stroke="#dc2626" stroke-width="3"/><path d="M 220 84 L 245 72" stroke="#dc2626" stroke-width="2"/><path d="M 224 88 L 250 84" stroke="#dc2626" stroke-width="2"/><path d="M 228 90 L 252 95" stroke="#dc2626" stroke-width="2"/><path d="M 220 95 L 248 110" stroke="#dc2626" stroke-width="2"/><line x1="60" y1="100" x2="200" y2="100" stroke="#3b82f6" stroke-width="3" stroke-dasharray="6,3"/><polygon points="200,95 215,100 200,105" fill="#3b82f6"/><text x="130" y="155" text-anchor="middle" font-size="13" font-weight="700">A: ${loc("엄지 신전·다른 발가락 펼침","Big toe up + fanning")}</text></g><g transform="translate(40,170)"><path d="M 20 30 L 200 30 L 220 10 L 240 20 L 240 40 L 220 50 L 200 50 L 200 60 L 20 60 Z" fill="#fed7aa" stroke="#9a3412" stroke-width="2"/><path d="M 220 10 L 220 -5" stroke="#1e293b"/><path d="M 224 10 L 232 -3" stroke="#1e293b"/><path d="M 228 12 L 240 4" stroke="#1e293b"/><text x="280" y="35" font-size="13" font-weight="700">B: ${loc("발가락 굴곡","Toe flexion")}</text></g></svg>`;
+    return { baseId: "babinski", categoryKey: "adult", part: loc("신경반사","Neuro Reflex"), emoji: "🦶",
+        title: loc("Babinski 반사","Babinski Reflex"),
+        desc: loc("성인 환자에서 그림 A처럼 발바닥을 자극할 때 엄지 신전 + 다른 발가락이 부채처럼 펼쳐지는 반응의 의미는?","In an adult, the response in A (big toe up + fanning toes) means?"),
+        image: svg,
+        choices: shuffle([
+            { text: loc("양성 Babinski - 상부운동신경원(피라미드로) 병변","Positive Babinski — upper motor neuron lesion"), effect: { hp: -2, rep: 22 }, log: loc("정답. 영아는 정상, 성인은 비정상.","Correct. Normal in infants, abnormal in adults.") },
+            { text: loc("정상 - 처치 불요","Normal — no action"), effect: { hp: -32, rep: -22 }, log: loc("성인에서는 비정상.","Abnormal in adults.") },
+            { text: loc("말초신경병증","Peripheral neuropathy"), effect: { hp: -25, rep: -15 }, log: loc("Babinski는 중추신경 병변.","Babinski indicates CNS lesion.") },
+            { text: loc("탈수","Dehydration"), effect: { hp: -38, rep: -28 }, log: loc("관련 없음.","Unrelated.") }
         ])
     };
 }
