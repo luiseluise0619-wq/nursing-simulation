@@ -951,7 +951,19 @@ const clinicalGenerators = [
     generateNGFeedingResidualQuestion, generateChestPainPriorityQuestion, generateOpioidConstipationFirstLineQuestion,
     generateAdvanceDirectiveBindQuestion, generateHealthLiteracyQuestion, generateHealthcareDisparityQuestion,
     generateIVSiteInfImgQuestion, generateRunningIVDripImgQuestion, generateBreathSoundImgQuestion,
-    generateUrineSedImgQuestion, generateRBCMorphologyImgQuestion, generateAccuCheckImgQuestion
+    generateUrineSedImgQuestion, generateRBCMorphologyImgQuestion, generateAccuCheckImgQuestion,
+    // ===== 배치 31: 다양 주제 + 이미지 (32문제) =====
+    generateBiPAPIndQuestion, generateCancerStageQuestion, generateRadiationSafetyQuestion,
+    generateMRIScreenQuestion, generateBSEteachQuestion, generateMammogramAgeQuestion,
+    generateHospitalAcquiredQuestion, generateBlamefreeReportQuestion, generateSepsisQSOFAQuestion,
+    generateInsulinPeakQuestion, generateAntipsychoticBaselineQuestion, generateExposureTherapyQuestion,
+    generateBoardingPriorityQuestion, generateOlderAdultPolypharmQuestion, generateAddisonTeachQuestion,
+    generateLevodopaTeachQuestion, generateAdolescentRiskQuestion, generateRheumaticPrevQuestion,
+    generateHomelessHealthQuestion, generatePostpartumHealthCheckQuestion, generateRapeKitQuestion,
+    generateBPHTeachingQuestion, generateBolusFeedingQuestion, generateNeglectVsAbuseQuestion,
+    generateBPCuffSizeImgQuestion, generateAlignmentImgQuestion, generateBPMonitor24ImgQuestion,
+    generateColostomyOutputImgQuestion, generateInfantHRRangeImgQuestion, generateGloveTypeImgQuestion,
+    generateTractionImgQuestion, generateNicuIsoletteImgQuestion
 ];
 
 function generateABGAQuestion() {
@@ -5826,6 +5838,411 @@ function generateAccuCheckImgQuestion() {
             { text: loc("당뇨 진단","Diabetes diagnosis"), effect: { hp: -32, rep: -22 }, log: loc("≥126 ×2 필요.","Need ≥126 ×2.") },
             { text: loc("저혈당","Hypoglycemia"), effect: { hp: -32, rep: -22 }, log: loc("<70 = 저혈당.","<70 = hypo.") },
             { text: loc("전당뇨","Pre-diabetes"), effect: { hp: -28, rep: -20 }, log: loc("100-125 범위.","Range is 100-125.") }
+        ])
+    };
+}
+
+// ========= 배치 31: 다양 주제 + 이미지 =========
+// --- 텍스트 24 ---
+function generateBiPAPIndQuestion() {
+    return { baseId: "bipapVsCpap", categoryKey: "adult", part: loc("비침습 환기","NIV"), emoji: "🫁",
+        title: loc("BiPAP vs CPAP 적응증","BiPAP vs CPAP Indications"),
+        desc: loc("CPAP보다 BiPAP이 \"더 적절한\" 환자는?","Patient where BiPAP is preferred over CPAP?"),
+        choices: shuffle([
+            { text: loc("COPD 악화·고탄산혈증 호흡부전","COPD exacerbation with hypercapnic resp failure"), effect: { hp: -2, rep: 22 }, log: loc("정답. BiPAP은 흡기·호기 압력 분리, CO2 배출에 유리.","Correct. BiPAP separates IPAP/EPAP, helps CO2 removal.") },
+            { text: loc("단순 OSA","Simple OSA"), effect: { hp: -25, rep: -15 }, log: loc("CPAP이 1차.","CPAP is first-line.") },
+            { text: loc("기흉","Pneumothorax"), effect: { hp: -42, rep: -32 }, log: loc("절대 금기.","Absolute contraindication.") },
+            { text: loc("의식 혼미·기도 보호 불능","Obtunded, can't protect airway"), effect: { hp: -38, rep: -28 }, log: loc("기관내삽관 필요.","Needs intubation.") }
+        ])
+    };
+}
+function generateCancerStageQuestion() {
+    return { baseId: "tnmStaging", categoryKey: "adult", part: loc("암 병기","Cancer Staging"), emoji: "🩺",
+        title: loc("TNM 병기 - 의미","TNM Staging"),
+        desc: loc("TNM 분류에서 \"T\"는 무엇을 의미하는가?","In TNM staging, what does \"T\" represent?"),
+        choices: shuffle([
+            { text: loc("원발 종양의 크기·침범 정도","Tumor size/local extent"), effect: { hp: -2, rep: 22 }, log: loc("정답. N=림프절, M=원격전이.","Correct. N=nodes, M=metastasis.") },
+            { text: loc("종양 위치(Topography)","Topography"), effect: { hp: -28, rep: -20 }, log: loc("아님.","No.") },
+            { text: loc("종양 시간(Time)","Time"), effect: { hp: -32, rep: -22 }, log: loc("아님.","No.") },
+            { text: loc("치료(Therapy)","Therapy"), effect: { hp: -32, rep: -22 }, log: loc("아님.","No.") }
+        ])
+    };
+}
+function generateRadiationSafetyQuestion() {
+    return { baseId: "brachyTherapy", categoryKey: "adult", part: loc("방사선 안전","Radiation Safety"), emoji: "☢️",
+        title: loc("내부 방사선 치료(브래키요법) 간호","Internal Radiation (Brachytherapy) Nursing"),
+        desc: loc("자궁경부암으로 cesium 임플란트를 한 환자 간호의 \"3대 원칙\"은?","Care for cesium implant patient — 3 principles?"),
+        choices: shuffle([
+            { text: loc("시간(Time) 단축, 거리(Distance) 유지, 차폐(Shielding)","Time (shorten), Distance (maintain), Shielding"), effect: { hp: -2, rep: 22 }, log: loc("정답. ALARA.","Correct. ALARA principle.") },
+            { text: loc("환자와 친밀하게 자주 방문","Visit patient often, closely"), effect: { hp: -38, rep: -28 }, log: loc("노출 ↑.","Increases exposure.") },
+            { text: loc("임산부 간호사도 OK","Pregnant nurse OK"), effect: { hp: -42, rep: -32 }, log: loc("절대 금지.","NEVER.") },
+            { text: loc("개인보호구 불요","No PPE needed"), effect: { hp: -38, rep: -28 }, log: loc("차폐 필수.","Shielding required.") }
+        ])
+    };
+}
+function generateMRIScreenQuestion() {
+    return { baseId: "mriContraind", categoryKey: "adult", part: loc("MRI 안전","MRI Safety"), emoji: "🧲",
+        title: loc("MRI 절대 금기","MRI Absolute Contraindication"),
+        desc: loc("MRI 검사의 \"절대 금기\"는?","Absolute contraindication for MRI?"),
+        choices: shuffle([
+            { text: loc("MRI 호환되지 않는 인공심박동기·체내 금속·인공와우","Non-MRI-compatible pacemaker, ferromagnetic implants, cochlear"), effect: { hp: -2, rep: 22 }, log: loc("정답. 강자기장으로 위험.","Correct. Strong magnet hazard.") },
+            { text: loc("당뇨","Diabetes"), effect: { hp: -32, rep: -22 }, log: loc("관련 없음.","Unrelated.") },
+            { text: loc("고혈압","Hypertension"), effect: { hp: -32, rep: -22 }, log: loc("관련 없음.","Unrelated.") },
+            { text: loc("문신","Tattoo"), effect: { hp: -22, rep: -12 }, log: loc("일부 주의.","Some caution.") }
+        ])
+    };
+}
+function generateBSEteachQuestion() {
+    return { baseId: "selfBreastExam", categoryKey: "community", part: loc("유방자가검진","BSE"), emoji: "🤱",
+        title: loc("자가 유방검진 시기","Self-Breast Exam Timing"),
+        desc: loc("폐경 전 여성에게 자가 유방검진의 \"가장 적절한\" 시기는?","Best time for SBE in premenopausal women?"),
+        choices: shuffle([
+            { text: loc("월경 시작 후 7-10일째 (호르몬 변화 적음)","7-10 days after menses starts (least hormonal change)"), effect: { hp: -2, rep: 22 }, log: loc("정답.","Correct.") },
+            { text: loc("월경 직전","Just before menses"), effect: { hp: -28, rep: -20 }, log: loc("호르몬 영향 ↑.","Hormonal changes.") },
+            { text: loc("매일","Daily"), effect: { hp: -25, rep: -15 }, log: loc("월 1회 충분.","Monthly is enough.") },
+            { text: loc("아무 때나","Any time"), effect: { hp: -28, rep: -20 }, log: loc("일관성 ↓.","Inconsistent.") }
+        ])
+    };
+}
+function generateMammogramAgeQuestion() {
+    return { baseId: "mammoAge", categoryKey: "community", part: loc("유방암 선별","Breast CA Screen"), emoji: "🩺",
+        title: loc("유방촬영술 권장","Mammography Screening"),
+        desc: loc("USPSTF 평균위험 여성의 정기 유방촬영 권장 시작 연령은?","USPSTF recommended starting age for routine mammography in average-risk women?"),
+        choices: shuffle([
+            { text: loc("40-50세부터, 2년마다 (위험도에 따라 조정)","Age 40-50 every 2 yr (adjusted by risk)"), effect: { hp: -2, rep: 22 }, log: loc("정답. 50-74세 권장 핵심.","Correct. 50-74 is core recommendation.") },
+            { text: loc("20세부터 매년","20, every year"), effect: { hp: -28, rep: -20 }, log: loc("너무 이름.","Too early.") },
+            { text: loc("70세부터","From 70"), effect: { hp: -32, rep: -22 }, log: loc("너무 늦음.","Too late.") },
+            { text: loc("폐경 후만","After menopause only"), effect: { hp: -28, rep: -20 }, log: loc("기준 다름.","Different criterion.") }
+        ])
+    };
+}
+function generateHospitalAcquiredQuestion() {
+    return { baseId: "haiPrevent", categoryKey: "management", part: loc("의료관련 감염","HAI"), emoji: "🦠",
+        title: loc("의료관련감염(HAI) 예방 - 가장 효과적","Most Effective HAI Prevention"),
+        desc: loc("의료관련감염 예방의 \"가장 기본적·효과적\" 조치는?","Most fundamental and effective HAI prevention?"),
+        choices: shuffle([
+            { text: loc("손위생","Hand hygiene"), effect: { hp: -2, rep: 22 }, log: loc("정답. 단일 가장 효과적.","Correct. Single most effective measure.") },
+            { text: loc("매일 항생제 예방","Daily prophylactic ABX"), effect: { hp: -32, rep: -22 }, log: loc("내성 ↑.","↑ Resistance.") },
+            { text: loc("전 환자 격리","Isolate all patients"), effect: { hp: -28, rep: -20 }, log: loc("불필요.","Unnecessary.") },
+            { text: loc("환자 면회 금지","No visitors ever"), effect: { hp: -32, rep: -22 }, log: loc("부적절.","Inappropriate.") }
+        ])
+    };
+}
+function generateBlamefreeReportQuestion() {
+    return { baseId: "justCultureModel", categoryKey: "management", part: loc("Just Culture","Just Culture"), emoji: "⚖️",
+        title: loc("Just Culture - 단순 실수","Just Culture — Simple Error"),
+        desc: loc("Just Culture에서 \"단순 인지 실수(slip)\"에 대한 적절한 대응은?","In Just Culture, response to a simple cognitive error (slip)?"),
+        choices: shuffle([
+            { text: loc("위로·시스템 점검 (개인 처벌 X)","Console + system review (no punishment)"), effect: { hp: -2, rep: 22 }, log: loc("정답. \"console\".","Correct. \"Console\" the person.") },
+            { text: loc("징계","Discipline"), effect: { hp: -32, rep: -22 }, log: loc("부적절.","Inappropriate.") },
+            { text: loc("해고","Termination"), effect: { hp: -42, rep: -32 }, log: loc("부적절.","Inappropriate.") },
+            { text: loc("무시","Ignore"), effect: { hp: -28, rep: -20 }, log: loc("학습 기회.","Missed opportunity.") }
+        ])
+    };
+}
+function generateSepsisQSOFAQuestion() {
+    return { baseId: "qsofaCriteria", categoryKey: "adult", part: loc("패혈증 사정","Sepsis Assessment"), emoji: "🦠",
+        title: loc("qSOFA 기준","qSOFA Criteria"),
+        desc: loc("병원 외래에서 qSOFA 점수 ≥2를 평가하는 \"3가지 항목\"은?","qSOFA score ≥2 — 3 components?"),
+        choices: shuffle([
+            { text: loc("의식 변화 + RR ≥22 + SBP ≤100","Altered mental + RR ≥22 + SBP ≤100"), effect: { hp: -2, rep: 22 }, log: loc("정답. 패혈증 의심 빠른 평가.","Correct. Quick screen for sepsis.") },
+            { text: loc("발열 + 백혈구 + Cr","Fever + WBC + Cr"), effect: { hp: -28, rep: -20 }, log: loc("SOFA 일부.","Part of full SOFA.") },
+            { text: loc("BP + HR + 산소포화도","BP + HR + SpO2"), effect: { hp: -28, rep: -20 }, log: loc("MEWS 등.","MEWS-like.") },
+            { text: loc("WBC + lactate + Cr","WBC + lactate + Cr"), effect: { hp: -25, rep: -15 }, log: loc("실험실 검사.","Lab tests.") }
+        ])
+    };
+}
+function generateInsulinPeakQuestion() {
+    return { baseId: "regularInsulinPeak", categoryKey: "adult", part: loc("인슐린 약동학","Insulin Pharmacokinetics"), emoji: "💉",
+        title: loc("Regular 인슐린 최고작용 시간","Regular Insulin Peak"),
+        desc: loc("Regular(R) 인슐린의 \"최고작용\" 시간은?","Peak time for regular (R) insulin?"),
+        choices: shuffle([
+            { text: loc("2-4시간","2-4 hours"), effect: { hp: -2, rep: 22 }, log: loc("정답. NPH는 4-12h.","Correct. NPH = 4-12h.") },
+            { text: loc("15분","15 minutes"), effect: { hp: -25, rep: -15 }, log: loc("Lispro/Aspart 빠른.","Lispro/aspart rapid.") },
+            { text: loc("12-24시간","12-24 hours"), effect: { hp: -28, rep: -20 }, log: loc("Glargine.","Glargine.") },
+            { text: loc("최고 없음 (지속형)","No peak (long-acting)"), effect: { hp: -28, rep: -20 }, log: loc("Glargine/Detemir.","Glargine/Detemir.") }
+        ])
+    };
+}
+function generateAntipsychoticBaselineQuestion() {
+    return { baseId: "antipsyBaseline", categoryKey: "psych", part: loc("항정신병약","Antipsychotic"), emoji: "💊",
+        title: loc("비정형 항정신병약 시작 전 검사","Atypical Antipsychotic Baseline"),
+        desc: loc("비정형 항정신병약 시작 전 가장 중요한 기저 검사는?","Baseline assessment before starting atypical antipsychotic?"),
+        choices: shuffle([
+            { text: loc("체중·BMI·공복혈당·지질·심전도","Weight/BMI, fasting glucose, lipids, ECG"), effect: { hp: -2, rep: 22 }, log: loc("정답. 대사 부작용 모니터링.","Correct. Metabolic side effect monitoring.") },
+            { text: loc("뇌 MRI","Brain MRI"), effect: { hp: -28, rep: -20 }, log: loc("일상 검사 아님.","Not routine.") },
+            { text: loc("간 생검","Liver biopsy"), effect: { hp: -42, rep: -32 }, log: loc("부적절.","Inappropriate.") },
+            { text: loc("관절 X선","Joint X-ray"), effect: { hp: -38, rep: -28 }, log: loc("관련 없음.","Unrelated.") }
+        ])
+    };
+}
+function generateExposureTherapyQuestion() {
+    return { baseId: "exposureTherapy", categoryKey: "psych", part: loc("불안 치료","Anxiety Therapy"), emoji: "💭",
+        title: loc("노출 치료 원리","Exposure Therapy Principle"),
+        desc: loc("공포증 치료의 \"노출(exposure)\" 치료 핵심 원리는?","Core principle of exposure therapy for phobias?"),
+        choices: shuffle([
+            { text: loc("점진적·반복적 노출로 둔감화·회피 행동 감소","Graduated, repeated exposure for desensitization and ↓ avoidance"), effect: { hp: -2, rep: 22 }, log: loc("정답. CBT 기반.","Correct. CBT-based.") },
+            { text: loc("즉시 최고 강도 자극","Maximum intensity immediately"), effect: { hp: -32, rep: -22 }, log: loc("점진적이 표준.","Graduated is standard.") },
+            { text: loc("회피 강화","Reinforce avoidance"), effect: { hp: -38, rep: -28 }, log: loc("반대.","Opposite.") },
+            { text: loc("약물만 사용","Drug only"), effect: { hp: -25, rep: -15 }, log: loc("CBT가 1차.","CBT first-line.") }
+        ])
+    };
+}
+function generateBoardingPriorityQuestion() {
+    return { baseId: "edBoardingPriority", categoryKey: "management", part: loc("응급실 흐름","ED Flow"), emoji: "🚪",
+        title: loc("응급실 적체(Boarding) 영향","ED Boarding Impact"),
+        desc: loc("응급실에서 \"입원 환자 적체(boarding)\"가 환자 결과에 미치는 영향은?","Impact of ED boarding on outcomes?"),
+        choices: shuffle([
+            { text: loc("이환율·사망률 ↑ + 환자 만족도 ↓","↑ Morbidity/mortality + ↓ patient satisfaction"), effect: { hp: -2, rep: 22 }, log: loc("정답. 시스템 개선 필요.","Correct. Systemic improvement needed.") },
+            { text: loc("영향 없음","No effect"), effect: { hp: -32, rep: -22 }, log: loc("연구 다수 부정.","Many studies refute.") },
+            { text: loc("결과 향상","Improves outcomes"), effect: { hp: -38, rep: -28 }, log: loc("반대.","Opposite.") },
+            { text: loc("간호사만 영향","Affects nurses only"), effect: { hp: -28, rep: -20 }, log: loc("환자 영향 큼.","Affects patients.") }
+        ])
+    };
+}
+function generateOlderAdultPolypharmQuestion() {
+    return { baseId: "polypharmDef", categoryKey: "adult", part: loc("다약제 복용","Polypharmacy"), emoji: "💊",
+        title: loc("다약제 복용 정의","Polypharmacy Definition"),
+        desc: loc("\"다약제 복용(polypharmacy)\"의 일반적 정의는?","Common definition of polypharmacy?"),
+        choices: shuffle([
+            { text: loc("동시에 5개 이상 약물 복용","Concurrent use of ≥5 medications"), effect: { hp: -2, rep: 22 }, log: loc("정답. 부작용·상호작용 ↑.","Correct. ↑ ADR/interactions.") },
+            { text: loc("3개 이상","≥3 medications"), effect: { hp: -25, rep: -15 }, log: loc("기준 아님.","Not the threshold.") },
+            { text: loc("10개 이상","≥10 medications"), effect: { hp: -25, rep: -15 }, log: loc("excessive polypharmacy.","Excessive polypharmacy.") },
+            { text: loc("같은 약물 두 번","Same drug twice"), effect: { hp: -32, rep: -22 }, log: loc("중복.","Duplication.") }
+        ])
+    };
+}
+function generateAddisonTeachQuestion() {
+    return { baseId: "addisonStressDose", categoryKey: "adult", part: loc("Addison 환자 교육","Addison Teaching"), emoji: "💊",
+        title: loc("Addison 환자 - 스트레스 용량","Addison — Stress Dose"),
+        desc: loc("Addison 환자에게 \"가장 중요한\" 자기관리 교육은?","Most important self-management teaching for Addison patient?"),
+        choices: shuffle([
+            { text: loc("질병·수술·심한 스트레스 시 스테로이드 용량 증량(stress dose)","Increase steroid dose (stress dose) during illness/surgery/severe stress"), effect: { hp: -2, rep: 22 }, log: loc("정답. 위기 예방.","Correct. Prevents crisis.") },
+            { text: loc("스테로이드 임의 중단","Stop steroid as desired"), effect: { hp: -45, rep: -35 }, log: loc("위기 위험.","Crisis risk.") },
+            { text: loc("저나트륨 식이","Low-Na diet"), effect: { hp: -38, rep: -28 }, log: loc("저Na 위험 ↑.","Worsens hypoNa.") },
+            { text: loc("운동 금지","Avoid all exercise"), effect: { hp: -25, rep: -15 }, log: loc("적절 운동 OK.","Moderate OK.") }
+        ])
+    };
+}
+function generateLevodopaTeachQuestion() {
+    return { baseId: "levodopaDietary", categoryKey: "adult", part: loc("Parkinson 약물","Parkinson Med"), emoji: "💊",
+        title: loc("Levodopa - 단백질 상호작용","Levodopa — Protein Interaction"),
+        desc: loc("Levodopa 복용 환자에게 식이 교육으로 가장 중요한 것은?","Most important diet teaching for levodopa?"),
+        choices: shuffle([
+            { text: loc("고단백 식사를 한꺼번에 피함 (흡수 저하)","Avoid large protein meals at once (impairs absorption)"), effect: { hp: -2, rep: 22 }, log: loc("정답. 단백질 분산 섭취.","Correct. Spread protein.") },
+            { text: loc("탄수화물 제한","Restrict carbs"), effect: { hp: -28, rep: -20 }, log: loc("관련 없음.","Unrelated.") },
+            { text: loc("물 섭취 제한","Restrict water"), effect: { hp: -38, rep: -28 }, log: loc("탈수.","Dehydration.") },
+            { text: loc("식이 무관","Diet doesn't matter"), effect: { hp: -32, rep: -22 }, log: loc("중요.","It matters.") }
+        ])
+    };
+}
+function generateAdolescentRiskQuestion() {
+    return { baseId: "headssscreen", categoryKey: "pediatric", part: loc("청소년 사정","Adolescent Assessment"), emoji: "🧒",
+        title: loc("HEEADSSS 청소년 평가","HEEADSSS Adolescent Assessment"),
+        desc: loc("청소년 정신·사회 평가 도구 \"HEEADSSS\"의 첫 \"H\"는?","First \"H\" in HEEADSSS adolescent assessment?"),
+        choices: shuffle([
+            { text: loc("Home (가정 환경)","Home environment"), effect: { hp: -2, rep: 22 }, log: loc("정답. H-E-E-A-D-S-S-S.","Correct. H-E-E-A-D-S-S-S.") },
+            { text: loc("Headache","Headache"), effect: { hp: -32, rep: -22 }, log: loc("아님.","No.") },
+            { text: loc("Health","Health"), effect: { hp: -25, rep: -15 }, log: loc("일반.","Generic.") },
+            { text: loc("Hobby","Hobby"), effect: { hp: -28, rep: -20 }, log: loc("아님.","No.") }
+        ])
+    };
+}
+function generateRheumaticPrevQuestion() {
+    return { baseId: "rfPrevention", categoryKey: "pediatric", part: loc("류마티스열 예방","RF Prevention"), emoji: "🦠",
+        title: loc("류마티스열 예방 - 핵심","Rheumatic Fever Prevention"),
+        desc: loc("류마티스열의 \"가장 효과적\" 1차 예방은?","Most effective primary prevention of rheumatic fever?"),
+        choices: shuffle([
+            { text: loc("연쇄상구균 인후염을 페니실린으로 적절히 치료","Treat strep throat with penicillin promptly"), effect: { hp: -2, rep: 22 }, log: loc("정답. GAS 인후염 후 1-3주 발생.","Correct. RF follows GAS pharyngitis.") },
+            { text: loc("백신 접종","Vaccine"), effect: { hp: -28, rep: -20 }, log: loc("백신 없음.","No vaccine.") },
+            { text: loc("관절 강화 운동","Joint exercise"), effect: { hp: -32, rep: -22 }, log: loc("예방 X.","Doesn't prevent.") },
+            { text: loc("저단백 식이","Low-protein diet"), effect: { hp: -38, rep: -28 }, log: loc("관련 없음.","Unrelated.") }
+        ])
+    };
+}
+function generateHomelessHealthQuestion() {
+    return { baseId: "homelessTrust", categoryKey: "community", part: loc("취약계층","Vulnerable Pop"), emoji: "🏘️",
+        title: loc("노숙인 건강간호 - 첫 단계","Nursing Homeless Population — First Step"),
+        desc: loc("노숙인을 처음 접한 지역사회 간호사의 \"가장 우선\" 행동은?","First action for community nurse meeting homeless person?"),
+        choices: shuffle([
+            { text: loc("신뢰 관계 형성·기본 욕구(쉼터·식사) 평가","Build trust; assess basic needs (shelter/food)"), effect: { hp: -2, rep: 22 }, log: loc("정답. Maslow 우선.","Correct. Maslow's hierarchy.") },
+            { text: loc("즉시 의료 검사 강요","Force medical exam now"), effect: { hp: -32, rep: -22 }, log: loc("신뢰 ↓.","Reduces trust.") },
+            { text: loc("체포 신고","Call police"), effect: { hp: -42, rep: -32 }, log: loc("부적절.","Inappropriate.") },
+            { text: loc("무시","Ignore"), effect: { hp: -45, rep: -35 }, log: loc("부적절.","Inappropriate.") }
+        ])
+    };
+}
+function generatePostpartumHealthCheckQuestion() {
+    return { baseId: "postpartumCheckup", categoryKey: "maternal", part: loc("산후 검진","Postpartum Visit"), emoji: "🤱",
+        title: loc("산후 첫 외래 검진 시기","First Postpartum Visit"),
+        desc: loc("ACOG 권장 \"포괄적\" 산후 외래 시기는?","ACOG recommended timing for comprehensive postpartum visit?"),
+        choices: shuffle([
+            { text: loc("출산 후 12주 이내 + 3주 이내 1차 접촉","Within 12 wk + initial contact within 3 wk"), effect: { hp: -2, rep: 22 }, log: loc("정답. 단순 6주 검진에서 변경.","Correct. Updated from single 6-wk visit.") },
+            { text: loc("6개월 후","6 mo later"), effect: { hp: -32, rep: -22 }, log: loc("너무 늦음.","Too late.") },
+            { text: loc("1년 후","1 year"), effect: { hp: -38, rep: -28 }, log: loc("부적절.","Inappropriate.") },
+            { text: loc("증상 시만","Only if symptoms"), effect: { hp: -32, rep: -22 }, log: loc("정기 권장.","Routine recommended.") }
+        ])
+    };
+}
+function generateRapeKitQuestion() {
+    return { baseId: "saneEvidence", categoryKey: "law", part: loc("성폭력 검사","SANE Exam"), emoji: "⚖️",
+        title: loc("성폭력 증거 수집","Sexual Assault Evidence"),
+        desc: loc("성폭력 응급실 환자의 증거 수집·간호에서 \"피해야 할\" 것은?","What to AVOID in SANE evidence collection?"),
+        choices: shuffle([
+            { text: loc("샤워·옷 갈아입기·배뇨를 권하기 (증거 손실)","Tell patient to shower/change/void (destroys evidence)"), effect: { hp: -2, rep: 22 }, log: loc("정답. 증거 보존 우선.","Correct. Preserve evidence.") },
+            { text: loc("환자 동의 후 검사","Exam after consent"), effect: { hp: -22, rep: -12 }, log: loc("올바름.","Proper.") },
+            { text: loc("정서적 지지","Emotional support"), effect: { hp: -22, rep: -12 }, log: loc("필수.","Required.") },
+            { text: loc("STD/임신 예방","STD/preg prophylaxis"), effect: { hp: -22, rep: -12 }, log: loc("권장.","Recommended.") }
+        ])
+    };
+}
+function generateBPHTeachingQuestion() {
+    return { baseId: "bphSawPalmettoCk", categoryKey: "adult", part: loc("BPH","BPH"), emoji: "💊",
+        title: loc("BPH - Finasteride 교육","BPH — Finasteride Teaching"),
+        desc: loc("Finasteride(5-α 환원효소 억제제)를 시작하는 환자에게 가장 중요한 교육은?","Most important teaching for finasteride?"),
+        choices: shuffle([
+            { text: loc("효과는 3-6개월 후, 임산부는 약물 부서진 정 만지지 말 것","Effect takes 3-6 mo; pregnant women must not handle crushed tabs"), effect: { hp: -2, rep: 22 }, log: loc("정답. 태아 기형 위험.","Correct. Teratogenic risk.") },
+            { text: loc("즉시 효과 기대","Expect immediate effect"), effect: { hp: -28, rep: -20 }, log: loc("늦게.","Slow.") },
+            { text: loc("성기능 영향 없음","No sexual side effects"), effect: { hp: -32, rep: -22 }, log: loc("발기/성욕 ↓.","Causes ED/↓libido.") },
+            { text: loc("자몽주스 OK","Grapefruit OK"), effect: { hp: -28, rep: -20 }, log: loc("일반적으로 영향 적음.","Usually OK but caution.") }
+        ])
+    };
+}
+function generateBolusFeedingQuestion() {
+    return { baseId: "ngBolusPosition", categoryKey: "fundamentals", part: loc("위관 영양","NG Feeding"), emoji: "🍵",
+        title: loc("Bolus 위관 영양 - 체위","Bolus NG Feeding — Position"),
+        desc: loc("위관 영양 시·후 \"필수\" 체위는?","Required position during/after NG feeding?"),
+        choices: shuffle([
+            { text: loc("HOB 30-45° 유지, 영양 후 30-60분","HOB 30-45° during and 30-60 min after"), effect: { hp: -2, rep: 22 }, log: loc("정답. 흡인 예방.","Correct. Prevents aspiration.") },
+            { text: loc("앙와위 평평","Flat supine"), effect: { hp: -38, rep: -28 }, log: loc("흡인 위험.","Aspiration risk.") },
+            { text: loc("Trendelenburg","Trendelenburg"), effect: { hp: -42, rep: -32 }, log: loc("매우 위험.","Very dangerous.") },
+            { text: loc("좌측위","Left lateral"), effect: { hp: -25, rep: -15 }, log: loc("HOB 우선.","HOB first.") }
+        ])
+    };
+}
+function generateNeglectVsAbuseQuestion() {
+    return { baseId: "elderNeglect", categoryKey: "law", part: loc("학대 vs 방치","Abuse vs Neglect"), emoji: "👴",
+        title: loc("노인 \"방치\" 식별","Identifying Elder Neglect"),
+        desc: loc("85세 환자가 영양실조·욕창·악취 나는 옷차림으로 발견됐다. 분류는?","85-yr patient: malnourished, pressure ulcers, soiled clothing. Classification?"),
+        choices: shuffle([
+            { text: loc("방치(Neglect) - 의무 신고","Neglect — mandatory report"), effect: { hp: -2, rep: 22 }, log: loc("정답. APS에 신고.","Correct. Report to APS.") },
+            { text: loc("정상 노화","Normal aging"), effect: { hp: -42, rep: -32 }, log: loc("부적절.","Inappropriate.") },
+            { text: loc("개인 선택","Personal choice"), effect: { hp: -38, rep: -28 }, log: loc("취약.","Vulnerable.") },
+            { text: loc("간호사 책임 X","Not nurse's role"), effect: { hp: -38, rep: -28 }, log: loc("의무 신고자.","Mandatory reporter.") }
+        ])
+    };
+}
+
+// --- 이미지 8 ---
+function generateBPCuffSizeImgQuestion() {
+    const svg = `<svg viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg"><rect width="600" height="200" fill="#f0f9ff"/><g transform="translate(40,30)"><rect x="0" y="40" width="160" height="60" fill="#fed7aa" stroke="#9a3412" stroke-width="2"/><rect x="20" y="50" width="80" height="40" fill="#3b82f6" stroke="#1e40af" stroke-width="2"/><text x="80" y="125" text-anchor="middle" font-size="11" font-weight="700">A</text><text x="80" y="145" text-anchor="middle" font-size="9" fill="#dc2626">${loc("커프 너무 작음","Cuff too small")}</text><text x="80" y="160" text-anchor="middle" font-size="9" fill="#dc2626">${loc("BP 가짜 ↑","BP falsely high")}</text></g><g transform="translate(220,30)"><rect x="0" y="40" width="160" height="60" fill="#fed7aa" stroke="#9a3412" stroke-width="2"/><rect x="20" y="55" width="120" height="30" fill="#3b82f6" stroke="#1e40af" stroke-width="2"/><text x="80" y="125" text-anchor="middle" font-size="11" font-weight="700">B</text><text x="80" y="145" text-anchor="middle" font-size="9" fill="#10b981">${loc("적절한 크기","Correct size")}</text><text x="80" y="160" text-anchor="middle" font-size="9" fill="#10b981">${loc("정확한 BP","Accurate BP")}</text></g><g transform="translate(400,30)"><rect x="0" y="40" width="160" height="60" fill="#fed7aa" stroke="#9a3412" stroke-width="2"/><rect x="-20" y="50" width="200" height="40" fill="#3b82f6" stroke="#1e40af" stroke-width="2"/><text x="80" y="125" text-anchor="middle" font-size="11" font-weight="700">C</text><text x="80" y="145" text-anchor="middle" font-size="9" fill="#dc2626">${loc("커프 너무 큼","Cuff too large")}</text><text x="80" y="160" text-anchor="middle" font-size="9" fill="#dc2626">${loc("BP 가짜 ↓","BP falsely low")}</text></g></svg>`;
+    return { baseId: "bpCuffSizeImg", categoryKey: "fundamentals", part: loc("BP 측정","BP Measurement"), emoji: "🩺",
+        title: loc("커프 너비 - 너무 작음","Cuff Too Small"),
+        desc: loc("커프(A)가 위팔 둘레에 비해 너무 작을 때 BP 측정은?","Cuff (A) too small for arm — BP reading?"),
+        image: svg,
+        choices: shuffle([
+            { text: loc("실제보다 \"가짜로 높게\" 측정","Falsely HIGH reading"), effect: { hp: -2, rep: 22 }, log: loc("정답. 너무 크면 가짜 낮게.","Correct. Too large = falsely low.") },
+            { text: loc("실제보다 낮게","Falsely low"), effect: { hp: -32, rep: -22 }, log: loc("너무 큰 커프.","That's too-large cuff.") },
+            { text: loc("정확함","Accurate"), effect: { hp: -32, rep: -22 }, log: loc("크기 중요.","Size matters.") },
+            { text: loc("측정 불가","Cannot measure"), effect: { hp: -28, rep: -20 }, log: loc("측정은 가능.","Can measure.") }
+        ])
+    };
+}
+function generateAlignmentImgQuestion() {
+    const svg = `<svg viewBox="0 0 600 220" xmlns="http://www.w3.org/2000/svg"><rect width="600" height="220" fill="#f0f9ff"/><g transform="translate(60,30)"><line x1="0" y1="100" x2="200" y2="100" stroke="#1e293b" stroke-width="2"/><circle cx="50" cy="100" r="12" fill="#fed7aa" stroke="#9a3412" stroke-width="2"/><rect x="60" y="92" width="120" height="16" fill="#fecaca" stroke="#991b1b" stroke-width="2"/><line x1="180" y1="92" x2="200" y2="92" stroke="#1e293b" stroke-width="3"/><line x1="180" y1="108" x2="200" y2="108" stroke="#1e293b" stroke-width="3"/><text x="100" y="155" text-anchor="middle" font-size="11" font-weight="700">A: ${loc("앙와위(supine)","Supine")}</text><text x="100" y="170" text-anchor="middle" font-size="9" fill="#10b981">${loc("정렬 정상","Aligned")}</text></g><g transform="translate(330,30)"><line x1="0" y1="100" x2="240" y2="100" stroke="#1e293b" stroke-width="2"/><circle cx="40" cy="100" r="12" fill="#fed7aa" stroke="#9a3412" stroke-width="2"/><rect x="50" y="80" width="60" height="20" fill="#fecaca" stroke="#991b1b" stroke-width="2"/><rect x="115" y="100" width="60" height="20" fill="#fecaca" stroke="#991b1b" stroke-width="2"/><line x1="180" y1="100" x2="220" y2="120" stroke="#1e293b" stroke-width="3"/><text x="120" y="155" text-anchor="middle" font-size="11" font-weight="700">B: ${loc("정렬 불량","Misaligned")}</text><text x="120" y="170" text-anchor="middle" font-size="9" fill="#dc2626">${loc("욕창·근경축 위험","Pressure/contracture risk")}</text></g></svg>`;
+    return { baseId: "bodyAlignImg", categoryKey: "fundamentals", part: loc("체위 정렬","Body Alignment"), emoji: "🛏️",
+        title: loc("올바른 체위 정렬","Proper Body Alignment"),
+        desc: loc("환자 침상에서 \"올바른\" 체위 정렬의 핵심 원칙은?","Core principle of proper body alignment in bed?"),
+        image: svg,
+        choices: shuffle([
+            { text: loc("머리·척추·골반·하지를 일직선·중립 위치로","Head, spine, pelvis, legs in straight line/neutral position"), effect: { hp: -2, rep: 22 }, log: loc("정답. 욕창·근경축 예방.","Correct. Prevents pressure/contracture.") },
+            { text: loc("발 끝을 항상 안으로 향함","Toes always pointed inward"), effect: { hp: -32, rep: -22 }, log: loc("족하수 위험.","Foot drop risk.") },
+            { text: loc("머리는 무릎보다 낮게","Head lower than knees"), effect: { hp: -32, rep: -22 }, log: loc("ICP·호흡 영향.","Affects ICP/breathing.") },
+            { text: loc("관절 모두 굴곡","All joints flexed"), effect: { hp: -32, rep: -22 }, log: loc("근경축.","Contracture.") }
+        ])
+    };
+}
+function generateBPMonitor24ImgQuestion() {
+    const svg = `<svg viewBox="0 0 600 220" xmlns="http://www.w3.org/2000/svg"><rect width="600" height="220" fill="#f0f9ff"/><g transform="translate(40,20)"><rect x="0" y="0" width="520" height="180" fill="#fff" stroke="#1e293b" stroke-width="2" rx="6"/><text x="260" y="22" text-anchor="middle" font-size="13" font-weight="800">${loc("24시간 활동성 BP 모니터","24-hr Ambulatory BP Monitor")}</text><line x1="40" y1="170" x2="500" y2="170" stroke="#1e293b" stroke-width="1.5"/><line x1="40" y1="40" x2="40" y2="170" stroke="#1e293b" stroke-width="1.5"/><text x="20" y="170" font-size="8">100</text><text x="20" y="120" font-size="8">130</text><text x="20" y="80" font-size="8">160</text><path d="M 40 110 L 80 105 L 120 100 L 160 95 L 200 105 L 240 100 L 280 105 L 320 75 L 360 70 L 400 65 L 440 100 L 480 110 L 500 115" stroke="#dc2626" stroke-width="2" fill="none"/><text x="350" y="55" font-size="10" fill="#dc2626" font-weight="700">${loc("야간 BP ↑","Night-time BP ↑")}</text><line x1="320" y1="40" x2="320" y2="170" stroke="#94a3b8" stroke-dasharray="3,2"/><text x="320" y="190" text-anchor="middle" font-size="9" fill="#64748b">${loc("야간","Night")}</text></g></svg>`;
+    return { baseId: "nondipperImg", categoryKey: "adult", part: loc("BP 패턴","BP Pattern"), emoji: "📊",
+        title: loc("야간 비강하(non-dipping) 패턴","Non-Dipping BP Pattern"),
+        desc: loc("24시간 BP 모니터에서 야간 BP가 \"감소하지 않는다(non-dipping)\". 이는 무엇을 의미하는가?","BP doesn't dip at night on 24-hr ABPM. Meaning?"),
+        image: svg,
+        choices: shuffle([
+            { text: loc("심혈관 위험 ↑·표적 장기 손상 위험 ↑","Increased CV risk and end-organ damage"), effect: { hp: -2, rep: 22 }, log: loc("정답. 정상은 야간 10-20% 감소.","Correct. Normal: 10-20% drop at night.") },
+            { text: loc("정상","Normal"), effect: { hp: -32, rep: -22 }, log: loc("정상은 dipping.","Normal dips.") },
+            { text: loc("계측 오류","Measurement error"), effect: { hp: -28, rep: -20 }, log: loc("패턴 의미 있음.","Pattern is meaningful.") },
+            { text: loc("저혈압","Hypotension"), effect: { hp: -32, rep: -22 }, log: loc("아님.","Not.") }
+        ])
+    };
+}
+function generateColostomyOutputImgQuestion() {
+    const svg = `<svg viewBox="0 0 600 220" xmlns="http://www.w3.org/2000/svg"><rect width="600" height="220" fill="#fff8f0"/><g transform="translate(40,30)"><circle cx="80" cy="80" r="50" fill="#fed7aa" stroke="#9a3412" stroke-width="2"/><circle cx="80" cy="80" r="20" fill="#dc2626" stroke="#7f1d1d" stroke-width="2"/><text x="80" y="84" text-anchor="middle" font-size="9" font-weight="700" fill="white">${loc("장루","Stoma")}</text><text x="80" y="160" text-anchor="middle" font-size="11" font-weight="700">A: ${loc("정상 (붉은·습윤)","Normal (red, moist)")}</text></g><g transform="translate(220,30)"><circle cx="80" cy="80" r="50" fill="#fed7aa" stroke="#9a3412" stroke-width="2"/><circle cx="80" cy="80" r="20" fill="#7c2d12" stroke="#1e293b" stroke-width="2"/><text x="80" y="84" text-anchor="middle" font-size="9" font-weight="700" fill="white">${loc("장루","Stoma")}</text><text x="80" y="160" text-anchor="middle" font-size="11" font-weight="700">B: ${loc("어두운 갈색","Dark/dusky")}</text></g><g transform="translate(400,30)"><circle cx="80" cy="80" r="50" fill="#fed7aa" stroke="#9a3412" stroke-width="2"/><circle cx="80" cy="80" r="20" fill="#000" stroke="#1e293b" stroke-width="2"/><text x="80" y="84" text-anchor="middle" font-size="9" font-weight="700" fill="white">${loc("장루","Stoma")}</text><text x="80" y="160" text-anchor="middle" font-size="11" font-weight="700">C: ${loc("검은색","Black")}</text></g></svg>`;
+    return { baseId: "stomaColorImg", categoryKey: "fundamentals", part: loc("장루 사정","Stoma Assessment"), emoji: "🩺",
+        title: loc("장루 색상 - 의미","Stoma Color"),
+        desc: loc("장루가 그림 C(검은색)이다. 의미는?","Stoma is black (C). Meaning?"),
+        image: svg,
+        choices: shuffle([
+            { text: loc("괴사(necrosis) - 즉시 외과 보고","Necrosis — notify surgery immediately"), effect: { hp: -3, rep: 22 }, log: loc("정답. 응급. A는 정상.","Correct. Emergency. A = normal.") },
+            { text: loc("정상","Normal"), effect: { hp: -42, rep: -32 }, log: loc("응급.","Emergency.") },
+            { text: loc("탈수","Dehydration"), effect: { hp: -32, rep: -22 }, log: loc("색 변화 다름.","Different color.") },
+            { text: loc("관찰","Observe"), effect: { hp: -42, rep: -32 }, log: loc("응급.","Emergency.") }
+        ])
+    };
+}
+function generateInfantHRRangeImgQuestion() {
+    const svg = `<svg viewBox="0 0 600 220" xmlns="http://www.w3.org/2000/svg"><rect width="600" height="220" fill="#fef3f7"/><g transform="translate(20,20)"><rect width="560" height="40" fill="#fff" stroke="#1e293b" stroke-width="2" rx="4"/><text x="280" y="27" text-anchor="middle" font-size="14" font-weight="800">${loc("연령별 정상 심박수 (안정 시)","Normal Heart Rate by Age (resting)")}</text></g><g transform="translate(20,70)"><rect width="135" height="50" fill="#fee2e2" stroke="#991b1b"/><text x="67" y="22" text-anchor="middle" font-size="11" font-weight="700">${loc("신생아","Newborn")}</text><text x="67" y="40" text-anchor="middle" font-size="11" font-weight="800" fill="#dc2626">110-160</text></g><g transform="translate(160,70)"><rect width="135" height="50" fill="#fed7aa" stroke="#9a3412"/><text x="67" y="22" text-anchor="middle" font-size="11" font-weight="700">${loc("영아","Infant")}</text><text x="67" y="40" text-anchor="middle" font-size="11" font-weight="800" fill="#dc2626">100-140</text></g><g transform="translate(300,70)"><rect width="135" height="50" fill="#fef3c7" stroke="#a16207"/><text x="67" y="22" text-anchor="middle" font-size="11" font-weight="700">${loc("학령기","School age")}</text><text x="67" y="40" text-anchor="middle" font-size="11" font-weight="800" fill="#dc2626">75-118</text></g><g transform="translate(440,70)"><rect width="140" height="50" fill="#dcfce7" stroke="#166534"/><text x="70" y="22" text-anchor="middle" font-size="11" font-weight="700">${loc("성인","Adult")}</text><text x="70" y="40" text-anchor="middle" font-size="11" font-weight="800" fill="#dc2626">60-100</text></g><g transform="translate(20,140)"><rect width="560" height="50" fill="#fde68a" stroke="#92400e"/><text x="280" y="22" text-anchor="middle" font-size="13" font-weight="700">${loc("환자: 6개월 영아, HR 80","Patient: 6-mo infant, HR 80")}</text><text x="280" y="40" text-anchor="middle" font-size="11" fill="#dc2626">${loc("정상 범위 미만!","Below normal range!")}</text></g></svg>`;
+    return { baseId: "infantBradycardia", categoryKey: "pediatric", part: loc("소아 활력","Pediatric VS"), emoji: "👶",
+        title: loc("영아 서맥","Infant Bradycardia"),
+        desc: loc("6개월 영아 HR 80 측정. 의미와 처치는?","6-mo infant HR 80. Meaning and action?"),
+        image: svg,
+        choices: shuffle([
+            { text: loc("심한 서맥 - 산소·환기·CPR 준비","Severe bradycardia — O2, ventilation, prepare CPR"), effect: { hp: -3, rep: 22 }, log: loc("정답. 영아 ≤60에서 CPR.","Correct. CPR if HR ≤60 with poor perfusion.") },
+            { text: loc("정상","Normal"), effect: { hp: -38, rep: -28 }, log: loc("100-140이 정상.","Normal 100-140.") },
+            { text: loc("좋은 신호","Good sign"), effect: { hp: -42, rep: -32 }, log: loc("위험.","Dangerous.") },
+            { text: loc("관찰","Observe"), effect: { hp: -32, rep: -22 }, log: loc("적극 처치.","Active management.") }
+        ])
+    };
+}
+function generateGloveTypeImgQuestion() {
+    const svg = `<svg viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg"><rect width="600" height="200" fill="#f0f9ff"/><g transform="translate(40,30)"><path d="M 30 120 L 30 60 Q 30 30 50 30 L 70 30 Q 90 30 90 50 L 90 120 Z" fill="#bfdbfe" stroke="#1e40af" stroke-width="2"/><path d="M 30 60 L 20 30 M 40 60 L 35 25 M 50 60 L 50 20 M 65 60 L 70 25 M 80 60 L 85 30" stroke="#1e40af" stroke-width="2" fill="none"/><text x="60" y="155" text-anchor="middle" font-size="12" font-weight="700">A</text><text x="60" y="175" text-anchor="middle" font-size="10" fill="#64748b">${loc("청결 장갑","Clean glove")}</text></g><g transform="translate(220,30)"><path d="M 30 120 L 30 60 Q 30 30 50 30 L 70 30 Q 90 30 90 50 L 90 120 Z" fill="#fef3c7" stroke="#92400e" stroke-width="2"/><path d="M 30 60 L 20 30 M 40 60 L 35 25 M 50 60 L 50 20 M 65 60 L 70 25 M 80 60 L 85 30" stroke="#92400e" stroke-width="2" fill="none"/><text x="60" y="155" text-anchor="middle" font-size="12" font-weight="700">B</text><text x="60" y="175" text-anchor="middle" font-size="10" fill="#64748b">${loc("멸균 장갑","Sterile glove")}</text></g><g transform="translate(400,30)"><rect x="20" y="40" width="80" height="80" fill="#fff" stroke="#1e293b" stroke-width="2" rx="4"/><text x="60" y="80" text-anchor="middle" font-size="10" font-weight="700">${loc("어떤 상황?","Which situation?")}</text><text x="60" y="100" text-anchor="middle" font-size="9" fill="#64748b">${loc("도뇨관 삽입","Foley insertion")}</text><text x="60" y="155" text-anchor="middle" font-size="12" font-weight="700">C</text></g></svg>`;
+    return { baseId: "foleyGlove", categoryKey: "fundamentals", part: loc("장갑 선택","Glove Selection"), emoji: "🧤",
+        title: loc("도뇨관 삽입 - 장갑 종류","Foley Insertion — Glove Type"),
+        desc: loc("도뇨관 삽입에 \"필수\"인 장갑은?","Required glove for Foley catheter insertion?"),
+        image: svg,
+        choices: shuffle([
+            { text: loc("멸균 장갑 (B)","Sterile glove (B)"), effect: { hp: -2, rep: 22 }, log: loc("정답. 무균술 적용.","Correct. Sterile technique.") },
+            { text: loc("청결 장갑 (A)","Clean glove (A)"), effect: { hp: -32, rep: -22 }, log: loc("CAUTI 위험.","CAUTI risk.") },
+            { text: loc("장갑 불요","No gloves"), effect: { hp: -45, rep: -35 }, log: loc("부적절.","Inappropriate.") },
+            { text: loc("이중 장갑","Double gloves"), effect: { hp: -28, rep: -20 }, log: loc("불필요.","Unnecessary.") }
+        ])
+    };
+}
+function generateTractionImgQuestion() {
+    const svg = `<svg viewBox="0 0 600 220" xmlns="http://www.w3.org/2000/svg"><rect width="600" height="220" fill="#f0f9ff"/><g transform="translate(40,30)"><rect width="200" height="100" fill="#fed7aa" stroke="#9a3412" stroke-width="2" rx="4"/><line x1="50" y1="80" x2="180" y2="80" stroke="#1e293b" stroke-width="3"/><line x1="180" y1="80" x2="220" y2="40" stroke="#dc2626" stroke-width="2"/><circle cx="220" cy="40" r="10" fill="#fbbf24"/><text x="100" y="155" text-anchor="middle" font-size="11" font-weight="700">A: ${loc("Buck's 견인","Buck's Traction")}</text><text x="100" y="170" text-anchor="middle" font-size="9" fill="#64748b">${loc("피부 견인·고관절 안정","Skin traction, hip stability")}</text></g><g transform="translate(320,30)"><rect width="200" height="100" fill="#fed7aa" stroke="#9a3412" stroke-width="2" rx="4"/><circle cx="100" cy="50" r="6" fill="#dc2626"/><text x="100" y="55" text-anchor="middle" font-size="6" fill="#fff">${loc("핀","pin")}</text><line x1="100" y1="50" x2="180" y2="80" stroke="#1e293b" stroke-width="2"/><line x1="180" y1="80" x2="220" y2="40" stroke="#dc2626" stroke-width="2"/><circle cx="220" cy="40" r="10" fill="#fbbf24"/><text x="100" y="155" text-anchor="middle" font-size="11" font-weight="700">B: ${loc("골견인","Skeletal Traction")}</text><text x="100" y="170" text-anchor="middle" font-size="9" fill="#64748b">${loc("핀 부위 감염 사정","Pin site infection check")}</text></g></svg>`;
+    return { baseId: "tractionWeights", categoryKey: "adult", part: loc("견인","Traction"), emoji: "🦴",
+        title: loc("견인 - 추 관리","Traction Weight Management"),
+        desc: loc("견인 환자의 \"가장 중요한\" 간호 원칙은?","Most important nursing principle for traction patient?"),
+        image: svg,
+        choices: shuffle([
+            { text: loc("추는 절대 들지 않고 자유롭게 매달려 있어야 함","Weights must hang freely, never lifted"), effect: { hp: -2, rep: 22 }, log: loc("정답. 견인 효과 유지.","Correct. Maintains traction.") },
+            { text: loc("추를 침대에 올려 두기","Rest weights on bed"), effect: { hp: -38, rep: -28 }, log: loc("견인 손실.","Loses traction.") },
+            { text: loc("매시간 추 위치 변경","Change weight position hourly"), effect: { hp: -32, rep: -22 }, log: loc("부적절.","Inappropriate.") },
+            { text: loc("환자가 자유롭게 움직임","Patient moves freely"), effect: { hp: -32, rep: -22 }, log: loc("정렬 유지.","Maintain alignment.") }
+        ])
+    };
+}
+function generateNicuIsoletteImgQuestion() {
+    const svg = `<svg viewBox="0 0 600 220" xmlns="http://www.w3.org/2000/svg"><rect width="600" height="220" fill="#fef3f7"/><g transform="translate(140,30)"><rect width="320" height="160" fill="#fff" stroke="#1e293b" stroke-width="2" rx="20"/><rect x="20" y="40" width="280" height="100" fill="#fef3c7" stroke="#92400e" stroke-width="1.5" rx="10"/><circle cx="160" cy="90" r="20" fill="#fed7aa"/><circle cx="160" cy="80" r="6" fill="#1e293b"/><rect x="80" y="60" width="160" height="6" fill="#3b82f6"/><text x="160" y="170" text-anchor="middle" font-size="13" font-weight="800">${loc("인큐베이터(Isolette)","Isolette/Incubator")}</text><text x="160" y="195" text-anchor="middle" font-size="10" fill="#64748b">${loc("미숙아 보호 환경","Premature infant care")}</text></g></svg>`;
+    return { baseId: "isoletteFunc", categoryKey: "pediatric", part: loc("미숙아 간호","Premature Care"), emoji: "👶",
+        title: loc("인큐베이터 - 주요 기능","Isolette Main Function"),
+        desc: loc("미숙아용 인큐베이터(Isolette)의 \"핵심 기능\" 3가지는?","3 main functions of an isolette for premature infants?"),
+        image: svg,
+        choices: shuffle([
+            { text: loc("체온 조절·습도·감염 차단","Thermoregulation, humidity, infection barrier"), effect: { hp: -2, rep: 22 }, log: loc("정답. 갈색지방 미발달 보완.","Correct. Compensates for immature thermoregulation.") },
+            { text: loc("음악 재생","Music playback"), effect: { hp: -32, rep: -22 }, log: loc("부수적.","Optional.") },
+            { text: loc("조명만","Lighting only"), effect: { hp: -32, rep: -22 }, log: loc("부수적.","Optional.") },
+            { text: loc("부모 격리","Parent isolation"), effect: { hp: -38, rep: -28 }, log: loc("반대 - 캥거루 케어.","Opposite — kangaroo care.") }
         ])
     };
 }
