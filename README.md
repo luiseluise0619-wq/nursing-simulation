@@ -1,13 +1,13 @@
 # Nurse Simulator · 간호사 시뮬레이터
 
-A free bilingual (KO/EN) PWA for nursing study — 783 randomized board-style questions (127 SVG image-based) plus a survival "shift" mode with bosses, combos, and image-based clinical scenarios. **v3.8 — soft neumorphic / sage-green design.**
+A free bilingual (KO/EN) PWA for nursing study — 813 randomized board-style questions (133 SVG image-based) plus a survival "shift" mode with bosses, combos, and image-based clinical scenarios. **v3.9 — soft neumorphic / sage-green design.**
 
 [![PWA](https://img.shields.io/badge/PWA-installable-6366f1)](#install)
 [![License](https://img.shields.io/badge/license-Educational%20Use-blue)](#license)
 
 ## Features
 
-- **783 randomized clinical questions** (656 text + **127 image-based** SVG questions covering ECG strips (V-fib/asystole/pacer), anatomy, JVD/skin turgor, scales, positioning, respiratory patterns, urine sediment, RBC morphology, IV complications, BP cuff sizing, traction, isolette, Babinski/Kernig, jaundice, clubbing, cyanosis, AED, GCS, oxygen devices, restraints, ABG, bladder scan, Ishihara, dermatomes, Chvostek/Trousseau, and procedure visuals) across 8 nursing-board subjects, including **NCLEX-style** delegation, HIPAA, and drug calculation questions
+- **813 randomized clinical questions** (680 text + **133 image-based** SVG questions covering ECG strips (V-fib/asystole/pacer/conduction), anatomy, JVD/skin turgor, scales, positioning, respiratory patterns, breath sounds, urine sediment, RBC morphology, IV complications, BP cuff sizing, traction, isolette, Babinski/Kernig, jaundice, clubbing, cyanosis, AED, GCS, oxygen devices, restraints, ABG, bladder scan, Ishihara, dermatomes, Chvostek/Trousseau, MI radiation, labor stages, murmur grading, abuse cycle, and procedure visuals) across 8 nursing-board subjects, including **NCLEX-style** delegation, HIPAA, and drug calculation questions
 - **Image questions appear in survival mode too** — clinical scenarios in shift mode include ECG strips, scoring scales, anatomy diagrams (~15% of events)
 - **Bilingual KO/EN** — full UI and content translation, instant toggle, persisted preference
 - **Survival shift mode** — 20 events per shift with 3 boss encounters (Code Blue, VIP, Mass Casualty), combo system, and **30 daily ward flavor events**
