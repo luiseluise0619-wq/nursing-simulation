@@ -853,7 +853,469 @@ const [first, second] = 과일;        // 배열에서 꺼내기
 
 ---
 
-## 마치며
+## 11. 자동 업데이트 시스템 — 사용자에게 새 버전 자동 배포
+
+### 작동 원리
+
+PWA의 강력한 점: 코드를 수정하고 push하면 사용자에게 **자동 배포**됩니다.
+
+```
+[개발자]                              [사용자]
+1. 문제 추가/코드 수정                 (앱 사용 중)
+2. npm run release  ◄─ 이 한 줄!         │
+3. git push                              │
+   ↓                                     ↓
+GitHub Pages (서버)         앱 백그라운드에서 새 버전 감지
+                                         ↓
+                              service-worker가 조용히 다운로드
+                                         ↓
+                            다음 앱 실행 시 → 새 버전 자동 적용
+```
+
+### 핵심: `service-worker.js`의 `CACHE_NAME`
+
+```js
+const CACHE_NAME = 'nurse-sim-20260510-14b52082';
+//                  ↑날짜    ↑script.js 해시 8자리
+```
+
+브라우저는 이 이름이 바뀌면:
+1. "새 버전 감지!" 인식
+2. 옛 캐시 삭제
+3. 새 파일 다운로드
+4. 사용자가 모르는 사이 업데이트
+
+### 이름이 안 바뀌면? → 사용자는 옛 버전 영원히
+
+이게 PWA의 가장 큰 함정입니다. 그래서 자동화가 필수.
+
+### 자동화 — `scripts/bump-version.js`
+
+```js
+const crypto = require('crypto');
+const fs = require('fs');
+
+// script.js의 SHA256 해시 (8자리)
+const hash = crypto.createHash('sha256')
+                   .update(scriptContent + htmlContent)
+                   .digest('hex')
+                   .slice(0, 8);
+
+// 날짜와 결합
+const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+const newCacheName = `nurse-sim-${date}-${hash}`;
+
+// service-worker.js 자동 갱신
+fs.writeFileSync('service-worker.js', sw.replace(/CACHE_NAME = '[^']+'/, `CACHE_NAME = '${newCacheName}'`));
+```
+
+### 사용 방법
+
+```bash
+# 문제 추가 등 코드 수정 후
+npm run release            # → 버전 자동 갱신
+git add -A
+git commit -m "+50 questions"
+git push                   # → GitHub Pages 배포 → 자동 사용자 업뎃!
+```
+
+### 함수별 분석
+
+#### `crypto.createHash('sha256')` — 내용 지문
+```js
+const hash = crypto.createHash('sha256')
+                   .update(scriptContent)
+                   .digest('hex')
+                   .slice(0, 8);
+```
+
+**무엇이 일어나는가**:
+- `createHash('sha256')`: 해시 계산기 생성 (SHA256 알고리즘)
+- `.update(scriptContent)`: script.js 전체 내용을 입력
+- `.digest('hex')`: 64자리 16진수 해시 결과
+- `.slice(0, 8)`: 앞 8자리만 사용 (예: `14b52082`)
+
+**왜 해시?**: 같은 내용 → 같은 해시. 1바이트라도 바뀌면 → 완전히 다른 해시.
+즉, 코드가 바뀌면 자동으로 새 버전 이름이 생성됩니다.
+
+---
+
+## 12. 폰 출시 — PWA로 즉시 배포
+
+### Path A: GitHub Pages (가장 쉬움, 무료)
+
+#### 단계 1: GitHub에 코드 올리기
+이미 push 한 상태라면 건너뜀.
+
+#### 단계 2: Pages 활성화
+1. GitHub 저장소 → **Settings** 탭
+2. 좌측 메뉴 → **Pages**
+3. **Source**: `Deploy from a branch` 선택
+4. **Branch**: `main` (또는 현재 브랜치) → `/ (root)` → Save
+5. 1-2분 후 위에 URL 표시:
+   `https://<username>.github.io/nursing-simulation/`
+
+#### 단계 3: 휴대폰에서 설치
+**iPhone (Safari)**:
+1. 위 URL 접속
+2. 하단 공유 아이콘 (네모+화살표)
+3. **"홈 화면에 추가"**
+4. 홈 화면에 앱 아이콘 생성됨
+
+**Android (Chrome)**:
+1. 위 URL 접속
+2. 우측 상단 ⋮ 메뉴
+3. **"앱 설치"** 또는 **"홈 화면에 추가"**
+
+#### 결과
+- 풀스크린 앱처럼 작동
+- 오프라인에서도 작동
+- 자동 업데이트 (개발자가 코드 push할 때마다)
+- 무료
+
+### Path B: 네이티브 앱 (App Store / Play Store)
+
+```bash
+# Capacitor로 감싸기 (Mac/Windows 모두)
+npm install @capacitor/core @capacitor/cli @capacitor/ios @capacitor/android
+npx cap add ios
+npx cap add android
+npx cap sync
+
+# iOS 빌드 (Mac만)
+npx cap open ios          # Xcode 열림 → Run 버튼
+
+# Android 빌드 (Mac/Windows)
+npx cap open android      # Android Studio 열림 → Run 버튼
+```
+
+**필요 사항**:
+- iOS: Mac + Xcode + Apple Developer ($99/년) + App Store 심사 (1-2주)
+- Android: Android Studio + Google Play Console ($25 1회) + 심사 (수일)
+
+### 권장: PWA 먼저, 네이티브 나중
+
+| 상황 | 추천 |
+|---|---|
+| 친구·가족·소규모 사용자 | **PWA만** (당장 배포) |
+| 1,000명+ 사용자 목표 | PWA → 네이티브 |
+| 광고 수익화 | 네이티브 (PWA 광고는 제한적) |
+| 푸시 알림 | 네이티브 (iOS PWA는 16.4+만) |
+
+---
+
+## 13. 깊이 있는 함수 분석 — 더 자세히 알고 싶다면
+
+### 13.1 `normalizeEvent(ev)` — 데이터 정규화
+
+```js
+function normalizeEvent(ev) {
+    if (!ev) return null;
+    if (!ev.category) ev.category = catName(ev.categoryKey);
+    if (!ev.choices) ev.choices = [];
+    if (typeof ev.title === "object") ev.title = L(ev.title);
+    if (typeof ev.desc === "object") ev.desc = L(ev.desc);
+    return ev;
+}
+```
+
+**역할**: 문제 객체에 빠진 필드를 채우고, 다국어 객체를 현재 언어 문자열로 변환.
+
+**왜 필요한가**:
+- Generator마다 약간씩 다른 형식으로 객체를 반환할 수 있음
+- 화면에 그릴 때는 일관된 형태가 필요
+- "방어적 프로그래밍": 잘못된 입력에도 화면이 깨지지 않게
+
+**한 줄씩 분석**:
+- `if (!ev) return null;`: ev가 없으면 즉시 종료 (방어막)
+- `if (!ev.category) ev.category = catName(ev.categoryKey);`:
+  category가 비었으면 categoryKey로 카테고리 이름 조회 후 채움
+- `if (typeof ev.title === "object") ev.title = L(ev.title);`:
+  title이 `{ko: "...", en: "..."}` 객체면 현재 언어로 변환
+
+### 13.2 `recentlyUsed(baseId)` — 중복 출제 방지
+
+```js
+function rememberQuestion(baseId) {
+    if (!gameState.recentIds) gameState.recentIds = [];
+    if (gameState.recentIds.length >= 80) {
+        gameState.recentIds.shift();   // 가장 오래된 것 제거
+    }
+    gameState.recentIds.push(baseId);   // 끝에 추가
+}
+
+function recentlyUsed(baseId) {
+    return gameState.recentIds.includes(baseId);
+}
+```
+
+**알고리즘**: FIFO 큐(First-In-First-Out)로 80개 유지.
+
+**왜 80?**: 200개 연속 추출 테스트에서 80이 적절한 균형점이었음.
+- 너무 작으면 → 같은 문제 자주 반복
+- 너무 크면 → pool이 좁아져 다양성 ↓
+
+**`shift()` vs `unshift()`**:
+- `shift()`: 배열 **앞**에서 제거 → 오래된 것
+- `push()`: 배열 **뒤**에 추가 → 최신
+- 합치면 큐(queue)
+
+### 13.3 `decideEnding()` — 13가지 엔딩 결정
+
+```js
+function decideEnding() {
+    const acc = gameState.correctCount /
+                Math.max(1, gameState.correctCount + gameState.wrongCount);
+    const flags = gameState.narrative;
+
+    // 우선순위: 특수 이스터에그 → 일반 엔딩
+    if (flags.codeBlueFailed && flags.ethicsViolation) {
+        return "tragedy";    // 비극 엔딩
+    }
+    if (flags.helpedNewbie && flags.sharedMeal && acc >= 0.85) {
+        return "newBond";    // 새로운 인연 엔딩
+    }
+    if (flags.threeBosses && acc >= 0.9) {
+        return "veteran";    // 베테랑 엔딩
+    }
+    // ... 13개 엔딩
+
+    // 기본 (점수 기반)
+    if (acc >= 0.7 && gameState.hp >= 50) return "safe";
+    if (acc < 0.5) return "needsStudy";
+    return "ordinary";
+}
+```
+
+**디자인 패턴**: 우선순위가 높은 특수 조건부터 검사. 매칭 안 되면 일반 점수.
+
+**`gameState.narrative` 플래그들**:
+- `codeBlueFailed`: 보스 #1 실패
+- `helpedNewbie`: 신규 간호사 도와줌
+- `sharedMeal`: 동료와 야식 같이 먹음
+- `ethicsViolation`: 윤리 위반 선택지 골랐음
+
+**플래그 설정** (`captureNarrative()`):
+```js
+function captureNarrative(ev, choice) {
+    if (ev.baseId === "newbie" && choice.text.includes("함께")) {
+        gameState.narrative.helpedNewbie = true;
+    }
+    // ...
+}
+```
+
+### 13.4 `setLang(lang)` — 다국어 즉시 전환
+
+```js
+function setLang(lang) {
+    if (lang !== "ko" && lang !== "en") return;   // 검증
+    gameState.lang = lang;
+    document.documentElement.lang = lang;          // <html lang> 갱신
+    document.title = lang === "en"
+        ? "Nurse Simulator"
+        : "간호사 시뮬레이터";
+    saveSettings();                                // localStorage 저장
+    syncLangButtons();                             // 토글 버튼 시각 갱신
+    renderRoot();                                  // 현재 화면 다시 그리기
+}
+```
+
+**핵심 인사이트**: 모든 텍스트가 `loc(ko, en)`을 통해 출력되므로,
+`gameState.lang`만 바꾸고 화면을 다시 그리면 → 즉시 전환.
+
+별도 번역 라이브러리(i18next 등) 없이 단순한 함수 하나로 해결.
+
+### 13.5 비동기 처리 — `setTimeout`과 애니메이션
+
+```js
+function showToast(text, kind = "primary") {
+    const toast = document.createElement("div");
+    toast.className = `toast toast-${kind}`;
+    toast.textContent = text;
+    document.body.appendChild(toast);
+
+    requestAnimationFrame(() => toast.classList.add("show"));
+    // ↑ 다음 프레임에 'show' 클래스 추가 → CSS transition 작동
+
+    setTimeout(() => {
+        toast.classList.remove("show");
+        setTimeout(() => toast.remove(), 400);
+    }, 2000);
+}
+```
+
+**`requestAnimationFrame` 트릭**: 요소를 추가한 직후 바로 클래스를 더하면 transition이 작동 안 함. 다음 프레임에 추가해야 부드럽게 나타남.
+
+**중첩 `setTimeout`**:
+- 0ms: 토스트 등장
+- 2000ms: 'show' 제거 (페이드 아웃 시작)
+- 2400ms: DOM에서 완전 제거
+
+### 13.6 이미지 SVG 생성 — 그림 문제
+
+```js
+function generateBabinskiImgQuestion() {
+    const svg = `<svg viewBox="0 0 600 220" xmlns="http://www.w3.org/2000/svg">
+        <rect width="600" height="220" fill="#f0f9ff"/>
+        <g transform="translate(40,40)">
+            <path d="M 20 80 L 200 80 ..." fill="#fed7aa" stroke="#9a3412"/>
+            <text x="130" y="135" font-size="13">Babinski 반사</text>
+        </g>
+    </svg>`;
+    return {
+        baseId: "babinskiImg",
+        // ...
+        image: svg,    // ← 문자열로 SVG를 저장
+        choices: [...]
+    };
+}
+```
+
+**왜 SVG?**:
+- 텍스트 기반 (PNG/JPG처럼 별도 파일 불필요)
+- 무한 확대해도 깨지지 않음
+- 인라인으로 삽입 → 오프라인 작동
+- 한국어/영어 텍스트 동적 삽입 가능
+
+`renderSceneCard`가 이걸 그릴 때:
+```js
+const imageBlock = ev.image
+    ? `<div class="scene-image">${ev.image}</div>`
+    : "";
+```
+`innerHTML`로 직접 삽입되어 화면에 SVG가 그려짐.
+
+### 13.7 SVG 안에서 다국어 처리
+
+```js
+const svg = `<svg ...>
+    <text>${loc("정답", "Answer")}</text>
+</svg>`;
+```
+
+generator가 호출될 때 `loc()`이 실행되면서 현재 언어의 텍스트가 SVG 문자열에 삽입됩니다. 즉, **언어 토글 시 다음 문제부터 이미지 안의 글자도 자동으로 바뀝니다**.
+
+### 13.8 에러 복구 — `showErrorRecovery`
+
+```js
+window.addEventListener("error", (e) => {
+    showErrorRecovery(e.error || e.message);
+});
+
+function showErrorRecovery(err) {
+    try {
+        const safeMsg = String(err?.message || err).replace(/[<>&]/g, "");
+        UI.gameArea.innerHTML = `
+            <div class="card">
+                <h2>⚠️ 일시적인 문제</h2>
+                <details><summary>기술 정보</summary><pre>${safeMsg}</pre></details>
+                <button onclick="location.reload()">앱 다시 시작</button>
+                <button onclick="goHome()">메인 메뉴</button>
+            </div>
+        `;
+    } catch (_e) { /* 에러 표시 자체가 실패하면 무시 */ }
+}
+```
+
+**왜 중요한가**: 한 번의 버그로 앱이 완전히 멈추지 않게 합니다.
+
+**`window.addEventListener("error", ...)`**: JavaScript 어디서든 잡지 못한 에러를 가로챔.
+
+**`replace(/[<>&]/g, "")`**: 에러 메시지에 `<script>` 같은 위험한 문자열이 들어와도 HTML 인젝션 방지.
+
+---
+
+## 14. 직접 수정해보기 — 미니 튜토리얼
+
+### 미션 1: 새 문제 추가
+
+**1. `script.js`에서 generator 작성**
+
+`clinicalGenerators` 배열 위에 함수 추가:
+
+```js
+function generateMyQuestion() {
+    return {
+        baseId: "myFirstQuestion",
+        categoryKey: "fundamentals",
+        part: loc("기본간호", "Fundamentals"),
+        emoji: "📚",
+        title: loc("내 첫 문제", "My First Question"),
+        desc: loc("환자가 통증을 호소합니다. 어떻게 하나요?",
+                  "Patient reports pain. What do you do?"),
+        choices: shuffle([
+            { text: loc("통증 평가 후 처방대로 진통제", "Assess and give ordered analgesic"),
+              effect: { hp: -2, rep: 22 },
+              log: loc("정답.", "Correct.") },
+            { text: loc("관찰만", "Just observe"),
+              effect: { hp: -20, rep: -15 },
+              log: loc("부족.", "Insufficient.") },
+            { text: loc("환자에게 \"참으세요\"", "Tell patient to bear it"),
+              effect: { hp: -30, rep: -25 },
+              log: loc("부적절.", "Inappropriate.") },
+            { text: loc("진통제 양 임의로 ↑", "Increase dose without order"),
+              effect: { hp: -40, rep: -35 },
+              log: loc("부적절.", "Inappropriate.") }
+        ])
+    };
+}
+```
+
+**2. `clinicalGenerators` 배열에 등록**
+
+```js
+const clinicalGenerators = [
+    // ... 기존 함수들
+    generateMyQuestion,    // ← 끝에 추가
+];
+```
+
+**3. 검증**
+
+```bash
+npm test               # JS 문법 검증
+npm start              # http://localhost:8000 에서 확인
+```
+
+**4. 배포**
+
+```bash
+npm run release        # 버전 자동 갱신
+git add -A && git commit -m "+1 my question"
+git push               # 사용자 자동 업뎃
+```
+
+### 미션 2: 색깔 바꾸기
+
+`index.html`의 `:root` 안:
+
+```css
+:root {
+    --sage: #7fa881;       ← 이걸 #ff6b6b 등으로 바꾸면
+    --sage-dark: #5e8961;  ← 전체 앱 색이 즉시 바뀜
+}
+```
+
+### 미션 3: 새 일상 이벤트 추가
+
+`script.js`의 `flavorEvents` 배열 끝에:
+
+```js
+() => ({
+    baseId: "myFlavorEvent",
+    categoryKey: "flavor",
+    part: loc("재밌는 상황", "Funny Moment"),
+    emoji: "😄",
+    title: loc("내 이벤트", "My Event"),
+    desc: loc("...", "..."),
+    choices: shuffle([
+        // 4개 선택지 (정답은 rep > 0)
+    ])
+}),
+```
+
+
 
 이 앱은 **"백엔드 없는, 빌드 없는, 의존성 없는"** 단순함을 추구합니다. HTML 1개 + JS 1개 + CSS는 HTML 안에 — 그게 전부입니다. 이런 단순함은 코드를 처음 배우는 사람에게 좋은 교재가 됩니다. **"구현 디테일에 휘둘리지 않고 문제 해결에 집중"**하는 방법을 보여주는 좋은 예시이기 때문입니다.
 
