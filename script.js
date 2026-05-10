@@ -9615,7 +9615,7 @@ const flavorEvents = [
     () => ({ baseId: "newbie", categoryKey: "flavor", part: loc("선임 멘토링","Senior Mentoring"), emoji: "👶", title: loc("신규 간호사 도움 요청","New Grad Asking for Help"), desc: loc("신규 간호사가 IV 카테터를 3번 실패하고 울 것 같은 표정으로 도움을 청합니다.","A new grad has missed the IV three times and asks for help, near tears."), choices: shuffle([
         { text: loc("함께 가서 시범을 보이며 천천히 가르친다","Go together, demonstrate, and teach slowly"), effect: { hp: -5, rep: 16 }, log: loc("후배가 자신감을 얻었습니다.","Junior gains confidence.") },
         { text: loc("\"내가 대신 해줄게\" 하고 직접 처치한다","Say \"I'll do it for you\" and handle it yourself"), effect: { hp: -4, rep: 4 }, log: loc("당장은 해결됐지만 성장 기회를 뺏었습니다.","Solves the moment but steals their growth.") },
-        { text: loc("\"3번이면 환자에게 미안해\"라며 핀잔준다","Scold them: \"Three tries — apologize to the patient\""), effect: { hp: -6, rep: -12 }, log: loc("후배의 자존감이 무너졌습니다.","Junior's self-esteem crumbles.") },
+        { text: loc("\"환자에게 IV팀 부르자\"고 안내하며 함께 도움 요청","Say \"Let's call the IV team\" and help them request specialist support"), effect: { hp: -3, rep: 12 }, log: loc("적절한 자원 활용을 안내했습니다.","You modeled appropriate resource use.") },
         { text: loc("차팅 중이라 무시한다","Ignore them — you're charting"), effect: { hp: -8, rep: -14 }, log: loc("후배가 다른 동료에게 갔습니다.","The junior turns to another colleague.") }
     ]) }),
     // ===== 신규 일상 이벤트 8개 =====
@@ -9654,12 +9654,6 @@ const flavorEvents = [
         { text: loc("수간호사에게 즉시 추가 인력 요청","Immediately request more staff from head nurse"), effect: { hp: -5, rep: 14 }, log: loc("적절한 보고체계 사용.","Used the right escalation chain.") },
         { text: loc("들어온 순서대로 천천히 처리","Just process in arrival order, slowly"), effect: { hp: -25, rep: -18 }, log: loc("중증환자가 방치될 수 있습니다.","Critical patients may be neglected.") },
         { text: loc("일단 자리를 비우고 휴게실로","Step out to the break room first"), effect: { hp: -20, rep: -22 }, log: loc("책임 회피입니다.","Abandoning duty.") }
-    ]) }),
-    () => ({ baseId: "preceptorBossy", categoryKey: "flavor", part: loc("선임 갈등","Senior Conflict"), emoji: "😤", title: loc("프리셉터 갈등","Preceptor Conflict"), desc: loc("프리셉터(선임)가 환자 앞에서 \"이것도 못해?\"라며 큰 소리로 핀잔을 줍니다.","Your preceptor scolds you in front of the patient: \"You can't even do this?\""), choices: shuffle([
-        { text: loc("환자 앞에서는 차분히 응대하고, 후에 따로 대화 요청","Respond calmly in front of the patient, request a private debrief later"), effect: { hp: -6, rep: 14 }, log: loc("프로다운 처신.","Professional handling.") },
-        { text: loc("그 자리에서 즉시 반박하고 언쟁","Argue back on the spot"), effect: { hp: -18, rep: -14 }, log: loc("환자 신뢰가 깨졌습니다.","Patient trust is shattered.") },
-        { text: loc("울며 자리를 떠난다","Walk away in tears"), effect: { hp: -16, rep: -10 }, log: loc("환자 관리가 중단됐습니다.","Patient care was interrupted.") },
-        { text: loc("수간호사에게 익명 신고","Anonymous report to the head nurse"), effect: { hp: -8, rep: 4 }, log: loc("절차는 정당하나 직접 대화가 우선이었습니다.","Valid channel, but direct talk first would've been better.") }
     ]) }),
     () => ({ baseId: "needleStick", categoryKey: "flavor", part: loc("바늘찔림","Needlestick"), emoji: "💉", title: loc("바늘찔림 사고","Needlestick Injury"), desc: loc("HIV 양성 환자에게 정맥주사 후 손가락에 바늘이 찔렸습니다. 출혈 중입니다.","After IV on an HIV+ patient, the needle stuck your finger. It's bleeding."), choices: shuffle([
         { text: loc("즉시 흐르는 물로 5분 세척 후 사고 신고·PEP 시작","Wash under running water 5 min, report incident, start PEP"), effect: { hp: -8, rep: 18 }, log: loc("표준 노출 후 처치입니다.","Standard post-exposure protocol.") },
