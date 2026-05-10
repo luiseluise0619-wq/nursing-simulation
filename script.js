@@ -9734,6 +9734,97 @@ const flavorEvents = [
         { text: loc("동료를 탓한다","Blame the coworker who caught it"), effect: { hp: -16, rep: -22 }, log: loc("관계와 안전문화 모두 손상.","Damages relationship and safety culture.") },
         { text: loc("아무것도 아닌 일이라며 잊는다","Brush it off as nothing"), effect: { hp: -12, rep: -14 }, log: loc("재발 위험을 무시.","Ignores recurrence risk.") }
     ]) }),
+    // ===== 재밌는 상황 15개 =====
+    () => ({ baseId: "escapedPatient", categoryKey: "flavor", part: loc("환자 탈출","Patient Escape"), emoji: "🏃", title: loc("환자가 사라졌다","Patient Vanished"), desc: loc("치매 환자 침대가 비어있고 환자복이 바닥에 떨어져 있습니다. 휠체어도 없습니다.","The dementia patient's bed is empty, gown on the floor, wheelchair gone."), choices: shuffle([
+        { text: loc("즉시 코드 옐로우(실종 환자) 발령 + 보안·관리자에게 동시 알림","Activate Code Yellow (missing patient) + notify security and supervisor"), effect: { hp: -8, rep: 22 }, log: loc("표준 프로토콜로 빠르게 발견.","Standard protocol — quickly found.") },
+        { text: loc("혼자 병동 한 바퀴 돌아본다","Take a quick lap of the unit alone"), effect: { hp: -18, rep: -14 }, log: loc("수색 범위가 너무 좁음.","Search radius too small.") },
+        { text: loc("기록만 남긴다","Just chart it"), effect: { hp: -32, rep: -28 }, log: loc("법적·안전 문제.","Legal and safety issue.") },
+        { text: loc("교대 시 인계만 한다","Pass it to the next shift"), effect: { hp: -42, rep: -34 }, log: loc("응급.","Emergency.") }
+    ]) }),
+    () => ({ baseId: "weddingProposal", categoryKey: "flavor", part: loc("병원 프로포즈","Hospital Proposal"), emoji: "💍", title: loc("병실에서의 프로포즈","Proposal in the Room"), desc: loc("말기 환자의 남자친구가 \"이 자리에서 청혼하고 싶어요\"라고 도움을 청합니다.","The terminal patient's boyfriend asks, \"I want to propose right here. Can you help?\""), choices: shuffle([
+        { text: loc("환자 동의 확인 후 사생활 보장·꽃·음악 등 분위기 조성에 협조","Confirm patient consent + help arrange privacy/flowers/music"), effect: { hp: 5, rep: 22 }, log: loc("병동에 박수 소리. 마음이 가득 찹니다.","Applause echoes in the unit. You're full.") },
+        { text: loc("\"규정상 안 됩니다\"라고 거절","\"Hospital policy says no\""), effect: { hp: -10, rep: -12 }, log: loc("기쁨의 순간을 차단.","Blocks a tender moment.") },
+        { text: loc("동료 단톡방에 알린다","Post in team group chat"), effect: { hp: -28, rep: -28 }, log: loc("개인정보 위반.","Privacy violation.") },
+        { text: loc("형식적으로 도와준 뒤 자리 피함","Help perfunctorily then disappear"), effect: { hp: -2, rep: -4 }, log: loc("기회를 흘려보냈습니다.","A moment slipped by.") }
+    ]) }),
+    () => ({ baseId: "wrongPatientName", categoryKey: "flavor", part: loc("이름 혼동","Name Mix-up"), emoji: "📛", title: loc("같은 이름 두 명","Two Patients, Same Name"), desc: loc("\"김민수\" 환자가 두 명입니다. 한 명은 28호, 한 명은 31호. 처방이 같이 떠 있습니다.","Two patients named \"Kim Min-su\" — rooms 28 and 31. Orders show together."), choices: shuffle([
+        { text: loc("두 가지 식별자(생년월일 + 의무기록번호)로 매번 확인","Always verify with TWO identifiers (DOB + MRN)"), effect: { hp: -2, rep: 22 }, log: loc("정답. JCAHO 안전 목표 #1.","Correct. JCAHO Goal #1.") },
+        { text: loc("이름과 방 번호로만","Name + room only"), effect: { hp: -22, rep: -16 }, log: loc("방 번호는 식별자 X.","Room is not an identifier.") },
+        { text: loc("환자에게 \"맞으세요?\"만","Just ask \"is this you?\""), effect: { hp: -25, rep: -18 }, log: loc("반응 능력 ↓ 환자에선 위험.","Risky if confused.") },
+        { text: loc("처방 다 무시","Ignore all orders"), effect: { hp: -38, rep: -28 }, log: loc("부적절.","Inappropriate.") }
+    ]) }),
+    () => ({ baseId: "secretRomance", categoryKey: "flavor", part: loc("사내 비밀","Workplace Secret"), emoji: "💏", title: loc("들킨 사내 연애","Caught Office Romance"), desc: loc("당직실에서 두 동료가 손을 잡고 있는 걸 우연히 봤습니다. 둘 다 결혼한 상태입니다.","You accidentally see two coworkers holding hands in the on-call room. Both are married."), choices: shuffle([
+        { text: loc("못 본 척하고 자리를 비킴, 환자 케어에 영향 시에만 보고 고려","Pretend you didn't see, leave; consider reporting only if patient care affected"), effect: { hp: -3, rep: 8 }, log: loc("사적 영역 vs 직업적 책임의 균형.","Privacy vs duty balanced.") },
+        { text: loc("동료 단톡방에 즉시 공유","Share in team chat immediately"), effect: { hp: -18, rep: -32 }, log: loc("심각한 사생활 침해.","Serious privacy breach.") },
+        { text: loc("관리자에게 즉시 일러바침","Run to the manager"), effect: { hp: -10, rep: -14 }, log: loc("성급한 보고.","Premature reporting.") },
+        { text: loc("\"이건 안 돼요\"라고 큰소리로 말함","Confront them loudly"), effect: { hp: -15, rep: -18 }, log: loc("부적절.","Inappropriate.") }
+    ]) }),
+    () => ({ baseId: "kidPee", categoryKey: "flavor", part: loc("소아 응급","Pediatric Mishap"), emoji: "💦", title: loc("소변 발사","Surprise Stream"), desc: loc("기저귀 갈던 6개월 아기가 \"분수\"처럼 소변을 쏘아 가운에 정통으로 맞았습니다. 부모가 미안해합니다.","Mid-diaper-change, the 6-mo-old launches a perfect stream — straight onto your gown. Parents are mortified."), choices: shuffle([
+        { text: loc("웃으며 \"건강하다는 신호\"라고 부모 안심시키고 가운 교체","Laugh, reassure parents \"sign of health,\" change gown"), effect: { hp: 8, rep: 18 }, log: loc("병동에 웃음꽃이 피었습니다.","The unit cracks up.") },
+        { text: loc("부모를 탓한다","Blame the parents"), effect: { hp: -15, rep: -22 }, log: loc("부적절.","Inappropriate.") },
+        { text: loc("화를 내며 자리를 떠난다","Storm out angry"), effect: { hp: -20, rep: -25 }, log: loc("프로답지 못함.","Unprofessional.") },
+        { text: loc("불평하며 처리","Complain while handling"), effect: { hp: -8, rep: -10 }, log: loc("아기는 잘못이 없음.","The baby's not at fault.") }
+    ]) }),
+    () => ({ baseId: "drunkVisitor", categoryKey: "flavor", part: loc("음주 보호자","Drunk Visitor"), emoji: "🍺", title: loc("술 취한 보호자","Intoxicated Visitor"), desc: loc("환자 면회 온 가족이 술에 취해 큰 소리로 떠들고 있습니다. 다른 환자들이 항의합니다.","An intoxicated family member is being loud, disturbing other patients."), choices: shuffle([
+        { text: loc("정중히 면회 일시 중단 안내 + 보안 호출 준비, 환자 안전 우선","Politely pause visitation, alert security, patient safety first"), effect: { hp: -5, rep: 18 }, log: loc("프로다운 처신.","Professional handling.") },
+        { text: loc("그냥 둔다","Just let it slide"), effect: { hp: -22, rep: -18 }, log: loc("타 환자 권리 침해.","Other patients' rights violated.") },
+        { text: loc("환자에게 통제하라고 함","Tell patient to control them"), effect: { hp: -15, rep: -16 }, log: loc("환자 책임 X.","Not patient's job.") },
+        { text: loc("같이 큰 소리로 맞대응","Match their volume"), effect: { hp: -28, rep: -32 }, log: loc("악화.","Escalates.") }
+    ]) }),
+    () => ({ baseId: "prankCall", categoryKey: "flavor", part: loc("이상한 전화","Strange Call"), emoji: "☎️", title: loc("\"환자 정보 좀\"","\"Need Patient Info\""), desc: loc("전화로 \"가족인데 환자 상태 좀 알려주세요\"라고 묻습니다. 보안 코드를 모르고 환자 이름만 압니다.","Caller: \"Family — give me patient status.\" They don't know the security code, only the name."), choices: shuffle([
+        { text: loc("HIPAA에 따라 정보 제공 거부, 환자에게 콜백 요청 안내","Refuse per HIPAA, instruct patient to call them back"), effect: { hp: -2, rep: 22 }, log: loc("정답. 신원 확인 안 된 사람에 정보 X.","Correct. No info to unverified party.") },
+        { text: loc("\"가족이라니까\" 정보 제공","\"Since you're family\" — share info"), effect: { hp: -42, rep: -32 }, log: loc("HIPAA 위반.","HIPAA violation.") },
+        { text: loc("이름만 확인 후 알려줌","Confirm name then share"), effect: { hp: -38, rep: -28 }, log: loc("불충분 검증.","Insufficient verification.") },
+        { text: loc("\"잠시만요\" 후 답 X","Say \"hold on\" and ghost"), effect: { hp: -15, rep: -14 }, log: loc("프로답지 못함.","Unprofessional.") }
+    ]) }),
+    () => ({ baseId: "homemadeFood", categoryKey: "flavor", part: loc("가정식 선물","Homemade Gift"), emoji: "🍱", title: loc("환자가 도시락을","Patient Brings Lunch"), desc: loc("퇴원 환자가 \"고마워서요\"라며 직접 만든 도시락을 가져왔습니다. 동료들이 부러워하는 표정.","A discharged patient brings homemade lunch \"as a thank-you.\" Coworkers eye it enviously."), choices: shuffle([
+        { text: loc("정중히 감사 표하지만 병원 윤리 정책에 따라 거절","Thank sincerely but decline per hospital ethics policy"), effect: { hp: -2, rep: 16 }, log: loc("작은 선물도 정책 우선.","Even small gifts fall under policy.") },
+        { text: loc("\"마음만 받겠습니다\" 하고 받음","\"Just the thought is enough\" — accept"), effect: { hp: 4, rep: -4 }, log: loc("정책 위반 가능성.","May violate policy.") },
+        { text: loc("기쁘게 받고 동료와 나눠 먹음","Accept gladly, share with team"), effect: { hp: 6, rep: -8 }, log: loc("선의지만 정책 위반.","Kind, but breaks policy.") },
+        { text: loc("바쁘다며 무시","Ignore, claim busy"), effect: { hp: -8, rep: -10 }, log: loc("환자 마음을 외면.","Dismisses kindness.") }
+    ]) }),
+    () => ({ baseId: "wrongSideMark", categoryKey: "flavor", part: loc("수술 부위 표시","Site Marking"), emoji: "🖊️", title: loc("Time-out 직전 의문","Pre-Time-Out Doubt"), desc: loc("수술 직전 Time-out에서 마킹이 \"왼쪽\"인데 동의서에는 \"오른쪽\"이 적혀있습니다.","At the surgical time-out: marking says LEFT but consent form says RIGHT."), choices: shuffle([
+        { text: loc("수술 즉시 보류 - 외과의·환자 가족과 함께 재확인","Stop surgery immediately — verify with surgeon and family"), effect: { hp: -3, rep: 26 }, log: loc("정답. \"잘못된 부위 수술\"은 절대 없어야 할 사고.","Correct. Wrong-site surgery is a never-event.") },
+        { text: loc("외과의 말만 믿고 진행","Trust surgeon, proceed"), effect: { hp: -45, rep: -38 }, log: loc("Never event.","Never event.") },
+        { text: loc("동의서를 수정","Edit the consent form"), effect: { hp: -42, rep: -35 }, log: loc("문서 위조.","Document tampering.") },
+        { text: loc("그냥 넘어감","Let it slide"), effect: { hp: -45, rep: -40 }, log: loc("환자 위해.","Patient harm.") }
+    ]) }),
+    () => ({ baseId: "snoringDoctor", categoryKey: "flavor", part: loc("의사 졸림","Sleeping MD"), emoji: "😴", title: loc("당직실의 코 고는 의사","Snoring Resident"), desc: loc("당직 인턴이 노트북 위에 엎드려 코를 골고 있습니다. 환자 알람이 울립니다.","The on-call intern is snoring face-down on a laptop. Patient alarm goes off."), choices: shuffle([
+        { text: loc("우선 환자 알람 응답 + 인턴 깨우기 (정중히)","Respond to alarm first + wake intern (politely)"), effect: { hp: -5, rep: 18 }, log: loc("환자 우선, 인간적인 깨움.","Patient first, humane wake.") },
+        { text: loc("그냥 깨우지 않고 처리","Don't wake them, handle alone"), effect: { hp: -15, rep: -8 }, log: loc("도움 받지 못함.","Misses backup.") },
+        { text: loc("\"인턴은 자고 있다\"고 단톡 공유","Post in chat about it"), effect: { hp: -22, rep: -28 }, log: loc("부적절.","Inappropriate.") },
+        { text: loc("사진 찍어 SNS","Take photo for SNS"), effect: { hp: -38, rep: -38 }, log: loc("심각한 윤리 위반.","Serious ethics violation.") }
+    ]) }),
+    () => ({ baseId: "thankCoworker", categoryKey: "flavor", part: loc("따뜻한 순간","Heartwarming Moment"), emoji: "☕", title: loc("동료의 따뜻한 커피","Coworker's Coffee"), desc: loc("힘든 한 밤을 보낸 당신에게 동료가 \"이거 마셔, 살 거야\"하며 따뜻한 커피를 건넵니다.","After a brutal night, a coworker hands you hot coffee: \"You'll live. Drink up.\""), choices: shuffle([
+        { text: loc("진심으로 감사하고 다음 번엔 내가 사기로 약속","Thank them genuinely + promise to return the favor"), effect: { hp: 12, rep: 14 }, log: loc("팀워크의 작은 순환.","Teamwork's quiet rhythm.") },
+        { text: loc("그냥 받고 끝","Just take it"), effect: { hp: 4, rep: 0 }, log: loc("나쁘진 않지만...","Not bad but...") },
+        { text: loc("\"왜 갑자기?\"라며 의심","\"Why so suddenly?\" — suspicious"), effect: { hp: -3, rep: -8 }, log: loc("선의를 의심한 것 미안.","Mistrusting kindness stings.") },
+        { text: loc("거절","Decline"), effect: { hp: -5, rep: -4 }, log: loc("관계 잃음.","Connection lost.") }
+    ]) }),
+    () => ({ baseId: "stuckSibling", categoryKey: "flavor", part: loc("아이 형제","Sibling Visit"), emoji: "🧒", title: loc("형제가 응접실에서","Sibling Stuck in Lobby"), desc: loc("입원 아동의 형(8세)이 부모 없이 응접실에서 혼자 울고 있습니다.","An 8-yr-old sibling of the patient is alone in the lobby, crying."), choices: shuffle([
+        { text: loc("아이 안전 확보 + 부모에게 즉시 연락 + 자원봉사자/Child Life 호출","Keep child safe + call parents + activate volunteer/Child Life"), effect: { hp: -3, rep: 18 }, log: loc("공감과 시스템 활용.","Empathy + system use.") },
+        { text: loc("\"너희 부모가 와야지\"라고 무시","\"Your parents should be here\" — ignore"), effect: { hp: -22, rep: -22 }, log: loc("아동 안전 의무 위반.","Child safety duty failed.") },
+        { text: loc("아이 혼자 두고 일 계속","Leave child, keep working"), effect: { hp: -28, rep: -28 }, log: loc("법적 문제 가능.","Possible legal issue.") },
+        { text: loc("사탕 주고 끝","Give candy and move on"), effect: { hp: -10, rep: -10 }, log: loc("응급 처치만 했음.","Only stopgap.") }
+    ]) }),
+    () => ({ baseId: "alarmPhantom", categoryKey: "flavor", part: loc("유령 알람","Phantom Alarm"), emoji: "👻", title: loc("아무도 없는 방의 알람","Empty Room Alarm"), desc: loc("이미 퇴원한 28호 모니터에서 갑자기 알람이 울립니다. 방은 비어있습니다.","Room 28's monitor alarms — but the patient was discharged earlier. Room is empty."), choices: shuffle([
+        { text: loc("모니터 리셋 + 장비 점검 의뢰 + 다른 환자 모니터 정상 확인","Reset monitor + biomed request + verify other monitors"), effect: { hp: -3, rep: 14 }, log: loc("표준 점검 절차.","Standard troubleshooting.") },
+        { text: loc("\"귀신이다!\"하며 동료에게 자랑","Tell coworkers \"It's a ghost!\""), effect: { hp: 4, rep: -4 }, log: loc("재밌지만 시간 낭비.","Funny but unproductive.") },
+        { text: loc("알람 끄고 끝","Silence and ignore"), effect: { hp: -15, rep: -10 }, log: loc("실제 고장 가능성.","May indicate real malfunction.") },
+        { text: loc("새벽 3시라 무시","It's 3 AM — ignore"), effect: { hp: -10, rep: -14 }, log: loc("부적절.","Inappropriate.") }
+    ]) }),
+    () => ({ baseId: "vipCleaner", categoryKey: "flavor", part: loc("청소 아주머니","Housekeeping Hero"), emoji: "🧹", title: loc("청소 직원의 발견","Housekeeping Catches Something"), desc: loc("청소 아주머니가 \"저 환자 화장실에서 한참 안 나와요\"라고 알려줍니다.","Housekeeping says, \"That patient hasn't come out of the bathroom for a while.\""), choices: shuffle([
+        { text: loc("즉시 확인 + 청소 직원에게 진심으로 감사","Check immediately + thank housekeeping sincerely"), effect: { hp: -2, rep: 22 }, log: loc("팀의 모든 사람이 환자 안전망.","Everyone is the safety net.") },
+        { text: loc("\"걱정 마세요\"라고 무시","\"Don't worry about it\" — dismiss"), effect: { hp: -25, rep: -25 }, log: loc("위험 신호 무시.","Ignored a real signal.") },
+        { text: loc("나중에 확인","Check later"), effect: { hp: -22, rep: -18 }, log: loc("늦은 응대.","Delayed response.") },
+        { text: loc("청소 직원에게 \"우리 일\"이라고 핀잔","\"That's nursing's job\" — snap"), effect: { hp: -32, rep: -28 }, log: loc("계급주의 + 안전 무시.","Hierarchy + safety neglect.") }
+    ]) }),
+    () => ({ baseId: "mysteryGift", categoryKey: "flavor", part: loc("이름 없는 선물","Anonymous Gift"), emoji: "🎁", title: loc("간호사실의 익명 케이크","Mystery Cake"), desc: loc("간호사실에 \"수고하세요!\"라고만 적힌 익명의 케이크 상자가 있습니다.","On the nurses' desk: an anonymous cake box with just \"Thanks for your hard work!\""), choices: shuffle([
+        { text: loc("동료들과 공유, 보호자에게 가능한 감사 표시","Share with team + thank family if identifiable"), effect: { hp: 14, rep: 18 }, log: loc("작은 행복이 퍼졌습니다.","A small joy ripples through.") },
+        { text: loc("출처 불명이라 폐기","Discard — unknown source"), effect: { hp: -3, rep: -4 }, log: loc("과한 조심.","Overcautious.") },
+        { text: loc("혼자 다 먹음","Eat it all yourself"), effect: { hp: 6, rep: -10 }, log: loc("팀원들이 섭섭해함.","Team feels left out.") },
+        { text: loc("\"독일 수도\"라며 공포 분위기","\"It's poisoned!\" — spread fear"), effect: { hp: -8, rep: -12 }, log: loc("팀 분위기 파괴.","Mood ruined.") }
+    ]) }),
 ];
 
 // =========================
