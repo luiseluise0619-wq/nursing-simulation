@@ -9959,10 +9959,27 @@ function pickCategory(categoryKey) {
     });
 }
 
+// 현재 필터로 사용 가능한 고유 baseId 수
+function countAvailableBaseIds(categoryKey, baseIdFilter, partFilter) {
+    const ids = new Set();
+    for (const gen of clinicalGenerators) {
+        try {
+            const ev = normalizeEvent(gen());
+            const catOk = !categoryKey || ev.categoryKey === categoryKey;
+            const idOk = !baseIdFilter || baseIdFilter.includes(ev.baseId);
+            const partOk = !partFilter || ev.part === partFilter;
+            if (catOk && idOk && partOk) ids.add(ev.baseId);
+        } catch (_e) {}
+    }
+    return ids.size;
+}
+
 function startQuiz(categoryKey, partFilter) {
     gameState.mode = "quiz"; gameState.quizCategory = categoryKey; gameState.quizSolved = 0;
     gameState.partFilter = partFilter || null;
-    UI.logBar.innerHTML = ""; addLog(`${catName(categoryKey)}${partFilter ? " · " + partFilter : ""} ${t("trainingStart")}`, "log-important");
+    gameState.sessionSeenIds = new Set();
+    gameState.quizPoolSize = countAvailableBaseIds(categoryKey, null, partFilter || null);
+    UI.logBar.innerHTML = ""; addLog(`${catName(categoryKey)}${partFilter ? " · " + partFilter : ""} ${t("trainingStart")} (${gameState.quizPoolSize}${loc(" 문제"," questions")})`, "log-important");
     renderNextQuizQuestion();
 }
 
@@ -10175,6 +10192,37 @@ function renderNextQuizQuestion() {
     if (gameState.mode === "srs_review")       baseIdFilter = getSrsDueIds();
     if (gameState.mode === "timed_exam")       categoryKey = null;
     const partFilter = (gameState.mode === "quiz") ? (gameState.partFilter || null) : null;
+
+    // 학습 모드: 세션 동안 본 baseId 제외하고 풀이, 모두 풀면 종료
+    if (gameState.mode === "quiz" && gameState.sessionSeenIds && gameState.quizPoolSize) {
+        if (gameState.sessionSeenIds.size >= gameState.quizPoolSize) {
+            showGameOver(
+                loc("🎉 모든 문제 풀이 완료!","🎉 All questions completed!"),
+                loc(`이 카테고리/세부주제의 ${gameState.quizPoolSize}문제를 모두 풀었습니다.\n해결: ${gameState.quizSolved} · 정답: ${gameState.correctCount} · 오답: ${gameState.wrongCount}`,
+                    `You've completed all ${gameState.quizPoolSize} questions in this category/subtopic.\nSolved: ${gameState.quizSolved} · Correct: ${gameState.correctCount} · Wrong: ${gameState.wrongCount}`)
+            );
+            return;
+        }
+        // 세션에서 본 baseId 제외
+        baseIdFilter = [];
+        for (const gen of clinicalGenerators) {
+            try {
+                const ev2 = normalizeEvent(gen());
+                const catOk = !categoryKey || ev2.categoryKey === categoryKey;
+                const partOk = !partFilter || ev2.part === partFilter;
+                if (catOk && partOk && !gameState.sessionSeenIds.has(ev2.baseId)) baseIdFilter.push(ev2.baseId);
+            } catch (_e) {}
+        }
+        if (baseIdFilter.length === 0) {
+            showGameOver(
+                loc("🎉 모든 문제 풀이 완료!","🎉 All questions completed!"),
+                loc(`이 카테고리/세부주제의 ${gameState.quizPoolSize}문제를 모두 풀었습니다.\n해결: ${gameState.quizSolved} · 정답: ${gameState.correctCount} · 오답: ${gameState.wrongCount}`,
+                    `You've completed all ${gameState.quizPoolSize} questions in this category/subtopic.\nSolved: ${gameState.quizSolved} · Correct: ${gameState.correctCount} · Wrong: ${gameState.wrongCount}`)
+            );
+            return;
+        }
+    }
+
     const ev = generateClinicalEventByCategory(categoryKey, baseIdFilter, partFilter);
     if (!ev) {
         showGameOver(loc("📋 풀이 종료","📋 Done"), loc("더 이상 풀 문제가 없습니다.","No more questions to review."));
@@ -10195,7 +10243,8 @@ function renderNextQuizQuestion() {
     } else {
         meta.push(`${catName(gameState.quizCategory)}`);
         if (gameState.partFilter) meta.push(`🔍 ${gameState.partFilter}`);
-        meta.push(`${loc("해결","Solved")}: ${gameState.quizSolved}`);
+        const total = gameState.quizPoolSize || 0;
+        meta.push(`${loc("진행","Progress")}: ${gameState.quizSolved}/${total}`);
     }
     renderSceneCard(ev, { mode: "quiz", questionIndex: gameState.quizSolved + 1, meta });
 }
@@ -10205,6 +10254,11 @@ function handleQuizChoice(choice, ev) {
     const isCorrect = (choice.effect?.rep || 0) > 0;
     const correctChoice = ev.choices.find(c => (c.effect?.rep || 0) > 0);
     const isExam = gameState.mode === "timed_exam";
+
+    // 학습 모드: 세션에서 본 baseId 추가 (정답·오답 무관, 1회 출제)
+    if (gameState.mode === "quiz" && gameState.sessionSeenIds) {
+        gameState.sessionSeenIds.add(ev.baseId);
+    }
 
     // 선택 버튼에 시각적 표시 (정답=녹색, 사용자 오답=빨강)
     const buttons = document.querySelectorAll("#choice-list .choice-btn");
