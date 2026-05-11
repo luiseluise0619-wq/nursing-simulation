@@ -1,7 +1,7 @@
 {
   "name": "nurse-simulator",
-  "version": "4.6.3",
-  "description": "Bilingual KO/EN nursing study PWA — 964 randomized questions (164 SVG image-based, also shown in survival mode), SRS Leitner, narrative survival mode, soft neumorphic UI.",
+  "version": "4.6.4",
+  "description": "Bilingual KO/EN nursing study PWA — 1032 randomized questions (175 SVG image-based, also shown in survival mode), SRS Leitner, narrative survival mode, soft neumorphic UI.",
   "scripts": {
     "start": "npx --yes http-server -p 8000 -c-1 .",
     "serve": "npx --yes http-server -p 8000 -c-1 .",
