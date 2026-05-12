@@ -1080,7 +1080,21 @@ const clinicalGenerators = [
     generateEBPHierarchyQuestion, generateUmbrellaInsuranceQuestion, generateNeonatalThermoregQuestion,
     generateChildAbuseShakeQuestion, generateMaternalDepressionScreenQuestion, generateInfantSudoinflateQuestion,
     generateRuleOfNinesImgQuestion, generateInfantReflexImgQuestion, generateAEDPedPadImgQuestion,
-    generateNeurovascularChecksImgQuestion, generateRespFailureSignImgQuestion
+    generateNeurovascularChecksImgQuestion, generateRespFailureSignImgQuestion,
+    // ===== 배치 42: 임상 실전 - 침상 옆 시나리오 =====
+    generateMorningAssessOrderQuestion, generateCallProviderTimingQuestion, generateSBARPracticalQuestion,
+    generatePreMedCheckQuestion, generateSymptomChainQuestion, generateNewPatientFirstHourQuestion,
+    generateMissedDoseQuestion, generateRapidResponseQuestion, generateBriefingDuringHandoffQuestion,
+    generateBeforeDischargeQuestion, generateBedAlarmTrueAlertQuestion, generatePatientRefuseCareQuestion,
+    generateHowToInterruptionQuestion, generateConfusedPatientNightQuestion, generateFamilyAtBedsideCPRQuestion,
+    generateNonEnglishPatientQuestion, generateChargeNurseDelegationQuestion, generateMisplacedNGQuestion,
+    generatePainReassessmentQuestion, generateAcuteDeliriumNursingQuestion, generateBedsideHandoffQuestion,
+    generatePatientFamilyConflictQuestion, generateNewMedicationTeachQuestion, generateRespRateBenchmarkQuestion,
+    generateChartingPearlQuestion, generateAlarmFatigueQuestion, generateSepsisRecognitionQuestion,
+    generateChestPainTriageQuestion, generateFirstNightShiftSurvivalQuestion, generateLearningFromMistakeQuestion,
+    generatePatientPreferenceQuestion, generateBreakdownEmergencyQuestion,
+    generateSBARTemplateImgQuestion, generateTriageColorImgQuestion, generateCriticalLabValueImgQuestion,
+    generateCodeStatusImgQuestion, generatePainTeachImgQuestion
 ];
 
 function generateABGAQuestion() {
@@ -10254,6 +10268,464 @@ function generateRespFailureSignImgQuestion() {
             { text: loc("코 벌렁임","Nasal flaring"), effect: { hp: -22, rep: -12 }, log: loc("적신호.","Red flag.") },
             { text: loc("늑간·흉골 함몰","Intercostal/sternal retractions"), effect: { hp: -22, rep: -12 }, log: loc("적신호.","Red flag.") },
             { text: loc("그렁거림(grunting)","Grunting"), effect: { hp: -22, rep: -12 }, log: loc("심각 적신호.","Serious red flag.") }
+        ])
+    };
+}
+
+// ========= 배치 42: 임상 실전 도움 - 침상 옆 시나리오 =========
+function generateMorningAssessOrderQuestion() {
+    return { baseId: "morningRoundOrder", categoryKey: "fundamentals", part: loc("아침 회진","Morning Rounds"), emoji: "🌅",
+        title: loc("아침 회진 - 우선 환자","Morning Rounds Priority"),
+        desc: loc("듀티 시작 인계 후 5명 환자 중 \"가장 먼저\" 봐야 할 사람은?","After handoff, which of 5 patients do you see FIRST?"),
+        choices: shuffle([
+            { text: loc("야간 활력 ↑·통증 ↑·약 변경된 가장 불안정한 환자","Most unstable: night vitals trending, ↑pain, recent med change"), effect: { hp: -2, rep: 22 }, log: loc("정답. ABC+불안정 환자 우선.","Correct. ABC+unstable first.") },
+            { text: loc("퇴원 예정 안정 환자","Stable discharge patient"), effect: { hp: -25, rep: -15 }, log: loc("나중.","Later.") },
+            { text: loc("가장 가까운 방","Closest room"), effect: { hp: -28, rep: -20 }, log: loc("우선순위 X.","Not priority.") },
+            { text: loc("가장 친한 환자","Favorite patient"), effect: { hp: -32, rep: -22 }, log: loc("부적절.","Inappropriate.") }
+        ])
+    };
+}
+function generateCallProviderTimingQuestion() {
+    return { baseId: "callProviderTime", categoryKey: "management", part: loc("의사 호출","Call Provider"), emoji: "📞",
+        title: loc("새벽 2시 의사 호출 - 적절","2 AM Provider Call - When"),
+        desc: loc("새벽 2시에 \"즉시\" 의사를 호출해야 하는 상황은?","Which warrants immediate 2 AM provider call?"),
+        choices: shuffle([
+            { text: loc("활력 급변·새 흉통·SpO2 ↓·의식 변화·소변 0·심한 출혈","Acute VS change, new chest pain, ↓SpO2, ↓LOC, anuria, severe bleeding"), effect: { hp: -2, rep: 22 }, log: loc("정답. 환자 안전 = 시간 중요.","Correct. Safety > convenience.") },
+            { text: loc("환자 불면","Patient can't sleep"), effect: { hp: -22, rep: -12 }, log: loc("PRN 약물 확인.","Check PRN orders.") },
+            { text: loc("정상 활력","Normal vitals"), effect: { hp: -28, rep: -20 }, log: loc("불필요.","Unnecessary.") },
+            { text: loc("처방 모름","Don't understand order"), effect: { hp: -25, rep: -15 }, log: loc("교대 시 정리.","Clarify at shift.") }
+        ])
+    };
+}
+function generateSBARPracticalQuestion() {
+    return { baseId: "sbarRealCall", categoryKey: "fundamentals", part: loc("SBAR 실전","SBAR Practice"), emoji: "📞",
+        title: loc("실제 SBAR 호출","Real SBAR Call"),
+        desc: loc("환자 SpO2 88%로 떨어졌다. \"S\" 부분에 들어갈 내용은?","Patient SpO2 dropped to 88%. What goes in \"S\" (Situation)?"),
+        choices: shuffle([
+            { text: loc("\"32호 김OO 환자, 65세 남자, SpO2 88%로 갑자기 감소\"","\"Room 32, Mr. Kim, 65M, sudden SpO2 drop to 88%\""), effect: { hp: -2, rep: 22 }, log: loc("정답. 누가·어디·무엇·언제.","Correct. Who/where/what/when.") },
+            { text: loc("환자 전체 병력","Entire patient history"), effect: { hp: -25, rep: -15 }, log: loc("B (Background).","That's B.") },
+            { text: loc("내 의견","My opinion"), effect: { hp: -28, rep: -20 }, log: loc("A (Assessment).","That's A.") },
+            { text: loc("처방 요청","Order request"), effect: { hp: -22, rep: -12 }, log: loc("R (Recommendation).","That's R.") }
+        ])
+    };
+}
+function generatePreMedCheckQuestion() {
+    return { baseId: "preMedFiveRights", categoryKey: "fundamentals", part: loc("투약 안전","Medication Safety"), emoji: "💊",
+        title: loc("실제 투약 - 5 Rights 적용","Real Medication 5 Rights"),
+        desc: loc("Lisinopril 처방을 환자에게 투여 \"직전\" 마지막 확인은?","Last check just before giving Lisinopril?"),
+        choices: shuffle([
+            { text: loc("환자 ID 2가지 식별자 + 알레르기 + 마지막 BP + 약물 이름·용량·시간 재확인","2 IDs + allergies + last BP + name/dose/time recheck"), effect: { hp: -2, rep: 22 }, log: loc("정답. 5R + 임상 판단.","Correct. 5Rs + clinical judgment.") },
+            { text: loc("아무 확인 없이 투여","Give without checking"), effect: { hp: -42, rep: -32 }, log: loc("부적절.","Inappropriate.") },
+            { text: loc("이름만 확인","Just name"), effect: { hp: -32, rep: -22 }, log: loc("불충분.","Insufficient.") },
+            { text: loc("처방을 다시 출력","Reprint order"), effect: { hp: -25, rep: -15 }, log: loc("부수적.","Secondary.") }
+        ])
+    };
+}
+function generateSymptomChainQuestion() {
+    return { baseId: "deteriorationCues", categoryKey: "adult", part: loc("악화 조기 인지","Early Deterioration"), emoji: "📉",
+        title: loc("환자 악화 - 초기 단서","Early Patient Deterioration Cues"),
+        desc: loc("환자가 \"악화\"되고 있다고 가장 먼저 알려주는 미묘한 단서는?","Most subtle early sign patient is deteriorating?"),
+        choices: shuffle([
+            { text: loc("호흡수 변화 + 의식·기분 변화 + 활력 \"추세\" (값보다 변화)","Change in RR + altered mentation/mood + VS \"trend\" (not absolute)"), effect: { hp: -2, rep: 22 }, log: loc("정답. \"환자가 다르다\"는 직감.","Correct. \"Patient looks different\" intuition.") },
+            { text: loc("BP 단독 값","BP alone"), effect: { hp: -25, rep: -15 }, log: loc("늦은 신호.","Late sign.") },
+            { text: loc("발열만","Fever alone"), effect: { hp: -28, rep: -20 }, log: loc("부수적.","Secondary.") },
+            { text: loc("환자 보호자 호소","Family complaint only"), effect: { hp: -22, rep: -12 }, log: loc("부수적이지만 참고.","Useful but secondary.") }
+        ])
+    };
+}
+function generateNewPatientFirstHourQuestion() {
+    return { baseId: "newAdmitPriority", categoryKey: "fundamentals", part: loc("신환 입원","New Admission"), emoji: "🚪",
+        title: loc("신환 입원 - 첫 1시간 우선","New Admit - First Hour Priority"),
+        desc: loc("응급실에서 막 도착한 신환 - 첫 1시간 \"우선\" 작업 3가지는?","Just-arrived patient - top 3 tasks in first hour?"),
+        choices: shuffle([
+            { text: loc("활력·신원 + 알레르기·낙상 위험 사정 + 즉시 처방 시행","VS+ID + allergy/fall screen + carry out immediate orders"), effect: { hp: -2, rep: 22 }, log: loc("정답. 안전 → 사정 → 실행.","Correct. Safety → assess → act.") },
+            { text: loc("자세한 병력 수집부터","Detailed history first"), effect: { hp: -25, rep: -15 }, log: loc("나중.","Later.") },
+            { text: loc("교육 자료 전달","Hand education packet"), effect: { hp: -22, rep: -12 }, log: loc("나중.","Later.") },
+            { text: loc("동료에게 인계","Hand off to coworker"), effect: { hp: -32, rep: -22 }, log: loc("환자 받았으면 본인 책임.","Your patient now.") }
+        ])
+    };
+}
+function generateMissedDoseQuestion() {
+    return { baseId: "missedDoseAction", categoryKey: "fundamentals", part: loc("투약 누락","Missed Dose"), emoji: "⏰",
+        title: loc("투약 누락 발견","Discovered Missed Dose"),
+        desc: loc("9시 항생제가 11시에 누락된 것을 발견했다. 행동은?","9 AM antibiotic missed, discovered at 11 AM. Action?"),
+        choices: shuffle([
+            { text: loc("약사·의사 확인 후 즉시 투여 또는 다음 용량 조정 + 사건 기록","Verify with pharmacy/MD, give now or adjust, document event"), effect: { hp: -2, rep: 22 }, log: loc("정답. 항생제는 시간 중요.","Correct. ABX timing matters.") },
+            { text: loc("그냥 다음 9시까지 기다림","Just wait until next 9 AM"), effect: { hp: -32, rep: -22 }, log: loc("내성 위험.","Resistance risk.") },
+            { text: loc("기록 없이 지금 투여","Give now, don't document"), effect: { hp: -42, rep: -32 }, log: loc("법적 문제.","Legal issue.") },
+            { text: loc("두 배 용량 투여","Double dose"), effect: { hp: -45, rep: -35 }, log: loc("절대 금지.","NEVER.") }
+        ])
+    };
+}
+function generateRapidResponseQuestion() {
+    return { baseId: "rapidResponseCriteria", categoryKey: "adult", part: loc("긴급대응팀","Rapid Response"), emoji: "🚨",
+        title: loc("Rapid Response 호출 기준","Rapid Response Criteria"),
+        desc: loc("\"긴급대응팀(RRT/MET)\"을 호출해야 할 상황은?","When to activate Rapid Response Team (RRT/MET)?"),
+        choices: shuffle([
+            { text: loc("뭔가 \"이상하다\" 직감 + 의식 변화·SpO2<90·HR<40 또는 >130·BP<90","Gut feeling \"something's off\" + ↓LOC, SpO2<90, HR<40 or >130, BP<90"), effect: { hp: -2, rep: 22 }, log: loc("정답. 의사 호출 전 RRT.","Correct. RRT before formal MD call.") },
+            { text: loc("환자가 가족 보고 싶어함","Patient wants family"), effect: { hp: -38, rep: -28 }, log: loc("부적절.","Inappropriate.") },
+            { text: loc("주치의 부재","Primary MD away"), effect: { hp: -25, rep: -15 }, log: loc("주된 이유 X.","Not main reason.") },
+            { text: loc("간호사 졸림","Nurse sleepy"), effect: { hp: -42, rep: -32 }, log: loc("부적절.","Inappropriate.") }
+        ])
+    };
+}
+function generateBriefingDuringHandoffQuestion() {
+    return { baseId: "handoffMinimum", categoryKey: "fundamentals", part: loc("교대 인계","Shift Handoff"), emoji: "🔄",
+        title: loc("교대 인계 - 빠뜨릴 수 없는 정보","Handoff Must-Include"),
+        desc: loc("교대 인계에서 \"절대 빠뜨릴 수 없는\" 정보는?","Most critical info that must be in handoff?"),
+        choices: shuffle([
+            { text: loc("코드 상태 + 보류된 처방 + 24h 활력 추세 + 미해결 문제 + 가족 연락","Code status + pending orders + 24h VS trends + unresolved + family contact"), effect: { hp: -2, rep: 22 }, log: loc("정답. 환자 안전 핵심.","Correct. Patient safety core.") },
+            { text: loc("환자가 먹은 음식","Patient's food intake"), effect: { hp: -25, rep: -15 }, log: loc("일반.","Routine.") },
+            { text: loc("개인 의견","Personal opinion"), effect: { hp: -28, rep: -20 }, log: loc("객관 사실.","Objective only.") },
+            { text: loc("환자 외모 묘사","Describe appearance"), effect: { hp: -32, rep: -22 }, log: loc("부적절.","Inappropriate.") }
+        ])
+    };
+}
+function generateBeforeDischargeQuestion() {
+    return { baseId: "dischargeChecklist", categoryKey: "fundamentals", part: loc("퇴원 체크리스트","Discharge Checklist"), emoji: "🏠",
+        title: loc("퇴원 전 마지막 확인","Final Pre-Discharge Check"),
+        desc: loc("환자 퇴원 \"직전\" 마지막 확인 항목은?","Final items to verify just before discharge?"),
+        choices: shuffle([
+            { text: loc("처방·교육 이해 (teach-back) + 추후 약속 + 응급 시 연락 + 가정 환경","Med + teaching (teach-back) + follow-up + emergency contact + home env"), effect: { hp: -2, rep: 22 }, log: loc("정답. 재입원 방지.","Correct. Prevents readmission.") },
+            { text: loc("바이탈만 측정","Just take vitals"), effect: { hp: -28, rep: -20 }, log: loc("불충분.","Insufficient.") },
+            { text: loc("기록만 작성","Just document"), effect: { hp: -32, rep: -22 }, log: loc("교육 우선.","Education priority.") },
+            { text: loc("환자 사인만","Just get signature"), effect: { hp: -38, rep: -28 }, log: loc("부적절.","Inappropriate.") }
+        ])
+    };
+}
+function generateBedAlarmTrueAlertQuestion() {
+    return { baseId: "bedAlarmRealAlert", categoryKey: "fundamentals", part: loc("침대 알람","Bed Alarm"), emoji: "🚨",
+        title: loc("침대 알람 - 진짜 알람 vs 거짓","Bed Alarm - True vs False"),
+        desc: loc("\"고위험 낙상\" 환자의 침대 알람이 울린다. 첫 행동은?","Bed alarm sounds for high fall-risk patient. First action?"),
+        choices: shuffle([
+            { text: loc("즉시 환자에게로 - 우선 환자 안전 확인","GO to patient immediately - safety first"), effect: { hp: -2, rep: 22 }, log: loc("정답. \"늑대다\"라도 매번 확인.","Correct. Even if \"boy who cried wolf\".") },
+            { text: loc("알람 무음 처리","Silence alarm"), effect: { hp: -42, rep: -32 }, log: loc("낙상 위험.","Fall risk.") },
+            { text: loc("끝내고 가서 확인","Finish task then check"), effect: { hp: -32, rep: -22 }, log: loc("늦음.","Too late.") },
+            { text: loc("청소 직원에게 부탁","Ask housekeeping"), effect: { hp: -38, rep: -28 }, log: loc("부적절.","Inappropriate.") }
+        ])
+    };
+}
+function generatePatientRefuseCareQuestion() {
+    return { baseId: "patientRefusesAct", categoryKey: "law", part: loc("환자 거부","Patient Refusal"), emoji: "🚫",
+        title: loc("환자가 진단검사 거부","Patient Refuses Test"),
+        desc: loc("의식 명료한 환자가 \"오늘 CT 검사 거부\"한다. 행동은?","Alert oriented patient refuses today's CT. Action?"),
+        choices: shuffle([
+            { text: loc("이유 탐색·위험·대안 설명·문서화 + 의사 보고, 자율성 존중","Explore reason, explain risk/alternative, document + notify MD, respect autonomy"), effect: { hp: -2, rep: 22 }, log: loc("정답. 환자 권리.","Correct. Patient right.") },
+            { text: loc("강제로 진행","Force the test"), effect: { hp: -45, rep: -35 }, log: loc("폭행.","Battery.") },
+            { text: loc("가족이 사인하면 OK","If family signs OK"), effect: { hp: -38, rep: -28 }, log: loc("환자 의사 우선.","Patient's wish.") },
+            { text: loc("\"맘대로 하세요\" 무시","\"Whatever\" - ignore"), effect: { hp: -32, rep: -22 }, log: loc("환자 옹호 의무.","Advocacy duty.") }
+        ])
+    };
+}
+function generateHowToInterruptionQuestion() {
+    return { baseId: "interruptionMedPrep", categoryKey: "management", part: loc("투약 중 방해","Med Prep Interruption"), emoji: "✋",
+        title: loc("투약 준비 중 누가 부른다","Interrupted During Med Prep"),
+        desc: loc("약물 준비 중 동료가 \"빨리 도와줘!\"라고 부른다. 행동은?","Mid-med-prep coworker calls \"help quickly!\" Action?"),
+        choices: shuffle([
+            { text: loc("\"투약 중\"이라고 명확히 알리고 응급 정도 확인 후 결정","Clearly say \"in med prep\", assess emergency level first"), effect: { hp: -2, rep: 22 }, log: loc("정답. 투약 오류의 큰 원인 = 방해.","Correct. Interruptions = top med error cause.") },
+            { text: loc("바로 가서 도움","Drop everything"), effect: { hp: -28, rep: -20 }, log: loc("투약 오류 위험.","Med error risk.") },
+            { text: loc("무시","Ignore"), effect: { hp: -32, rep: -22 }, log: loc("협업 X.","Not collaborative.") },
+            { text: loc("약 빨리 끝냄 (서두름)","Rush meds"), effect: { hp: -38, rep: -28 }, log: loc("실수 ↑.","Increases errors.") }
+        ])
+    };
+}
+function generateConfusedPatientNightQuestion() {
+    return { baseId: "delirSundowning", categoryKey: "adult", part: loc("Sundowning","Sundowning"), emoji: "🌆",
+        title: loc("Sundowning 환자 - 야간 간호","Sundowning Night Care"),
+        desc: loc("저녁마다 혼란·초조 ↑ (sundowning)인 환자에게 \"가장 효과적\"인 대응은?","Most effective approach for evening confusion (sundowning)?"),
+        choices: shuffle([
+            { text: loc("일관된 일정·낮은 자극 환경·익숙한 물건·시간/날짜 시계, 약은 최후","Consistent routine, low stimuli, familiar items, clock/date, meds last resort"), effect: { hp: -2, rep: 22 }, log: loc("정답. 비약물 우선.","Correct. Non-pharm first.") },
+            { text: loc("즉시 진정제","Immediate sedation"), effect: { hp: -28, rep: -20 }, log: loc("낙상·역설 효과.","Falls/paradoxical.") },
+            { text: loc("억제대","Restraints"), effect: { hp: -38, rep: -28 }, log: loc("악화.","Worsens.") },
+            { text: loc("환자에게 진실 강요","Confront with reality"), effect: { hp: -25, rep: -15 }, log: loc("재정향 부드럽게.","Gentle reorient.") }
+        ])
+    };
+}
+function generateFamilyAtBedsideCPRQuestion() {
+    return { baseId: "familyWitnessCPR", categoryKey: "law", part: loc("CPR 동안 가족","CPR Family Witness"), emoji: "🤝",
+        title: loc("CPR 중 가족 입회","Family Witnessed CPR"),
+        desc: loc("CPR 중 가족이 \"보고 싶다\"고 요청한다. 행동은?","During CPR family asks to watch. Action?"),
+        choices: shuffle([
+            { text: loc("동행 직원(chaplain/social work)과 함께 입회 허용, 안전 거리 유지","Allow with support staff (chaplain/SW), safe distance"), effect: { hp: -2, rep: 22 }, log: loc("정답. 가족 입회는 슬픔 처리에 도움.","Correct. Helps with grief.") },
+            { text: loc("절대 X","Absolutely no"), effect: { hp: -28, rep: -20 }, log: loc("연구 결과는 입회 권장.","Research supports.") },
+            { text: loc("무관심하게 허용","Allow without support"), effect: { hp: -32, rep: -22 }, log: loc("동행 직원 필요.","Need support.") },
+            { text: loc("환자 사망까지 입회 X","No until death declared"), effect: { hp: -28, rep: -20 }, log: loc("늦음.","Too late.") }
+        ])
+    };
+}
+function generateNonEnglishPatientQuestion() {
+    return { baseId: "interpreterTriedQuestion", categoryKey: "fundamentals", part: loc("의료 통역","Medical Interpreter"), emoji: "🗣️",
+        title: loc("비영어권 환자 - 통역","Non-English Patient Interpreter"),
+        desc: loc("스페인어만 하는 환자가 응급실에 도착했다. 통역으로 \"적절한\" 선택은?","Spanish-only patient in ED. Appropriate interpreter?"),
+        choices: shuffle([
+            { text: loc("자격 의료 통역사 (전화·영상·대면), 절대 가족·환자 미성년 자녀 X","Qualified medical interpreter (phone/video/in-person), NEVER family or minor children"), effect: { hp: -2, rep: 22 }, log: loc("정답. 정확성·기밀성.","Correct. Accuracy/confidentiality.") },
+            { text: loc("환자의 8살 아들","Patient's 8-yr son"), effect: { hp: -38, rep: -28 }, log: loc("아동 부담 + 부정확.","Burden + inaccuracy.") },
+            { text: loc("스페인어 좀 하는 동료","Coworker who speaks some Spanish"), effect: { hp: -25, rep: -15 }, log: loc("의료 정확성 X.","Not medically accurate.") },
+            { text: loc("Google 번역 핸드폰","Google Translate"), effect: { hp: -28, rep: -20 }, log: loc("응급 시만 임시.","Only emergency stopgap.") }
+        ])
+    };
+}
+function generateChargeNurseDelegationQuestion() {
+    return { baseId: "delegationUAP", categoryKey: "management", part: loc("위임","Delegation"), emoji: "👥",
+        title: loc("UAP에게 위임 가능한 업무","UAP Delegation"),
+        desc: loc("간호조무사(UAP)에게 \"위임 가능한\" 업무는?","Which task CAN be delegated to UAP?"),
+        choices: shuffle([
+            { text: loc("안정 환자 활력·입욕·보행 보조·식사 보조","Stable patient VS, bathing, ambulation assist, feeding"), effect: { hp: -2, rep: 22 }, log: loc("정답. 사정·교육·평가는 RN.","Correct. Assess/teach/eval = RN only.") },
+            { text: loc("신환 입원 사정","Admission assessment"), effect: { hp: -32, rep: -22 }, log: loc("RN 전용.","RN only.") },
+            { text: loc("환자 교육","Patient education"), effect: { hp: -32, rep: -22 }, log: loc("RN 전용.","RN only.") },
+            { text: loc("IV 약물 투여","IV medication"), effect: { hp: -38, rep: -28 }, log: loc("RN 전용.","RN only.") }
+        ])
+    };
+}
+function generateMisplacedNGQuestion() {
+    return { baseId: "ngTubePlacementVerify", categoryKey: "fundamentals", part: loc("NG 위치 확인","NG Placement"), emoji: "🩺",
+        title: loc("NG 튜브 - 위치 확인 표준","NG Placement Verification Standard"),
+        desc: loc("NG 튜브 \"신규 삽입 후\" 위치 확인 \"표준\" 방법은?","Standard verification after new NG insertion?"),
+        choices: shuffle([
+            { text: loc("X선 영상 (gold standard) + 흡인액 pH","Chest/abdominal X-ray (gold standard) + aspirate pH"), effect: { hp: -2, rep: 22 }, log: loc("정답. 청진은 신뢰성 ↓.","Correct. Auscultation unreliable.") },
+            { text: loc("공기 주입 청진","Air auscultation"), effect: { hp: -32, rep: -22 }, log: loc("부정확.","Inaccurate.") },
+            { text: loc("환자 호소","Patient says it's in"), effect: { hp: -38, rep: -28 }, log: loc("불가능.","Impossible.") },
+            { text: loc("표시 길이만","Just check marking"), effect: { hp: -28, rep: -20 }, log: loc("불충분.","Insufficient.") }
+        ])
+    };
+}
+function generatePainReassessmentQuestion() {
+    return { baseId: "painReassessTime", categoryKey: "fundamentals", part: loc("통증 재평가","Pain Reassessment"), emoji: "🩺",
+        title: loc("진통제 후 통증 재평가","Post-Analgesic Reassessment"),
+        desc: loc("경구 morphine 투여 후 \"언제\" 통증을 재평가하는가?","When to reassess pain after oral morphine?"),
+        choices: shuffle([
+            { text: loc("경구 60분 후 (정점), IV 15-30분 후","60 min after PO (peak), 15-30 min after IV"), effect: { hp: -2, rep: 22 }, log: loc("정답. 약물 약동 기반.","Correct. Based on pharmacokinetics.") },
+            { text: loc("재평가 X","No reassessment"), effect: { hp: -32, rep: -22 }, log: loc("표준 위반.","Standards violation.") },
+            { text: loc("다음 듀티 시","Next shift"), effect: { hp: -28, rep: -20 }, log: loc("너무 늦음.","Too late.") },
+            { text: loc("환자 요청 시만","Only if patient asks"), effect: { hp: -25, rep: -15 }, log: loc("매번 표준.","Routine standard.") }
+        ])
+    };
+}
+function generateAcuteDeliriumNursingQuestion() {
+    return { baseId: "deliriumNursing", categoryKey: "adult", part: loc("급성 섬망 간호","Acute Delirium Nursing"), emoji: "🧠",
+        title: loc("입원 후 급성 섬망 - 비약물 처치","Acute Delirium Non-Pharm"),
+        desc: loc("입원 후 갑작스런 섬망 환자에게 \"비약물\" 처치는?","Non-pharmacological intervention for new-onset inpatient delirium?"),
+        choices: shuffle([
+            { text: loc("기저 원인 검색 (UTI·전해질·약물·산소) + 재정향·일정·가족·수면","Search underlying cause (UTI/lytes/meds/O2) + reorient/routine/family/sleep"), effect: { hp: -2, rep: 22 }, log: loc("정답. 원인 우선.","Correct. Cause first.") },
+            { text: loc("진정제 즉시","Sedate immediately"), effect: { hp: -32, rep: -22 }, log: loc("악화 가능.","Can worsen.") },
+            { text: loc("억제대","Restraints"), effect: { hp: -38, rep: -28 }, log: loc("악화.","Worsens.") },
+            { text: loc("관찰만","Just observe"), effect: { hp: -28, rep: -20 }, log: loc("원인 평가.","Assess cause.") }
+        ])
+    };
+}
+function generateBedsideHandoffQuestion() {
+    return { baseId: "bedsideHandoff", categoryKey: "fundamentals", part: loc("침상 인계","Bedside Handoff"), emoji: "🛏️",
+        title: loc("침상 옆 인계 - 장점","Bedside Handoff Benefits"),
+        desc: loc("\"침상 옆\" 인계의 \"가장 큰\" 장점은?","Biggest advantage of bedside handoff?"),
+        choices: shuffle([
+            { text: loc("환자 참여·실시간 확인·오류 ↓·만족도 ↑","Patient engagement + real-time verification + ↓errors + ↑satisfaction"), effect: { hp: -2, rep: 22 }, log: loc("정답. JCAHO 권장.","Correct. JCAHO recommends.") },
+            { text: loc("시간 절약","Saves time"), effect: { hp: -22, rep: -12 }, log: loc("초기엔 더 걸림.","Initially takes longer.") },
+            { text: loc("환자 사생활 ↑","More privacy"), effect: { hp: -28, rep: -20 }, log: loc("실제 ↓.","Actually less.") },
+            { text: loc("간호사 부담 ↓","Less nurse burden"), effect: { hp: -28, rep: -20 }, log: loc("동일.","Same.") }
+        ])
+    };
+}
+function generatePatientFamilyConflictQuestion() {
+    return { baseId: "familyDisagreesCare", categoryKey: "law", part: loc("가족 갈등","Family Conflict"), emoji: "👨‍👩‍👧",
+        title: loc("가족이 환자 의사와 충돌","Family vs Patient Wishes"),
+        desc: loc("의식 명료한 환자가 \"치료 거부\"인데 가족은 \"계속하라\"고 강요. 행동은?","Alert patient refuses tx, family demands continue. Action?"),
+        choices: shuffle([
+            { text: loc("환자 자율성 최우선, 가족 정서적 지지·정보 제공, 윤리위 의뢰","Patient autonomy first, emotional support + info to family, ethics consult"), effect: { hp: -2, rep: 22 }, log: loc("정답. 환자가 결정자.","Correct. Patient is decision-maker.") },
+            { text: loc("가족 의사 따름","Follow family"), effect: { hp: -38, rep: -28 }, log: loc("환자 권리 침해.","Violates patient right.") },
+            { text: loc("환자에게 가족 설득 요청","Ask patient to convince family"), effect: { hp: -25, rep: -15 }, log: loc("환자 부담.","Patient burden.") },
+            { text: loc("가족 면회 금지","Ban family visits"), effect: { hp: -32, rep: -22 }, log: loc("부적절.","Inappropriate.") }
+        ])
+    };
+}
+function generateNewMedicationTeachQuestion() {
+    return { baseId: "newMedTeachBasics", categoryKey: "fundamentals", part: loc("새 약물 교육","New Med Teaching"), emoji: "💊",
+        title: loc("새 약물 교육 - 핵심 4가지","New Med Teaching - 4 Key Items"),
+        desc: loc("환자에게 새 약물 교육 시 \"필수\" 4가지는?","4 essential items in new med teaching?"),
+        choices: shuffle([
+            { text: loc("약 이름·용도·복용법·중요 부작용·다음 처방까지 관리","Name + purpose + how to take + key side effects + management"), effect: { hp: -2, rep: 22 }, log: loc("정답. Teach-back으로 확인.","Correct. Verify with teach-back.") },
+            { text: loc("약값만","Just cost"), effect: { hp: -32, rep: -22 }, log: loc("부적절.","Inappropriate.") },
+            { text: loc("제약회사명","Manufacturer name"), effect: { hp: -38, rep: -28 }, log: loc("불필요.","Unnecessary.") },
+            { text: loc("환자가 알아서","Self-discover"), effect: { hp: -32, rep: -22 }, log: loc("부적절.","Inappropriate.") }
+        ])
+    };
+}
+function generateRespRateBenchmarkQuestion() {
+    return { baseId: "rrUnderreported", categoryKey: "fundamentals", part: loc("호흡수","Respiratory Rate"), emoji: "💨",
+        title: loc("호흡수 - 가장 자주 놓치는 활력","Most Overlooked Vital"),
+        desc: loc("연구상 \"가장 자주 부정확하게\" 측정되는 활력 징후는?","Most often inaccurately measured vital sign?"),
+        choices: shuffle([
+            { text: loc("호흡수 - 종종 \"16/분\" 자동 기록 → 실제는 더 빠름","Respiratory rate — often defaulted to \"16\" when actually faster"), effect: { hp: -2, rep: 22 }, log: loc("정답. 가장 민감한 악화 지표인데 놓침.","Correct. Most sensitive early sign, often missed.") },
+            { text: loc("체온","Temperature"), effect: { hp: -25, rep: -15 }, log: loc("정확.","Accurate.") },
+            { text: loc("BP","BP"), effect: { hp: -25, rep: -15 }, log: loc("정확.","Accurate.") },
+            { text: loc("SpO2","SpO2"), effect: { hp: -25, rep: -15 }, log: loc("정확.","Accurate.") }
+        ])
+    };
+}
+function generateChartingPearlQuestion() {
+    return { baseId: "chartingObjective", categoryKey: "law", part: loc("기록 원칙","Documentation"), emoji: "📝",
+        title: loc("기록 - 객관적 vs 주관적","Objective vs Subjective"),
+        desc: loc("간호 기록의 \"올바른\" 표현은?","Correct nursing documentation phrase?"),
+        choices: shuffle([
+            { text: loc("\"환자 호흡 24/분, 청진 시 양측 폐 wheezing\"","\"Pt RR 24, bilateral wheezes on auscultation\""), effect: { hp: -2, rep: 22 }, log: loc("정답. 측정 가능·객관적.","Correct. Measurable, objective.") },
+            { text: loc("\"환자가 숨이 차 보임\"","\"Pt seems short of breath\""), effect: { hp: -25, rep: -15 }, log: loc("주관적.","Subjective.") },
+            { text: loc("\"환자가 화났다\"","\"Pt was angry\""), effect: { hp: -28, rep: -20 }, log: loc("관찰 행동으로.","Use observed behavior.") },
+            { text: loc("\"문제 없음\"","\"No issues\""), effect: { hp: -32, rep: -22 }, log: loc("막연.","Vague.") }
+        ])
+    };
+}
+function generateAlarmFatigueQuestion() {
+    return { baseId: "alarmFatigueSolution", categoryKey: "management", part: loc("알람 피로","Alarm Fatigue"), emoji: "🚨",
+        title: loc("알람 피로 해결법","Alarm Fatigue Solution"),
+        desc: loc("\"알람 피로(alarm fatigue)\"의 가장 효과적 해결책은?","Most effective alarm fatigue solution?"),
+        choices: shuffle([
+            { text: loc("환자별 임계값 맞춤·정기 lead 관리·진짜 알람만 남도록 설정","Customize thresholds per patient + lead care + meaningful alarms only"), effect: { hp: -2, rep: 22 }, log: loc("정답. JCAHO 국가 환자 안전 목표.","Correct. JCAHO Goal #6.") },
+            { text: loc("모든 알람 끄기","Silence all alarms"), effect: { hp: -42, rep: -32 }, log: loc("위험.","Dangerous.") },
+            { text: loc("간호사가 무시","Nurses ignore"), effect: { hp: -38, rep: -28 }, log: loc("환자 위해.","Patient harm.") },
+            { text: loc("환자 모니터링 X","Stop monitoring"), effect: { hp: -45, rep: -35 }, log: loc("부적절.","Inappropriate.") }
+        ])
+    };
+}
+function generateSepsisRecognitionQuestion() {
+    return { baseId: "sepsisFirstClues", categoryKey: "adult", part: loc("패혈증 조기 인지","Early Sepsis"), emoji: "🦠",
+        title: loc("패혈증 - 침상 옆 첫 단서","Sepsis - First Bedside Clues"),
+        desc: loc("환자 침상 옆에서 \"패혈증\"을 가장 먼저 의심하게 하는 단서는?","First bedside clue suggesting sepsis?"),
+        choices: shuffle([
+            { text: loc("미열 또는 저체온 + 빈호흡 + 의식 변화 (활력 미묘)","Low-grade fever or hypothermia + tachypnea + altered mentation"), effect: { hp: -2, rep: 22 }, log: loc("정답. qSOFA 즉시 적용.","Correct. Apply qSOFA.") },
+            { text: loc("BP 80/50으로 떨어짐","BP 80/50 (late)"), effect: { hp: -25, rep: -15 }, log: loc("늦은 신호.","Late.") },
+            { text: loc("정상 활력","Normal vitals"), effect: { hp: -32, rep: -22 }, log: loc("패혈증은 미묘.","Sepsis is subtle.") },
+            { text: loc("환자 호소만","Only patient complaint"), effect: { hp: -28, rep: -20 }, log: loc("객관 사정.","Need objective.") }
+        ])
+    };
+}
+function generateChestPainTriageQuestion() {
+    return { baseId: "chestPainECGFirst", categoryKey: "adult", part: loc("흉통 분류","Chest Pain Triage"), emoji: "💓",
+        title: loc("응급실 흉통 환자 - 첫 행동","ED Chest Pain First Action"),
+        desc: loc("응급실 도착한 흉통 환자에게 \"가장 먼저\" 시행할 것은?","First action for ED chest pain patient?"),
+        choices: shuffle([
+            { text: loc("12-lead ECG 10분 이내 + 활력·산소","12-lead ECG within 10 min + VS + O2"), effect: { hp: -2, rep: 22 }, log: loc("정답. STEMI 식별 시간 중요.","Correct. Time-critical STEMI ID.") },
+            { text: loc("자세한 병력","Detailed history"), effect: { hp: -28, rep: -20 }, log: loc("ECG 우선.","ECG first.") },
+            { text: loc("CT 즉시","CT immediately"), effect: { hp: -32, rep: -22 }, log: loc("부적절.","Inappropriate.") },
+            { text: loc("진통제만","Just give analgesic"), effect: { hp: -38, rep: -28 }, log: loc("진단 우선.","Diagnose first.") }
+        ])
+    };
+}
+function generateFirstNightShiftSurvivalQuestion() {
+    return { baseId: "newGradTip", categoryKey: "management", part: loc("신규 간호사 팁","New Nurse Tip"), emoji: "🌟",
+        title: loc("신규 간호사 - 첫 야간 듀티 생존","First Night Shift Survival"),
+        desc: loc("신규 간호사가 첫 야간 듀티에서 \"가장 중요한\" 자세는?","Most important attitude for new nurse on first night?"),
+        choices: shuffle([
+            { text: loc("모르면 즉시 묻기·문서 확인·체계적 작업·동료에게 도움 요청","Ask immediately if unsure, verify docs, work systematically, ask for help"), effect: { hp: -2, rep: 22 }, log: loc("정답. \"질문하는 신규\"가 안전.","Correct. \"Asking new grad\" is safe.") },
+            { text: loc("부끄러워서 안 묻기","Too shy to ask"), effect: { hp: -38, rep: -28 }, log: loc("환자 위해.","Patient harm.") },
+            { text: loc("빨리 끝내려고 서두름","Rush to finish fast"), effect: { hp: -32, rep: -22 }, log: loc("실수 ↑.","↑Errors.") },
+            { text: loc("혼자 모든 일","Do everything alone"), effect: { hp: -32, rep: -22 }, log: loc("팀 활용.","Use the team.") }
+        ])
+    };
+}
+function generateLearningFromMistakeQuestion() {
+    return { baseId: "nearMissAction", categoryKey: "management", part: loc("Near-Miss","Near-Miss"), emoji: "⚠️",
+        title: loc("Near-Miss 후 행동","After a Near-Miss"),
+        desc: loc("동료가 잡아준 \"투약 실수 직전(near-miss)\" 후 \"가장 적절한\" 행동은?","Action after coworker catches a near-miss?"),
+        choices: shuffle([
+            { text: loc("Near-miss 보고서 작성·시스템 개선 회의 참여, 동료 감사","File near-miss report, attend safety meeting, thank coworker"), effect: { hp: -2, rep: 22 }, log: loc("정답. 개인 실수 → 시스템 학습.","Correct. Personal mistake → system learning.") },
+            { text: loc("자책만","Just self-blame"), effect: { hp: -28, rep: -20 }, log: loc("학습 기회 ↓.","Learning lost.") },
+            { text: loc("아무 말 없이 잊기","Silently forget"), effect: { hp: -32, rep: -22 }, log: loc("재발 위험.","Recurrence risk.") },
+            { text: loc("동료를 탓함","Blame coworker"), effect: { hp: -42, rep: -32 }, log: loc("관계 + 안전 문화 손상.","Damages relationship + culture.") }
+        ])
+    };
+}
+function generatePatientPreferenceQuestion() {
+    return { baseId: "patientCenteredCare", categoryKey: "fundamentals", part: loc("환자 중심","Patient-Centered"), emoji: "💚",
+        title: loc("환자 중심 간호 - 실천","Patient-Centered Care in Practice"),
+        desc: loc("\"환자 중심 간호\"의 \"실제\" 적용은?","Real-world application of patient-centered care?"),
+        choices: shuffle([
+            { text: loc("환자 선호·가치·문화·일정에 맞춰 케어 조정 (의학적 안전 내에서)","Adapt care to patient preferences/values/culture/schedule (within safety)"), effect: { hp: -2, rep: 22 }, log: loc("정답. \"환자가 무엇을 원하는가?\" 질문.","Correct. Ask \"what matters to you?\".") },
+            { text: loc("표준 일정 강요","Force standard schedule"), effect: { hp: -32, rep: -22 }, log: loc("부적절.","Inappropriate.") },
+            { text: loc("의사 의견만","Only MD opinion"), effect: { hp: -28, rep: -20 }, log: loc("환자 권리 ↓.","↓Patient rights.") },
+            { text: loc("간호사 편의 우선","Nurse convenience first"), effect: { hp: -32, rep: -22 }, log: loc("부적절.","Inappropriate.") }
+        ])
+    };
+}
+function generateBreakdownEmergencyQuestion() {
+    return { baseId: "burnoutSelfCare", categoryKey: "management", part: loc("번아웃 자가 관리","Burnout Self-Care"), emoji: "💚",
+        title: loc("간호사 번아웃 자가 인지","Nurse Burnout Self-Recognition"),
+        desc: loc("간호사 자신의 \"번아웃\" 초기 신호는?","Early signs of nurse burnout in self?"),
+        choices: shuffle([
+            { text: loc("환자와의 거리감·아침 출근 두려움·신체 피로·잠 안 옴·실수 ↑","Emotional distance, dread of work, fatigue, poor sleep, ↑errors"), effect: { hp: -2, rep: 22 }, log: loc("정답. 도움 요청 = 강함.","Correct. Asking for help = strength.") },
+            { text: loc("환자 케어 더 잘함","Better patient care"), effect: { hp: -25, rep: -15 }, log: loc("반대.","Opposite.") },
+            { text: loc("동료와 관계 ↑","Better with coworkers"), effect: { hp: -28, rep: -20 }, log: loc("반대.","Opposite.") },
+            { text: loc("아무 영향 없음","No effect"), effect: { hp: -32, rep: -22 }, log: loc("영향 큼.","Big impact.") }
+        ])
+    };
+}
+
+// 이미지 5개
+function generateSBARTemplateImgQuestion() {
+    const svg = `<svg viewBox="0 0 600 240" xmlns="http://www.w3.org/2000/svg"><rect width="600" height="240" fill="#f0f9ff"/><g transform="translate(20,20)"><rect width="560" height="200" fill="#fff" stroke="#1e293b" stroke-width="2" rx="6"/><text x="280" y="32" text-anchor="middle" font-size="14" font-weight="800">${loc("SBAR 호출 템플릿","SBAR Call Template")}</text><text x="40" y="65" font-size="14" font-weight="800" fill="#7fa881">S</text><text x="70" y="65" font-size="11">${loc("Situation - 누가, 무엇이, 언제","Who, what, when")}</text><text x="40" y="100" font-size="14" font-weight="800" fill="#7fa881">B</text><text x="70" y="100" font-size="11">${loc("Background - 관련 병력·검사","Relevant hx/labs")}</text><text x="40" y="135" font-size="14" font-weight="800" fill="#7fa881">A</text><text x="70" y="135" font-size="11">${loc("Assessment - 내 사정·의심","My assessment/concern")}</text><text x="40" y="170" font-size="14" font-weight="800" fill="#7fa881">R</text><text x="70" y="170" font-size="11">${loc("Recommendation - 요청·계획","Request/plan")}</text></g></svg>`;
+    return { baseId: "sbarTemplateImg", categoryKey: "fundamentals", part: loc("SBAR 인계","SBAR"), emoji: "📞",
+        title: loc("SBAR 'R' 부분","SBAR 'R' Part"),
+        desc: loc("SBAR의 \"R\"에 들어갈 적절한 예는?","Appropriate content for \"R\" in SBAR?"),
+        image: svg,
+        choices: shuffle([
+            { text: loc("\"산소 처방 + STAT ABG + 평가 위해 와주실 수 있나요?\"","\"Can you order O2 + STAT ABG + come evaluate?\""), effect: { hp: -2, rep: 22 }, log: loc("정답. 구체적 요청.","Correct. Specific request.") },
+            { text: loc("환자 전체 병력","Entire history"), effect: { hp: -25, rep: -15 }, log: loc("B에.","Belongs in B.") },
+            { text: loc("\"걱정돼요\"","\"I'm worried\""), effect: { hp: -28, rep: -20 }, log: loc("A.","Belongs in A.") },
+            { text: loc("환자 이름","Patient name"), effect: { hp: -25, rep: -15 }, log: loc("S.","Belongs in S.") }
+        ])
+    };
+}
+function generateTriageColorImgQuestion() {
+    const svg = `<svg viewBox="0 0 600 220" xmlns="http://www.w3.org/2000/svg"><rect width="600" height="220" fill="#fef3f7"/><g transform="translate(40,30)"><rect width="120" height="60" fill="#dc2626" rx="6"/><text x="60" y="32" text-anchor="middle" font-size="13" font-weight="700" fill="white">${loc("적색","RED")}</text><text x="60" y="50" text-anchor="middle" font-size="10" fill="white">${loc("즉각 응급","Immediate")}</text></g><g transform="translate(180,30)"><rect width="120" height="60" fill="#fbbf24" rx="6"/><text x="60" y="32" text-anchor="middle" font-size="13" font-weight="700">${loc("황색","YELLOW")}</text><text x="60" y="50" text-anchor="middle" font-size="10">${loc("지연 가능","Delayed")}</text></g><g transform="translate(320,30)"><rect width="120" height="60" fill="#10b981" rx="6"/><text x="60" y="32" text-anchor="middle" font-size="13" font-weight="700" fill="white">${loc("녹색","GREEN")}</text><text x="60" y="50" text-anchor="middle" font-size="10" fill="white">${loc("경증·보행","Minor")}</text></g><g transform="translate(460,30)"><rect width="120" height="60" fill="#1e293b" rx="6"/><text x="60" y="32" text-anchor="middle" font-size="13" font-weight="700" fill="white">${loc("흑색","BLACK")}</text><text x="60" y="50" text-anchor="middle" font-size="10" fill="white">${loc("사망/소생불가","Deceased")}</text></g><g transform="translate(20,120)"><rect width="560" height="60" fill="#fde68a" stroke="#92400e" rx="4"/><text x="280" y="32" text-anchor="middle" font-size="13" font-weight="700">${loc("환자: 호흡 8/분, 의식 무, 출혈 다량","Patient: RR 8, no LOC, severe bleeding")}</text></g></svg>`;
+    return { baseId: "startTriageRedCase", categoryKey: "community", part: loc("START 분류","START Triage"), emoji: "🚑",
+        title: loc("START 분류 - 이 환자는?","START Triage - This Patient?"),
+        desc: loc("의식 무·RR 8·다량 출혈 환자의 START 색상은?","No LOC, RR 8, severe bleeding — START color?"),
+        image: svg,
+        choices: shuffle([
+            { text: loc("적색 - 즉각 응급 (생명 위협·치료 가능)","RED — immediate (life-threatening but treatable)"), effect: { hp: -2, rep: 22 }, log: loc("정답. RPM 어느 하나 이상 비정상.","Correct. Any RPM abnormal.") },
+            { text: loc("황색","Yellow"), effect: { hp: -28, rep: -20 }, log: loc("덜 위급.","Less urgent.") },
+            { text: loc("녹색","Green"), effect: { hp: -38, rep: -28 }, log: loc("경증.","Minor.") },
+            { text: loc("흑색","Black"), effect: { hp: -32, rep: -22 }, log: loc("아직 호흡.","Still breathing.") }
+        ])
+    };
+}
+function generateCriticalLabValueImgQuestion() {
+    const svg = `<svg viewBox="0 0 600 220" xmlns="http://www.w3.org/2000/svg"><rect width="600" height="220" fill="#f0f9ff"/><g transform="translate(20,20)"><rect width="560" height="180" fill="#fff" stroke="#1e293b" stroke-width="2" rx="6"/><text x="280" y="30" text-anchor="middle" font-size="14" font-weight="800">${loc("검사 결과 - 위험치","Critical Lab Values")}</text><text x="40" y="60" font-size="11" font-weight="700">${loc("나트륨","Sodium")}</text><text x="200" y="60" font-size="11" fill="#dc2626" font-weight="800">115 mEq/L</text><text x="350" y="60" font-size="10" fill="#64748b">${loc("정상 135-145","Normal 135-145")}</text><text x="40" y="90" font-size="11" font-weight="700">${loc("칼륨","Potassium")}</text><text x="200" y="90" font-size="11" fill="#dc2626" font-weight="800">6.8 mEq/L</text><text x="350" y="90" font-size="10" fill="#64748b">${loc("정상 3.5-5.0","Normal 3.5-5.0")}</text><text x="40" y="120" font-size="11" font-weight="700">${loc("혈당","Glucose")}</text><text x="200" y="120" font-size="11" fill="#dc2626" font-weight="800">35 mg/dL</text><text x="350" y="120" font-size="10" fill="#64748b">${loc("정상 70-100","Normal 70-100")}</text><text x="40" y="150" font-size="11" font-weight="700">${loc("INR","INR")}</text><text x="200" y="150" font-size="11" fill="#dc2626" font-weight="800">8.5</text><text x="350" y="150" font-size="10" fill="#64748b">${loc("정상 0.9-1.1","Normal 0.9-1.1")}</text></g></svg>`;
+    return { baseId: "criticalLabAction", categoryKey: "fundamentals", part: loc("위험 검사치","Critical Labs"), emoji: "📊",
+        title: loc("위험 검사치 - 행동","Critical Lab Value Action"),
+        desc: loc("\"위험치(critical value)\" 검사 결과를 받았다. 행동은?","Just received a critical lab value. Action?"),
+        image: svg,
+        choices: shuffle([
+            { text: loc("즉시 의사 호출 + 환자 사정 + 결과 read-back + 처치 시행, 모두 문서화","Call MD immediately + assess patient + read-back result + intervene, document all"), effect: { hp: -2, rep: 22 }, log: loc("정답. JCAHO 안전 목표.","Correct. JCAHO safety goal.") },
+            { text: loc("다음 듀티에 인계","Pass to next shift"), effect: { hp: -42, rep: -32 }, log: loc("응급.","Emergency.") },
+            { text: loc("이메일로만 보고","Email only"), effect: { hp: -38, rep: -28 }, log: loc("즉시 통화.","Immediate verbal.") },
+            { text: loc("환자 사정만","Just assess"), effect: { hp: -32, rep: -22 }, log: loc("의사 호출.","Call MD too.") }
+        ])
+    };
+}
+function generateCodeStatusImgQuestion() {
+    const svg = `<svg viewBox="0 0 600 220" xmlns="http://www.w3.org/2000/svg"><rect width="600" height="220" fill="#f0f9ff"/><g transform="translate(40,20)"><rect width="160" height="180" fill="#dcfce7" stroke="#166534" rx="6"/><text x="80" y="30" text-anchor="middle" font-size="14" font-weight="800">${loc("Full Code","Full Code")}</text><text x="80" y="60" text-anchor="middle" font-size="10">${loc("모든 소생술","All resuscitation")}</text><text x="80" y="90" text-anchor="middle" font-size="9" fill="#166534">${loc("CPR·삽관·약물","CPR + intubation + drugs")}</text></g><g transform="translate(220,20)"><rect width="160" height="180" fill="#fef9c3" stroke="#a16207" rx="6"/><text x="80" y="30" text-anchor="middle" font-size="14" font-weight="800">DNR / DNI</text><text x="80" y="60" text-anchor="middle" font-size="10">${loc("CPR 없음","No CPR")}</text><text x="80" y="90" text-anchor="middle" font-size="9" fill="#a16207">${loc("약물·산소는 OK","Meds/O2 OK")}</text></g><g transform="translate(400,20)"><rect width="160" height="180" fill="#fee2e2" stroke="#991b1b" rx="6"/><text x="80" y="30" text-anchor="middle" font-size="14" font-weight="800">${loc("Comfort","Comfort")}</text><text x="80" y="60" text-anchor="middle" font-size="10">${loc("편안함만","Comfort only")}</text><text x="80" y="90" text-anchor="middle" font-size="9" fill="#991b1b">${loc("진통·기도 관리","Pain mgmt, airway")}</text></g></svg>`;
+    return { baseId: "codeStatusVerify", categoryKey: "fundamentals", part: loc("Code 상태","Code Status"), emoji: "❤️",
+        title: loc("Code 상태 - 인계 시 확인","Code Status at Handoff"),
+        desc: loc("교대 인계에서 \"매번\" Code 상태를 확인해야 하는 이유는?","Why verify Code status at every handoff?"),
+        image: svg,
+        choices: shuffle([
+            { text: loc("환자 상태 변화에 따라 갱신 가능, 잘못된 코드 시 법적·윤리적 문제","Status may change with patient condition; wrong code = legal/ethical issue"), effect: { hp: -2, rep: 22 }, log: loc("정답. 매 교대마다 확인.","Correct. Verify every shift.") },
+            { text: loc("형식적 절차","Just formality"), effect: { hp: -28, rep: -20 }, log: loc("법적 의무.","Legal requirement.") },
+            { text: loc("필요 없음","Not needed"), effect: { hp: -38, rep: -28 }, log: loc("필수.","Required.") },
+            { text: loc("환자만 알면 됨","Only patient needs to know"), effect: { hp: -32, rep: -22 }, log: loc("팀 전체.","Whole team.") }
+        ])
+    };
+}
+function generatePainTeachImgQuestion() {
+    const svg = `<svg viewBox="0 0 600 240" xmlns="http://www.w3.org/2000/svg"><rect width="600" height="240" fill="#fef3f7"/><g transform="translate(20,30)"><rect width="560" height="180" fill="#fff" stroke="#1e293b" stroke-width="2" rx="6"/><text x="280" y="32" text-anchor="middle" font-size="14" font-weight="800">${loc("PCA 환자 교육 핵심","PCA Patient Teaching Key Points")}</text><text x="40" y="60" font-size="11" font-weight="700">1.</text><text x="80" y="60" font-size="11">${loc("\"본인만\" 버튼 누르기 (가족·간호사 X)","Only YOU push the button (not family/nurse)")}</text><text x="40" y="90" font-size="11" font-weight="700">2.</text><text x="80" y="90" font-size="11">${loc("통증 시작될 때 누르기 (참기 X)","Push when pain starts (don't tough it out)")}</text><text x="40" y="120" font-size="11" font-weight="700">3.</text><text x="80" y="120" font-size="11">${loc("Lockout 시간이 안전 보호","Lockout time keeps you safe")}</text><text x="40" y="150" font-size="11" font-weight="700">4.</text><text x="80" y="150" font-size="11">${loc("졸리거나 호흡 어려우면 알리기","Tell us if drowsy or hard to breathe")}</text></g></svg>`;
+    return { baseId: "pcaKeyTeach", categoryKey: "fundamentals", part: loc("PCA 교육","PCA Teaching"), emoji: "💉",
+        title: loc("PCA - 가장 중요한 안전 교육","PCA Most Critical Safety Teaching"),
+        desc: loc("PCA 사용 환자에게 \"가장 중요한\" 안전 교육은?","Most critical PCA safety teaching?"),
+        image: svg,
+        choices: shuffle([
+            { text: loc("\"본인만\" 버튼 누르기 (\"PCA by proxy\" 금지)","ONLY patient pushes button (no \"PCA by proxy\")"), effect: { hp: -2, rep: 22 }, log: loc("정답. 호흡 억제 자동 보호.","Correct. Auto-protects from respiratory depression.") },
+            { text: loc("가족이 대신","Family pushes"), effect: { hp: -45, rep: -35 }, log: loc("절대 금지.","NEVER.") },
+            { text: loc("매시간 누르기","Push every hour"), effect: { hp: -28, rep: -20 }, log: loc("필요시만.","Only when needed.") },
+            { text: loc("참다가 한 번에","Hold and push once"), effect: { hp: -25, rep: -15 }, log: loc("초기 사용.","Use early.") }
         ])
     };
 }

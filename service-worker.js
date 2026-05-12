@@ -1,5 +1,5 @@
 // Nurse Simulator service worker — cache-first offline shell
-const CACHE_NAME = 'nurse-sim-20260511-6c0f61f0';
+const CACHE_NAME = 'nurse-sim-20260512-f14a0655';
 const ASSETS = [
     './',
     './index.html',
