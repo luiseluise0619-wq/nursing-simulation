@@ -1,7 +1,7 @@
 {
   "name": "nurse-simulator",
-  "version": "4.6.5",
-  "description": "Bilingual KO/EN nursing study PWA — 1069 randomized questions (180 SVG image-based) with real-world bedside clinical scenarios, SRS Leitner, narrative survival mode, soft neumorphic UI.",
+  "version": "4.6.6",
+  "description": "Bilingual KO/EN nursing study PWA — 1103 randomized questions (185 SVG image-based) with real-world bedside clinical scenarios, SRS Leitner, narrative survival mode, soft neumorphic UI.",
   "scripts": {
     "start": "npx --yes http-server -p 8000 -c-1 .",
     "serve": "npx --yes http-server -p 8000 -c-1 .",
