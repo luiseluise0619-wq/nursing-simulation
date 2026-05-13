@@ -12599,10 +12599,47 @@ const flavorEvents = [
 ];
 
 // =========================
-// 보스 이벤트 (eventCount 5/10/18)
+// 보스 이벤트 (eventCount 5/10/18) — narrative 플래그 기반 변형
 // =========================
 function bossEventForCount(count) {
-    if (count === 5) return { baseId: "boss-codeblue", categoryKey: "boss", part: "BOSS", emoji: "💥",
+    const n = gameState.narrative;
+    if (count === 5) return buildCodeBlueBoss(n);
+    if (count === 10) return buildVipBoss(n);
+    if (count === 18) return buildMassBoss(n);
+    return null;
+}
+
+function buildCodeBlueBoss(n) {
+    // 305호 김순자 할머니 가족의 감사카드를 받은 적 있으면, 그녀가 코드블루
+    if (n.acceptedThanks) {
+        return { baseId: "boss-codeblue", categoryKey: "boss", part: "BOSS", emoji: "💥",
+            variant: "grandma",
+            title: loc("[BOSS] 코드 블루 · 305호","[BOSS] Code Blue · Room 305"),
+            desc: loc("305호. 김순자 할머니. 그제 따님이 두고 간 핸드크림이 아직 책상에 있다. 모니터는 일직선. 입술이 푸르다. 당신이 첫 사람이다.","Room 305. Grandma Kim. The hand cream her daughter left two days ago still sits on your desk. Flatline. Lips blue. You are the first responder."),
+            choices: shuffle([
+                { text: loc("의식·호흡 확인 즉시 가슴압박, 동료에게 코드블루 콜 요청","Confirm unresponsive/apneic, start compressions, call Code Blue"), effect: { hp: -10, rep: 38 }, log: loc("ROSC. 따님이 손을 모은다. 보스 클리어!","ROSC. Her daughter clasps her hands. Boss cleared!"), boss: true },
+                { text: loc("AED만 가지러 다녀온다","Just go get the AED"), effect: { hp: -32, rep: -28 }, log: loc("가슴압박 공백이 생겼습니다.","A gap in compressions opens up.") },
+                { text: loc("주치의에게 전화부터 한다","Call the attending first"), effect: { hp: -50, rep: -42 }, log: loc("골든타임을 놓쳤습니다.","Golden time is lost.") },
+                { text: loc("보호자에게 먼저 상황을 설명한다","Explain the situation to the guardian first"), effect: { hp: -50, rep: -45 }, log: loc("환자가 사망 위기에 빠졌습니다.","The patient is on the brink of death.") }
+            ])
+        };
+    }
+    // 박지원을 멘토링한 적 있으면, 지원이가 첫 발견자
+    if (n.helpedNewbie) {
+        return { baseId: "boss-codeblue", categoryKey: "boss", part: "BOSS", emoji: "💥",
+            variant: "jiwon",
+            title: loc("[BOSS] 코드 블루 · 신규의 비명","[BOSS] Code Blue · Rookie's Scream"),
+            desc: loc("\"선생님! 305호 안 깨요!\" 지원이가 복도 끝에서 달려오며 외친다. 모니터는 이미 일직선. 그녀의 손이 떨린다. 당신 차례다.","\"Sunbae! Room 305 isn't waking up!\" Ji-won sprints down the corridor. Flatline. Her hands shake. Your turn."),
+            choices: shuffle([
+                { text: loc("지원에게 가슴압박 시키고 코드콜, 본인은 기도 확보","Have Ji-won start compressions, call Code, secure airway yourself"), effect: { hp: -10, rep: 38 }, log: loc("지원이 손이 멎었다. ROSC. 보스 클리어!","Ji-won's shaking stops. ROSC. Boss cleared!"), boss: true },
+                { text: loc("AED만 가지러 다녀온다","Just go get the AED"), effect: { hp: -32, rep: -28 }, log: loc("가슴압박 공백. 지원이가 얼어붙는다.","Compression gap. Ji-won freezes.") },
+                { text: loc("주치의에게 전화부터 한다","Call the attending first"), effect: { hp: -50, rep: -42 }, log: loc("골든타임을 놓쳤습니다.","Golden time is lost.") },
+                { text: loc("지원에게 \"네가 알아서 해\"라고 한다","Tell Ji-won \"figure it out yourself\""), effect: { hp: -50, rep: -45 }, log: loc("지원이가 무너진다. 환자도.","Ji-won breaks. So does the patient.") }
+            ])
+        };
+    }
+    // 기본
+    return { baseId: "boss-codeblue", categoryKey: "boss", part: "BOSS", emoji: "💥",
         title: loc("[BOSS] 코드 블루","[BOSS] Code Blue"),
         desc: loc("\"환자 안 깨요!\" 305호. 모니터가 일직선. 입술이 푸르다. 시계는 이미 돌고 있다. 당신이 첫 사람이다.","\"She's not waking up!\" Room 305. Flatline. Lips blue. The clock is already running. You are the first responder — there is no second."),
         choices: shuffle([
@@ -12612,7 +12649,24 @@ function bossEventForCount(count) {
             { text: loc("보호자에게 먼저 상황을 설명한다","Explain the situation to the guardian first"), effect: { hp: -50, rep: -45 }, log: loc("환자가 사망 위기에 빠졌습니다.","The patient is on the brink of death.") }
         ])
     };
-    if (count === 10) return { baseId: "boss-vip", categoryKey: "boss", part: "BOSS", emoji: "👑",
+}
+
+function buildVipBoss(n) {
+    // 직전 코드블루 성공 → 한 수간호사가 직접 등 뒤에서 백업
+    if (n.savedCodeBlue) {
+        return { baseId: "boss-vip", categoryKey: "boss", part: "BOSS", emoji: "👑",
+            variant: "han-backup",
+            title: loc("[BOSS] VIP 환자 · 한 수간호사의 신뢰","[BOSS] VIP Patient · Han Has Your Back"),
+            desc: loc("이사장 모친의 보호자가 종이 한 장을 내민다 — 1:1 전담, 특별식. 한 수간호사가 어깨에 손을 얹는다. \"305호에서 본 그 손, 믿어. 원칙대로 가.\"","The chairman's family slides a list across the desk: 1:1 nurse, special diet. Charge nurse Han rests a hand on your shoulder. \"I saw what you did in 305. Trust your training.\""),
+            choices: shuffle([
+                { text: loc("환자 안전을 최우선으로 원칙대로 응대하며 정중히 설명한다","Prioritize patient safety, follow policy, and explain politely"), effect: { hp: -8, rep: 36 }, log: loc("전문성이 인정받았습니다. 보스 클리어!","Professionalism recognized. Boss cleared!"), boss: true },
+                { text: loc("수간호사에게 즉시 보고하여 대응 방향을 정한다","Escalate to the head nurse and align on a response"), effect: { hp: -6, rep: 22 }, log: loc("한 수간호사가 고개를 끄덕인다. 위기를 함께 넘겼습니다.","Han nods. Crisis navigated, together."), boss: true },
+                { text: loc("모든 요구를 무리해서 다 들어준다","Bend over backwards to grant every demand"), effect: { hp: -28, rep: -16 }, log: loc("다른 환자가 방치됐습니다. 한 수간호사의 신뢰가 흔들린다.","Other patients neglected. Han's trust wavers.") },
+                { text: loc("VIP라 무서워서 회피한다","Avoid them out of fear of the VIP"), effect: { hp: -22, rep: -28 }, log: loc("민원이 접수됐습니다.","A complaint is filed.") }
+            ])
+        };
+    }
+    return { baseId: "boss-vip", categoryKey: "boss", part: "BOSS", emoji: "👑",
         title: loc("[BOSS] VIP 환자","[BOSS] VIP Patient"),
         desc: loc("이사장 모친, 특실 입원. 보호자가 종이 한 장을 내민다 — 1:1 전담, 회진 1순위, 특별식. 다른 환자 31명이 벨을 누른다.","The chairman's mother — private suite. Family slides a list across the desk: 1:1 nurse, priority rounds, special diet. Thirty-one other call lights flash."),
         choices: shuffle([
@@ -12622,7 +12676,38 @@ function bossEventForCount(count) {
             { text: loc("VIP라 무서워서 회피한다","Avoid them out of fear of the VIP"), effect: { hp: -22, rep: -28 }, log: loc("민원이 접수됐습니다.","A complaint is filed.") }
         ])
     };
-    if (count === 18) return { baseId: "boss-mass", categoryKey: "boss", part: "BOSS", emoji: "🚑",
+}
+
+function buildMassBoss(n) {
+    // 임신 12주 정수영과 야식 나눈 적 있고 코드블루 살린 적 있으면 — 수영이가 옆에 선다
+    if (n.sharedMeal && n.savedCodeBlue) {
+        return { baseId: "boss-mass", categoryKey: "boss", part: "BOSS", emoji: "🚑",
+            variant: "sooyoung",
+            title: loc("[BOSS] 다중외상 · 수영이와 함께","[BOSS] Mass Casualty · With Soo-young"),
+            desc: loc("사이렌 다섯. 수영이가 옆에 선다. 12주 배. 무리하면 안 된다 — 알면서도 가운을 묶는다. \"내가 황색 둘 맡을게. 너는 적색.\"","Five sirens. Soo-young steps up beside you. Twelve weeks along. She shouldn't — but she ties her gown anyway. \"I'll take two Yellows. You take Red.\""),
+            choices: shuffle([
+                { text: loc("START 트리아지 후 수영에게는 안정된 황색만 배정, 본인은 적색","START triage; assign Soo-young stable Yellows, take Red yourself"), effect: { hp: -12, rep: 46 }, log: loc("수영이의 미소. 모두 살았다. 최종 보스 클리어!","Soo-young smiles. Everyone alive. Final boss cleared!"), boss: true },
+                { text: loc("수영을 적색에 투입한다","Put Soo-young on Red"), effect: { hp: -32, rep: -28 }, log: loc("그녀가 무리했다. 다음 날 출혈 호소.","She overextended. She reports bleeding the next day.") },
+                { text: loc("도착한 순서대로 처치한다","Treat in order of arrival"), effect: { hp: -28, rep: -18 }, log: loc("트리아지 원칙을 어겼습니다.","Triage principles violated.") },
+                { text: loc("수영에게 \"임산부니까 쉬어\"라고 보낸다","Send Soo-young away — \"You're pregnant, rest\""), effect: { hp: -34, rep: -22 }, log: loc("혼자가 됐다. 다섯이 모두 위태롭다.","Alone now. All five teeter.") }
+            ])
+        };
+    }
+    // 박지원이 성장했다 — 트리아지 색깔 태그를 직접 들고 옴
+    if (n.helpedNewbie) {
+        return { baseId: "boss-mass", categoryKey: "boss", part: "BOSS", emoji: "🚑",
+            variant: "jiwon-grown",
+            title: loc("[BOSS] 다중외상 · 지원이의 첫 트리아지","[BOSS] Mass Casualty · Ji-won's First Triage"),
+            desc: loc("사이렌 다섯. 지원이가 트리아지 색깔 태그를 손에 쥐고 옆에 선다. 새벽 노트의 페이지가 빛난다. \"선생님, 시작해요.\"","Five sirens. Ji-won steps up beside you, triage tags fanned in her grip. Her pre-dawn notebook pages glow. \"Sunbae — let's start.\""),
+            choices: shuffle([
+                { text: loc("지원과 함께 START 분류, 적색은 본인이 직접","START triage with Ji-won; you take all Reds personally"), effect: { hp: -14, rep: 44 }, log: loc("지원이가 황색 둘을 완벽히 분류했다. 보스 클리어!","Ji-won sorts two Yellows flawlessly. Boss cleared!"), boss: true },
+                { text: loc("눈에 띄는 출혈 환자부터 무작정 처치한다","Just treat the most visibly bleeding patient first"), effect: { hp: -32, rep: -22 }, log: loc("기도 폐쇄 환자가 방치됐습니다.","An airway-obstructed patient is neglected.") },
+                { text: loc("지원에게 알아서 하라고 맡긴다","Tell Ji-won to handle it alone"), effect: { hp: -28, rep: -32 }, log: loc("지원이가 굳었다. 리더십 부재.","Ji-won freezes. Leadership absent.") },
+                { text: loc("도착한 순서대로 처치한다","Treat in order of arrival"), effect: { hp: -28, rep: -18 }, log: loc("트리아지 원칙을 어겼습니다.","Triage principles violated.") }
+            ])
+        };
+    }
+    return { baseId: "boss-mass", categoryKey: "boss", part: "BOSS", emoji: "🚑",
         title: loc("[BOSS] 다중외상 5명 동시 입실","[BOSS] Mass Casualty — 5 at Once"),
         desc: loc("사이렌 다섯 대. 5명 동시 도착. 피, 유리, 비명. 인력은 당신과 신규 하나. START 트리아지, 지금.","Five sirens. Five gurneys through the doors at once. Blood, glass, screaming. Staff: you and one new grad. START triage. Now."),
         choices: shuffle([
@@ -12632,7 +12717,6 @@ function bossEventForCount(count) {
             { text: loc("도착한 순서대로 처치한다","Treat in order of arrival"), effect: { hp: -28, rep: -18 }, log: loc("트리아지 원칙을 어겼습니다.","Triage principles violated.") }
         ])
     };
-    return null;
 }
 
 function initSurvival() {
