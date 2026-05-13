@@ -151,9 +151,9 @@ const T = {
     trainingTitle:  { ko: "국가고시 8과목 트레이닝", en: "Boards · 8 Subjects Training" },
     trainingDesc:   { ko: "숫자와 상황이 계속 변하는 무한 랜덤 기출 변형(4지선다)이 제공됩니다.", en: "Infinite randomized boards-style 4-choice questions with varying numbers and scenarios." },
     introTitle:     { ko: "듀티의 시작", en: "Shift Begins" },
-    introNight:     { ko: "어두운 복도, 절반은 꺼진 형광등. Night 듀티가 시작됩니다. 모니터 알람이 멀리서 울립니다.", en: "Dim corridor, half the fluorescents off. Night shift begins. A monitor alarm wails in the distance." },
-    introEvening:   { ko: "저녁 6시, 보호자 면회와 신규 입원이 동시에 몰리는 시간. Evening 듀티 시작.", en: "6 PM — visitors and new admissions surge in. Evening shift begins." },
-    introDay:       { ko: "병동 문이 열립니다. 햇살과 함께 첫 호출벨이 울립니다. Day 듀티 시작.", en: "The unit doors open. Sunlight pours in with the first call bell. Day shift begins." },
+    introNight:     { ko: "23시 인계. 형광등이 깜빡이고, 모니터 알람이 복도 끝에서 운다. 12시간. 환자 32명. 당신 둘.", en: "23:00 handoff. Fluorescents flicker. A monitor wails at the corridor's end. Twelve hours. Thirty-two patients. Two of you." },
+    introEvening:   { ko: "15시. 낮 듀티의 피로가 인계서에 묻어 있다. 저녁 약, 야간 준비, 보호자 면담. 시계가 빨리 돈다.", en: "15:00. Day shift's exhaustion bleeds through the handoff sheet. Evening meds. Night prep. Family meetings. The clock spins faster." },
+    introDay:       { ko: "07시. 채혈 카트가 덜컹대고, 회진까진 한 시간. 커피는 식었고, 환자들은 이미 깨어 있다.", en: "07:00. The blood-draw cart rattles down the hall. Rounds in one hour. Your coffee's cold. The patients are already awake." },
     introA:         { ko: "심호흡하고 인계 핵심부터 정리한다", en: "Take a breath and review handoff highlights" },
     introB:         { ko: "물품 카트부터 점검한다", en: "Check supply cart first" },
     introC:         { ko: "차지널스에게 어제 야간 이슈를 묻는다", en: "Ask charge nurse about last night's issues" },
@@ -201,31 +201,31 @@ const T = {
 
     // ===== Narrative endings (story branches) =====
     endPromotion:        { ko: "🌟 수간호사 승진", en: "🌟 Promoted to Head Nurse" },
-    endPromotionDesc:    { ko: "보스 셋 모두 성공·정답률 95% 이상. 다음 분기, 당신의 책상에 'Head Nurse' 명패가 놓인다.", en: "All 3 bosses cleared and 95%+ accuracy. Next quarter, a 'Head Nurse' nameplate sits on your desk." },
+    endPromotionDesc:    { ko: "보스 셋, 정답률 95%. 다음 분기 책상엔 'Head Nurse' 명패. 손이 떨리는 건 무게 때문이다.", en: "Three bosses cleared. 95% accuracy. Next quarter, a 'Head Nurse' nameplate lands on your desk. Your hands shake — from the weight, not fear." },
     endBeloved:          { ko: "💝 사랑받는 멘토", en: "💝 Beloved Mentor" },
-    endBelovedDesc:      { ko: "신규를 끌어주고 환자의 감사도 받았다. 동료들이 당신을 '우리 팀의 멘토'라 부른다.", en: "You guided the new grad and received a patient's thanks. Colleagues call you 'our team's mentor.'" },
+    endBelovedDesc:      { ko: "신규의 어깨를 잡아 세웠고, 환자의 두 손이 당신을 붙들었다. 스테이션에서 그들은 당신을 '멘토'라 부른다.", en: "You steadied the new grad's shoulders. A patient's two hands clung to yours. At the station, they call you 'mentor' — and they mean it." },
     endHeroLetter:       { ko: "💌 환자의 손편지", en: "💌 A Patient's Letter" },
-    endHeroLetterDesc:   { ko: "전신마취에서 깨어난 환자가 당신 이름으로 손편지를 보내왔다. 보람이 가슴에 새겨진다.", en: "A patient emerging from anesthesia mailed a handwritten letter with your name. Fulfillment etched in your heart." },
+    endHeroLetterDesc:   { ko: "마취에서 깬 환자의 손편지. 잉크가 번진 글씨 끝에 당신의 이름. 가운 주머니에서, 오래 따뜻하다.", en: "A handwritten letter from a patient surfacing out of anesthesia. Smudged ink, your name at the bottom. Tucked into your scrub pocket — and it stays warm." },
     endNewBond:          { ko: "☕ 새로운 인연", en: "☕ A New Bond" },
-    endNewBondDesc:      { ko: "야식을 같이 먹은 동료와 다음 주 카페 약속이 잡혔다. 듀티가 끝나자 마음이 가벼워진다.", en: "You and the coworker who shared snacks have a coffee date next week. The shift ends with a lighter heart." },
+    endNewBondDesc:      { ko: "새벽 컵라면을 같이 후루룩거린 동료와 다음 주 카페 약속. 듀티 끝, 어깨에서 무언가가 빠져나간다.", en: "The coworker you shared 3 a.m. ramen with texts: coffee, next week. The shift ends, and something heavy slides off your shoulders." },
     endBurnout:          { ko: "🌅 번아웃 · 휴식 발령", en: "🌅 Burnout · On Leave" },
-    endBurnoutDesc:      { ko: "수치는 좋았지만 몸이 무너졌다. 수간호사가 일주일 쉬라고 직권 발령했다.", en: "Numbers were good but your body collapsed. The head nurse signs you off for a week." },
+    endBurnoutDesc:      { ko: "차트는 깨끗했다. 당신이 무너졌을 뿐. 수간호사가 일주일 강제 휴무를 통보한다. 거절할 힘조차 없다.", en: "The charts are clean. You're the thing that broke. The head nurse orders a mandatory week off. You don't have the strength to refuse." },
     endGradSchool:       { ko: "🎓 대학원 진학", en: "🎓 Off to Grad School" },
-    endGradSchoolDesc:   { ko: "임상이 답이 아닐 수도. 당신은 대학원 입학 원서를 쓰기 시작한다.", en: "Maybe clinical isn't the only path. You start drafting a graduate-school application." },
+    endGradSchoolDesc:   { ko: "병동의 답이 전부는 아닐지도. 새벽 책상 위, 대학원 원서의 첫 줄을 적기 시작한다.", en: "Maybe the ward isn't the only answer. Before dawn, at your desk, you start the first line of a graduate-school application." },
     endSteadyAce:        { ko: "💪 든든한 에이스", en: "💪 The Steady Ace" },
-    endSteadyAceDescNew: { ko: "튀지는 않지만 누구나 같이 일하고 싶어 하는 간호사가 됐다.", en: "Not flashy, but the nurse everyone wants on their team." },
+    endSteadyAceDescNew: { ko: "화려하진 않다. 그러나 어느 듀티 표에도, 누군가는 당신 이름 옆에 동그라미를 친다.", en: "You don't shine. But on every duty roster, somebody quietly circles your name next to theirs." },
     endSafeShift:        { ko: "✅ 무사 완수", en: "✅ Safely Completed" },
-    endSafeShiftDescNew: { ko: "큰 사고 없이 인계가 끝났다. 평범하지만 그게 어렵다.", en: "Handoff complete without major incidents. Ordinary — but ordinary is hard." },
+    endSafeShiftDescNew: { ko: "큰일 없이 인계가 끝났다. 평범한 한 줄. 그 한 줄이 얼마나 어려운지, 당신만은 안다.", en: "Handoff complete. No alarms. One ordinary line on a chart — and only you know how hard 'ordinary' really is." },
     endNeedsStudy:       { ko: "🤔 다시 책상 앞으로", en: "🤔 Back to the Books" },
-    endNeedsStudyDesc:   { ko: "이번 듀티는 학습이 부족했다. 약점부터 다시 펼쳐보자.", en: "This shift exposed weak spots. Open the books to your gaps first." },
+    endNeedsStudyDesc:   { ko: "듀티가 약점을 다 펼쳐 보였다. 가운을 벗기 전, 책부터 펴자. 부끄러움보다 다음이 중요하다.", en: "The shift laid your weak spots out, one by one. Before the scrubs come off, open the book. Next shift matters more than shame." },
     endLostPatient:      { ko: "⚰️ 잃은 한 사람", en: "⚰️ One Life Lost" },
-    endLostPatientDesc:  { ko: "코드 블루에서 골든타임을 놓쳤다. 가족 앞에 설 면목이 없다. 한동안 임상에서 멀어진다.", en: "Golden time lost in the Code Blue. You can't face the family. You step away from clinical for a while." },
+    endLostPatientDesc:  { ko: "코드 블루. 골든타임이 손가락 사이로 빠져나갔다. 보호자의 눈을 마주칠 수 없다. 한동안, 병동을 떠난다.", en: "Code Blue. The golden window slipped through your fingers. You can't meet the family's eyes. You walk away from the ward, for a while." },
     endEthics:           { ko: "⚖️ 기록 위조 적발", en: "⚖️ Falsified Records Uncovered" },
-    endEthicsDesc:       { ko: "투약 기록 위조가 적발됐다. 사고 위원회에 회부되고 면허가 흔들린다.", en: "Falsified records were discovered. Incident committee, license at risk." },
+    endEthicsDesc:       { ko: "위조된 투약 기록이 발각됐다. 사고 위원회, 면허 심사. 가운보다 먼저 떨어진 것이 있다.", en: "Falsified medication records, exposed. Incident committee. License hearing. Something fell before the scrubs did — your name." },
     endInvestigation:    { ko: "⚖️ 사고 조사위원회 회부", en: "⚖️ Incident Committee Review" },
-    endInvestigationDesc:{ ko: "치명적 실수가 누적돼 조사위원회가 열린다. 면허 정지 가능성도 거론된다.", en: "Critical errors trigger an incident committee. License suspension is on the table." },
+    endInvestigationDesc:{ ko: "누적된 실수들이 한 줄로 꿰어졌다. 조사위원회 소집. 면허 정지가 의제에 오른다.", en: "The errors line up like beads on a string. The committee convenes. License suspension is on the agenda — and your name is on the docket." },
     endRetrainNew:       { ko: "📋 재교육 명령", en: "📋 Mandatory Retraining" },
-    endRetrainDescNew:   { ko: "내일은 비번. 모레부터 1주일 재교육 의무.", en: "Tomorrow off. The day after, mandatory week-long retraining." },
+    endRetrainDescNew:   { ko: "내일은 비번. 모레부터, 일주일짜리 재교육. 다시 배우는 건 부끄럽지 않다. 안 배우는 게 부끄럽다.", en: "Tomorrow, off. The day after, a week of mandatory retraining. Re-learning isn't the shame. Refusing to learn is." },
     correctAnswer:  { ko: "✅ 정답", en: "✅ Correct Answer" },
     yourChoice:     { ko: "당신의 선택", en: "Your Choice" },
     rationaleLabel: { ko: "해설", en: "Rationale" },
@@ -12396,7 +12396,7 @@ const flavorEvents = [
         { text: loc("동료에게 도움을 요청하지 않고 혼자 처리","Try to handle it all alone without asking for help"), effect: { hp: -20, rep: -10 }, log: loc("팀 호출이 더 안전합니다.","Calling for help is safer.") },
         { text: loc("가장 가까운 환자부터 처리","Just handle the nearest patient first"), effect: { hp: -22, rep: -14 }, log: loc("우선순위 원칙을 어겼습니다.","Violates triage principle.") }
     ]) }),
-    () => ({ baseId: "endOfLife", categoryKey: "flavor", part: loc("임종 케어","End-of-Life"), emoji: "🕯️", title: loc("가족 회의","Family Meeting"), desc: loc("말기 환자의 가족이 \"고통스럽지 않게 해 주세요\"라며 통증 조절을 부탁합니다.","The dying patient's family pleads, \"Please keep them comfortable.\""), choices: shuffle([
+    () => ({ baseId: "endOfLife", categoryKey: "flavor", part: loc("임종 케어","End-of-Life"), emoji: "🕯️", title: loc("가족 회의","Family Meeting"), desc: loc("임종실. 아들은 \"끝까지 살려달라\", 딸은 \"편안하게 보내드리자\". 환자의 호흡은 12회. 시간은 당신 편이 아니다.","The end-of-life room. Son: \"Do everything.\" Daughter: \"Let her rest.\" Respiration: 12. Time is not on your side — or theirs."), choices: shuffle([
         { text: loc("처방된 진통제·항불안제로 편안함을 유지하고 가족 곁에 머물게 한다","Use ordered analgesics/anxiolytics for comfort and let family stay close"), effect: { hp: -3, rep: 18 }, log: loc("호스피스 원칙에 부합합니다.","Aligns with hospice principles.") },
         { text: loc("호흡 억제 우려로 진통제를 모두 끊는다","Withhold all analgesics fearing respiratory depression"), effect: { hp: -28, rep: -22 }, log: loc("말기 환자에게 통증 완화가 우선입니다.","Comfort takes precedence at end of life.") },
         { text: loc("가족을 모두 병실 밖으로 내보낸다","Send all family out of the room"), effect: { hp: -25, rep: -20 }, log: loc("가족 동행이 임종 케어의 핵심입니다.","Family presence is central to dying care.") },
@@ -12408,13 +12408,13 @@ const flavorEvents = [
         { text: loc("EMR 복구까지 모든 업무를 중단","Halt all care until EMR is back"), effect: { hp: -28, rep: -20 }, log: loc("환자 안전이 위협됩니다.","Compromises patient safety.") },
         { text: loc("환자에게 \"전산 고장\"이라고만 말하고 회피","Just tell patients \"system is down\" and avoid duties"), effect: { hp: -20, rep: -14 }, log: loc("책임 회피입니다.","Avoidance of duty.") }
     ]) }),
-    () => ({ baseId: "mvcMass", categoryKey: "flavor", part: loc("기상 재난","Weather Disaster"), emoji: "🌪️", title: loc("폭우 다수 입실","Storm Mass Admission"), desc: loc("폭우로 사고가 속출. 응급실에서 신환 8명이 한꺼번에 올라옵니다. 보스 트리아지는 아니지만 인력은 빡빡합니다.","Severe storm: 8 new admissions land on your unit at once. Not the boss event, but staff is stretched."), choices: shuffle([
+    () => ({ baseId: "mvcMass", categoryKey: "flavor", part: loc("기상 재난","Weather Disaster"), emoji: "🌪️", title: loc("폭우 다수 입실","Storm Surge"), desc: loc("빗줄기에 사이렌이 잠긴다. 8명, 동시 도착. 응급실은 가득. 보스급은 아니다 — 다만 길고, 차갑고, 끝이 안 보인다.","Sirens drown in the downpour. Eight admissions at once. ER is full. Not boss-level — just long, cold, and the end is nowhere in sight."), choices: shuffle([
         { text: loc("팀별 분담과 ABC 우선순위로 빠르게 흡수","Distribute by team and absorb by ABC priority"), effect: { hp: -8, rep: 18 }, log: loc("위기 관리가 매끄러웠습니다.","Smooth crisis management.") },
         { text: loc("수간호사에게 즉시 추가 인력 요청","Immediately request more staff from head nurse"), effect: { hp: -5, rep: 14 }, log: loc("적절한 보고체계 사용.","Used the right escalation chain.") },
         { text: loc("들어온 순서대로 천천히 처리","Just process in arrival order, slowly"), effect: { hp: -25, rep: -18 }, log: loc("중증환자가 방치될 수 있습니다.","Critical patients may be neglected.") },
         { text: loc("일단 자리를 비우고 휴게실로","Step out to the break room first"), effect: { hp: -20, rep: -22 }, log: loc("책임 회피입니다.","Abandoning duty.") }
     ]) }),
-    () => ({ baseId: "needleStick", categoryKey: "flavor", part: loc("바늘찔림","Needlestick"), emoji: "💉", title: loc("바늘찔림 사고","Needlestick Injury"), desc: loc("HIV 양성 환자에게 정맥주사 후 손가락에 바늘이 찔렸습니다. 출혈 중입니다.","After IV on an HIV+ patient, the needle stuck your finger. It's bleeding."), choices: shuffle([
+    () => ({ baseId: "needleStick", categoryKey: "flavor", part: loc("바늘찔림","Needlestick"), emoji: "💉", title: loc("바늘찔림","Needlestick"), desc: loc("HIV 양성 환자의 바늘. 장갑 사이, 검지. 따끔. 피 한 방울. 시계를 본다 — 노출 후 72시간, 카운트 시작.","HIV+ patient's needle. Through the glove. Index finger. A bead of blood. You check the clock — 72-hour PEP window, just started."), choices: shuffle([
         { text: loc("즉시 흐르는 물로 5분 세척 후 사고 신고·PEP 시작","Wash under running water 5 min, report incident, start PEP"), effect: { hp: -8, rep: 18 }, log: loc("표준 노출 후 처치입니다.","Standard post-exposure protocol.") },
         { text: loc("아무에게도 말하지 않고 일을 계속한다","Tell no one and keep working"), effect: { hp: -32, rep: -32 }, log: loc("자신과 미래 환자가 위험에 노출.","Endangers self and future patients.") },
         { text: loc("상처 부위를 입으로 빨아낸다","Suck the wound to extract blood"), effect: { hp: -28, rep: -20 }, log: loc("점막 노출 위험을 증가시킵니다.","Increases mucosal exposure risk.") },
@@ -12433,7 +12433,7 @@ const flavorEvents = [
         { text: loc("\"이번 분기에 시간을 잘 빼시네요\"라고 농담","Joke \"Convenient timing this quarter\""), effect: { hp: -10, rep: -14 }, log: loc("심한 농담입니다.","Crossed a line.") },
         { text: loc("수간호사에게 즉시 알려 업무 조정 요청","Immediately notify head nurse to redistribute"), effect: { hp: -6, rep: 8 }, log: loc("동료 의사 확인 없이 보고는 성급.","Reporting without coworker's consent is hasty.") }
     ]) }),
-    () => ({ baseId: "powerOutage", categoryKey: "flavor", part: loc("정전","Power Outage"), emoji: "🔌", title: loc("병동 정전","Unit Blackout"), desc: loc("천둥소리와 함께 병동 절반의 전기가 나갔습니다. 인공호흡기 환자가 있습니다.","Thunder, then half the unit goes dark. A vented patient is on this floor."), choices: shuffle([
+    () => ({ baseId: "powerOutage", categoryKey: "flavor", part: loc("정전","Power Outage"), emoji: "🔌", title: loc("병동 정전","Unit Blackout"), desc: loc("형광등이 꺼졌다. 비상등이 붉다. 6병상의 인공호흡기, 알람이 운다. 손에 앰부백, 어둠 속의 결정.","Lights out. Emergency reds bleed across the walls. Bed 6's ventilator alarm screams. Ambu bag in your hand. Decide — in the dark."), choices: shuffle([
         { text: loc("벤틸레이터 환자 즉시 확인 + Ambu bag 준비, 비상 발전기 상태 확인","Immediately check vented patient + ready Ambu bag, verify backup generator"), effect: { hp: -8, rep: 22 }, log: loc("우선순위 판단이 정확합니다.","Spot-on priority judgment.") },
         { text: loc("핸드폰 손전등으로 차팅을 계속","Keep charting using phone flashlight"), effect: { hp: -25, rep: -20 }, log: loc("환자가 우선입니다.","Patients first.") },
         { text: loc("환자에게 \"전기 들어올 때까지 기다리세요\"","Tell patients \"Wait until power's back\""), effect: { hp: -28, rep: -22 }, log: loc("위급환자 사정이 안 됐습니다.","Critical patient assessment skipped.") },
@@ -12494,7 +12494,7 @@ const flavorEvents = [
         { text: loc("아무것도 아닌 일이라며 잊는다","Brush it off as nothing"), effect: { hp: -12, rep: -14 }, log: loc("재발 위험을 무시.","Ignores recurrence risk.") }
     ]) }),
     // ===== 재밌는 상황 15개 =====
-    () => ({ baseId: "escapedPatient", categoryKey: "flavor", part: loc("환자 탈출","Patient Escape"), emoji: "🏃", title: loc("환자가 사라졌다","Patient Vanished"), desc: loc("치매 환자 침대가 비어있고 환자복이 바닥에 떨어져 있습니다. 휠체어도 없습니다.","The dementia patient's bed is empty, gown on the floor, wheelchair gone."), choices: shuffle([
+    () => ({ baseId: "escapedPatient", categoryKey: "flavor", part: loc("환자 탈출","Patient Escape"), emoji: "🏃", title: loc("환자가 사라졌다","The Patient Is Gone"), desc: loc("312호 침대가 비었다. 담요는 따뜻하다. 휠체어도 없다. 치매, 88세, 슬리퍼 차림. 비상계단 문이 열려 있다.","Bed 312, empty. The blanket's still warm. Wheelchair gone. Dementia, 88, in slippers. The stairwell door hangs open."), choices: shuffle([
         { text: loc("즉시 코드 옐로우(실종 환자) 발령 + 보안·관리자에게 동시 알림","Activate Code Yellow (missing patient) + notify security and supervisor"), effect: { hp: -8, rep: 22 }, log: loc("표준 프로토콜로 빠르게 발견.","Standard protocol — quickly found.") },
         { text: loc("혼자 병동 한 바퀴 돌아본다","Take a quick lap of the unit alone"), effect: { hp: -18, rep: -14 }, log: loc("수색 범위가 너무 좁음.","Search radius too small.") },
         { text: loc("기록만 남긴다","Just chart it"), effect: { hp: -32, rep: -28 }, log: loc("법적·안전 문제.","Legal and safety issue.") },
@@ -12542,7 +12542,7 @@ const flavorEvents = [
         { text: loc("기쁘게 받고 동료와 나눠 먹음","Accept gladly, share with team"), effect: { hp: 6, rep: -8 }, log: loc("선의지만 정책 위반.","Kind, but breaks policy.") },
         { text: loc("바쁘다며 무시","Ignore, claim busy"), effect: { hp: -8, rep: -10 }, log: loc("환자 마음을 외면.","Dismisses kindness.") }
     ]) }),
-    () => ({ baseId: "wrongSideMark", categoryKey: "flavor", part: loc("수술 부위 표시","Site Marking"), emoji: "🖊️", title: loc("Time-out 직전 의문","Pre-Time-Out Doubt"), desc: loc("수술 직전 Time-out에서 마킹이 \"왼쪽\"인데 동의서에는 \"오른쪽\"이 적혀있습니다.","At the surgical time-out: marking says LEFT but consent form says RIGHT."), choices: shuffle([
+    () => ({ baseId: "wrongSideMark", categoryKey: "flavor", part: loc("수술 부위 표시","Site Marking"), emoji: "🖊️", title: loc("Time-out 직전, 의문","Doubt at Time-Out"), desc: loc("부위 표시는 LEFT. 동의서는 RIGHT. 마취과는 들어왔고, 집도의가 가운을 묶는다. 입을 열 시간, 10초.","The surgical mark says LEFT. The consent says RIGHT. Anesthesia's in. The surgeon ties his gown. Ten seconds to speak up."), choices: shuffle([
         { text: loc("수술 즉시 보류 - 외과의·환자 가족과 함께 재확인","Stop surgery immediately — verify with surgeon and family"), effect: { hp: -3, rep: 26 }, log: loc("정답. \"잘못된 부위 수술\"은 절대 없어야 할 사고.","Correct. Wrong-site surgery is a never-event.") },
         { text: loc("외과의 말만 믿고 진행","Trust surgeon, proceed"), effect: { hp: -45, rep: -38 }, log: loc("Never event.","Never event.") },
         { text: loc("동의서를 수정","Edit the consent form"), effect: { hp: -42, rep: -35 }, log: loc("문서 위조.","Document tampering.") },
@@ -12584,6 +12584,18 @@ const flavorEvents = [
         { text: loc("혼자 다 먹음","Eat it all yourself"), effect: { hp: 6, rep: -10 }, log: loc("팀원들이 섭섭해함.","Team feels left out.") },
         { text: loc("\"독일 수도\"라며 공포 분위기","\"It's poisoned!\" — spread fear"), effect: { hp: -8, rep: -12 }, log: loc("팀 분위기 파괴.","Mood ruined.") }
     ]) }),
+    () => ({ baseId: "pediOncGoodbye", categoryKey: "flavor", part: loc("소아 종양","Pediatric Oncology"), emoji: "🧸", title: loc("곰인형의 무게","The Weight of a Teddy Bear"), desc: loc("7세, AML 재발. 엄마가 복도에서 무너진다. 아이는 곰인형을 내밀며 \"선생님도 안아줘\"라 한다. 다음 환자 벨이 울린다.","Seven years old. Relapsed AML. Mom collapses in the hallway. The child holds out a teddy bear: \"You hug it too.\" Another call light rings."), choices: shuffle([
+        { text: loc("1분만 무릎을 꿇고 아이의 눈높이에서 곰을 안아준 뒤, 동료에게 옆 벨을 부탁한다","Kneel to the child's eye level for sixty seconds, hug the bear, then ask a coworker to cover the other call light"), effect: { hp: -3, rep: 18 }, log: loc("60초의 멈춤이 아이의 하루를 바꾼다. 당신의 어깨도 살짝 가벼워진다.","Sixty seconds of stillness changed the child's day. Your shoulders, a little lighter too.") },
+        { text: loc("아이의 손을 잡고 \"곧 다시 올게\"라 말한 뒤 벨로 향한다","Squeeze the child's hand, promise \"I'll be right back,\" then answer the bell"), effect: { rep: 8 }, log: loc("약속은 지켰다. 다만, 곰인형은 침대 위에 다시 놓였다.","You kept the promise. The bear, set back on the bed, kept waiting.") },
+        { text: loc("\"지금은 바빠\"라 짧게 말하고 자리를 뜬다","Say \"I'm busy right now\" and walk off"), effect: { rep: -12 }, log: loc("엄마의 눈이 당신의 등을 따라온다. 그 시선은 오래 남는다.","Mom's eyes track your back down the hall. The look lingers — for hours.") },
+        { text: loc("엄마에게 \"이런 상황에선 감정을 좀 추스르셔야 한다\"고 한다","Tell mom she needs to \"get her emotions together\" right now"), effect: { hp: -5, rep: -30 }, log: loc("복도가 얼어붙는다. 옆 병실 보호자까지 고개를 돌린다.","The hallway freezes. Even the family next door turns to stare.") }
+    ]) }),
+    () => ({ baseId: "narcoticsDiversion", categoryKey: "flavor", part: loc("동료 비위","Colleague Misconduct"), emoji: "🚨", title: loc("약품 캐비닛 앞에서","At the Narcotics Cabinet"), desc: loc("새벽 3시. 선배가 마약장에서 페치다닐 한 앰플을 가운 주머니에 넣는다. 차트 기록은 없다. 눈이 마주친다.","3 a.m. Your senior pockets a fentanyl ampule from the narcotics cabinet. No chart entry. Her eyes lock onto yours."), choices: shuffle([
+        { text: loc("그 자리에서 조용히 막아서고, 즉시 수간호사와 약제부에 SBAR로 보고한다","Block her path quietly, then escalate to the charge nurse and pharmacy with an SBAR report"), effect: { hp: -4, rep: 20 }, log: loc("손이 떨렸지만 손가락은 휴대폰 위에 있었다. 환자 안전이 먼저다.","Your hand shook, but your fingers were already on the phone. Patient safety comes first.") },
+        { text: loc("선배에게 \"되돌리세요\"라고 단 둘이 있는 자리에서 말하고, 행동을 지켜본다","Pull her aside privately, say \"Put it back,\" and watch what she does"), effect: { rep: 7 }, log: loc("앰플은 캐비닛으로 돌아갔다. 그러나 다음 듀티는 어떻게 될지 모른다.","The ampule went back. But what happens next shift — you don't know.") },
+        { text: loc("못 본 척 차트로 돌아간다","Pretend you didn't see and go back to charting"), effect: { rep: -15 }, log: loc("차트의 글자가 흐려진다. 환자 누군가의 통증은 누군가가 가져갔다.","The letters on the chart blur. Somewhere, a patient's pain was stolen.") },
+        { text: loc("카카오톡 단톡방에 익명으로 흘린다","Leak it anonymously into the staff group chat"), effect: { hp: -3, rep: -28 }, log: loc("30분 안에 병동 전체가 안다. 환자 보호도, 절차도, 무너졌다.","Within thirty minutes the whole unit knows. Patient protection, due process — both collapsed.") }
+    ]) }),
 ];
 
 // =========================
@@ -12592,7 +12604,7 @@ const flavorEvents = [
 function bossEventForCount(count) {
     if (count === 5) return { baseId: "boss-codeblue", categoryKey: "boss", part: "BOSS", emoji: "💥",
         title: loc("[BOSS] 코드 블루","[BOSS] Code Blue"),
-        desc: loc("병실에서 \"환자 의식 없어요!\"라는 외침. 모니터가 평탄선을 그립니다. 당신이 발견자입니다.","A scream from the room — \"Patient's unresponsive!\" The monitor flatlines. You're the first to find them."),
+        desc: loc("\"환자 안 깨요!\" 305호. 모니터가 일직선. 입술이 푸르다. 시계는 이미 돌고 있다. 당신이 첫 사람이다.","\"She's not waking up!\" Room 305. Flatline. Lips blue. The clock is already running. You are the first responder — there is no second."),
         choices: shuffle([
             { text: loc("의식·호흡 확인 즉시 가슴압박, 동료에게 코드블루 콜 요청","Confirm unresponsive/apneic, start compressions, call Code Blue"), effect: { hp: -10, rep: 38 }, log: loc("신속한 대응으로 ROSC! 보스 클리어!","ROSC achieved! Boss cleared!"), boss: true },
             { text: loc("AED만 가지러 다녀온다","Just go get the AED"), effect: { hp: -32, rep: -28 }, log: loc("가슴압박 공백이 생겼습니다.","A gap in compressions opens up.") },
@@ -12602,7 +12614,7 @@ function bossEventForCount(count) {
     };
     if (count === 10) return { baseId: "boss-vip", categoryKey: "boss", part: "BOSS", emoji: "👑",
         title: loc("[BOSS] VIP 환자","[BOSS] VIP Patient"),
-        desc: loc("병원 이사장의 모친이 입원했습니다. 보호자가 \"24시간 1:1 간호, 회진 우선, 특별식\" 등 무리한 요구를 쏟아냅니다.","The hospital chairman's mother is admitted. Family demands 24-hour 1:1 care, priority rounds, and a special diet."),
+        desc: loc("이사장 모친, 특실 입원. 보호자가 종이 한 장을 내민다 — 1:1 전담, 회진 1순위, 특별식. 다른 환자 31명이 벨을 누른다.","The chairman's mother — private suite. Family slides a list across the desk: 1:1 nurse, priority rounds, special diet. Thirty-one other call lights flash."),
         choices: shuffle([
             { text: loc("환자 안전을 최우선으로 원칙대로 응대하며 정중히 설명한다","Prioritize patient safety, follow policy, and explain politely"), effect: { hp: -10, rep: 32 }, log: loc("전문성이 인정받았습니다. 보스 클리어!","Professionalism recognized. Boss cleared!"), boss: true },
             { text: loc("수간호사에게 즉시 보고하여 대응 방향을 정한다","Escalate to the head nurse and align on a response"), effect: { hp: -8, rep: 18 }, log: loc("차분한 보고체계로 위기를 넘겼습니다.","Crisis navigated through calm chain of command."), boss: true },
@@ -12612,7 +12624,7 @@ function bossEventForCount(count) {
     };
     if (count === 18) return { baseId: "boss-mass", categoryKey: "boss", part: "BOSS", emoji: "🚑",
         title: loc("[BOSS] 다중외상 5명 동시 입실","[BOSS] Mass Casualty — 5 at Once"),
-        desc: loc("교통사고로 환자 5명이 동시 도착. 인력은 당신과 신규 1명뿐입니다.","Five trauma patients arrive simultaneously from an MVC. Only you and one new grad are available."),
+        desc: loc("사이렌 다섯 대. 5명 동시 도착. 피, 유리, 비명. 인력은 당신과 신규 하나. START 트리아지, 지금.","Five sirens. Five gurneys through the doors at once. Blood, glass, screaming. Staff: you and one new grad. START triage. Now."),
         choices: shuffle([
             { text: loc("START 분류로 적색·황색·녹색 트리아지 후 인력 배분","START triage into Red/Yellow/Green and allocate staff"), effect: { hp: -14, rep: 42 }, log: loc("훌륭한 트리아지로 모두 살렸습니다! 최종 보스 클리어!","Brilliant triage saves everyone! Final boss cleared!"), boss: true },
             { text: loc("눈에 띄는 출혈 환자부터 무작정 처치한다","Just treat the most visibly bleeding patient first"), effect: { hp: -32, rep: -22 }, log: loc("기도 폐쇄 환자가 방치됐습니다.","An airway-obstructed patient is neglected.") },
