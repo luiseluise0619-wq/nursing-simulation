@@ -1120,7 +1120,21 @@ const clinicalGenerators = [
     generateNursingTheoryQuestion, generateCommunityImmunizationQuestion, generateAmbiguousGenitaliaQuestion,
     generateUpperGIBleedQuestion, generateThyroidStormManagementQuestion,
     generateBPSitesImgQuestion, generateLymphNodeImgQuestion, generateCardiacChamberImgQuestion,
-    generateBaselineFHRImgQuestion, generateTannerStageImgQuestion
+    generateBaselineFHRImgQuestion, generateTannerStageImgQuestion,
+    // ===== 배치 45: 다양 주제 =====
+    generateTrachCareQuestion, generateCRRTQuestion, generateAngioedemaQuestion,
+    generateBreechManagementQuestion, generateTrialOfLaborQuestion, generateEpisiotomyTypeQuestion,
+    generateDevelopmentMilestoneQuestion, generateBipolarManiaQuestion, generateGADCharacteristicsQuestion,
+    generateGRBSBabyQuestion, generateAsepticTechniqueQuestion, generateMobilityQuestion,
+    generateAirEmbolismPositionQuestion, generatePacemakerTypeQuestion, generateGlaucomaCareQuestion,
+    generateMacularDegenerationQuestion, generateHerpesZosterQuestion, generateGastricLavageQuestion,
+    generateHomeOxygenSafetyTank2Question, generateFractureCompartmentQuestion, generateDeliriumTremensQuestion,
+    generateBreastfeedingBenefitsQuestion, generateHydrocephalusQuestion, generateNGTubeDrainColorQuestion,
+    generateCorpulmonaleQuestion, generateGynecologicCancerQuestion, generatePCNAllergyQuestion,
+    generateHIVViralLoadQuestion, generateUTIPedQuestion, generateThrombolyticDrugQuestion,
+    generateGTubeQuestion,
+    generateAirEmbolismPosImgQuestion, generateHerpesZosterImgQuestion, generateMacularDegImgQuestion,
+    generateDressingChangeImgQuestion, generatePacemakerLeadImgQuestion
 ];
 
 function generateABGAQuestion() {
@@ -11596,6 +11610,452 @@ function generateTannerStageImgQuestion() {
             { text: loc("성격 평가","Personality assessment"), effect: { hp: -38, rep: -28 }, log: loc("아님.","No.") },
             { text: loc("키 예측","Predict height"), effect: { hp: -28, rep: -20 }, log: loc("간접.","Indirect.") },
             { text: loc("지능 평가","IQ assessment"), effect: { hp: -42, rep: -32 }, log: loc("부적절.","Inappropriate.") }
+        ])
+    };
+}
+
+// ========= 배치 45: 다양 주제 + 이미지 =========
+function generateTrachCareQuestion() {
+    return { baseId: "trachCleanInner", categoryKey: "fundamentals", part: loc("기관절개관 관리","Trach Care"), emoji: "🫁",
+        title: loc("기관절개관 내관 청소","Trach Inner Cannula Cleaning"),
+        desc: loc("기관절개관 \"내관 청소\"의 적절한 방법은?","Proper method to clean trach inner cannula?"),
+        choices: shuffle([
+            { text: loc("내관 제거 후 식염수·과산화수소 세척, 거즈로 건조 후 재삽입","Remove, clean with saline/H2O2, dry with gauze, reinsert"), effect: { hp: -2, rep: 22 }, log: loc("정답. 8-12시간마다 또는 분비물 있을 때.","Correct. Q8-12h or PRN with secretions.") },
+            { text: loc("물로 헹굼","Plain water rinse"), effect: { hp: -28, rep: -20 }, log: loc("부적절.","Inappropriate.") },
+            { text: loc("교체 X","Don't replace"), effect: { hp: -32, rep: -22 }, log: loc("정기적으로.","Regular cleaning.") },
+            { text: loc("환자가 직접","Patient does it"), effect: { hp: -32, rep: -22 }, log: loc("간호 권한.","Nursing scope.") }
+        ])
+    };
+}
+function generateCRRTQuestion() {
+    return { baseId: "crrtIndication", categoryKey: "adult", part: loc("CRRT","CRRT"), emoji: "🩺",
+        title: loc("CRRT 적응증","CRRT Indication"),
+        desc: loc("CRRT(지속적 신대체 치료)가 \"가장 적절한\" 환자는?","Best indication for CRRT?"),
+        choices: shuffle([
+            { text: loc("혈역학적 불안정한 ICU 환자 - 천천히 제거 가능","Hemodynamically unstable ICU patient - slower removal"), effect: { hp: -2, rep: 22 }, log: loc("정답. HD는 빠르고 불안정.","Correct. HD is fast and destabilizing.") },
+            { text: loc("외래 환자","Outpatient"), effect: { hp: -32, rep: -22 }, log: loc("외래 HD.","Outpatient HD.") },
+            { text: loc("응급 고K","Emergency hyperK"), effect: { hp: -25, rep: -15 }, log: loc("HD가 빠름.","HD faster.") },
+            { text: loc("안정 만성 신부전","Stable CKD"), effect: { hp: -28, rep: -20 }, log: loc("HD.","HD.") }
+        ])
+    };
+}
+function generateAngioedemaQuestion() {
+    return { baseId: "aceAngioedema", categoryKey: "adult", part: loc("ACE 부작용","ACE-I Side Effects"), emoji: "💊",
+        title: loc("ACE-I 혈관부종","ACE-I Angioedema"),
+        desc: loc("ACE 억제제 복용 환자에서 입술·혀 부종이 발생했다. 행동은?","Patient on ACE-I develops lip/tongue swelling. Action?"),
+        choices: shuffle([
+            { text: loc("즉시 약 중단 + 기도 확보 + 응급실, 평생 ACE 회피","Stop drug, secure airway, ED; lifelong ACE avoidance"), effect: { hp: -3, rep: 22 }, log: loc("정답. 흑인에서 더 흔함.","Correct. More common in Black patients.") },
+            { text: loc("계속 복용","Continue drug"), effect: { hp: -45, rep: -35 }, log: loc("기도 폐쇄.","Airway obstruction.") },
+            { text: loc("항히스타민만","Antihistamine only"), effect: { hp: -32, rep: -22 }, log: loc("불충분 - bradykinin.","Insufficient - bradykinin.") },
+            { text: loc("관찰","Observe"), effect: { hp: -42, rep: -32 }, log: loc("응급.","Emergency.") }
+        ])
+    };
+}
+function generateBreechManagementQuestion() {
+    return { baseId: "breechFootlingDeliv", categoryKey: "maternal", part: loc("둔위","Breech"), emoji: "🤰",
+        title: loc("Footling breech 분만","Footling Breech Delivery"),
+        desc: loc("\"Footling breech\"가 의심되는 산모의 권장 분만은?","Recommended delivery for footling breech?"),
+        choices: shuffle([
+            { text: loc("제왕절개 - 탯줄 탈출 위험 ↑↑","C-section - high cord prolapse risk"), effect: { hp: -2, rep: 22 }, log: loc("정답. 자연 분만 위험.","Correct. Vaginal delivery risky.") },
+            { text: loc("자연 분만 권장","Vaginal delivery"), effect: { hp: -38, rep: -28 }, log: loc("위험.","Dangerous.") },
+            { text: loc("외부 두향 전환만","ECV only"), effect: { hp: -28, rep: -20 }, log: loc("이전 시도 가능.","May try first.") },
+            { text: loc("진통 시작 시 결정","Wait until labor"), effect: { hp: -32, rep: -22 }, log: loc("미리 계획.","Plan ahead.") }
+        ])
+    };
+}
+function generateTrialOfLaborQuestion() {
+    return { baseId: "tolacRequire", categoryKey: "maternal", part: loc("TOLAC","TOLAC"), emoji: "🤰",
+        title: loc("TOLAC 요건","TOLAC Requirements"),
+        desc: loc("TOLAC(이전 C/S 후 자연 분만 시도) 시 \"필수\" 요건은?","Required for TOLAC (trial of labor after C-section)?"),
+        choices: shuffle([
+            { text: loc("응급 C/S 24h 즉시 가능 + 이전 저자궁부 절개","24h immediate C/S availability + prior low transverse incision"), effect: { hp: -2, rep: 22 }, log: loc("정답. 자궁 파열 위험.","Correct. Uterine rupture risk.") },
+            { text: loc("이전 고전적 절개도 OK","Prior classical OK"), effect: { hp: -42, rep: -32 }, log: loc("절대 금기.","Absolute contraindication.") },
+            { text: loc("산부인과 의사 없어도","Without OB available"), effect: { hp: -38, rep: -28 }, log: loc("부적절.","Inappropriate.") },
+            { text: loc("산모 동의 X","No consent"), effect: { hp: -42, rep: -32 }, log: loc("필수.","Required.") }
+        ])
+    };
+}
+function generateEpisiotomyTypeQuestion() {
+    return { baseId: "episiotomyMidline", categoryKey: "maternal", part: loc("회음 절개","Episiotomy"), emoji: "🤰",
+        title: loc("중앙 vs 정중측방 회음 절개","Midline vs Mediolateral"),
+        desc: loc("\"중앙(midline)\" 회음 절개의 \"단점\"은?","Disadvantage of midline episiotomy?"),
+        choices: shuffle([
+            { text: loc("3·4도 열상으로 확장 위험 ↑","↑Risk of extending to 3rd/4th degree laceration"), effect: { hp: -2, rep: 22 }, log: loc("정답. Mediolateral은 그 반대.","Correct. Mediolateral has opposite tradeoff.") },
+            { text: loc("회복 더 어려움","Harder recovery"), effect: { hp: -25, rep: -15 }, log: loc("중앙이 빨라.","Midline easier.") },
+            { text: loc("출혈 더 많음","More bleeding"), effect: { hp: -25, rep: -15 }, log: loc("Mediolateral 더.","Mediolateral more.") },
+            { text: loc("단점 없음","No disadvantage"), effect: { hp: -32, rep: -22 }, log: loc("양쪽 trade-off.","Both have tradeoffs.") }
+        ])
+    };
+}
+function generateDevelopmentMilestoneQuestion() {
+    return { baseId: "infant9MoMilestone", categoryKey: "pediatric", part: loc("발달 이정표","Development"), emoji: "👶",
+        title: loc("9개월 영아 발달 이정표","9-Month Milestone"),
+        desc: loc("9개월 영아의 \"전형적\" 발달 이정표는?","Typical 9-month milestone?"),
+        choices: shuffle([
+            { text: loc("기기 + 잡고 서기 + 모방 + 낯가림 + \"마마/다다\"","Crawls + pulls to stand + imitates + stranger anxiety + \"mama/dada\""), effect: { hp: -2, rep: 22 }, log: loc("정답. 다음 단계: 1살에 첫 단어.","Correct. Next: 1st word by 1 yr.") },
+            { text: loc("완전한 문장","Full sentences"), effect: { hp: -32, rep: -22 }, log: loc("2-3세.","2-3 yr.") },
+            { text: loc("뛰기","Running"), effect: { hp: -28, rep: -20 }, log: loc("2세.","2 yr.") },
+            { text: loc("아무것도 안 함","Nothing yet"), effect: { hp: -32, rep: -22 }, log: loc("발달 평가.","Developmental eval.") }
+        ])
+    };
+}
+function generateBipolarManiaQuestion() {
+    return { baseId: "maniaSafety", categoryKey: "psych", part: loc("조증","Mania"), emoji: "⚡",
+        title: loc("조증 환자 - 우선 간호","Mania Priority Nursing"),
+        desc: loc("급성 조증 환자의 \"우선\" 간호 진단은?","Priority nursing dx for acute mania?"),
+        choices: shuffle([
+            { text: loc("자기 또는 타인 위해 위험 - 자극 ↓ 환경, 일관성","Risk for injury to self/others — low-stimulation, consistent"), effect: { hp: -2, rep: 22 }, log: loc("정답. 수면 부족 + 충동성.","Correct. Sleep deprivation + impulsivity.") },
+            { text: loc("영양 부족","Nutritional deficit"), effect: { hp: -25, rep: -15 }, log: loc("부수적.","Secondary.") },
+            { text: loc("불안","Anxiety"), effect: { hp: -28, rep: -20 }, log: loc("부수적.","Secondary.") },
+            { text: loc("지식 부족","Knowledge deficit"), effect: { hp: -32, rep: -22 }, log: loc("후순위.","Lower priority.") }
+        ])
+    };
+}
+function generateGADCharacteristicsQuestion() {
+    return { baseId: "gadCriteria", categoryKey: "psych", part: loc("일반 불안","GAD"), emoji: "😰",
+        title: loc("일반 불안 장애 진단","GAD Diagnostic Criteria"),
+        desc: loc("일반 불안 장애(GAD)의 \"진단 기준\"은?","Diagnostic criteria for GAD?"),
+        choices: shuffle([
+            { text: loc("≥ 6개월 과도한 걱정 + 3/6 증상 (긴장·피로·집중↓·근긴장·수면)","≥6 mo excessive worry + 3/6 symptoms (restless/fatigue/↓focus/muscle/sleep)"), effect: { hp: -2, rep: 22 }, log: loc("정답. CBT + SSRI 1차.","Correct. CBT + SSRI first-line.") },
+            { text: loc("발작적 공황만","Just panic attacks"), effect: { hp: -28, rep: -20 }, log: loc("공황장애.","Panic disorder.") },
+            { text: loc("특정 자극","Specific trigger"), effect: { hp: -28, rep: -20 }, log: loc("공포증.","Phobia.") },
+            { text: loc("외상 후","Post-trauma"), effect: { hp: -28, rep: -20 }, log: loc("PTSD.","PTSD.") }
+        ])
+    };
+}
+function generateGRBSBabyQuestion() {
+    return { baseId: "gestationalBSMonitor", categoryKey: "maternal", part: loc("GDM 신생아","GDM Newborn"), emoji: "👶",
+        title: loc("GDM 산모 신생아 - 첫 24시간","GDM Newborn First 24h"),
+        desc: loc("임신성 당뇨 산모의 신생아 \"첫 24시간\" 우선 모니터링은?","Priority monitoring of GDM mother's newborn in first 24h?"),
+        choices: shuffle([
+            { text: loc("저혈당 (BG q1-2h) + 호흡곤란 + 다혈증","Hypoglycemia (BG q1-2h) + respiratory distress + polycythemia"), effect: { hp: -2, rep: 22 }, log: loc("정답. 고인슐린혈증.","Correct. Hyperinsulinemia.") },
+            { text: loc("발열만","Fever only"), effect: { hp: -32, rep: -22 }, log: loc("주된 우려 X.","Not main concern.") },
+            { text: loc("발진","Rash"), effect: { hp: -32, rep: -22 }, log: loc("관련 적음.","Less related.") },
+            { text: loc("관찰 X","No monitoring"), effect: { hp: -42, rep: -32 }, log: loc("적극 모니터.","Active monitor.") }
+        ])
+    };
+}
+function generateAsepticTechniqueQuestion() {
+    return { baseId: "asepticContaminate", categoryKey: "fundamentals", part: loc("무균술","Aseptic Technique"), emoji: "🧤",
+        title: loc("멸균 영역 - 오염 판정","Sterile Field Contamination"),
+        desc: loc("멸균 영역에서 \"오염\"으로 판정되는 상황은?","When is sterile field considered contaminated?"),
+        choices: shuffle([
+            { text: loc("허리 아래·시야 밖, 1인치 가장자리, 비멸균 접촉, 젖음","Below waist/out of sight, 1-inch edge, contact with non-sterile, wet"), effect: { hp: -2, rep: 22 }, log: loc("정답. 의심되면 오염.","Correct. If in doubt, throw out.") },
+            { text: loc("의심만 됨","Just suspected"), effect: { hp: -28, rep: -20 }, log: loc("오염으로 처리.","Treat as contaminated.") },
+            { text: loc("간호사 호흡","Nurse's breath"), effect: { hp: -25, rep: -15 }, log: loc("마스크.","Wear mask.") },
+            { text: loc("환자 옆","Near patient"), effect: { hp: -25, rep: -15 }, log: loc("계산 영역.","Calculated zone.") }
+        ])
+    };
+}
+function generateMobilityQuestion() {
+    return { baseId: "earlyMobilization", categoryKey: "fundamentals", part: loc("조기 보행","Early Mobilization"), emoji: "🚶",
+        title: loc("수술 후 조기 보행 - 이점","Post-op Early Ambulation Benefits"),
+        desc: loc("수술 후 조기 보행의 \"이점\"이 아닌 것은?","Which is NOT a benefit of early post-op ambulation?"),
+        choices: shuffle([
+            { text: loc("수술 부위 통증 완전 해결","Complete resolution of surgical pain"), effect: { hp: -2, rep: 22 }, log: loc("정답. 통증은 진통제 필요.","Correct. Pain needs analgesics.") },
+            { text: loc("DVT 예방","DVT prevention"), effect: { hp: -22, rep: -12 }, log: loc("이점.","Benefit.") },
+            { text: loc("폐 합병증 예방","Pulmonary complication prevention"), effect: { hp: -22, rep: -12 }, log: loc("이점.","Benefit.") },
+            { text: loc("장 운동 자극","Stimulate bowel"), effect: { hp: -22, rep: -12 }, log: loc("이점.","Benefit.") }
+        ])
+    };
+}
+function generateAirEmbolismPositionQuestion() {
+    return { baseId: "airEmbolismPos2", categoryKey: "fundamentals", part: loc("공기 색전","Air Embolism"), emoji: "💨",
+        title: loc("CVC 공기 색전 의심","Suspected CVC Air Embolism"),
+        desc: loc("CVC 사용 중 갑작스런 호흡곤란·저혈압. 환자 체위는?","Sudden dyspnea/hypotension during CVC use. Patient position?"),
+        choices: shuffle([
+            { text: loc("좌측위 + Trendelenburg (공기를 우심방에 가두기)","Left lateral + Trendelenburg (trap air in RA)"), effect: { hp: -3, rep: 22 }, log: loc("정답. 폐 진입 방지.","Correct. Prevents pulmonary embolism.") },
+            { text: loc("우측위","Right lateral"), effect: { hp: -38, rep: -28 }, log: loc("폐로 색전.","Embolizes to lung.") },
+            { text: loc("앙와위","Supine"), effect: { hp: -32, rep: -22 }, log: loc("부적절.","Inappropriate.") },
+            { text: loc("앉기","Sitting"), effect: { hp: -42, rep: -32 }, log: loc("매우 위험.","Very dangerous.") }
+        ])
+    };
+}
+function generatePacemakerTypeQuestion() {
+    return { baseId: "pacemakerCodeVVI", categoryKey: "adult", part: loc("Pacemaker 코드","Pacemaker Code"), emoji: "💓",
+        title: loc("VVI Pacemaker","VVI Pacemaker"),
+        desc: loc("\"VVI\" pacemaker의 의미는?","Meaning of \"VVI\" pacemaker?"),
+        choices: shuffle([
+            { text: loc("심실 페이싱, 심실 센싱, 자기박동 시 억제","Paces ventricle, senses ventricle, inhibited if intrinsic beat"), effect: { hp: -2, rep: 22 }, log: loc("정답. 1=Chamber paced, 2=sensed, 3=response.","Correct. 1=paced, 2=sensed, 3=response.") },
+            { text: loc("양심실","Both ventricles"), effect: { hp: -32, rep: -22 }, log: loc("아님.","No.") },
+            { text: loc("심방+심실","Atrium + ventricle"), effect: { hp: -28, rep: -20 }, log: loc("DDD.","DDD.") },
+            { text: loc("응급용","Emergency"), effect: { hp: -32, rep: -22 }, log: loc("부적절.","Inappropriate.") }
+        ])
+    };
+}
+function generateGlaucomaCareQuestion() {
+    return { baseId: "glaucomaPostOpAvoid", categoryKey: "adult", part: loc("녹내장 후 간호","Post-Glaucoma Surgery"), emoji: "👁️",
+        title: loc("녹내장 수술 후 - 회피","Post-Glaucoma Surgery Avoid"),
+        desc: loc("녹내장 수술 후 환자가 \"피해야 할\" 활동은?","Activities to AVOID after glaucoma surgery?"),
+        choices: shuffle([
+            { text: loc("기침·재채기·구토·무거운 것 들기·구부리기 (IOP ↑)","Coughing, sneezing, vomiting, lifting, bending (↑IOP)"), effect: { hp: -2, rep: 22 }, log: loc("정답. 안압 ↑ 방지.","Correct. Avoid IOP elevation.") },
+            { text: loc("천천한 보행","Slow walking"), effect: { hp: -22, rep: -12 }, log: loc("OK.","OK.") },
+            { text: loc("말하기","Talking"), effect: { hp: -22, rep: -12 }, log: loc("OK.","OK.") },
+            { text: loc("음악 듣기","Listening to music"), effect: { hp: -22, rep: -12 }, log: loc("OK.","OK.") }
+        ])
+    };
+}
+function generateMacularDegenerationQuestion() {
+    return { baseId: "amdSx", categoryKey: "adult", part: loc("황반 변성","AMD"), emoji: "👁️",
+        title: loc("황반 변성 - 가장 흔한 증상","AMD Most Common Symptom"),
+        desc: loc("황반 변성의 \"가장 초기\" 증상은?","Earliest sign of macular degeneration?"),
+        choices: shuffle([
+            { text: loc("중심 시야 흐림·왜곡 (직선이 굽어 보임)","Central vision blur/distortion (straight lines look curved)"), effect: { hp: -2, rep: 22 }, log: loc("정답. Amsler grid 자가 검사.","Correct. Amsler grid self-test.") },
+            { text: loc("주변 시야 손실","Peripheral vision loss"), effect: { hp: -28, rep: -20 }, log: loc("녹내장.","Glaucoma.") },
+            { text: loc("야간 시야 ↓","Night vision ↓"), effect: { hp: -28, rep: -20 }, log: loc("백내장·RP.","Cataract/RP.") },
+            { text: loc("증상 없음","No symptoms"), effect: { hp: -28, rep: -20 }, log: loc("증상 있음.","Has symptoms.") }
+        ])
+    };
+}
+function generateHerpesZosterQuestion() {
+    return { baseId: "zosterDermatomal", categoryKey: "adult", part: loc("대상포진","Herpes Zoster"), emoji: "🦠",
+        title: loc("대상포진 특징","Herpes Zoster Hallmark"),
+        desc: loc("대상포진의 \"전형적\" 발진 분포는?","Classic herpes zoster rash distribution?"),
+        choices: shuffle([
+            { text: loc("일측 dermatome (중앙 경계 안 넘음) + 통증·물집","Unilateral, dermatomal (doesn't cross midline) + pain/blisters"), effect: { hp: -2, rep: 22 }, log: loc("정답. Antiviral 72h 내.","Correct. Antiviral within 72 hr.") },
+            { text: loc("양측 대칭","Bilateral symmetric"), effect: { hp: -32, rep: -22 }, log: loc("다른 진단.","Different dx.") },
+            { text: loc("전신 흩어짐","Generalized scattered"), effect: { hp: -28, rep: -20 }, log: loc("수두.","Varicella.") },
+            { text: loc("얼굴만","Face only"), effect: { hp: -25, rep: -15 }, log: loc("일부 위치.","Some location.") }
+        ])
+    };
+}
+function generateGastricLavageQuestion() {
+    return { baseId: "lavageContra", categoryKey: "fundamentals", part: loc("위 세척","Gastric Lavage"), emoji: "🧪",
+        title: loc("위 세척 금기","Gastric Lavage Contraindication"),
+        desc: loc("위 세척의 \"절대 금기\"는?","Absolute contraindication for gastric lavage?"),
+        choices: shuffle([
+            { text: loc("부식성 물질 섭취 (acid/alkali) - 식도 천공","Caustic ingestion (acid/alkali) - perforation risk"), effect: { hp: -2, rep: 22 }, log: loc("정답. 활성탄도 무효.","Correct. Charcoal also useless.") },
+            { text: loc("아세트아미노펜","Acetaminophen"), effect: { hp: -28, rep: -20 }, log: loc("NAC 가능.","NAC works.") },
+            { text: loc("벤조 중독","Benzo OD"), effect: { hp: -25, rep: -15 }, log: loc("일반적으로 OK.","Generally OK.") },
+            { text: loc("아편 중독","Opioid OD"), effect: { hp: -28, rep: -20 }, log: loc("Naloxone.","Naloxone.") }
+        ])
+    };
+}
+function generateHomeOxygenSafetyTank2Question() {
+    return { baseId: "homeO2TankStorage", categoryKey: "community", part: loc("재택 산소","Home O2"), emoji: "🏠",
+        title: loc("재택 산소 탱크 - 안전","Home O2 Tank Safety"),
+        desc: loc("재택 산소 탱크의 \"안전 보관\" 방법은?","Safe storage of home O2 tank?"),
+        choices: shuffle([
+            { text: loc("수직으로 고정 + 화기 3m 떨어짐 + 환기 + 직사광선 회피","Upright secured + 10ft from flame + ventilated + no direct sun"), effect: { hp: -2, rep: 22 }, log: loc("정답. 폭발·화재 위험.","Correct. Explosion/fire risk.") },
+            { text: loc("부엌에 두기","In kitchen"), effect: { hp: -38, rep: -28 }, log: loc("화기 근처 X.","Away from flame.") },
+            { text: loc("자동차 트렁크","Car trunk"), effect: { hp: -42, rep: -32 }, log: loc("열 ↑.","Heat risk.") },
+            { text: loc("창고에 눕히기","Lying down in storage"), effect: { hp: -32, rep: -22 }, log: loc("수직으로.","Upright.") }
+        ])
+    };
+}
+function generateFractureCompartmentQuestion() {
+    return { baseId: "fxNVCheck", categoryKey: "adult", part: loc("골절 후 사정","Post-Fx Assessment"), emoji: "🦴",
+        title: loc("석고 후 신경혈관 사정 빈도","Post-Cast NV Check"),
+        desc: loc("새 석고 부목 적용 후 \"신경혈관(NV)\" 사정 빈도는?","Frequency of NV checks after new cast?"),
+        choices: shuffle([
+            { text: loc("첫 24시간 q1-2h, 안정 시 q4h","First 24h q1-2h, then q4h when stable"), effect: { hp: -2, rep: 22 }, log: loc("정답. Compartment 증후군 위험.","Correct. Compartment risk.") },
+            { text: loc("q8h","Q8h"), effect: { hp: -32, rep: -22 }, log: loc("부족.","Insufficient.") },
+            { text: loc("환자 호소 시만","Only if patient complains"), effect: { hp: -32, rep: -22 }, log: loc("정기.","Routine.") },
+            { text: loc("필요 X","Not needed"), effect: { hp: -42, rep: -32 }, log: loc("필수.","Required.") }
+        ])
+    };
+}
+function generateDeliriumTremensQuestion() {
+    return { baseId: "dtOnset", categoryKey: "psych", part: loc("진전 섬망","DT"), emoji: "🍷",
+        title: loc("진전 섬망 - 발생 시점","DT Onset"),
+        desc: loc("진전 섬망(DT)의 \"가장 흔한\" 발생 시점은?","Most common DT onset time?"),
+        choices: shuffle([
+            { text: loc("마지막 음주 후 48-96시간","48-96 hours after last drink"), effect: { hp: -2, rep: 22 }, log: loc("정답. 발작은 12-48h.","Correct. Seizures 12-48h.") },
+            { text: loc("음주 중","While drinking"), effect: { hp: -32, rep: -22 }, log: loc("금단.","Withdrawal.") },
+            { text: loc("1시간 후","1 hour"), effect: { hp: -28, rep: -20 }, log: loc("너무 빠름.","Too early.") },
+            { text: loc("1개월 후","1 month"), effect: { hp: -32, rep: -22 }, log: loc("너무 늦음.","Too late.") }
+        ])
+    };
+}
+function generateBreastfeedingBenefitsQuestion() {
+    return { baseId: "breastfeedingImmunity", categoryKey: "maternal", part: loc("모유수유","Breastfeeding"), emoji: "🤱",
+        title: loc("모유수유 - 면역 이점","Breastfeeding Immunity"),
+        desc: loc("모유의 \"가장 중요한\" 면역 성분은?","Most important immune component of breast milk?"),
+        choices: shuffle([
+            { text: loc("Secretory IgA - 점막 보호 + 초유에 풍부","Secretory IgA - mucosal protection + rich in colostrum"), effect: { hp: -2, rep: 22 }, log: loc("정답. 6개월 단독 모유수유 권장.","Correct. Exclusive BF until 6 mo.") },
+            { text: loc("IgM만","IgM only"), effect: { hp: -28, rep: -20 }, log: loc("부수적.","Secondary.") },
+            { text: loc("백혈구만","WBC only"), effect: { hp: -28, rep: -20 }, log: loc("일부.","Partial.") },
+            { text: loc("면역 X","No immunity"), effect: { hp: -38, rep: -28 }, log: loc("강력 면역.","Strong immunity.") }
+        ])
+    };
+}
+function generateHydrocephalusQuestion() {
+    return { baseId: "vpShuntInfection", categoryKey: "pediatric", part: loc("VP 션트","VP Shunt"), emoji: "🧠",
+        title: loc("VP 션트 감염 신호","VP Shunt Infection Signs"),
+        desc: loc("소아 VP 션트의 \"감염 적신호\"는?","Red flags for VP shunt infection in child?"),
+        choices: shuffle([
+            { text: loc("발열·구토·과민·션트 부위 발적·의식 변화","Fever, vomiting, irritability, redness at site, ↓LOC"), effect: { hp: -2, rep: 22 }, log: loc("정답. 즉시 외과 평가.","Correct. Immediate surgical eval.") },
+            { text: loc("정상 활동","Normal activity"), effect: { hp: -32, rep: -22 }, log: loc("적신호.","Red flag.") },
+            { text: loc("울음 ↓","↓Crying"), effect: { hp: -28, rep: -20 }, log: loc("기능 ↓.","Functional decline.") },
+            { text: loc("배뇨 잘 함","Normal voiding"), effect: { hp: -28, rep: -20 }, log: loc("관련 적음.","Less related.") }
+        ])
+    };
+}
+function generateNGTubeDrainColorQuestion() {
+    return { baseId: "ngDrainCoffee", categoryKey: "adult", part: loc("NG 배액","NG Drainage"), emoji: "🩺",
+        title: loc("NG 배액 - 커피색의 의미","NG Drainage - Coffee Ground"),
+        desc: loc("NG 튜브에서 \"커피색\" 배액의 의미는?","Coffee-ground NG drainage means?"),
+        choices: shuffle([
+            { text: loc("이미 응고된 위 출혈 (오래된 혈액 + 위산)","Old/digested blood + gastric acid - past bleed"), effect: { hp: -2, rep: 22 }, log: loc("정답. 선홍은 활동성 출혈.","Correct. Bright red = active bleed.") },
+            { text: loc("정상","Normal"), effect: { hp: -32, rep: -22 }, log: loc("비정상.","Abnormal.") },
+            { text: loc("탈수","Dehydration"), effect: { hp: -28, rep: -20 }, log: loc("관련 적음.","Less related.") },
+            { text: loc("정상 위 분비물","Normal gastric secretion"), effect: { hp: -32, rep: -22 }, log: loc("녹색-노랑.","Green-yellow normal.") }
+        ])
+    };
+}
+function generateCorpulmonaleQuestion() {
+    return { baseId: "corPulmonaleCause", categoryKey: "adult", part: loc("폐성 심장","Cor Pulmonale"), emoji: "🫁",
+        title: loc("Cor Pulmonale 원인","Cor Pulmonale Cause"),
+        desc: loc("Cor pulmonale의 \"가장 흔한\" 원인은?","Most common cause of cor pulmonale?"),
+        choices: shuffle([
+            { text: loc("만성 COPD (가장 흔함), 폐섬유증, 폐색전","Chronic COPD (most common), pulmonary fibrosis, PE"), effect: { hp: -2, rep: 22 }, log: loc("정답. 폐 → 우심 부전.","Correct. Lung → RV failure.") },
+            { text: loc("좌심부전","LV failure"), effect: { hp: -32, rep: -22 }, log: loc("다른 원인.","Different cause.") },
+            { text: loc("심근경색","MI"), effect: { hp: -28, rep: -20 }, log: loc("좌심.","LV.") },
+            { text: loc("심방세동","A-fib"), effect: { hp: -28, rep: -20 }, log: loc("부수적.","Secondary.") }
+        ])
+    };
+}
+function generateGynecologicCancerQuestion() {
+    return { baseId: "ovarianCAEarly", categoryKey: "community", part: loc("난소암 조기","Ovarian CA Early"), emoji: "🩺",
+        title: loc("난소암 - 조기 발견 어려움","Ovarian CA - Difficult Early Detection"),
+        desc: loc("난소암의 \"가장 흔한\" 초기 증상은?","Most common early sign of ovarian cancer?"),
+        choices: shuffle([
+            { text: loc("애매한 복부 팽창·식욕 변화·골반 통증 (\"조용한 살인자\")","Vague abdominal bloating, appetite changes, pelvic pain (\"silent killer\")"), effect: { hp: -2, rep: 22 }, log: loc("정답. 진단 시 진행됨.","Correct. Often advanced at dx.") },
+            { text: loc("질 출혈","Vaginal bleeding"), effect: { hp: -28, rep: -20 }, log: loc("자궁내막암.","Endometrial CA.") },
+            { text: loc("심한 통증","Severe pain"), effect: { hp: -28, rep: -20 }, log: loc("늦은 신호.","Late sign.") },
+            { text: loc("증상 없음","Asymptomatic"), effect: { hp: -25, rep: -15 }, log: loc("미묘하지만 있음.","Subtle but present.") }
+        ])
+    };
+}
+function generatePCNAllergyQuestion() {
+    return { baseId: "pcnCrossReact", categoryKey: "fundamentals", part: loc("PCN 교차반응","PCN Cross-Reaction"), emoji: "💊",
+        title: loc("PCN 알레르기 - 교차반응","PCN Allergy Cross-Reaction"),
+        desc: loc("PCN 알레르기 환자에게 \"교차반응\" 위험이 가장 높은 항생제군은?","Highest cross-reaction risk in PCN-allergic patient?"),
+        choices: shuffle([
+            { text: loc("1세대 Cephalosporin (cefazolin 등) - 10% 교차반응","1st-gen cephalosporins (cefazolin etc) - 10% cross-reaction"), effect: { hp: -2, rep: 22 }, log: loc("정답. 3-4세대는 낮음.","Correct. 3rd-4th gen lower.") },
+            { text: loc("Macrolide","Macrolides"), effect: { hp: -28, rep: -20 }, log: loc("관련 없음.","Unrelated.") },
+            { text: loc("Quinolone","Quinolones"), effect: { hp: -28, rep: -20 }, log: loc("관련 없음.","Unrelated.") },
+            { text: loc("Vancomycin","Vancomycin"), effect: { hp: -28, rep: -20 }, log: loc("관련 없음.","Unrelated.") }
+        ])
+    };
+}
+function generateHIVViralLoadQuestion() {
+    return { baseId: "hivUndetect", categoryKey: "adult", part: loc("HIV 바이러스량","HIV Viral Load"), emoji: "🩸",
+        title: loc("HIV \"검출 불가\" 의미","HIV Undetectable Meaning"),
+        desc: loc("HIV \"undetectable\" 바이러스량의 \"임상\" 의미는?","Clinical meaning of \"undetectable\" HIV viral load?"),
+        choices: shuffle([
+            { text: loc("U=U: Undetectable = Untransmittable (성접촉으로 전염 안 됨)","U=U: Undetectable = Untransmittable (no sexual transmission)"), effect: { hp: -2, rep: 22 }, log: loc("정답. CDC 인정.","Correct. CDC endorsed.") },
+            { text: loc("완치","Cured"), effect: { hp: -32, rep: -22 }, log: loc("아님.","No.") },
+            { text: loc("검사 오류","Test error"), effect: { hp: -32, rep: -22 }, log: loc("실제 0에 근접.","Genuinely low.") },
+            { text: loc("ART 중단 OK","OK to stop ART"), effect: { hp: -42, rep: -32 }, log: loc("절대 중단 X.","Never stop.") }
+        ])
+    };
+}
+function generateUTIPedQuestion() {
+    return { baseId: "pedUTIShouldEval", categoryKey: "pediatric", part: loc("소아 UTI","Pediatric UTI"), emoji: "🦠",
+        title: loc("소아 UTI - 영상 검사","Pediatric UTI Imaging"),
+        desc: loc("\"<2세\" 첫 UTI 아동의 \"추가 검사\" 권고는?","Recommended further workup for first UTI in <2 yr old?"),
+        choices: shuffle([
+            { text: loc("신장·방광 초음파 - 구조 이상 식별","Renal/bladder ultrasound - identify structural abnormalities"), effect: { hp: -2, rep: 22 }, log: loc("정답. VUR 의심 시 VCUG.","Correct. VCUG if VUR suspected.") },
+            { text: loc("검사 X","No imaging"), effect: { hp: -32, rep: -22 }, log: loc("권장됨.","Recommended.") },
+            { text: loc("CT","CT"), effect: { hp: -28, rep: -20 }, log: loc("방사선 회피.","Avoid radiation.") },
+            { text: loc("MRI","MRI"), effect: { hp: -28, rep: -20 }, log: loc("일반 X.","Not routine.") }
+        ])
+    };
+}
+function generateThrombolyticDrugQuestion() {
+    return { baseId: "tpaWindowExtended", categoryKey: "adult", part: loc("tPA 시간 창","tPA Window"), emoji: "🧠",
+        title: loc("tPA 확장 시간 창","Extended tPA Window"),
+        desc: loc("일부 환자에서 tPA의 \"확장된\" 시간 창은?","Extended tPA window for select patients?"),
+        choices: shuffle([
+            { text: loc("증상 시작 4.5h 표준, 일부 영상 기준 충족 환자 24h까지","4.5h standard, up to 24h in select patients meeting imaging criteria"), effect: { hp: -2, rep: 22 }, log: loc("정답. 영상 가이드.","Correct. Imaging-guided.") },
+            { text: loc("증상 시작 무관","No time limit"), effect: { hp: -38, rep: -28 }, log: loc("출혈 위험.","Bleeding risk.") },
+            { text: loc("1시간만","Only 1 hour"), effect: { hp: -32, rep: -22 }, log: loc("기준 다름.","Different.") },
+            { text: loc("절대 사용 X","Never use"), effect: { hp: -38, rep: -28 }, log: loc("권장됨.","Recommended.") }
+        ])
+    };
+}
+function generateGTubeQuestion() {
+    return { baseId: "petubeCare", categoryKey: "fundamentals", part: loc("PEG 튜브","PEG Tube"), emoji: "🩺",
+        title: loc("PEG 튜브 관리","PEG Tube Care"),
+        desc: loc("PEG 튜브 \"주변 피부\" 관리의 핵심은?","Key to PEG tube peristomal skin care?"),
+        choices: shuffle([
+            { text: loc("매일 비누·물 청결 + 건조 유지 + 회전·이동 점검","Daily soap/water cleansing + dry + rotate/check movement"), effect: { hp: -2, rep: 22 }, log: loc("정답. 부어 있음·발적 보고.","Correct. Report swelling/redness.") },
+            { text: loc("건드리지 않음","Don't touch"), effect: { hp: -32, rep: -22 }, log: loc("청결 필수.","Cleansing required.") },
+            { text: loc("매일 새 드레싱","New dressing daily"), effect: { hp: -25, rep: -15 }, log: loc("필요시.","If needed.") },
+            { text: loc("알코올로 닦기","Alcohol wipes"), effect: { hp: -28, rep: -20 }, log: loc("피부 자극.","Skin irritation.") }
+        ])
+    };
+}
+
+// 이미지 5개
+function generateAirEmbolismPosImgQuestion() {
+    const svg = `<svg viewBox="0 0 600 220" xmlns="http://www.w3.org/2000/svg"><rect width="600" height="220" fill="#fef3f7"/><g transform="translate(40,40)"><rect width="240" height="120" fill="#fed7aa" stroke="#9a3412" stroke-width="2"/><circle cx="60" cy="60" r="14" fill="#fee2e2"/><text x="60" y="64" text-anchor="middle" font-size="9" font-weight="700">${loc("머리","Head")}</text><line x1="0" y1="60" x2="0" y2="120" stroke="#3b82f6" stroke-width="6"/><text x="-25" y="65" font-size="9" fill="#3b82f6" font-weight="700">${loc("아래","Down")}</text><line x1="240" y1="100" x2="280" y2="120" stroke="#1e293b" stroke-width="3"/><text x="100" y="170" text-anchor="middle" font-size="11" font-weight="700">${loc("좌측위 + Trendelenburg","Left lateral + Trendelenburg")}</text></g></svg>`;
+    return { baseId: "airEmbolismPosImg", categoryKey: "fundamentals", part: loc("공기 색전 체위","Air Embolism Position"), emoji: "🩺",
+        title: loc("공기 색전 체위 - 왜?","Air Embolism Position - Why?"),
+        desc: loc("좌측위 + Trendelenburg의 \"기전\"은?","Mechanism of left lateral + Trendelenburg?"),
+        image: svg,
+        choices: shuffle([
+            { text: loc("공기가 우심방·우심실 상부에 갇혀 폐 색전 방지","Air trapped in RA/RV apex, prevents pulmonary embolism"), effect: { hp: -2, rep: 22 }, log: loc("정답.","Correct.") },
+            { text: loc("뇌 관류 ↑","↑Brain perfusion"), effect: { hp: -28, rep: -20 }, log: loc("주된 이유 X.","Not main reason.") },
+            { text: loc("호흡 향상","Improves breathing"), effect: { hp: -32, rep: -22 }, log: loc("아님.","No.") },
+            { text: loc("효과 없음","No effect"), effect: { hp: -42, rep: -32 }, log: loc("효과 있음.","Effective.") }
+        ])
+    };
+}
+function generateHerpesZosterImgQuestion() {
+    const svg = `<svg viewBox="0 0 600 220" xmlns="http://www.w3.org/2000/svg"><rect width="600" height="220" fill="#fef3f7"/><g transform="translate(180,30)"><rect width="240" height="160" fill="#fed7aa" stroke="#9a3412" stroke-width="2"/><line x1="120" y1="0" x2="120" y2="160" stroke="#1e293b" stroke-width="1" stroke-dasharray="4,2"/><circle cx="80" cy="40" r="6" fill="#dc2626"/><circle cx="70" cy="60" r="6" fill="#dc2626"/><circle cx="85" cy="80" r="6" fill="#dc2626"/><circle cx="75" cy="100" r="6" fill="#dc2626"/><circle cx="90" cy="120" r="6" fill="#dc2626"/><text x="60" y="180" font-size="11" font-weight="700">${loc("일측 dermatome","Unilateral dermatomal")}</text></g></svg>`;
+    return { baseId: "zosterImg", categoryKey: "adult", part: loc("대상포진","Herpes Zoster"), emoji: "🦠",
+        title: loc("대상포진 발진 패턴","Herpes Zoster Pattern"),
+        desc: loc("그림처럼 \"한 쪽에만\" dermatomal하게 분포된 통증성 발진은?","One-sided dermatomal painful rash. Diagnosis?"),
+        image: svg,
+        choices: shuffle([
+            { text: loc("대상포진 - 항바이러스 72h 내, 통증 관리","Herpes zoster - antiviral within 72h, pain mgmt"), effect: { hp: -2, rep: 22 }, log: loc("정답. PHN 합병증.","Correct. PHN complication.") },
+            { text: loc("수두","Varicella"), effect: { hp: -28, rep: -20 }, log: loc("전신.","Generalized.") },
+            { text: loc("아토피","Eczema"), effect: { hp: -32, rep: -22 }, log: loc("패턴 다름.","Different.") },
+            { text: loc("두드러기","Hives"), effect: { hp: -32, rep: -22 }, log: loc("일과성.","Transient.") }
+        ])
+    };
+}
+function generateMacularDegImgQuestion() {
+    const svg = `<svg viewBox="0 0 600 220" xmlns="http://www.w3.org/2000/svg"><rect width="600" height="220" fill="#fef3f7"/><g transform="translate(40,30)"><rect width="240" height="160" fill="#fff" stroke="#1e293b" stroke-width="2"/><text x="120" y="30" text-anchor="middle" font-size="13" font-weight="800">${loc("정상","Normal")}</text><circle cx="120" cy="100" r="40" fill="#fed7aa"/><circle cx="120" cy="100" r="20" fill="#fbbf24"/><circle cx="120" cy="100" r="8" fill="#1e293b"/></g><g transform="translate(320,30)"><rect width="240" height="160" fill="#fff" stroke="#1e293b" stroke-width="2"/><text x="120" y="30" text-anchor="middle" font-size="13" font-weight="800">${loc("AMD","AMD")}</text><circle cx="120" cy="100" r="40" fill="#fed7aa"/><circle cx="120" cy="100" r="20" fill="#fbbf24"/><circle cx="120" cy="100" r="14" fill="#7c2d12"/></g></svg>`;
+    return { baseId: "amdCentralImg", categoryKey: "adult", part: loc("AMD","AMD"), emoji: "👁️",
+        title: loc("황반 변성 시야","AMD Vision"),
+        desc: loc("AMD 환자가 보는 시야는?","What patient with AMD sees?"),
+        image: svg,
+        choices: shuffle([
+            { text: loc("중심 시야 검은 점·왜곡 (직선이 굽음)","Central black spot/distortion (straight lines wavy)"), effect: { hp: -2, rep: 22 }, log: loc("정답. Amsler grid 자가 검사.","Correct. Amsler grid self-test.") },
+            { text: loc("주변 시야 손실","Peripheral loss"), effect: { hp: -28, rep: -20 }, log: loc("녹내장.","Glaucoma.") },
+            { text: loc("전체 흐림","Whole blur"), effect: { hp: -28, rep: -20 }, log: loc("백내장.","Cataract.") },
+            { text: loc("정상","Normal"), effect: { hp: -38, rep: -28 }, log: loc("비정상.","Abnormal.") }
+        ])
+    };
+}
+function generateDressingChangeImgQuestion() {
+    const svg = `<svg viewBox="0 0 600 240" xmlns="http://www.w3.org/2000/svg"><rect width="600" height="240" fill="#f0f9ff"/><g transform="translate(20,30)"><rect width="180" height="180" fill="#fff" stroke="#1e293b" stroke-width="2" rx="4"/><text x="90" y="30" text-anchor="middle" font-size="12" font-weight="800">${loc("Wet-to-Dry","Wet-to-Dry")}</text><text x="90" y="60" text-anchor="middle" font-size="9">${loc("기계적 변연절제","Mechanical debride")}</text><text x="90" y="80" text-anchor="middle" font-size="9">${loc("괴사 조직 제거","Removes necrotic")}</text></g><g transform="translate(210,30)"><rect width="180" height="180" fill="#fff" stroke="#1e293b" stroke-width="2" rx="4"/><text x="90" y="30" text-anchor="middle" font-size="12" font-weight="800">${loc("Hydrocolloid","Hydrocolloid")}</text><text x="90" y="60" text-anchor="middle" font-size="9">${loc("자가용해","Autolytic")}</text><text x="90" y="80" text-anchor="middle" font-size="9">${loc("3-5일 유지","3-5 days")}</text></g><g transform="translate(400,30)"><rect width="180" height="180" fill="#fff" stroke="#1e293b" stroke-width="2" rx="4"/><text x="90" y="30" text-anchor="middle" font-size="12" font-weight="800">${loc("Alginate","Alginate")}</text><text x="90" y="60" text-anchor="middle" font-size="9">${loc("다량 삼출물","Heavy exudate")}</text><text x="90" y="80" text-anchor="middle" font-size="9">${loc("해조류 기반","Seaweed-based")}</text></g></svg>`;
+    return { baseId: "alginateUse", categoryKey: "fundamentals", part: loc("드레싱","Dressings"), emoji: "🩹",
+        title: loc("Alginate 드레싱 적응증","Alginate Dressing Indication"),
+        desc: loc("\"다량 삼출\" 상처에 적합한 드레싱은?","Best dressing for heavily exudative wound?"),
+        image: svg,
+        choices: shuffle([
+            { text: loc("Alginate (해조 기반 - 흡수성 ↑)","Alginate (seaweed - highly absorbent)"), effect: { hp: -2, rep: 22 }, log: loc("정답. 마른 상처는 hydrogel.","Correct. Dry wound = hydrogel.") },
+            { text: loc("Wet-to-dry","Wet-to-dry"), effect: { hp: -28, rep: -20 }, log: loc("괴사 조직용.","For necrotic.") },
+            { text: loc("Hydrocolloid","Hydrocolloid"), effect: { hp: -25, rep: -15 }, log: loc("소량-중간.","Light-mod.") },
+            { text: loc("Gauze","Gauze"), effect: { hp: -28, rep: -20 }, log: loc("일반.","Generic.") }
+        ])
+    };
+}
+function generatePacemakerLeadImgQuestion() {
+    const svg = `<svg viewBox="0 0 600 240" xmlns="http://www.w3.org/2000/svg"><rect width="600" height="240" fill="#fef3f7"/><g transform="translate(180,30)"><path d="M 60 30 Q 30 25 25 100 L 35 200 Q 60 215 100 215 Q 140 215 165 200 L 175 100 Q 170 25 140 30 L 100 35 Z" fill="#fee2e2" stroke="#991b1b" stroke-width="2"/><circle cx="60" cy="55" r="8" fill="#1e293b"/><text x="60" y="58" text-anchor="middle" font-size="8" fill="white" font-weight="700">PM</text><line x1="60" y1="55" x2="100" y2="100" stroke="#3b82f6" stroke-width="2"/><line x1="100" y1="100" x2="100" y2="155" stroke="#3b82f6" stroke-width="2"/><circle cx="100" cy="100" r="4" fill="#dc2626"/><text x="115" y="105" font-size="9">RA</text><circle cx="100" cy="155" r="4" fill="#dc2626"/><text x="115" y="160" font-size="9">RV</text></g><text x="300" y="220" text-anchor="middle" font-size="11" fill="#64748b">${loc("Dual-chamber pacemaker (DDD)","Dual-chamber pacemaker (DDD)")}</text></svg>`;
+    return { baseId: "dddPacemaker", categoryKey: "adult", part: loc("Pacemaker DDD","DDD Pacemaker"), emoji: "💓",
+        title: loc("DDD Pacemaker 의미","DDD Pacemaker Meaning"),
+        desc: loc("\"DDD\" pacemaker의 의미는?","DDD pacemaker meaning?"),
+        image: svg,
+        choices: shuffle([
+            { text: loc("심방·심실 모두 페이싱·센싱 + 이중 반응 (가장 생리적)","Paces and senses BOTH atrium and ventricle + dual response (most physiologic)"), effect: { hp: -2, rep: 22 }, log: loc("정답. AV 동기.","Correct. AV synchrony.") },
+            { text: loc("심실만","Ventricle only"), effect: { hp: -28, rep: -20 }, log: loc("VVI.","VVI.") },
+            { text: loc("심방만","Atrium only"), effect: { hp: -28, rep: -20 }, log: loc("AAI.","AAI.") },
+            { text: loc("응급 외부","Emergency external"), effect: { hp: -32, rep: -22 }, log: loc("부적절.","Inappropriate.") }
         ])
     };
 }
