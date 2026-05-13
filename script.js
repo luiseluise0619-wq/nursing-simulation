@@ -36,7 +36,15 @@ let gameState = {
     studyTools: { wrongIds: [], bookmarkIds: [] },
     timedExam: null, // { startMs, durationMs, total, done, correct, wrong }
     srs: { cards: {} }, // { baseId: { box: 1..5, dueAt: ms, lastSeen: ms } }
+    revivesUsed: 0, // per-run rewarded-ad revives consumed (max 1)
 };
+
+// 부활 광고 1회 한정 + 보상값
+const MAX_REVIVES_PER_RUN = 1;
+const REVIVE_HP_RESTORE = 50;
+const REVIVE_REP_RESTORE_FLOOR = -30;
+const REVIVE_REP_BONUS = 30;
+const REVIVE_AD_DURATION_SEC = 5;
 
 // SRS Leitner 5-box 간격(일): 박스1=즉시, 2=1일, 3=3일, 4=7일, 5=14일
 const SRS_INTERVALS_DAYS = [0, 0, 1, 3, 7, 14];
@@ -291,6 +299,20 @@ const T = {
     },
     settingsButton:   { ko: "⚙️ 설정", en: "⚙️ Settings" },
     backToMenu:       { ko: "← 메뉴로", en: "← Back to Menu" },
+
+    // ===== 부활(광고) =====
+    reviveTitle:      { ko: "💔 듀티 중단 위기", en: "💔 Shift About to End" },
+    reviveHpDesc:     { ko: "체력이 바닥났습니다. 광고를 시청하고 듀티를 이어가시겠어요?", en: "You're burned out. Watch a short ad to keep the shift going?" },
+    reviveRepDesc:    { ko: "평판이 위태롭습니다. 광고를 보고 다시 일어서시겠어요?", en: "Your reputation is collapsing. Watch a short ad and recover?" },
+    reviveWatchBtn:   { ko: "📺 광고 보고 부활 (1회)", en: "📺 Watch Ad to Revive (1x)" },
+    reviveSkipBtn:    { ko: "퇴근하기 (종료)", en: "Clock Out (End)" },
+    reviveUsedNote:   { ko: "이번 듀티의 부활 기회는 모두 사용했습니다.", en: "You've used your revive for this shift." },
+    reviveAdLoading:  { ko: "광고 준비 중…", en: "Loading ad…" },
+    reviveAdPlaying:  { ko: "광고 재생 중", en: "Ad playing" },
+    reviveAdSkipIn:   { ko: "초 후 보상 지급", en: "s until reward" },
+    reviveAdDone:     { ko: "✅ 광고 시청 완료 · HP/평판 회복", en: "✅ Ad complete · HP & Rep restored" },
+    reviveAdFail:     { ko: "광고를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.", en: "Couldn't load an ad. Try again shortly." },
+    reviveLogRecover: { ko: "📺 광고 보상으로 부활했습니다 (HP +50, 평판 +30)", en: "📺 Revived via rewarded ad (HP +50, Rep +30)" },
 };
 function t(key) { return L(T[key]); }
 
@@ -323,6 +345,68 @@ function loadSettings() {
         if (data.srs && data.srs.cards) gameState.srs.cards = data.srs.cards;
     } catch (e) { /* corrupt 무시 */ }
 }
+
+// =========================
+// Analytics (localStorage + optional external sink)
+// =========================
+const ANALYTICS_KEY = "nurseSim.analytics";
+const ANALYTICS_MAX = 500;
+const Analytics = {
+    track(event, payload = {}) {
+        const record = { event, payload, ts: Date.now() };
+        try {
+            const buf = JSON.parse(localStorage.getItem(ANALYTICS_KEY) || "[]");
+            buf.push(record);
+            if (buf.length > ANALYTICS_MAX) buf.splice(0, buf.length - ANALYTICS_MAX);
+            localStorage.setItem(ANALYTICS_KEY, JSON.stringify(buf));
+        } catch (e) { /* private/full storage 무시 */ }
+        // 외부 분석 도구 훅 — 통합 시 window.trackEvent 정의만 하면 자동 연결
+        if (typeof window !== "undefined" && typeof window.trackEvent === "function") {
+            try { window.trackEvent(event, payload); } catch (e) {}
+        }
+    },
+    snapshot() {
+        try { return JSON.parse(localStorage.getItem(ANALYTICS_KEY) || "[]"); }
+        catch (e) { return []; }
+    },
+    clear() {
+        try { localStorage.removeItem(ANALYTICS_KEY); } catch (e) {}
+    },
+};
+
+// =========================
+// Rewarded Ads — provider-agnostic adapter
+//   기본은 시뮬레이션(5초 카운트다운). 실제 AdSense/AdMob/IMA 연결 시
+//   window.AdProvider = { showRewarded({ onReward, onClose, onError }) {} } 만 정의하면 즉시 사용.
+// =========================
+const Ads = {
+    isAvailable() {
+        return true; // 어댑터가 없을 때도 시뮬레이션으로 항상 사용 가능
+    },
+    showRewarded({ onReward, onClose, onError }) {
+        if (typeof window !== "undefined" && window.AdProvider && typeof window.AdProvider.showRewarded === "function") {
+            try {
+                Analytics.track("ad_request", { provider: "external" });
+                return window.AdProvider.showRewarded({
+                    onReward: () => { Analytics.track("ad_rewarded", { provider: "external" }); onReward && onReward(); },
+                    onClose:  () => { Analytics.track("ad_closed",   { provider: "external" }); onClose  && onClose(); },
+                    onError:  (e) => { Analytics.track("ad_error",   { provider: "external", message: String(e) }); onError && onError(e); },
+                });
+            } catch (e) {
+                Analytics.track("ad_error", { provider: "external", message: String(e) });
+                onError && onError(e);
+                return;
+            }
+        }
+        // 빌트인 시뮬레이션 광고
+        Analytics.track("ad_request", { provider: "sim" });
+        runSimulatedRewardedAd({
+            durationSec: REVIVE_AD_DURATION_SEC,
+            onReward: () => { Analytics.track("ad_rewarded", { provider: "sim" }); onReward && onReward(); },
+            onClose:  () => { Analytics.track("ad_closed",   { provider: "sim" }); onClose  && onClose(); },
+        });
+    },
+};
 
 // 학습 도구 헬퍼
 function addWrongId(baseId) {
@@ -12144,6 +12228,7 @@ function resetStateForMode() {
     gameState.streak = 0; gameState.bestStreak = 0; gameState.bossesCleared = 0;
     gameState.correctCount = 0; gameState.wrongCount = 0;
     gameState.partFilter = null;
+    gameState.revivesUsed = 0;
     gameState.narrative = {
         codeBlueFailed: false, vipFailed: false, massFailed: false, savedCodeBlue: false,
         helpedNewbie: false, acceptedThanks: false, sharedMeal: false, ethicsViolation: false,
@@ -12542,6 +12627,7 @@ function initSurvival() {
     resetStateForMode(); gameState.mode = "survival"; gameState.quizCategory = null;
     showCoreUI(); UI.logBar.innerHTML = "";
     addLog(t("dutyStart"), "log-important");
+    Analytics.track("survival_start", { shift: gameState.currentShift, difficulty: gameState.difficulty });
     renderSurvivalEvent("intro");
 }
 
@@ -12832,8 +12918,8 @@ function handleSurvivalChoice(choice, ev) {
 
     updateStats();
 
-    if (gameState.hp <= 0) return showGameOver(t("gameOverHpTitle"), t("gameOverHpDesc"));
-    if (gameState.rep < -60) return showGameOver(t("gameOverRepTitle"), t("gameOverRepDesc"));
+    if (gameState.hp <= 0) return tryReviveOrGameOver("hp", t("gameOverHpTitle"), t("gameOverHpDesc"));
+    if (gameState.rep < -60) return tryReviveOrGameOver("rep", t("gameOverRepTitle"), t("gameOverRepDesc"));
     if (gameState.eventCount >= MAX_PROGRESS_EVENTS) {
         const ending = decideEnding();
         let desc = ending.desc + `\n\n${t("accuracyLabel")}: ${gameState.correctCount}/${gameState.correctCount + gameState.wrongCount} (${ending.accuracy}%) · ${t("bestCombo")} ${gameState.bestStreak} · ${t("metaBoss")} ${gameState.bossesCleared}/3`;
@@ -13013,6 +13099,177 @@ function handleQuizChoice(choice, ev) {
 function goNextQuiz() {
     if (gameState.hp <= 0) return showGameOver(t("quizDoneTitle"), t("quizDoneDesc"));
     renderNextQuizQuestion();
+}
+
+// =========================
+// 부활(리워드 광고)
+// =========================
+function canRevive() {
+    return gameState.mode === "survival" && gameState.revivesUsed < MAX_REVIVES_PER_RUN;
+}
+
+// 죽음 직전 분기점: 부활 가능하면 광고 프롬프트, 아니면 게임오버.
+// reason: "hp" | "rep"
+function tryReviveOrGameOver(reason, fallbackTitle, fallbackDesc) {
+    if (!canRevive()) {
+        Analytics.track("game_over", { reason, revived: false, revives_used: gameState.revivesUsed });
+        return showGameOver(fallbackTitle, fallbackDesc);
+    }
+    Analytics.track("revive_prompt_shown", { reason });
+    showRevivePrompt(reason, fallbackTitle, fallbackDesc);
+}
+
+function showRevivePrompt(reason, fallbackTitle, fallbackDesc) {
+    const modal = UI.modal;
+    const descText = reason === "rep" ? t("reviveRepDesc") : t("reviveHpDesc");
+
+    document.getElementById("modal-title").textContent = t("reviveTitle");
+    document.getElementById("modal-desc").textContent = descText;
+
+    document.getElementById("modal-stats").innerHTML = `
+      <div style="display:flex; flex-direction:column; gap:12px; align-items:center;">
+        <div style="font-size:0.95rem; line-height:1.6;">
+          ${t("finalHp")}: <span class="highlight">${clamp(gameState.hp, 0, 100)}</span> ·
+          ${t("finalRep")}: <span class="highlight">${gameState.rep}</span><br>
+          ${t("correctLabel")} <span class="highlight">${gameState.correctCount}</span> /
+          ${t("wrongLabel")} <span class="highlight">${gameState.wrongCount}</span>
+        </div>
+        <button id="revive-watch-btn" class="choice-btn primary" style="max-width:360px; width:100%;">${t("reviveWatchBtn")}</button>
+        <button id="revive-skip-btn" class="choice-btn ghost center" style="max-width:360px; width:100%;">${t("reviveSkipBtn")}</button>
+      </div>
+    `;
+
+    // 기존 게임오버 UI 요소들은 숨김
+    const promoTitle = document.getElementById("modal-promo-title");
+    const homeBtn = document.getElementById("modal-home-btn");
+    const quizPanel = modal.querySelector(".quiz-panel");
+    const modalHr = modal.querySelector("hr");
+    if (promoTitle) promoTitle.style.display = "none";
+    if (quizPanel) quizPanel.style.display = "none";
+    if (modalHr) modalHr.style.display = "none";
+    if (homeBtn) homeBtn.style.display = "none";
+
+    modal.classList.add("active");
+
+    document.getElementById("revive-watch-btn").onclick = () => {
+        Analytics.track("revive_ad_started", { reason });
+        Ads.showRewarded({
+            onReward: () => {
+                gameState.revivesUsed += 1;
+                gameState.hp = clamp(REVIVE_HP_RESTORE, 0, 100);
+                if (gameState.rep < REVIVE_REP_RESTORE_FLOOR) gameState.rep = REVIVE_REP_RESTORE_FLOOR;
+                gameState.rep += REVIVE_REP_BONUS;
+                gameState.streak = 0;
+                Analytics.track("revive_success", { reason, hp: gameState.hp, rep: gameState.rep });
+                addLog(t("reviveLogRecover"), "log-important");
+                updateStats();
+                // 모달 닫고 다음 서바이벌 이벤트로 진행
+                restoreGameOverModalUI();
+                modal.classList.remove("active");
+                renderSurvivalEvent("random_hub");
+            },
+            onClose: () => {
+                // 보상 없이 닫힌 경우 → 게임오버
+                Analytics.track("revive_ad_closed_no_reward", { reason });
+                restoreGameOverModalUI();
+                modal.classList.remove("active");
+                showGameOver(fallbackTitle, fallbackDesc);
+            },
+            onError: () => {
+                Analytics.track("revive_ad_error", { reason });
+                showToast(t("reviveAdFail"));
+            },
+        });
+    };
+
+    document.getElementById("revive-skip-btn").onclick = () => {
+        Analytics.track("revive_declined", { reason });
+        restoreGameOverModalUI();
+        modal.classList.remove("active");
+        showGameOver(fallbackTitle, fallbackDesc);
+    };
+}
+
+// showGameOver는 기존 DOM 구조를 그대로 사용하므로 부활 프롬프트가 숨긴 요소들을 복원
+function restoreGameOverModalUI() {
+    const modal = UI.modal;
+    const promoTitle = document.getElementById("modal-promo-title");
+    const homeBtn = document.getElementById("modal-home-btn");
+    const quizPanel = modal.querySelector(".quiz-panel");
+    const modalHr = modal.querySelector("hr");
+    if (promoTitle) promoTitle.style.display = "";
+    if (quizPanel) quizPanel.style.display = "";
+    if (modalHr) modalHr.style.display = "";
+    if (homeBtn) homeBtn.style.display = "";
+}
+
+// 빌트인 시뮬레이션 광고: 5초 카운트다운 + 보상 버튼
+function runSimulatedRewardedAd({ durationSec, onReward, onClose }) {
+    let secondsLeft = durationSec;
+    let timer = null;
+    let rewarded = false;
+
+    const overlay = document.createElement("div");
+    overlay.id = "revive-ad-overlay";
+    overlay.style.cssText = `
+      position: fixed; inset: 0; background: rgba(15, 23, 42, 0.92);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      z-index: 4000; padding: 24px; color: #fff; text-align: center;
+    `;
+    overlay.innerHTML = `
+      <div style="background:#1e293b; padding:28px 22px; border-radius:18px; max-width:380px; width:100%; box-shadow:0 24px 48px rgba(0,0,0,0.35);">
+        <div style="font-size:0.72rem; letter-spacing:0.12em; text-transform:uppercase; color:#94a3b8; margin-bottom:8px;">Ad</div>
+        <div style="font-size:1.05rem; font-weight:700; margin-bottom:14px;" id="revive-ad-status">${t("reviveAdPlaying")}</div>
+        <div style="font-size:3.2rem; font-weight:800; color:#7fa881; line-height:1; margin:14px 0;" id="revive-ad-countdown">${secondsLeft}</div>
+        <div style="font-size:0.85rem; color:#cbd5e1; margin-bottom:18px;"><span id="revive-ad-suffix">${secondsLeft}${t("reviveAdSkipIn")}</span></div>
+        <div style="background:#0f172a; border-radius:12px; padding:18px; margin-bottom:18px; font-size:0.9rem; color:#94a3b8; line-height:1.6;">
+          🎯 Sponsored placeholder<br><span style="font-size:0.8rem;">(실 광고 SDK는 AdProvider 어댑터로 교체)</span>
+        </div>
+        <button id="revive-ad-close" class="choice-btn ghost center" style="background:#334155; color:#e2e8f0; width:100%;" disabled>—</button>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    const countdownEl = overlay.querySelector("#revive-ad-countdown");
+    const suffixEl = overlay.querySelector("#revive-ad-suffix");
+    const closeBtn = overlay.querySelector("#revive-ad-close");
+    const statusEl = overlay.querySelector("#revive-ad-status");
+
+    function cleanup() {
+        if (timer) clearInterval(timer);
+        overlay.remove();
+    }
+
+    function finishReward() {
+        rewarded = true;
+        statusEl.textContent = t("reviveAdDone");
+        countdownEl.textContent = "✓";
+        suffixEl.textContent = "";
+        closeBtn.disabled = false;
+        closeBtn.textContent = loc("보상 받기", "Claim Reward");
+        closeBtn.style.background = "var(--sage)";
+        closeBtn.style.color = "#fff";
+        closeBtn.onclick = () => { cleanup(); onReward && onReward(); };
+    }
+
+    timer = setInterval(() => {
+        secondsLeft -= 1;
+        if (secondsLeft <= 0) {
+            clearInterval(timer); timer = null;
+            finishReward();
+        } else {
+            countdownEl.textContent = secondsLeft;
+            suffixEl.textContent = `${secondsLeft}${t("reviveAdSkipIn")}`;
+        }
+    }, 1000);
+
+    // 사용자가 esc/뒤로 시도 시 → 보상 없이 닫기
+    overlay.addEventListener("click", (e) => {
+        if (e.target === overlay && !rewarded) {
+            cleanup();
+            onClose && onClose();
+        }
+    });
 }
 
 // =========================
