@@ -1,16 +1,13 @@
 {
   "name": "nurse-simulator",
-  "version": "1.0.0",
-  "description": "",
-  "main": "main.js",
+  "version": "4.6.8",
+  "description": "Bilingual KO/EN nursing study PWA — 1173 randomized questions (195 SVG image-based) with real-world bedside clinical scenarios, SRS Leitner, narrative survival mode, soft neumorphic UI.",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "npx --yes http-server -p 8000 -c-1 .",
+    "serve": "npx --yes http-server -p 8000 -c-1 .",
+    "test": "node -c script.js && echo Syntax OK",
+    "release": "node scripts/bump-version.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "devDependencies": {
-    "electron": "^41.3.0"
-  }
+  "license": "Educational use only",
+  "private": true
 }
