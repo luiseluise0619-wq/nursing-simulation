@@ -12329,7 +12329,7 @@ const flavorEvents = [
         { text: loc("수액부터 우선 달고 사정은 나중에","Hang IV fluids first, assess later"), effect: { hp: -10, rep: -6 }, log: loc("사정 없는 처치는 위험합니다.","Treating without assessment is dangerous.") },
         { text: loc("보호자에게 노트 작성을 부탁한다","Ask the guardian to take notes for you"), effect: { hp: -3, rep: -15 }, log: loc("보호자가 황당해합니다.","The guardian is dumbfounded.") }
     ]) }),
-    () => ({ baseId: "drMad", categoryKey: "flavor", part: loc("팀워크","Teamwork"), emoji: "🥼", title: loc("의사의 짜증","Doctor's Frustration"), desc: loc("주치의가 \"왜 처방 안 받았어?\"라며 짜증을 냅니다. 처방창은 아직 열려있지 않았습니다.","The attending snaps, \"Why isn't the order in?\" — but the order entry is still empty."), choices: shuffle([
+    () => ({ baseId: "drMad", categoryKey: "flavor", part: loc("팀워크","Teamwork"), emoji: "🥼", title: loc("의사의 짜증","Doctor's Frustration"), desc: loc("최재호 선생이 모니터를 노려봅니다. \"처방 왜 안 들어갔어요? 30분째예요.\"","Dr. Choi glares at the monitor. \"Why aren't the orders in? It's been thirty minutes.\""), choices: shuffle([
         { text: loc("\"방금 확인했는데 아직 미입력 상태입니다\"라고 사실대로 말한다","Honestly say, \"I just checked — it's still not entered\""), effect: { hp: -3, rep: 11 }, log: loc("정직이 통했습니다.","Honesty worked.") },
         { text: loc("\"확인하겠습니다\"라며 빠르게 처방을 다시 확인한다","Say, \"Let me verify\" and quickly recheck the orders"), effect: { hp: -5, rep: 6 }, log: loc("프로다운 응대였습니다.","A professional response.") },
         { text: loc("\"죄송합니다\"만 반복한다","Just repeat \"I'm sorry\""), effect: { hp: -10, rep: -3 }, log: loc("문제가 해결되지 않았습니다.","Nothing is resolved.") },
@@ -12341,7 +12341,7 @@ const flavorEvents = [
         { text: loc("\"누우세요\"라고 멀리서 외친다","Shout \"Lie down!\" from a distance"), effect: { hp: -16, rep: -14 }, log: loc("환자가 미끄러졌습니다.","The patient slipped.") },
         { text: loc("차팅 중이라 잠시 후에 가본다","You're charting — check on them later"), effect: { hp: -22, rep: -22 }, log: loc("낙상 사고가 발생했습니다.","A fall occurred.") }
     ]) }),
-    () => ({ baseId: "snack", categoryKey: "flavor", part: loc("휴식","Break"), emoji: "🍙", title: loc("동료의 야식","Coworker's Late-Night Snack"), desc: loc("동료가 컵라면과 김밥을 사왔습니다. \"같이 먹자\"고 권합니다.","A coworker brought instant noodles and gimbap. \"Eat with me!\" they say."), choices: shuffle([
+    () => ({ baseId: "snack", categoryKey: "flavor", part: loc("휴식","Break"), emoji: "🍙", title: loc("동료의 야식","Coworker's Late-Night Snack"), desc: loc("수영이가 컵라면 두 개를 들고 옵니다. \"5분만. 앉아.\"","Soo-young appears with two cup noodles. \"Five minutes. Sit down.\""), choices: shuffle([
         { text: loc("5분만 빠르게 먹고 일어선다","Eat quickly for 5 minutes and get back up"), effect: { hp: 18, rep: 1 }, log: loc("체력이 회복됐습니다.","HP recovered.") },
         { text: loc("고맙다고만 하고 일에 집중한다","Just thank them and focus on work"), effect: { hp: -3, rep: 5 }, log: loc("의지력이 빛났습니다.","Willpower shines.") },
         { text: loc("한 그릇 더 먹고 잠시 쉰다","Eat another bowl and rest a bit"), effect: { hp: 10, rep: -5 }, log: loc("포만감에 집중력이 흐려집니다.","Fullness blurs your focus.") },
@@ -12359,19 +12359,19 @@ const flavorEvents = [
         { text: loc("참고 호출부터 응답한다","Hold it and answer the calls first"), effect: { hp: -16, rep: 7 }, log: loc("방광염 위험이 커졌습니다.","Cystitis risk rises.") },
         { text: loc("둘 다 동시에 응답한다며 우왕좌왕","Try to answer both at once and fumble"), effect: { hp: -10, rep: -8 }, log: loc("대응이 늦어 환자가 불만을 토로했습니다.","Delayed response — patients complain.") }
     ]) }),
-    () => ({ baseId: "chargeNurse", categoryKey: "flavor", part: loc("보고","Reporting"), emoji: "📞", title: loc("차지널스 콜","Charge Nurse Call"), desc: loc("차지널스가 \"환자 상태 1분 안에 정리해서 보고해\"라고 말합니다.","Charge nurse says, \"Brief me on the patient in one minute.\""), choices: shuffle([
+    () => ({ baseId: "chargeNurse", categoryKey: "flavor", part: loc("보고","Reporting"), emoji: "📞", title: loc("차지널스 콜","Charge Nurse Call"), desc: loc("한 수간호사가 시계를 봅니다. \"1분. 305호부터 브리핑해.\"","Charge nurse Han glances at the clock. \"One minute. Start with Room 305.\""), choices: shuffle([
         { text: loc("SBAR 형식으로 핵심만 보고한다","Report the essentials in SBAR format"), effect: { hp: -3, rep: 14 }, log: loc("표준 보고가 빛났습니다.","Standard reporting shines.") },
         { text: loc("활력징후 위주로 간단히 보고한다","Quick report focused on vital signs"), effect: { hp: -2, rep: 7 }, log: loc("무난한 보고였습니다.","An adequate report.") },
         { text: loc("잘 모르겠다고 회피한다","Dodge with \"I'm not sure\""), effect: { hp: -10, rep: -16 }, log: loc("실력 부족이 드러났습니다.","Your weakness is exposed.") },
         { text: loc("감정과 잡담까지 길게 늘어놓는다","Ramble with emotions and small talk"), effect: { hp: -8, rep: -6 }, log: loc("시간 낭비라는 평가입니다.","Considered a waste of time.") }
     ]) }),
-    () => ({ baseId: "thankyou", categoryKey: "flavor", part: loc("행운","Lucky Moment"), emoji: "💌", title: loc("감사 카드","Thank-You Card"), desc: loc("퇴원하는 환자가 손편지를 건네며 \"덕분에 살았어요\"라고 인사합니다.","A discharging patient hands you a handwritten note: \"You saved my life.\""), choices: shuffle([
+    () => ({ baseId: "thankyou", categoryKey: "flavor", part: loc("행운","Lucky Moment"), emoji: "💌", title: loc("감사 카드","Thank-You Card"), desc: loc("스테이션에 손편지가 놓여 있습니다. \"305호 어머니 가족입니다. 핸드크림은 미정이가 골랐어요.\"","A handwritten card on the station. \"From Room 305's family. Mi-jung picked out the hand cream.\""), choices: shuffle([
         { text: loc("감사한 마음으로 인사받는다","Receive their thanks gratefully"), effect: { hp: 10, rep: 18 }, log: loc("마음이 따뜻해집니다. 보람이 누적됐습니다.","Your heart warms. Fulfillment accumulates.") },
         { text: loc("겸손하게 의사 덕분이라고 돌린다","Humbly credit the doctor"), effect: { hp: 6, rep: 8 }, log: loc("겸양이 인정받았습니다.","Humility is appreciated.") },
         { text: loc("어색해서 카드를 받지 않는다","Decline the card awkwardly"), effect: { hp: -2, rep: -4 }, log: loc("환자가 머쓱해합니다.","The patient feels embarrassed.") },
         { text: loc("바쁘다며 자리를 피한다","Slip away saying you're busy"), effect: { hp: -4, rep: -8 }, log: loc("감사 표현을 외면했습니다.","You turned away from gratitude.") }
     ]) }),
-    () => ({ baseId: "newbie", categoryKey: "flavor", part: loc("선임 멘토링","Senior Mentoring"), emoji: "👶", title: loc("신규 간호사 도움 요청","New Grad Asking for Help"), desc: loc("신규 간호사가 IV 카테터를 3번 실패하고 울 것 같은 표정으로 도움을 청합니다.","A new grad has missed the IV three times and asks for help, near tears."), choices: shuffle([
+    () => ({ baseId: "newbie", categoryKey: "flavor", part: loc("선임 멘토링","Senior Mentoring"), emoji: "👶", title: loc("신규 간호사 도움 요청","New Grad Asking for Help"), desc: loc("지원이가 또 IV를 세 번 실패했습니다. \"선생님... 한 번만 더 봐주세요.\" 손이 떨립니다.","Ji-won missed the IV three times again. \"Sunbae... watch me one more time.\" Her hands won't stop shaking."), choices: shuffle([
         { text: loc("함께 가서 시범을 보이며 천천히 가르친다","Go together, demonstrate, and teach slowly"), effect: { hp: -5, rep: 16 }, log: loc("후배가 자신감을 얻었습니다.","Junior gains confidence.") },
         { text: loc("\"내가 대신 해줄게\" 하고 직접 처치한다","Say \"I'll do it for you\" and handle it yourself"), effect: { hp: -4, rep: 4 }, log: loc("당장은 해결됐지만 성장 기회를 뺏었습니다.","Solves the moment but steals their growth.") },
         { text: loc("\"환자에게 IV팀 부르자\"고 안내하며 함께 도움 요청","Say \"Let's call the IV team\" and help them request specialist support"), effect: { hp: -3, rep: 12 }, log: loc("적절한 자원 활용을 안내했습니다.","You modeled appropriate resource use.") },
@@ -12421,13 +12421,13 @@ const flavorEvents = [
         { text: loc("드레싱만 하고 PEP 결정은 다음 주에","Just bandage; decide on PEP next week"), effect: { hp: -25, rep: -18 }, log: loc("PEP은 가능한 빨리 시작해야 합니다(이상적: 2시간 내).","PEP must start ASAP — ideally within 2 hours.") }
     ]) }),
     // ===== 신규 12개 일상 이벤트 =====
-    () => ({ baseId: "longStayDC", categoryKey: "flavor", part: loc("퇴원 순간","Discharge Moment"), emoji: "🎉", title: loc("3개월 만의 퇴원","Discharge After 3 Months"), desc: loc("3개월 입원했던 환자가 휠체어에서 일어나 직접 걸어 퇴원합니다. 가족이 박수를 칩니다.","A patient who was admitted for 3 months stands from the wheelchair and walks out. Family applauds."), choices: shuffle([
+    () => ({ baseId: "longStayDC", categoryKey: "flavor", part: loc("퇴원 순간","Discharge Moment"), emoji: "🎉", title: loc("3개월 만의 퇴원","Discharge After 3 Months"), desc: loc("305호 김순자 할머니가 휠체어에서 손을 흔듭니다. 따님이 눈물을 훔칩니다. \"우리 딸, 고마워요.\"","Grandma Kim in 305 waves from her wheelchair. Her daughter wipes her eyes. \"Thank you, my dear.\""), choices: shuffle([
         { text: loc("환자·가족과 함께 기뻐하고 따뜻하게 배웅","Celebrate with patient/family and offer a warm sendoff"), effect: { hp: 15, rep: 18 }, log: loc("이 순간이 간호의 보람입니다.","This is why we do this work.") },
         { text: loc("형식적인 작별 인사만 한다","Give a perfunctory goodbye"), effect: { hp: -3, rep: -4 }, log: loc("기회를 놓쳤습니다.","A missed moment.") },
         { text: loc("바쁘다며 자리를 피한다","Slip away citing busyness"), effect: { hp: -8, rep: -10 }, log: loc("환자가 섭섭해합니다.","The patient feels let down.") },
         { text: loc("퇴원 교육 자료만 건네고 끝","Hand over discharge papers only"), effect: { hp: -2, rep: 2 }, log: loc("필요한 일은 했지만 마음은 못 전했습니다.","Did the task but missed the moment.") }
     ]) }),
-    () => ({ baseId: "coworkerPregnancy", categoryKey: "flavor", part: loc("동료 소식","Coworker News"), emoji: "🤰", title: loc("동료의 임신 소식","Coworker's Pregnancy"), desc: loc("동료가 \"저 임신 12주예요\"라고 조용히 알려옵니다. 그동안 아침마다 화장실로 뛰어가던 게 이해됩니다.","A coworker quietly says, \"I'm 12 weeks pregnant.\" Suddenly the morning bathroom dashes make sense."), choices: shuffle([
+    () => ({ baseId: "coworkerPregnancy", categoryKey: "flavor", part: loc("동료 소식","Coworker News"), emoji: "🤰", title: loc("동료의 임신 소식","Coworker's Pregnancy"), desc: loc("수영이가 탈의실에서 조용히 속삭입니다. \"12주차야. 아직 아무한테도 말 안 했어.\"","In the locker room, Soo-young whispers it: \"Twelve weeks. You're the first to know.\""), choices: shuffle([
         { text: loc("축하하고 무거운 환자 이동·방사선 노출 업무를 자청해서 분담","Congratulate and offer to take heavy lifting/radiation duties"), effect: { hp: -3, rep: 16 }, log: loc("팀 분위기가 따뜻해졌습니다.","Team warmth grows.") },
         { text: loc("축하만 하고 평소대로 분담","Just congratulate; keep normal assignments"), effect: { hp: 0, rep: 4 }, log: loc("좋지만 적극적 배려는 부족.","Nice, but not proactive.") },
         { text: loc("\"이번 분기에 시간을 잘 빼시네요\"라고 농담","Joke \"Convenient timing this quarter\""), effect: { hp: -10, rep: -14 }, log: loc("심한 농담입니다.","Crossed a line.") },
@@ -12457,7 +12457,7 @@ const flavorEvents = [
         { text: loc("이유 없이 단호하게 거절","Bluntly refuse without explanation"), effect: { hp: 2, rep: -14 }, log: loc("팀워크가 손상.","Damages teamwork.") },
         { text: loc("\"내가 왜?\"라며 화를 낸다","Snap \"Why me?\""), effect: { hp: -8, rep: -22 }, log: loc("관계가 깨집니다.","Relationship broken.") }
     ]) }),
-    () => ({ baseId: "preceptee", categoryKey: "flavor", part: loc("프리셉티 평가","Preceptee Evaluation"), emoji: "📝", title: loc("프리셉티 평가","Evaluation Time"), desc: loc("당신이 가르치고 있는 신규 간호사가 발전 속도가 느립니다. 분기 평가 시간이 다가옵니다.","The new grad you're precepting is slow to progress. Quarterly review is coming up."), choices: shuffle([
+    () => ({ baseId: "preceptee", categoryKey: "flavor", part: loc("프리셉티 평가","Preceptee Evaluation"), emoji: "📝", title: loc("프리셉티 평가","Evaluation Time"), desc: loc("분기 평가서에 박지원 이름이 떠 있습니다. 느리지만, 노트 한 권을 가득 채운 신규입니다.","Ji-won Park's name sits at the top of the quarterly review. Slow hands. A notebook filled cover to cover."), choices: shuffle([
         { text: loc("구체적 사례·수치로 강점·약점·개선 계획을 함께 작성","Co-write strengths/weaknesses/improvement plan with specific examples"), effect: { hp: -4, rep: 18 }, log: loc("객관적이고 발전적인 평가.","Objective and growth-oriented.") },
         { text: loc("\"잘 하고 있다\"고 일반적으로 칭찬만","Generic praise: \"You're doing fine\""), effect: { hp: 0, rep: -8 }, log: loc("발전 기회를 뺏습니다.","Robs them of growth.") },
         { text: loc("불만을 다른 동료들에게 토로","Complain about them to other coworkers"), effect: { hp: -8, rep: -22 }, log: loc("뒷담화는 직장 내 괴롭힘.","Workplace gossip is bullying.") },
@@ -12554,7 +12554,7 @@ const flavorEvents = [
         { text: loc("\"인턴은 자고 있다\"고 단톡 공유","Post in chat about it"), effect: { hp: -22, rep: -28 }, log: loc("부적절.","Inappropriate.") },
         { text: loc("사진 찍어 SNS","Take photo for SNS"), effect: { hp: -38, rep: -38 }, log: loc("심각한 윤리 위반.","Serious ethics violation.") }
     ]) }),
-    () => ({ baseId: "thankCoworker", categoryKey: "flavor", part: loc("따뜻한 순간","Heartwarming Moment"), emoji: "☕", title: loc("동료의 따뜻한 커피","Coworker's Coffee"), desc: loc("힘든 한 밤을 보낸 당신에게 동료가 \"이거 마셔, 살 거야\"하며 따뜻한 커피를 건넵니다.","After a brutal night, a coworker hands you hot coffee: \"You'll live. Drink up.\""), choices: shuffle([
+    () => ({ baseId: "thankCoworker", categoryKey: "flavor", part: loc("따뜻한 순간","Heartwarming Moment"), emoji: "☕", title: loc("동료의 따뜻한 커피","Coworker's Coffee"), desc: loc("새벽 4시. 수영이가 따뜻한 커피를 책상에 올려둡니다. 아무 말 없이.","4 a.m. Soo-young sets a hot coffee on your desk. Doesn't say a word."), choices: shuffle([
         { text: loc("진심으로 감사하고 다음 번엔 내가 사기로 약속","Thank them genuinely + promise to return the favor"), effect: { hp: 12, rep: 14 }, log: loc("팀워크의 작은 순환.","Teamwork's quiet rhythm.") },
         { text: loc("그냥 받고 끝","Just take it"), effect: { hp: 4, rep: 0 }, log: loc("나쁘진 않지만...","Not bad but...") },
         { text: loc("\"왜 갑자기?\"라며 의심","\"Why so suddenly?\" — suspicious"), effect: { hp: -3, rep: -8 }, log: loc("선의를 의심한 것 미안.","Mistrusting kindness stings.") },
