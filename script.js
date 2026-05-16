@@ -131,6 +131,9 @@ const Storage = {
             wrongQueue: Array.isArray(raw.wrongQueue) ? raw.wrongQueue.filter(e => e && typeof e === "object" && Array.isArray(e.choices)) : [],
             bestCombo: Number.isFinite(raw.bestCombo) ? raw.bestCombo : 0,
             mockBest: Number.isFinite(raw.mockBest) ? raw.mockBest : 0,
+            handoffBest: Number.isFinite(raw.handoffBest) ? raw.handoffBest : 0,
+            triageBest: Number.isFinite(raw.triageBest) ? raw.triageBest : 0,
+            scenarios: (raw.scenarios && typeof raw.scenarios === "object" && !Array.isArray(raw.scenarios)) ? raw.scenarios : {},
             daily: (raw.daily && typeof raw.daily === "object") ? raw.daily : {},
             history: Array.isArray(raw.history) ? raw.history : [],
         };
@@ -522,7 +525,8 @@ function renderSurvivalEvent(eventId) {
 function applyChoiceEffect(choice) {
     if (!choice.effect) return;
     let hpDelta = choice.effect.hp || 0;
-    if (hpDelta < 0) hpDelta = Math.round(hpDelta * gameState.difficulty);
+    // 시나리오 모드는 큐레이팅된 HP 손실/회복을 그대로 적용 (shift 가중치 미적용)
+    if (hpDelta < 0 && gameState.mode !== "scenario") hpDelta = Math.round(hpDelta * gameState.difficulty);
     gameState.hp = clamp(gameState.hp + hpDelta, 0, 100);
     gameState.rep += choice.effect.rep || 0;
     if (choice.effect.item) gameState.items.push(choice.effect.item);
@@ -1185,11 +1189,27 @@ function endScenario(failReason) {
 // =========================================================================
 // PDF/인쇄 (오답노트 + 대시보드)
 // =========================================================================
-function printWrongQueue() {
-    const queue = Storage.getWrongQueue();
+// 잔여 print-only 영역을 정리하고 새 영역 추가 + 인쇄 미리보기 종료 후 제거
+function preparePrintArea() {
+    document.querySelectorAll(".print-only").forEach(n => n.remove());
     const area = document.createElement("div");
     area.className = "print-only";
-    area.id = "active-print-area";
+    return area;
+}
+function triggerPrint(area) {
+    document.body.appendChild(area);
+    const cleanup = () => area.remove();
+    // Chrome/Safari 는 print() 가 비동기 미리보기로 즉시 반환 — afterprint 후 제거해야 빈 페이지 방지
+    if (typeof window !== "undefined" && typeof window.addEventListener === "function") {
+        window.addEventListener("afterprint", cleanup, { once: true });
+    }
+    try { window.print(); }
+    catch { cleanup(); }
+}
+
+function printWrongQueue() {
+    const queue = Storage.getWrongQueue();
+    const area = preparePrintArea();
     let html = `<h1>오답노트 — ${todayKey()}</h1><p>총 ${queue.length}건</p>`;
     queue.forEach((q, i) => {
         const correct = (q.choices || []).find(c => c.correct);
@@ -1204,16 +1224,13 @@ function printWrongQueue() {
             </div>`;
     });
     area.innerHTML = html;
-    document.body.appendChild(area);
-    try { window.print(); } finally { setTimeout(() => area.remove(), 0); }
+    triggerPrint(area);
 }
 
 function printDashboard() {
     const stats = Storage.getStats();
     const data = Storage.load();
-    const area = document.createElement("div");
-    area.className = "print-only";
-    area.id = "active-print-area";
+    const area = preparePrintArea();
     let html = `<h1>학습 대시보드 — ${todayKey()}</h1>`;
     html += `<table class="print-stats"><thead><tr><th>과목</th><th>풀이</th><th>정답</th><th>정답률</th></tr></thead><tbody>`;
     CATEGORIES.forEach(cat => {
@@ -1224,8 +1241,7 @@ function printDashboard() {
     html += `</tbody></table>`;
     html += `<p>최고 콤보 ${data.bestCombo} · 모의고사 최고점 ${data.mockBest} · 인계 ${data.handoffBest || 0}% · 트리아지 ${data.triageBest || 0}% · 오답 ${data.wrongQueue.length}건</p>`;
     area.innerHTML = html;
-    document.body.appendChild(area);
-    try { window.print(); } finally { setTimeout(() => area.remove(), 0); }
+    triggerPrint(area);
 }
 
 // =========================================================================

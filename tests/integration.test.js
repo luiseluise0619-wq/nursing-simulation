@@ -222,6 +222,34 @@ describe("Storage 스키마 검증", () => {
         loadScript();
         expect(document.querySelector('[data-action="initSurvival"]')).not.toBeNull();
     });
+
+    test("scenarios/handoffBest/triageBest 가 저장 후 재로드시 보존된다 (Storage.validate 회귀)", () => {
+        // 시나리오 결과를 흉내내어 직접 기록
+        const seed = {
+            settings: { theme: "auto", sound: true },
+            stats: {},
+            wrongQueue: [],
+            bestCombo: 5,
+            mockBest: 10,
+            handoffBest: 80,
+            triageBest: 60,
+            scenarios: { "sc-mi": { bestHp: 75, bestRep: 30, completed: true } },
+            daily: {},
+            history: [],
+        };
+        localStorage.setItem("nurseSim:v1", JSON.stringify(seed));
+        loadScript();
+        // 시나리오 메뉴를 다시 열어 보존 여부 확인 (data.scenarios[id] 가 undefined 면 crash)
+        expect(() => {
+            document.querySelector('[data-action="renderScenarioMenu"]').click();
+        }).not.toThrow();
+        // 대시보드도 신규 필드를 표시
+        document.querySelector('[data-action="returnToMenu"]').click();
+        document.querySelector('[data-action="renderDashboard"]').click();
+        const body = document.body.textContent;
+        expect(body).toMatch(/인계.*?80/);
+        expect(body).toMatch(/트리아지.*?60/);
+    });
 });
 
 describe("ESC 키로 모달 닫기", () => {
@@ -366,6 +394,24 @@ describe("임상 시나리오", () => {
         const hp = parseInt(document.getElementById("hp").textContent, 10);
         expect(hp).toBeGreaterThan(0);
     });
+
+    test("Night 시프트(난이도 1.5x) 가 시나리오 HP 손실을 증폭하지 않는다", () => {
+        loadScript();
+        // 메인 메뉴에서 Night 시프트 선택 → 난이도 1.5 설정
+        document.querySelector('[data-shift="Night"]').click();
+        document.querySelector('[data-action="renderScenarioMenu"]').click();
+        document.querySelector('[data-action="startScenario"]').click();
+        const C = require("../content.js");
+        const wrongChoice = C.SCENARIOS[0].steps[0].choices.find(c => !c.correct && c.hp < 0);
+        const btns = [...document.querySelectorAll("#choice-list .choice-btn")];
+        const wrongBtn = btns.find(b => b.textContent.includes(wrongChoice.text.slice(0, 10)));
+        expect(wrongBtn).toBeDefined();
+        wrongBtn.click();
+        const hpAfter = parseInt(document.getElementById("hp").textContent, 10);
+        // hp 손실은 라운드되지 않은 원본 값과 동일해야 함 (100 + wrongChoice.hp)
+        const expected = 100 + wrongChoice.hp;
+        expect(hpAfter).toBe(expected);
+    });
 });
 
 describe("PDF/인쇄", () => {
@@ -381,6 +427,16 @@ describe("PDF/인쇄", () => {
         document.querySelector('[data-action="renderDashboard"]').click();
         document.querySelector('[data-action="printDashboard"]').click();
         expect(window.print).toHaveBeenCalled();
+    });
+
+    test("연속 인쇄 호출 시 print-only 영역이 중복 누적되지 않는다", () => {
+        loadScript();
+        document.querySelector('[data-action="renderDashboard"]').click();
+        document.querySelector('[data-action="printWrongQueue"]').click();
+        document.querySelector('[data-action="printWrongQueue"]').click();
+        document.querySelector('[data-action="printDashboard"]').click();
+        // afterprint 이벤트가 발생하지 않은 jsdom 에서도 마지막 1개만 남아야 함
+        expect(document.querySelectorAll(".print-only").length).toBe(1);
     });
 });
 
