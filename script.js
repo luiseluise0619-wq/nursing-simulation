@@ -1327,6 +1327,8 @@ function returnToMenu() {
         });
     }
     if (gameState.mockTimerId) { clearInterval(gameState.mockTimerId); gameState.mockTimerId = null; }
+    // 인계 시뮬레이터 등 TTS 재생을 메뉴 진입과 동시에 강제 중단
+    if (typeof Speech !== "undefined") Speech.stop();
     if (UI.modal.classList.contains("active")) UI.modal.classList.remove("active");
     resetStateForMode();
     gameState.mode = "menu";
