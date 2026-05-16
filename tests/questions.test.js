@@ -116,3 +116,33 @@ describe("저장소 헬퍼 (스모크)", () => {
         expect(s.dailySeed("2024-01-01")).not.toBe(s.dailySeed("2024-01-02"));
     });
 });
+
+describe("ECG 문제 — 동등한 의미의 보기가 동시에 나타나지 않음", () => {
+    test("정답을 제외한 보기 중에 '제세동' 문구가 들어간 보기가 없다", () => {
+        for (let i = 0; i < 100; i++) {
+            const ev = Q.generateECGQuestion();
+            const correct = ev.choices.find(c => c.correct);
+            const distractors = ev.choices.filter(c => !c.correct);
+            // 정답이 제세동 관련일 때, 다른 보기에는 '제세동' 단어가 나타나선 안 됨
+            if (correct.text.includes("제세동")) {
+                distractors.forEach(d => {
+                    expect(d.text.includes("제세동")).toBe(false);
+                });
+            }
+        }
+    });
+});
+
+describe("일일 챌린지 시드 결정성", () => {
+    const s = require("../script.js");
+    test("같은 날짜 시드는 동일", () => {
+        expect(s.dailySeed("2026-05-16")).toBe(s.dailySeed("2026-05-16"));
+    });
+    test("다른 날짜 시드는 다름", () => {
+        const seeds = new Set();
+        for (let m = 1; m <= 12; m++) {
+            seeds.add(s.dailySeed(`2026-${String(m).padStart(2, "0")}-01`));
+        }
+        expect(seeds.size).toBe(12);
+    });
+});

@@ -89,7 +89,7 @@ const Storage = {
             const raw = localStorage.getItem(STORAGE_KEY);
             if (!raw) return Storage.defaults();
             const parsed = JSON.parse(raw);
-            return Object.assign(Storage.defaults(), parsed);
+            return Storage.validate(parsed);
         } catch {
             return Storage.defaults();
         }
@@ -101,14 +101,35 @@ const Storage = {
         const stats = {};
         CATEGORIES.forEach(c => stats[c] = { solved: 0, correct: 0 });
         return {
-            settings: { theme: "light", sound: true },
+            settings: { theme: "auto", sound: true },
             stats,
-            wrongQueue: [],   // [{baseId, snapshot}]
+            wrongQueue: [],
             bestCombo: 0,
             mockBest: 0,
-            daily: {},        // { "YYYY-MM-DD": { solved, correct, completed } }
-            history: [],      // 최근 게임 결과
+            daily: {},
+            history: [],
         };
+    },
+    // localStorage 변조 시 타입을 보정해 무한루프/렌더 오류를 방지
+    validate(raw) {
+        const d = Storage.defaults();
+        if (!raw || typeof raw !== "object") return d;
+        const out = {
+            settings: (raw.settings && typeof raw.settings === "object") ? Object.assign(d.settings, raw.settings) : d.settings,
+            stats: d.stats,
+            wrongQueue: Array.isArray(raw.wrongQueue) ? raw.wrongQueue.filter(e => e && typeof e === "object" && Array.isArray(e.choices)) : [],
+            bestCombo: Number.isFinite(raw.bestCombo) ? raw.bestCombo : 0,
+            mockBest: Number.isFinite(raw.mockBest) ? raw.mockBest : 0,
+            daily: (raw.daily && typeof raw.daily === "object") ? raw.daily : {},
+            history: Array.isArray(raw.history) ? raw.history : [],
+        };
+        if (raw.stats && typeof raw.stats === "object") {
+            CATEGORIES.forEach(c => {
+                const s = raw.stats[c];
+                if (s && Number.isFinite(s.solved) && Number.isFinite(s.correct)) out.stats[c] = { solved: s.solved, correct: s.correct };
+            });
+        }
+        return out;
     },
     incrementStat(category, correct) {
         const data = Storage.load();
@@ -120,6 +141,7 @@ const Storage = {
     addWrong(question) {
         const data = Storage.load();
         const entry = {
+            id: `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
             baseId: question.baseId,
             category: question.category,
             part: question.part,
@@ -131,11 +153,15 @@ const Storage = {
         if (data.wrongQueue.length >= 200) data.wrongQueue.shift();
         data.wrongQueue.push(entry);
         Storage.save(data);
+        return entry.id;
     },
-    removeWrong(index) {
+    removeWrongById(id) {
         const data = Storage.load();
-        data.wrongQueue.splice(index, 1);
-        Storage.save(data);
+        const idx = data.wrongQueue.findIndex(e => e.id === id);
+        if (idx >= 0) {
+            data.wrongQueue.splice(idx, 1);
+            Storage.save(data);
+        }
     },
     clearWrong() {
         const data = Storage.load();
@@ -211,12 +237,20 @@ const Sound = {
 // =========================================================================
 // 테마
 // =========================================================================
+function resolvedTheme(t) {
+    if (t === "auto" || !t) {
+        try { return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"; }
+        catch { return "light"; }
+    }
+    return t === "dark" ? "dark" : "light";
+}
 function applyTheme(theme) {
-    document.documentElement.setAttribute("data-theme", theme);
-    if (UI.themeToggle) UI.themeToggle.textContent = theme === "dark" ? "☀️" : "🌙";
+    const r = resolvedTheme(theme);
+    document.documentElement.setAttribute("data-theme", r);
+    if (UI.themeToggle) UI.themeToggle.textContent = r === "dark" ? "☀️" : "🌙";
 }
 function toggleTheme() {
-    const cur = document.documentElement.getAttribute("data-theme") || "light";
+    const cur = resolvedTheme(Storage.getSettings().theme);
     const next = cur === "dark" ? "light" : "dark";
     applyTheme(next);
     Storage.setSettings({ theme: next });
@@ -259,10 +293,12 @@ function updateStats() {
     else if (gameState.mode === "daily") { value = gameState.dailySolved; total = DAILY_CHALLENGE_TOTAL; label = "일일 챌린지"; }
     else if (gameState.mode === "wrong_review") { value = gameState.quizSolved; total = Math.max(gameState.wrongQueue.length, 1); label = "오답노트"; }
 
-    const progress = Math.min((value / total) * 100, 100);
+    const progressRaw = total > 0 ? (value / total) * 100 : 0;
+    const progress = Math.min(Number.isFinite(progressRaw) ? progressRaw : 0, 100);
     UI.progressFill.style.width = `${progress}%`;
     UI.progressPercent.textContent = `${Math.round(progress)}%`;
     UI.progressText.textContent = label;
+    UI.progressWrap.setAttribute("aria-valuenow", String(Math.round(progress)));
 
     UI.inventory.innerHTML = "";
     const shiftBadge = document.createElement("span");
@@ -347,11 +383,11 @@ function renderSceneCard(ev, options = {}) {
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
         ${tag}${metaRow}
-        <span class="scene-emoji">${ev.emoji || "🩺"}</span>
+        <span class="scene-emoji" aria-hidden="true">${ev.emoji || "🩺"}</span>
         <h2 class="scene-title">${questionIndex !== null ? `[Q${questionIndex}] ` : ""}${escapeHtml(ev.title)}</h2>
         <p class="scene-desc">${escapeHtml(ev.desc)}</p>
-        <div class="choice-list" id="choice-list"></div>
-        <div id="feedback-zone"></div>
+        <div class="choice-list" id="choice-list" role="list"></div>
+        <div id="feedback-zone" aria-live="polite" aria-atomic="true"></div>
       </div>
     `;
 
@@ -406,6 +442,13 @@ function resetStateForMode() {
     gameState.items = []; gameState.quizSolved = 0;
     gameState.quizCorrect = 0; gameState.quizWrong = 0;
     gameState.recentIds = []; gameState.combo = 0;
+    gameState.mockTotal = 0; gameState.mockAnswered = 0; gameState.mockCorrect = 0;
+    gameState.mockDeadlineTs = 0; gameState.mockWrong = [];
+    gameState.dailySeed = 0; gameState.dailyIndex = 0;
+    gameState.dailyCorrect = 0; gameState.dailySolved = 0;
+    gameState.dailyQuestions = null;
+    gameState.wrongQueue = [];
+    gameState.currentWrongId = null;
 }
 function initSurvival() {
     resetStateForMode();
@@ -548,6 +591,7 @@ function handleQuizChoice(choice, ev) {
 function startMockExam() {
     resetStateForMode();
     gameState.mode = "mock";
+    gameState._mockEnded = false;
     gameState.mockTotal = MOCK_EXAM_TOTAL;
     gameState.mockAnswered = 0; gameState.mockCorrect = 0; gameState.mockWrong = [];
     gameState.mockDeadlineTs = Date.now() + MOCK_EXAM_SECONDS * 1000;
@@ -585,6 +629,8 @@ function handleMockChoice(choice, ev) {
     });
 }
 function endMockExam(reason) {
+    if (gameState._mockEnded) return;
+    gameState._mockEnded = true;
     if (gameState.mockTimerId) { clearInterval(gameState.mockTimerId); gameState.mockTimerId = null; }
     const total = gameState.mockTotal;
     const correct = gameState.mockCorrect;
@@ -608,24 +654,53 @@ function endMockExam(reason) {
 }
 
 // =========================================================================
-// 일일 챌린지 (날짜 기반 seeded)
+// 일일 챌린지 (날짜 기반 seeded — 같은 날 같은 generator 시퀀스)
 // =========================================================================
 function dailySeed(dateKey) {
     let h = 2166136261;
     for (let i = 0; i < dateKey.length; i++) { h ^= dateKey.charCodeAt(i); h = (h * 16777619) >>> 0; }
     return h;
 }
+function seededRng(seed) {
+    let a = seed >>> 0;
+    return function () {
+        a = (a + 0x6D2B79F5) >>> 0;
+        let t = a;
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+}
+function pickDailyGenerators(seed, count) {
+    const rng = seededRng(seed);
+    const out = [];
+    const recentlyPicked = [];
+    for (let i = 0; i < count; i++) {
+        let idx;
+        let attempts = 0;
+        do {
+            idx = Math.floor(rng() * NQ.allGenerators.length);
+            attempts++;
+        } while (recentlyPicked.includes(idx) && attempts < 10);
+        recentlyPicked.push(idx);
+        if (recentlyPicked.length > 5) recentlyPicked.shift();
+        out.push(NQ.allGenerators[idx]);
+    }
+    return out;
+}
 function startDailyChallenge() {
     resetStateForMode();
     gameState.mode = "daily";
     gameState.dailySolved = 0; gameState.dailyCorrect = 0;
     gameState.dailySeed = dailySeed(todayKey());
+    gameState.dailyQuestions = pickDailyGenerators(gameState.dailySeed, DAILY_CHALLENGE_TOTAL);
     showCoreUI(); UI.logBar.innerHTML = "";
     addLog(`오늘의 일일 챌린지 — ${DAILY_CHALLENGE_TOTAL}문제`, "log-important");
     renderNextDailyQuestion();
 }
 function renderNextDailyQuestion() {
-    const ev = generateClinicalEventByCategory(null);
+    const gen = gameState.dailyQuestions && gameState.dailyQuestions[gameState.dailySolved];
+    const ev = gen ? gen() : generateClinicalEventByCategory(null);
     renderSceneCard(ev, {
         mode: "daily",
         questionIndex: gameState.dailySolved + 1,
@@ -699,6 +774,7 @@ function renderNextWrongQuestion() {
         return;
     }
     const snap = gameState.wrongQueue[0];
+    gameState.currentWrongId = snap.id;
     const ev = {
         baseId: snap.baseId, category: snap.category, part: snap.part,
         emoji: "📝", title: snap.title, desc: snap.desc,
@@ -712,13 +788,12 @@ function renderNextWrongQuestion() {
 }
 function handleWrongReviewChoice(choice, ev) {
     const isCorrect = isCorrectChoice(choice);
+    const id = gameState.currentWrongId;
     gameState.quizSolved += 1;
     if (isCorrect) {
         gameState.quizCorrect += 1; bumpCombo(); Sound.correct();
         gameState.wrongQueue.shift();
-        const live = Storage.getWrongQueue();
-        const idx = live.findIndex(q => q.baseId === ev.baseId && q.title === ev.title);
-        if (idx >= 0) Storage.removeWrong(idx);
+        if (id) Storage.removeWrongById(id);
     } else {
         gameState.quizWrong += 1; resetCombo(); Sound.wrong();
         const item = gameState.wrongQueue.shift();
@@ -780,6 +855,24 @@ function confirmClearStats() {
 // 메인 메뉴 (returnToMenu)
 // =========================================================================
 function returnToMenu() {
+    // 진행 중인 모의고사 → abort 로 일관 처리 (endMockExam이 history/timer 정리)
+    if (gameState.mode === "mock" && !gameState._mockEnded) {
+        gameState._mockEnded = true;
+        if (gameState.mockTimerId) { clearInterval(gameState.mockTimerId); gameState.mockTimerId = null; }
+        const total = gameState.mockTotal, correct = gameState.mockCorrect, answered = gameState.mockAnswered;
+        const acc = answered > 0 ? Math.round((correct / answered) * 100) : 0;
+        Storage.setMockBest(correct);
+        Storage.addHistory({ mode: "mock", at: Date.now(), total, answered, correct, accuracy: acc, reason: "abort" });
+    }
+    // 일일 챌린지 부분 진행 상태 저장 (메뉴에서 재방문 시 대시보드에 노출)
+    if (gameState.mode === "daily" && gameState.dailySolved > 0 && gameState.dailySolved < DAILY_CHALLENGE_TOTAL) {
+        Storage.setDaily(todayKey(), {
+            solved: gameState.dailySolved,
+            correct: gameState.dailyCorrect,
+            completed: false,
+            ts: Date.now(),
+        });
+    }
     if (gameState.mockTimerId) { clearInterval(gameState.mockTimerId); gameState.mockTimerId = null; }
     if (UI.modal.classList.contains("active")) UI.modal.classList.remove("active");
     resetStateForMode();
@@ -808,6 +901,13 @@ function returnToMenu() {
         <button class="choice-btn" onclick="startDailyChallenge()">🎯 일일 챌린지 ${dailyDone ? "(오늘 완료)" : ""}</button>
         <button class="choice-btn" onclick="reviewWrongAnswers()">📝 오답노트 (${wrongCount})</button>
         <button class="choice-btn subtle center" onclick="renderDashboard()">📊 학습 대시보드</button>
+        <p style="margin-top: 16px; font-size: 11px; color: var(--muted);">
+          <span class="kbd-hint">1</span><span class="kbd-hint">2</span><span class="kbd-hint">3</span><span class="kbd-hint">4</span> 보기 선택 ·
+          <span class="kbd-hint">Space</span> 다음 ·
+          <span class="kbd-hint">T</span> 테마 ·
+          <span class="kbd-hint">M</span> 사운드 ·
+          <span class="kbd-hint">ESC</span> 모달 닫기
+        </p>
       </div>`;
 
     // 메인 메뉴에서도 상단 헤더는 표시(테마/사운드 토글 위해)
@@ -820,13 +920,25 @@ function returnToMenu() {
 function showGameOver(title, desc) {
     document.getElementById("modal-title").textContent = title;
     document.getElementById("modal-desc").textContent = desc;
-    document.getElementById("modal-stats").innerHTML = `
-      최종 체력: <span class="highlight">${clamp(gameState.hp, 0, 100)}</span><br>
-      최종 평판: <span class="highlight">${gameState.rep}</span><br>
-      처리한 상황: <span class="highlight">${gameState.eventCount}</span>건<br>
-      최고 콤보: <span class="highlight">${gameState.bestCombo}</span>
-    `;
+    const statsEl = document.getElementById("modal-stats");
+    statsEl.innerHTML = "";
+    const tpl = [
+        ["최종 체력", clamp(gameState.hp, 0, 100)],
+        ["최종 평판", gameState.rep],
+        ["처리한 상황", `${gameState.eventCount}건`],
+        ["최고 콤보", gameState.bestCombo],
+    ];
+    tpl.forEach(([k, v]) => {
+        const row = document.createElement("div");
+        row.appendChild(document.createTextNode(`${k}: `));
+        const sp = document.createElement("span");
+        sp.className = "highlight";
+        sp.textContent = String(v);
+        row.appendChild(sp);
+        statsEl.appendChild(row);
+    });
     UI.modal.classList.add("active");
+
     let score = 0, attempts = 0, currentQ = null;
     function gen() {
         const raw = generateClinicalEventByCategory(null);
@@ -835,7 +947,7 @@ function showGameOver(title, desc) {
     }
     function load() {
         currentQ = gen();
-        document.getElementById("question-box").innerText = currentQ.q;
+        document.getElementById("question-box").textContent = currentQ.q;
         const choicesEl = document.getElementById("choices");
         choicesEl.innerHTML = "";
         currentQ.choices.forEach((c, i) => {
@@ -845,24 +957,55 @@ function showGameOver(title, desc) {
             btn.addEventListener("click", () => check(i));
             choicesEl.appendChild(btn);
         });
-        document.getElementById("left").innerText = `${attempts + 1}회차`;
-        document.getElementById("result").innerText = "";
+        document.getElementById("left").textContent = `${attempts + 1}회차`;
+        document.getElementById("result").textContent = "";
+        // 첫 보기에 포커스
+        const first = choicesEl.querySelector(".choice-btn");
+        if (first) first.focus();
+    }
+    function renderResult(ok) {
+        const resultEl = document.getElementById("result");
+        resultEl.innerHTML = "";
+        if (ok) {
+            const s = document.createElement("span");
+            s.style.color = "var(--success)";
+            s.textContent = "✅ 정답!";
+            resultEl.appendChild(s);
+        } else {
+            const head = document.createElement("div");
+            head.className = "modal-result-wrong-head";
+            head.textContent = `❌ 오답 — 정답: ${currentQ.choices[currentQ.answer].text}`;
+            const exp = document.createElement("div");
+            exp.className = "modal-result-wrong-exp";
+            exp.textContent = currentQ.explain;
+            resultEl.appendChild(head);
+            resultEl.appendChild(exp);
+        }
     }
     function check(i) {
         attempts++;
         const ok = i === currentQ.answer;
-        if (ok) { score++; Sound.correct(); document.getElementById("result").innerHTML = "<span style='color:var(--success)'>✅ 정답!</span>"; }
-        else { Sound.wrong(); document.getElementById("result").innerHTML = `<span style='color:var(--danger)'>❌ 오답 — 정답: ${currentQ.choices[currentQ.answer].text}<br><span style='font-size:0.85rem; color:#cbd5e1;'>${currentQ.explain}</span></span>`; }
+        if (ok) { score++; Sound.correct(); }
+        else { Sound.wrong(); }
+        renderResult(ok);
         const acc = attempts > 0 ? Math.round((score / attempts) * 100) : 0;
         let rank = "신규 간호사 (SN/RN)";
         if (score >= 10) rank = "RN 2년차 (1인분 가능)";
         if (score >= 30) rank = "RN 5년차 (에이스)";
         if (score >= 50) rank = "차지 널스 (Charge)";
         if (score >= 100) rank = "수간호사 (HN)";
-        document.getElementById("rank").innerText = `${rank} · 정답률 ${acc}%`;
-        document.getElementById("score").innerText = score;
-        document.querySelectorAll("#choices .choice-btn").forEach(b => b.disabled = true);
-        setTimeout(load, 1800);
+        document.getElementById("rank").textContent = `${rank} · 정답률 ${acc}%`;
+        document.getElementById("score").textContent = score;
+        const choicesEl = document.getElementById("choices");
+        choicesEl.querySelectorAll(".choice-btn").forEach(b => b.disabled = true);
+        // 자동 진행 대신 명시적 "다음 문제" 버튼 (느린 독해자 배려)
+        const nextBtn = document.createElement("button");
+        nextBtn.className = "choice-btn primary center";
+        nextBtn.textContent = "다음 문제 (Space)";
+        nextBtn.style.marginTop = "12px";
+        nextBtn.addEventListener("click", load);
+        choicesEl.appendChild(nextBtn);
+        nextBtn.focus();
     }
     load();
 }
@@ -871,7 +1014,13 @@ function showGameOver(title, desc) {
 // 키보드 단축키
 // =========================================================================
 function handleKeydown(e) {
-    if (UI.modal.classList.contains("active")) return;
+    // 한국어 IME 조합 중 입력 무시 (1~4, t, m 등이 잘못 발동되지 않도록)
+    if (e.isComposing || e.keyCode === 229) return;
+    // 모달 활성 시 ESC 로 닫기 + 단축키 차단
+    if (UI.modal.classList.contains("active")) {
+        if (e.key === "Escape") { returnToMenu(); e.preventDefault(); }
+        return;
+    }
     if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")) return;
     const num = parseInt(e.key, 10);
     if (num >= 1 && num <= 4) {
@@ -894,7 +1043,7 @@ function handleKeydown(e) {
 function boot() {
     cacheUI();
     const settings = Storage.getSettings();
-    applyTheme(settings.theme || "light");
+    applyTheme(settings.theme || "auto");
     Sound.enabled = settings.sound !== false;
     if (UI.soundToggle) UI.soundToggle.textContent = Sound.enabled ? "🔊" : "🔇";
     const stored = Storage.load();
@@ -902,6 +1051,16 @@ function boot() {
     if (UI.themeToggle) UI.themeToggle.addEventListener("click", toggleTheme);
     if (UI.soundToggle) UI.soundToggle.addEventListener("click", toggleSound);
     document.addEventListener("keydown", handleKeydown);
+    // 시스템 다크모드 변경에 반응 (사용자가 명시적으로 라이트/다크를 선택하지 않은 경우)
+    try {
+        const mq = window.matchMedia("(prefers-color-scheme: dark)");
+        const onChange = () => {
+            const t = Storage.getSettings().theme;
+            if (t === "auto" || !t) applyTheme("auto");
+        };
+        if (mq.addEventListener) mq.addEventListener("change", onChange);
+        else if (mq.addListener) mq.addListener(onChange);
+    } catch {}
     returnToMenu();
 }
 

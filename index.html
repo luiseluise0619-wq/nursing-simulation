@@ -18,7 +18,8 @@
         </div>
     </div>
 
-    <div id="progress-wrap" class="hidden">
+    <div id="progress-wrap" class="hidden" role="progressbar"
+         aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-labelledby="progress-text">
         <div id="progress-fill"></div>
     </div>
     <div id="progress-info" class="hidden">
@@ -28,35 +29,35 @@
 
     <div id="inventory-bar" class="hidden"></div>
 
-    <div id="game-area">
+    <div id="game-area" role="main">
         <!-- 메인 메뉴는 script.js의 returnToMenu()에서 렌더링 -->
     </div>
 
-    <div id="log-bar" class="hidden"></div>
+    <div id="log-bar" class="hidden" role="log" aria-live="polite" aria-atomic="false"></div>
 
-    <div id="modal">
-        <h2 id="modal-title" style="color: var(--danger); margin-bottom: 5px;"></h2>
-        <p id="modal-desc" style="text-align: center; color: #cbd5e1; margin-bottom: 20px;"></p>
-        <div id="modal-stats" style="margin-bottom: 30px; line-height: 1.8; text-align: center; background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; width: 100%;"></div>
+    <div id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-desc">
+        <h2 id="modal-title" class="modal-heading"></h2>
+        <p id="modal-desc" class="modal-subdesc"></p>
+        <div id="modal-stats" class="modal-stats-card"></div>
 
-        <hr style="width: 100%; border: 1px solid #334155; margin-bottom: 20px;">
+        <hr class="modal-divider">
 
-        <h3 style="color: var(--primary);">📚 승급 심사 (무한 랜덤 문제풀이)</h3>
-        <div style="width: 100%; background: #1e293b; padding: 20px; border-radius: 12px; box-sizing: border-box;">
-            <div style="display: flex; justify-content: space-between; font-size: 0.9rem; color: #94a3b8; border-bottom: 1px solid #334155; padding-bottom: 10px; margin-bottom: 15px;">
-                <span>회차: <strong id="left" style="color:#fff"></strong></span>
-                <span>랭크: <strong id="rank" style="color:var(--warning)">신규</strong></span>
+        <h3 class="modal-section-title">📚 승급 심사 (무한 랜덤 문제풀이)</h3>
+        <div class="modal-quiz-card">
+            <div class="modal-quiz-header">
+                <span>회차: <strong id="left"></strong></span>
+                <span>랭크: <strong id="rank">신규</strong></span>
             </div>
 
-            <div id="question-box" style="font-weight: bold; margin-bottom: 20px; font-size: 1.1rem; line-height: 1.4; white-space: pre-wrap;"></div>
+            <div id="question-box" class="modal-question" aria-live="polite"></div>
             <div id="choices"></div>
 
-            <div id="result" style="margin-top: 15px; font-weight: bold; text-align: center; padding: 10px;"></div>
-            <div style="text-align: center; margin-top: 10px;">
-                <span style="font-size: 0.9rem; color: #94a3b8;">현재 점수: <span id="score" style="color:#fff; font-weight:bold;">0</span>점</span>
+            <div id="result" class="modal-result" aria-live="assertive"></div>
+            <div class="modal-score-row">
+                <span>현재 점수: <span id="score" class="modal-score">0</span>점</span>
             </div>
         </div>
-        <button class="choice-btn center" style="margin-top: 20px; background: transparent; color: white;" onclick="returnToMenu()">처음으로 돌아가기</button>
+        <button class="choice-btn center modal-close" onclick="returnToMenu()">처음으로 돌아가기 (ESC)</button>
     </div>
 
     <script src="questions.js"></script>

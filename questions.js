@@ -332,7 +332,7 @@
         const rhythms = [
             { name: "심실세동(VFib)", correct: "즉시 제세동(defibrillation)을 시행한다", log: "정답. VFib은 충격을 줘야 하는 리듬입니다." },
             { name: "무수축(Asystole)", correct: "CPR을 시작하고 에피네프린을 투여한다", log: "정답. Asystole은 제세동 금기, CPR과 약물이 핵심입니다." },
-            { name: "심실빈맥(맥박 없음)", correct: "즉시 제세동을 시행한다", log: "정답. 무맥성 VT는 VFib과 같이 처치합니다." },
+            { name: "심실빈맥(맥박 없음)", correct: "즉시 제세동(defibrillation)을 시행한다", log: "정답. 무맥성 VT는 VFib과 같이 처치합니다." },
             { name: "심방세동(AFib, 안정형)", correct: "심박수 조절과 항응고요법을 준비한다", log: "정답. 혈전 예방과 심박수 조절이 핵심입니다." },
         ];
         const r = pick(rhythms);
