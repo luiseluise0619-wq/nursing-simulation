@@ -27,7 +27,10 @@
       {
         "displayName": "unit",
         "testEnvironment": "node",
-        "testMatch": ["<rootDir>/tests/questions.test.js"]
+        "testMatch": [
+          "<rootDir>/tests/questions.test.js",
+          "<rootDir>/tests/content.test.js"
+        ]
       },
       {
         "displayName": "integration",

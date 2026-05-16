@@ -18,12 +18,14 @@ const CATEGORIES = [
 
 const NQ = (typeof window !== "undefined" && window.NurseQuestions)
     || (typeof require !== "undefined" ? require("./questions.js") : null);
+const NC = (typeof window !== "undefined" && window.NurseContent)
+    || (typeof require !== "undefined" ? require("./content.js") : null);
 
 // =========================================================================
 // 상태
 // =========================================================================
 let gameState = {
-    mode: "menu",                    // menu | survival | quiz_menu | quiz | mock | daily | wrong_review | dashboard
+    mode: "menu",
     hp: 100, rep: 0,
     eventCount: 0,
     items: [],
@@ -39,6 +41,12 @@ let gameState = {
     dailySeed: 0, dailyIndex: 0, dailyCorrect: 0, dailySolved: 0,
     // wrong review
     wrongQueue: [],
+    // handoff
+    handoffIndex: 0, handoffCorrect: 0, handoffTotal: 0,
+    // triage
+    triageIndex: 0, triageCorrect: 0, triageTotal: 0, triagePicks: {},
+    // scenario
+    scenarioId: null, scenarioStep: 0,
 };
 
 const UI = {};
@@ -106,6 +114,9 @@ const Storage = {
             wrongQueue: [],
             bestCombo: 0,
             mockBest: 0,
+            handoffBest: 0,
+            triageBest: 0,
+            scenarios: {},     // { scenarioId: { bestHp, bestRep, completed } }
             daily: {},
             history: [],
         };
@@ -183,6 +194,24 @@ const Storage = {
     setMockBest(n) {
         const data = Storage.load();
         if (n > data.mockBest) { data.mockBest = n; Storage.save(data); }
+    },
+    setHandoffBest(acc) {
+        const data = Storage.load();
+        if (!Number.isFinite(data.handoffBest) || acc > data.handoffBest) { data.handoffBest = acc; Storage.save(data); }
+    },
+    setTriageBest(acc) {
+        const data = Storage.load();
+        if (!Number.isFinite(data.triageBest) || acc > data.triageBest) { data.triageBest = acc; Storage.save(data); }
+    },
+    setScenarioResult(id, hp, rep, completed) {
+        const data = Storage.load();
+        const prev = data.scenarios[id] || { bestHp: 0, bestRep: 0, completed: false };
+        data.scenarios[id] = {
+            bestHp: Math.max(prev.bestHp, hp),
+            bestRep: Math.max(prev.bestRep, rep),
+            completed: prev.completed || completed,
+        };
+        Storage.save(data);
     },
     getDaily(dateKey) {
         const data = Storage.load();
@@ -292,6 +321,12 @@ function updateStats() {
     else if (gameState.mode === "mock") { value = gameState.mockAnswered; total = gameState.mockTotal; label = "모의고사"; }
     else if (gameState.mode === "daily") { value = gameState.dailySolved; total = DAILY_CHALLENGE_TOTAL; label = "일일 챌린지"; }
     else if (gameState.mode === "wrong_review") { value = gameState.quizSolved; total = Math.max(gameState.wrongQueue.length, 1); label = "오답노트"; }
+    else if (gameState.mode === "handoff") { value = gameState.handoffIndex; total = NC.HANDOFF_PATIENTS.length; label = "인계 시뮬레이터"; }
+    else if (gameState.mode === "triage") { value = gameState.triageIndex; total = NC.TRIAGE_CASES.length; label = "트리아지"; }
+    else if (gameState.mode === "scenario") {
+        const s = NC.SCENARIOS.find(x => x.id === gameState.scenarioId);
+        value = gameState.scenarioStep; total = s ? s.steps.length : 1; label = `시나리오 · ${s ? s.title : ""}`;
+    }
 
     const progressRaw = total > 0 ? (value / total) * 100 : 0;
     const progress = Math.min(Number.isFinite(progressRaw) ? progressRaw : 0, 100);
@@ -412,6 +447,7 @@ function dispatchChoice(choice, ev, idx, mode) {
     else if (mode === "mock") handleMockChoice(choice, ev);
     else if (mode === "daily") handleDailyChoice(choice, ev);
     else if (mode === "wrong_review") handleWrongReviewChoice(choice, ev);
+    else if (mode === "scenario") handleScenarioChoice(choice, ev);
     else handleQuizChoice(choice, ev);
 }
 
@@ -449,6 +485,10 @@ function resetStateForMode() {
     gameState.dailyQuestions = null;
     gameState.wrongQueue = [];
     gameState.currentWrongId = null;
+    gameState.handoffIndex = 0; gameState.handoffCorrect = 0; gameState.handoffTotal = 0;
+    gameState.triageIndex = 0; gameState.triageCorrect = 0; gameState.triageTotal = 0;
+    gameState.triagePicks = {};
+    gameState.scenarioId = null; gameState.scenarioStep = 0;
 }
 function initSurvival() {
     resetStateForMode();
@@ -804,6 +844,414 @@ function handleWrongReviewChoice(choice, ev) {
 }
 
 // =========================================================================
+// 인계 시뮬레이터 (TTS 인계 + 키워드 채점)
+// =========================================================================
+const Speech = {
+    speak(text, onEnd) {
+        try {
+            if (typeof window === "undefined" || !window.speechSynthesis) return false;
+            window.speechSynthesis.cancel();
+            const utter = new SpeechSynthesisUtterance(text);
+            utter.lang = "ko-KR";
+            utter.rate = 1.0;
+            if (onEnd) utter.onend = onEnd;
+            window.speechSynthesis.speak(utter);
+            return true;
+        } catch { return false; }
+    },
+    stop() { try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch {} },
+    supported() { return typeof window !== "undefined" && !!window.speechSynthesis; },
+};
+
+function normalizeKeyword(s) {
+    return String(s || "").toLowerCase().replace(/[^\w가-힣]/g, "");
+}
+
+function startHandoff() {
+    resetStateForMode();
+    gameState.mode = "handoff";
+    showCoreUI(); UI.logBar.innerHTML = "";
+    addLog("인계 시뮬레이터 — 음성을 듣고 핵심 키워드를 답변창에 적으세요.", "log-important");
+    renderHandoffPatient();
+}
+
+function renderHandoffPatient() {
+    const patients = NC.HANDOFF_PATIENTS;
+    if (gameState.handoffIndex >= patients.length) { endHandoff(); return; }
+    const p = patients[gameState.handoffIndex];
+    const ttsHint = Speech.supported() ? "" : "\n⚠ 이 환경은 음성합성을 지원하지 않습니다. '본문 보기' 로 학습하세요.";
+    UI.gameArea.innerHTML = `
+      <div class="scene-card card">
+        <span class="scene-emoji" aria-hidden="true">🎙️</span>
+        <h2 class="scene-title">[인계 ${gameState.handoffIndex + 1}/${patients.length}] ${escapeHtml(p.title)}</h2>
+        <p class="scene-desc">음성 인계를 듣고 핵심 키워드 ${p.keywords.length}개를 떠올려 답변창에 쉼표/공백으로 구분해 입력하세요.
+힌트: ${escapeHtml(p.hint)}${ttsHint}</p>
+        <div class="handoff-controls">
+          <button class="choice-btn primary" data-action="handoffPlay">▶ 인계 듣기</button>
+          <button class="choice-btn" data-action="handoffStop">⏹ 중지</button>
+          <button class="choice-btn" data-action="handoffShow">📄 본문 보기</button>
+        </div>
+        <div id="handoff-narration" class="handoff-narration hidden" aria-live="polite"></div>
+        <textarea id="handoff-answer" class="handoff-answer" rows="4" placeholder="기억나는 핵심 키워드를 적으세요" aria-label="인계 답변"></textarea>
+        <div class="choice-list">
+          <button class="choice-btn primary" data-action="handoffSubmit">제출</button>
+          <button class="choice-btn" data-action="returnToMenu">메뉴로</button>
+        </div>
+        <div id="handoff-feedback" aria-live="polite"></div>
+      </div>`;
+    updateStats();
+}
+
+function handoffPlay() {
+    const p = NC.HANDOFF_PATIENTS[gameState.handoffIndex];
+    if (!p) return;
+    const ok = Speech.speak(p.narration);
+    if (!ok) handoffShow();
+}
+function handoffStop() { Speech.stop(); }
+function handoffShow() {
+    const p = NC.HANDOFF_PATIENTS[gameState.handoffIndex];
+    if (!p) return;
+    const el = document.getElementById("handoff-narration");
+    if (!el) return;
+    el.textContent = p.narration;
+    el.classList.remove("hidden");
+}
+
+function handoffSubmit() {
+    const p = NC.HANDOFF_PATIENTS[gameState.handoffIndex];
+    if (!p) return;
+    Speech.stop();
+    const ans = document.getElementById("handoff-answer").value;
+    const tokens = ans.split(/[\s,·•。、]+/).map(normalizeKeyword).filter(Boolean);
+    const hits = [], misses = [];
+    p.keywords.forEach(k => {
+        const n = normalizeKeyword(k);
+        const found = tokens.some(t => t.includes(n) || n.includes(t));
+        if (found) hits.push(k); else misses.push(k);
+    });
+    gameState.handoffCorrect += hits.length;
+    gameState.handoffTotal += p.keywords.length;
+    const fb = document.getElementById("handoff-feedback");
+    fb.innerHTML = "";
+    const allHit = hits.length === p.keywords.length;
+    const box = document.createElement("div");
+    box.className = `feedback-box ${allHit ? "correct" : "wrong"}`;
+    const head = document.createElement("div");
+    head.textContent = `${hits.length}/${p.keywords.length} 키워드 일치`;
+    box.appendChild(head);
+    const detail = document.createElement("div");
+    detail.style.fontWeight = "normal"; detail.style.marginTop = "6px";
+    detail.style.whiteSpace = "pre-wrap";
+    detail.textContent = `✅ ${hits.join(", ") || "(없음)"}\n❌ 놓침: ${misses.join(", ") || "(없음)"}`;
+    box.appendChild(detail);
+    fb.appendChild(box);
+    if (allHit) { bumpCombo(); Sound.correct(); } else { resetCombo(); Sound.wrong(); }
+    const next = document.createElement("button");
+    next.className = "choice-btn primary center";
+    next.textContent = "다음 환자";
+    next.dataset.action = "handoffNext";
+    fb.appendChild(next);
+}
+function handoffNext() {
+    gameState.handoffIndex += 1;
+    renderHandoffPatient();
+}
+function endHandoff() {
+    Speech.stop();
+    const total = gameState.handoffTotal, correct = gameState.handoffCorrect;
+    const acc = total ? Math.round(correct / total * 100) : 0;
+    Storage.setHandoffBest(acc);
+    Storage.addHistory({ mode: "handoff", at: Date.now(), total, correct, accuracy: acc });
+    UI.gameArea.innerHTML = `
+      <div class="scene-card card">
+        <span class="scene-emoji" aria-hidden="true">🎙️</span>
+        <h2 class="scene-title">인계 시뮬레이션 완료</h2>
+        <p class="scene-desc">키워드 정확도: ${correct}/${total} (${acc}%)</p>
+        <div class="choice-list">
+          <button class="choice-btn primary" data-action="startHandoff">다시 시작</button>
+          <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
+        </div>
+      </div>`;
+}
+
+// =========================================================================
+// 트리아지 (다중환자 우선순위)
+// =========================================================================
+function startTriage() {
+    resetStateForMode();
+    gameState.mode = "triage";
+    showCoreUI(); UI.logBar.innerHTML = "";
+    addLog("응급실 트리아지 — 5명 환자에게 1(최우선)~5(후순위)를 매기세요.", "log-important");
+    renderTriageCase();
+}
+
+function renderTriageCase() {
+    const cases = NC.TRIAGE_CASES;
+    if (gameState.triageIndex >= cases.length) { endTriage(); return; }
+    const c = cases[gameState.triageIndex];
+    gameState.triagePicks = {};
+    const cards = c.patients.map(p => `
+        <div class="triage-card" data-patient="${escapeHtml(p.id)}">
+          <div class="triage-card-head">
+            <span class="triage-emoji" aria-hidden="true">${p.emoji}</span>
+            <span class="triage-desc">${escapeHtml(p.desc)}</span>
+          </div>
+          <div class="triage-pick" role="radiogroup" aria-label="${escapeHtml(p.desc)} 우선순위">
+            ${[1,2,3,4,5].map(n => `<button class="triage-num" data-action="triagePick" data-patient="${escapeHtml(p.id)}" data-num="${n}" aria-label="${n}순위">${n}</button>`).join("")}
+          </div>
+        </div>`).join("");
+    UI.gameArea.innerHTML = `
+      <div class="scene-card card">
+        <span class="scene-emoji" aria-hidden="true">🚑</span>
+        <h2 class="scene-title">[케이스 ${gameState.triageIndex + 1}/${cases.length}] ${escapeHtml(c.title)}</h2>
+        <p class="scene-desc">각 환자에게 1(최우선)~5(후순위)를 부여하세요. 같은 번호 중복 불가.</p>
+        <div class="triage-list">${cards}</div>
+        <div class="choice-list">
+          <button class="choice-btn primary" data-action="triageSubmit">제출</button>
+          <button class="choice-btn" data-action="returnToMenu">메뉴로</button>
+        </div>
+        <div id="triage-feedback" aria-live="polite"></div>
+      </div>`;
+    updateStats();
+}
+
+function triagePick(target) {
+    const pid = target.dataset.patient;
+    const n = parseInt(target.dataset.num, 10);
+    gameState.triagePicks[pid] = n;
+    // 환자 카드 안에서만 active 상태를 갱신 (id 셀렉터 escape 회피)
+    const card = target.closest(".triage-card");
+    if (!card) return;
+    card.querySelectorAll(".triage-num").forEach(b => {
+        b.classList.toggle("active", parseInt(b.dataset.num, 10) === n);
+    });
+}
+
+function triageSubmit() {
+    const c = NC.TRIAGE_CASES[gameState.triageIndex];
+    const picks = c.patients.map(p => gameState.triagePicks[p.id]);
+    const fb = document.getElementById("triage-feedback");
+    fb.innerHTML = "";
+    if (picks.some(v => !v)) {
+        const w = document.createElement("div"); w.className = "feedback-box wrong";
+        w.textContent = "모든 환자에게 순위를 매겨주세요.";
+        fb.appendChild(w); return;
+    }
+    if (new Set(picks).size !== 5) {
+        const w = document.createElement("div"); w.className = "feedback-box wrong";
+        w.textContent = "1~5번을 각 한 번씩만 사용하세요.";
+        fb.appendChild(w); return;
+    }
+    let correct = 0;
+    const results = c.patients.map(p => {
+        const pick = gameState.triagePicks[p.id];
+        const ok = pick === p.priority;
+        if (ok) correct++;
+        return { p, pick, ok };
+    });
+    gameState.triageCorrect += correct;
+    gameState.triageTotal += c.patients.length;
+    const allOk = correct === c.patients.length;
+    const box = document.createElement("div");
+    box.className = `feedback-box ${allOk ? "correct" : "wrong"}`;
+    const head = document.createElement("div");
+    head.textContent = `${correct}/${c.patients.length} 정답`;
+    box.appendChild(head);
+    results.sort((a,b) => a.p.priority - b.p.priority).forEach(r => {
+        const row = document.createElement("div");
+        row.style.fontWeight = "normal"; row.style.marginTop = "4px";
+        row.textContent = `${r.ok ? "✅" : "❌"} 정답 ${r.p.priority} (선택 ${r.pick}) — ${r.p.why}`;
+        box.appendChild(row);
+    });
+    const rationale = document.createElement("div");
+    rationale.style.marginTop = "8px"; rationale.style.fontStyle = "italic";
+    rationale.textContent = c.rationale;
+    box.appendChild(rationale);
+    fb.appendChild(box);
+    if (allOk) { bumpCombo(); Sound.correct(); } else { resetCombo(); Sound.wrong(); }
+    const next = document.createElement("button");
+    next.className = "choice-btn primary center";
+    next.textContent = "다음 케이스";
+    next.dataset.action = "triageNext";
+    fb.appendChild(next);
+}
+function triageNext() { gameState.triageIndex += 1; renderTriageCase(); }
+function endTriage() {
+    const total = gameState.triageTotal, correct = gameState.triageCorrect;
+    const acc = total ? Math.round(correct / total * 100) : 0;
+    Storage.setTriageBest(acc);
+    Storage.addHistory({ mode: "triage", at: Date.now(), total, correct, accuracy: acc });
+    UI.gameArea.innerHTML = `
+      <div class="scene-card card">
+        <span class="scene-emoji" aria-hidden="true">🚑</span>
+        <h2 class="scene-title">트리아지 완료</h2>
+        <p class="scene-desc">정답률: ${correct}/${total} (${acc}%)</p>
+        <div class="choice-list">
+          <button class="choice-btn primary" data-action="startTriage">다시 시작</button>
+          <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
+        </div>
+      </div>`;
+}
+
+// =========================================================================
+// 임상 시나리오 (멀티스텝, HP/평판 누적)
+// =========================================================================
+function renderScenarioMenu() {
+    resetStateForMode();
+    gameState.mode = "scenario_menu";
+    showCoreUI(); UI.logBar.innerHTML = "";
+    addLog("멀티스텝 임상 시나리오 — 한 환자의 의사결정을 끝까지 따라가세요.", "log-important");
+    updateStats();
+    const data = Storage.load();
+    UI.gameArea.innerHTML = `
+      <div class="scene-card card">
+        <span class="scene-emoji" aria-hidden="true">📋</span>
+        <h2 class="scene-title">임상 시나리오 챔버</h2>
+        <p class="scene-desc">한 환자의 입실 → 사정 → 처치 → 평가까지 3~5단계 의사결정을 진행합니다.\n각 결정이 환자 상태(HP)에 누적됩니다.</p>
+        <div class="choice-list">
+          ${NC.SCENARIOS.map(s => {
+              const rec = data.scenarios[s.id];
+              const tag = rec?.completed ? ` ✅ 최고 HP ${rec.bestHp}` : "";
+              return `<button class="choice-btn primary" data-action="startScenario" data-arg="${escapeHtml(s.id)}">${escapeHtml(s.title)}${tag}</button>`;
+          }).join("")}
+          <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
+        </div>
+      </div>`;
+}
+
+function startScenario(target) {
+    const id = target.dataset.arg;
+    const s = NC.SCENARIOS.find(x => x.id === id);
+    if (!s) return;
+    resetStateForMode();
+    gameState.mode = "scenario";
+    gameState.scenarioId = id;
+    gameState.scenarioStep = 0;
+    gameState.hp = 100; gameState.rep = 0;
+    showCoreUI(); UI.logBar.innerHTML = "";
+    addLog(`시나리오 시작: ${s.title}`, "log-important");
+    addLog(s.intro);
+    renderScenarioStep();
+}
+
+function renderScenarioStep() {
+    const s = NC.SCENARIOS.find(x => x.id === gameState.scenarioId);
+    if (!s) return;
+    if (gameState.scenarioStep >= s.steps.length) { endScenario(); return; }
+    const step = s.steps[gameState.scenarioStep];
+    const ev = {
+        baseId: "scenario", category: s.title, part: `Step ${gameState.scenarioStep + 1}/${s.steps.length}`,
+        emoji: "📋", title: step.prompt,
+        desc: gameState.scenarioStep === 0 ? s.intro : `현재 HP ${gameState.hp} / 평판 ${gameState.rep}`,
+        choices: step.choices.map(c => ({
+            text: c.text, correct: !!c.correct,
+            effect: { hp: c.hp || 0, rep: c.rep || 0 },
+            log: c.log || "",
+        })),
+    };
+    renderSceneCard(ev, { mode: "scenario", questionIndex: gameState.scenarioStep + 1, meta: [s.title, `Step ${gameState.scenarioStep + 1}/${s.steps.length}`] });
+}
+
+function handleScenarioChoice(choice, ev) {
+    applyChoiceEffect(choice);
+    const isCorrect = isCorrectChoice(choice);
+    if (isCorrect) { bumpCombo(); Sound.correct(); addLog(`[정답] ${choice.log}`, "log-good"); }
+    else { resetCombo(); Sound.wrong(); addLog(`[오답] ${choice.log}`, "log-bad"); }
+    if (gameState.hp <= 0) { renderFeedback(ev, choice, { onNext: () => endScenario("환자 상태 악화 — 시나리오 실패") }); return; }
+    renderFeedback(ev, choice, {
+        onNext: () => { gameState.scenarioStep += 1; renderScenarioStep(); },
+    });
+}
+
+function endScenario(failReason) {
+    const s = NC.SCENARIOS.find(x => x.id === gameState.scenarioId);
+    const title = failReason ? "❌ " + failReason : "✅ 시나리오 완수";
+    const completed = !failReason;
+    Storage.setScenarioResult(gameState.scenarioId, gameState.hp, gameState.rep, completed);
+    Storage.addHistory({ mode: "scenario", at: Date.now(), id: gameState.scenarioId, hp: gameState.hp, rep: gameState.rep, completed });
+    UI.gameArea.innerHTML = `
+      <div class="scene-card card">
+        <span class="scene-emoji" aria-hidden="true">📋</span>
+        <h2 class="scene-title">${escapeHtml(title)}</h2>
+        <p class="scene-desc">${escapeHtml(s ? s.title : "")}\n최종 HP ${gameState.hp} · 평판 ${gameState.rep}</p>
+        <div class="choice-list">
+          <button class="choice-btn primary" data-action="renderScenarioMenu">시나리오 목록</button>
+          <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
+        </div>
+      </div>`;
+}
+
+// =========================================================================
+// PDF/인쇄 (오답노트 + 대시보드)
+// =========================================================================
+function printWrongQueue() {
+    const queue = Storage.getWrongQueue();
+    const area = document.createElement("div");
+    area.className = "print-only";
+    area.id = "active-print-area";
+    let html = `<h1>오답노트 — ${todayKey()}</h1><p>총 ${queue.length}건</p>`;
+    queue.forEach((q, i) => {
+        const correct = (q.choices || []).find(c => c.correct);
+        html += `
+            <div class="print-item">
+              <h3>${i + 1}. [${escapeHtml(q.category || "")}] ${escapeHtml(q.title || "")}</h3>
+              <p>${escapeHtml(q.desc || "").replace(/\n/g, "<br>")}</p>
+              <ul>
+                ${(q.choices || []).map(c => `<li>${c.correct ? "<strong>✓ " + escapeHtml(c.text) + "</strong>" : escapeHtml(c.text)}</li>`).join("")}
+              </ul>
+              <p class="print-log">해설: ${escapeHtml((correct && correct.log) || "")}</p>
+            </div>`;
+    });
+    area.innerHTML = html;
+    document.body.appendChild(area);
+    try { window.print(); } finally { setTimeout(() => area.remove(), 0); }
+}
+
+function printDashboard() {
+    const stats = Storage.getStats();
+    const data = Storage.load();
+    const area = document.createElement("div");
+    area.className = "print-only";
+    area.id = "active-print-area";
+    let html = `<h1>학습 대시보드 — ${todayKey()}</h1>`;
+    html += `<table class="print-stats"><thead><tr><th>과목</th><th>풀이</th><th>정답</th><th>정답률</th></tr></thead><tbody>`;
+    CATEGORIES.forEach(cat => {
+        const s = stats[cat] || { solved: 0, correct: 0 };
+        const acc = s.solved ? Math.round(s.correct / s.solved * 100) : 0;
+        html += `<tr><td>${escapeHtml(cat)}</td><td>${s.solved}</td><td>${s.correct}</td><td>${acc}%</td></tr>`;
+    });
+    html += `</tbody></table>`;
+    html += `<p>최고 콤보 ${data.bestCombo} · 모의고사 최고점 ${data.mockBest} · 인계 ${data.handoffBest || 0}% · 트리아지 ${data.triageBest || 0}% · 오답 ${data.wrongQueue.length}건</p>`;
+    area.innerHTML = html;
+    document.body.appendChild(area);
+    try { window.print(); } finally { setTimeout(() => area.remove(), 0); }
+}
+
+// =========================================================================
+// 출제 경향 차트 (SVG)
+// =========================================================================
+function renderTrendsChart() {
+    const t = NC.EXAM_TRENDS;
+    const cats = Object.keys(t.categories);
+    const totals = cats.map(c => t.categories[c].reduce((s, v) => s + v, 0) / t.categories[c].length);
+    const max = Math.max(...totals);
+    const barH = 22, gap = 6, labelW = 130;
+    const W = 360, H = cats.length * (barH + gap) + 20;
+    let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="최근 5개년 과목별 평균 문항 수" class="trends-svg">`;
+    cats.forEach((cat, i) => {
+        const v = totals[i];
+        const w = (v / max) * (W - labelW - 30);
+        const y = i * (barH + gap) + 5;
+        svg += `<text x="0" y="${y + 15}" class="trend-label">${escapeHtml(cat)}</text>`;
+        svg += `<rect x="${labelW}" y="${y}" width="${w}" height="${barH}" rx="4" class="trend-bar"/>`;
+        svg += `<text x="${labelW + w + 4}" y="${y + 15}" class="trend-value">${Math.round(v)}</text>`;
+    });
+    svg += `</svg>`;
+    return svg;
+}
+
+// =========================================================================
 // 대시보드 (과목별 통계)
 // =========================================================================
 function renderDashboard() {
@@ -829,16 +1277,21 @@ function renderDashboard() {
 
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
-        <span class="scene-emoji">📊</span>
+        <span class="scene-emoji" aria-hidden="true">📊</span>
         <h2 class="scene-title">학습 대시보드</h2>
         <p class="scene-desc">과목별 정답률과 누적 성과를 확인할 수 있습니다.</p>
         <div class="dashboard-grid">${rows}</div>
         <hr class="dashboard-divider">
         <p class="scene-desc dashboard-summary">
-          🔥 최고 콤보: <strong>${data.bestCombo}</strong> · 🏆 모의고사 최고점: <strong>${data.mockBest}</strong> · 📝 오답: <strong>${wrongCount}</strong>건 · 🎯 ${escapeHtml(dailyMsg)}
+          🔥 최고 콤보 <strong>${data.bestCombo}</strong> · 🏆 모의고사 <strong>${data.mockBest}</strong> · 🎙️ 인계 <strong>${data.handoffBest || 0}%</strong> · 🚑 트리아지 <strong>${data.triageBest || 0}%</strong> · 📝 오답 <strong>${wrongCount}</strong>건 · 🎯 ${escapeHtml(dailyMsg)}
         </p>
+        <hr class="dashboard-divider">
+        <h3 class="trends-title">📈 최근 5개년 과목별 출제 경향</h3>
+        ${renderTrendsChart()}
         <div class="choice-list dashboard-actions">
           <button class="choice-btn primary" data-action="reviewWrongAnswers">오답 복습 (${wrongCount})</button>
+          <button class="choice-btn" data-action="printWrongQueue">📄 오답노트 PDF/인쇄</button>
+          <button class="choice-btn" data-action="printDashboard">📄 대시보드 PDF/인쇄</button>
           <button class="choice-btn" data-action="confirmClearStats">통계 초기화</button>
           <button class="choice-btn center" data-action="returnToMenu">메인 메뉴</button>
         </div>
@@ -899,6 +1352,9 @@ function returnToMenu() {
         <button class="choice-btn" data-action="renderQuizMenu">트레이닝 센터 (8과목)</button>
         <button class="choice-btn" data-action="startMockExam">📝 모의고사 (${MOCK_EXAM_TOTAL}문제 · ${MOCK_EXAM_SECONDS / 60}분)</button>
         <button class="choice-btn" data-action="startDailyChallenge">🎯 일일 챌린지 ${dailyDone ? "(오늘 완료)" : ""}</button>
+        <button class="choice-btn" data-action="startHandoff">🎙️ 인계 시뮬레이터 (TTS)</button>
+        <button class="choice-btn" data-action="startTriage">🚑 응급실 트리아지</button>
+        <button class="choice-btn" data-action="renderScenarioMenu">📋 임상 시나리오 챔버</button>
         <button class="choice-btn" data-action="reviewWrongAnswers">📝 오답노트 (${wrongCount})</button>
         <button class="choice-btn subtle center" data-action="renderDashboard">📊 학습 대시보드</button>
         <p class="menu-kbd-row">
@@ -1077,6 +1533,21 @@ const DELEGATED_ACTIONS = {
     renderDashboard: () => renderDashboard(),
     confirmClearStats: () => confirmClearStats(),
     setShift: (t) => setShift(t.dataset.shift, parseFloat(t.dataset.mult), t),
+    // 신규 모드
+    startHandoff: () => startHandoff(),
+    handoffPlay: () => handoffPlay(),
+    handoffStop: () => handoffStop(),
+    handoffShow: () => handoffShow(),
+    handoffSubmit: () => handoffSubmit(),
+    handoffNext: () => handoffNext(),
+    startTriage: () => startTriage(),
+    triagePick: (t) => triagePick(t),
+    triageSubmit: () => triageSubmit(),
+    triageNext: () => triageNext(),
+    renderScenarioMenu: () => renderScenarioMenu(),
+    startScenario: (t) => startScenario(t),
+    printWrongQueue: () => printWrongQueue(),
+    printDashboard: () => printDashboard(),
 };
 function handleDelegatedAction(e) {
     const target = e.target.closest("[data-action]");

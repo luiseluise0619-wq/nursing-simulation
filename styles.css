@@ -411,3 +411,147 @@ body {
     color: #cbd5e1;
     margin-top: 4px;
 }
+
+/* ===== 인계 시뮬레이터 ===== */
+.handoff-controls {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+.handoff-controls .choice-btn {
+    width: auto;
+    flex: 1;
+    margin-bottom: 0;
+}
+.handoff-narration {
+    background: var(--softer);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 12px;
+    font-size: 0.92rem;
+    white-space: pre-wrap;
+    line-height: 1.5;
+}
+.handoff-answer {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--card);
+    color: var(--text);
+    font-size: 0.95rem;
+    font-family: inherit;
+    margin-bottom: 10px;
+    resize: vertical;
+}
+
+/* ===== 트리아지 ===== */
+.triage-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+.triage-card {
+    background: var(--softer);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+}
+.triage-card-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+.triage-emoji { font-size: 1.4rem; }
+.triage-desc { flex: 1; font-size: 0.92rem; line-height: 1.4; }
+.triage-pick {
+    display: flex;
+    gap: 6px;
+}
+.triage-num {
+    flex: 1;
+    min-height: 36px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+}
+.triage-num:hover { background: var(--soft); }
+.triage-num.active {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+}
+
+/* ===== 출제 경향 차트 ===== */
+.trends-title {
+    margin: 12px 0 8px;
+    font-size: 0.95rem;
+    color: var(--text);
+}
+.trends-svg {
+    width: 100%;
+    height: auto;
+}
+.trends-svg .trend-label {
+    fill: var(--text);
+    font-size: 11px;
+    font-weight: bold;
+}
+.trends-svg .trend-bar {
+    fill: var(--primary);
+}
+.trends-svg .trend-value {
+    fill: var(--muted);
+    font-size: 11px;
+}
+
+/* ===== 인쇄 ===== */
+.print-only { display: none; }
+@media print {
+    body * { visibility: hidden !important; }
+    .print-only, .print-only * { visibility: visible !important; }
+    .print-only {
+        display: block !important;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        padding: 20px;
+        background: #fff !important;
+        color: #000 !important;
+        font-family: 'Malgun Gothic', sans-serif;
+    }
+    .print-only h1 { font-size: 18pt; margin-bottom: 4pt; }
+    .print-only h3 { font-size: 12pt; margin: 12pt 0 4pt; }
+    .print-only p, .print-only li { font-size: 11pt; line-height: 1.4; }
+    .print-only .print-item {
+        page-break-inside: avoid;
+        border-top: 1px solid #ccc;
+        padding-top: 6pt;
+        margin-bottom: 6pt;
+    }
+    .print-only .print-log {
+        font-style: italic;
+        color: #444;
+    }
+    .print-only table.print-stats {
+        border-collapse: collapse;
+        width: 100%;
+        margin-top: 12pt;
+    }
+    .print-only table.print-stats th,
+    .print-only table.print-stats td {
+        border: 1px solid #ccc;
+        padding: 4pt 8pt;
+        text-align: left;
+        font-size: 11pt;
+    }
+    @page { margin: 1.2cm; }
+}

@@ -60,7 +60,16 @@ function freshDom() {
 function loadScript() {
     jest.resetModules();
     const Q = require("../questions.js");
+    const C = require("../content.js");
     window.NurseQuestions = Q;
+    window.NurseContent = C;
+    // TTS / 인쇄 stub
+    window.speechSynthesis = {
+        speak: jest.fn(),
+        cancel: jest.fn(),
+    };
+    window.SpeechSynthesisUtterance = function (text) { this.text = text; };
+    window.print = jest.fn();
     return require("../script.js");
 }
 
@@ -233,6 +242,156 @@ describe("모달 접근성 속성", () => {
         expect(m.getAttribute("role")).toBe("dialog");
         expect(m.getAttribute("aria-modal")).toBe("true");
         expect(m.hasAttribute("aria-labelledby")).toBe(true);
+    });
+});
+
+describe("인계 시뮬레이터 (TTS)", () => {
+    test("메인 메뉴에 인계 버튼이 있고 클릭하면 답변 textarea 가 노출된다", () => {
+        loadScript();
+        const btn = document.querySelector('[data-action="startHandoff"]');
+        expect(btn).not.toBeNull();
+        btn.click();
+        expect(document.getElementById("handoff-answer")).not.toBeNull();
+        expect(document.querySelector('[data-action="handoffPlay"]')).not.toBeNull();
+    });
+
+    test("정답 키워드를 모두 입력하면 정답률 100% 피드백이 표시된다", () => {
+        loadScript();
+        document.querySelector('[data-action="startHandoff"]').click();
+        const C = require("../content.js");
+        const ans = C.HANDOFF_PATIENTS[0].keywords.join(" ");
+        document.getElementById("handoff-answer").value = ans;
+        document.querySelector('[data-action="handoffSubmit"]').click();
+        const fb = document.getElementById("handoff-feedback");
+        expect(fb.textContent).toMatch(/\d+\/\d+/);
+        expect(fb.querySelector(".feedback-box.correct")).not.toBeNull();
+    });
+
+    test("handoffPlay 가 speechSynthesis.speak 를 호출한다", () => {
+        loadScript();
+        document.querySelector('[data-action="startHandoff"]').click();
+        document.querySelector('[data-action="handoffPlay"]').click();
+        expect(window.speechSynthesis.speak).toHaveBeenCalled();
+    });
+
+    test("handoffShow 가 본문을 노출시킨다", () => {
+        loadScript();
+        document.querySelector('[data-action="startHandoff"]').click();
+        document.querySelector('[data-action="handoffShow"]').click();
+        const el = document.getElementById("handoff-narration");
+        expect(el.classList.contains("hidden")).toBe(false);
+        expect(el.textContent.length).toBeGreaterThan(20);
+    });
+});
+
+describe("트리아지 (다중환자 우선순위)", () => {
+    test("5명 환자 카드와 각자 1~5 우선순위 버튼이 렌더된다", () => {
+        loadScript();
+        document.querySelector('[data-action="startTriage"]').click();
+        const cards = document.querySelectorAll(".triage-card");
+        expect(cards.length).toBe(5);
+        cards.forEach(card => {
+            const nums = card.querySelectorAll(".triage-num");
+            expect(nums.length).toBe(5);
+        });
+    });
+
+    test("순위 미배정 상태로 제출하면 에러 피드백을 보여준다", () => {
+        loadScript();
+        document.querySelector('[data-action="startTriage"]').click();
+        document.querySelector('[data-action="triageSubmit"]').click();
+        const fb = document.getElementById("triage-feedback");
+        expect(fb.textContent).toMatch(/순위를 매겨주세요/);
+    });
+
+    test("중복 번호로 제출하면 거부된다", () => {
+        loadScript();
+        document.querySelector('[data-action="startTriage"]').click();
+        const cards = document.querySelectorAll(".triage-card");
+        cards.forEach(card => {
+            const btn1 = card.querySelector('.triage-num[data-num="1"]');
+            btn1.click();
+        });
+        document.querySelector('[data-action="triageSubmit"]').click();
+        const fb = document.getElementById("triage-feedback");
+        expect(fb.textContent).toMatch(/한 번씩만/);
+    });
+
+    test("정답 순위를 모두 매기면 5/5 피드백이 표시된다", () => {
+        loadScript();
+        document.querySelector('[data-action="startTriage"]').click();
+        const C = require("../content.js");
+        const case0 = C.TRIAGE_CASES[0];
+        case0.patients.forEach(p => {
+            const card = document.querySelector(`.triage-card[data-patient="${p.id}"]`);
+            const btn = card.querySelector(`.triage-num[data-num="${p.priority}"]`);
+            btn.click();
+        });
+        document.querySelector('[data-action="triageSubmit"]').click();
+        const fb = document.getElementById("triage-feedback");
+        expect(fb.textContent).toMatch(/5\/5/);
+        expect(fb.querySelector(".feedback-box.correct")).not.toBeNull();
+    });
+});
+
+describe("임상 시나리오", () => {
+    test("시나리오 메뉴에서 시나리오 카드들이 노출된다", () => {
+        loadScript();
+        document.querySelector('[data-action="renderScenarioMenu"]').click();
+        const starts = document.querySelectorAll('[data-action="startScenario"]');
+        expect(starts.length).toBeGreaterThanOrEqual(1);
+    });
+
+    test("시나리오 시작 시 첫 step 의 4개 선택지가 노출된다", () => {
+        loadScript();
+        document.querySelector('[data-action="renderScenarioMenu"]').click();
+        document.querySelector('[data-action="startScenario"]').click();
+        const choices = document.querySelectorAll("#choice-list .choice-btn");
+        expect(choices.length).toBeGreaterThanOrEqual(3);
+    });
+
+    test("정답 선택 시 HP 가 0 이하로 떨어지지 않는다", () => {
+        loadScript();
+        document.querySelector('[data-action="renderScenarioMenu"]').click();
+        document.querySelector('[data-action="startScenario"]').click();
+        // 정답 선택지 (text가 정답 보기의 것)를 찾아 클릭
+        const C = require("../content.js");
+        const s = C.SCENARIOS[0];
+        const correctText = s.steps[0].choices.find(c => c.correct).text;
+        const btns = [...document.querySelectorAll("#choice-list .choice-btn")];
+        const correctBtn = btns.find(b => b.textContent.includes(correctText.slice(0, 10)));
+        expect(correctBtn).toBeDefined();
+        correctBtn.click();
+        // HP 표시 확인
+        const hp = parseInt(document.getElementById("hp").textContent, 10);
+        expect(hp).toBeGreaterThan(0);
+    });
+});
+
+describe("PDF/인쇄", () => {
+    test("printWrongQueue 가 print-only 영역을 만들고 window.print 호출", () => {
+        loadScript();
+        document.querySelector('[data-action="renderDashboard"]').click();
+        document.querySelector('[data-action="printWrongQueue"]').click();
+        expect(window.print).toHaveBeenCalled();
+    });
+
+    test("printDashboard 가 print-only 영역을 만들고 window.print 호출", () => {
+        loadScript();
+        document.querySelector('[data-action="renderDashboard"]').click();
+        document.querySelector('[data-action="printDashboard"]').click();
+        expect(window.print).toHaveBeenCalled();
+    });
+});
+
+describe("출제 경향 SVG 차트", () => {
+    test("대시보드에 trends-svg 가 렌더된다", () => {
+        loadScript();
+        document.querySelector('[data-action="renderDashboard"]').click();
+        const svg = document.querySelector(".trends-svg");
+        expect(svg).not.toBeNull();
+        const bars = svg.querySelectorAll(".trend-bar");
+        expect(bars.length).toBe(8); // 8과목
     });
 });
 
