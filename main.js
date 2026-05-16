@@ -2,11 +2,15 @@ const { app, BrowserWindow } = require('electron')
 
 function createWindow() {
     const win = new BrowserWindow({
-        width: 450, // 모바일 시뮬레이터에 맞는 폭
-        height: 800
+        width: 450,
+        height: 800,
+        webPreferences: {
+            contextIsolation: true,
+            nodeIntegration: false,
+            sandbox: true
+        }
     })
 
-    // 우리가 만든 index.html 파일을 로드합니다.
     win.loadFile('index.html')
 }
 

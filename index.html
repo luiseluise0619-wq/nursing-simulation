@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
     <title>간호사 시뮬레이터</title>
     <style>
         :root {
@@ -126,7 +127,7 @@
                 <span style="font-size: 0.9rem; color: #94a3b8;">현재 점수: <span id="score" style="color:#fff; font-weight:bold;">0</span>점</span>
             </div>
         </div>
-        <button class="choice-btn center" style="margin-top: 20px; background: transparent; color: white;" onclick="location.reload()">처음으로 돌아가기</button>
+        <button class="choice-btn center" style="margin-top: 20px; background: transparent; color: white;" onclick="returnToMenu()">처음으로 돌아가기</button>
     </div>
 
     <script src="script.js"></script>
