@@ -377,8 +377,8 @@ function isCorrectChoice(c) { return c && c.correct === true; }
 
 function renderSceneCard(ev, options = {}) {
     const { mode = "survival", questionIndex = null, meta = [] } = options;
-    const tag = ev.category ? `<div class="category-tag" style="font-weight:bold; color:var(--primary); margin-bottom:5px;">[${ev.category}] ${ev.part || ""}</div>` : "";
-    const metaRow = meta.length ? `<div class="meta-row" style="margin-bottom:15px;">${meta.map(m => `<div class="meta-chip" style="display:inline-block; margin-right:8px; font-size:12px; color:var(--muted); background:var(--soft); padding:2px 6px; border-radius:4px;">${escapeHtml(m)}</div>`).join("")}</div>` : "";
+    const tag = ev.category ? `<div class="category-tag">[${escapeHtml(ev.category)}] ${escapeHtml(ev.part || "")}</div>` : "";
+    const metaRow = meta.length ? `<div class="meta-row">${meta.map(m => `<div class="meta-chip">${escapeHtml(m)}</div>`).join("")}</div>` : "";
 
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
@@ -517,8 +517,8 @@ function renderQuizMenu() {
         <h2 class="scene-title">국가고시 8과목 트레이닝</h2>
         <p class="scene-desc">숫자와 상황이 계속 변하는 무한 랜덤 4지선다 문제를 제공합니다.\n트레이닝 모드에서는 체력이 감소하지 않습니다.</p>
         <div class="choice-list">
-          ${CATEGORIES.map(c => `<button class="choice-btn primary" onclick="startQuiz('${c}')">${c}</button>`).join("")}
-          <button class="choice-btn center" onclick="returnToMenu()">메인 메뉴</button>
+          ${CATEGORIES.map(c => `<button class="choice-btn primary" data-action="startQuiz" data-arg="${escapeHtml(c)}">${c}</button>`).join("")}
+          <button class="choice-btn center" data-action="returnToMenu">메인 메뉴</button>
         </div>
       </div>`;
 }
@@ -646,9 +646,9 @@ function endMockExam(reason) {
         <h2 class="scene-title">${title}</h2>
         <p class="scene-desc">총 ${total}문제 중 ${answered}문제 응답 / 정답 ${correct} (정답률 ${acc}%)</p>
         <div class="choice-list">
-          <button class="choice-btn primary" onclick="startMockExam()">한 번 더</button>
-          <button class="choice-btn" onclick="reviewWrongAnswers()">오답 복습</button>
-          <button class="choice-btn center" onclick="returnToMenu()">메인 메뉴</button>
+          <button class="choice-btn primary" data-action="startMockExam">한 번 더</button>
+          <button class="choice-btn" data-action="reviewWrongAnswers">오답 복습</button>
+          <button class="choice-btn center" data-action="returnToMenu">메인 메뉴</button>
         </div>
       </div>`;
 }
@@ -731,7 +731,7 @@ function endDailyChallenge() {
         <h2 class="scene-title">일일 챌린지 완료</h2>
         <p class="scene-desc">정답 ${correct}/${DAILY_CHALLENGE_TOTAL}\n오늘의 도전을 마쳤습니다. 내일 다시 도전하세요!</p>
         <div class="choice-list">
-          <button class="choice-btn primary" onclick="returnToMenu()">메뉴로</button>
+          <button class="choice-btn primary" data-action="returnToMenu">메뉴로</button>
         </div>
       </div>`;
 }
@@ -750,7 +750,7 @@ function reviewWrongAnswers() {
             <h2 class="scene-title">오답노트가 비었습니다</h2>
             <p class="scene-desc">아직 저장된 오답이 없어요. 트레이닝/모의고사에서 문제를 풀면 자동으로 쌓입니다.</p>
             <div class="choice-list">
-              <button class="choice-btn primary" onclick="returnToMenu()">메인 메뉴</button>
+              <button class="choice-btn primary" data-action="returnToMenu">메인 메뉴</button>
             </div>
           </div>`;
         showCoreUI(); updateStats();
@@ -768,7 +768,7 @@ function renderNextWrongQuestion() {
             <h2 class="scene-title">오답을 모두 복습했습니다</h2>
             <p class="scene-desc">정답 ${gameState.quizCorrect} / 다시 오답 ${gameState.quizWrong}</p>
             <div class="choice-list">
-              <button class="choice-btn primary" onclick="returnToMenu()">메인 메뉴</button>
+              <button class="choice-btn primary" data-action="returnToMenu">메인 메뉴</button>
             </div>
           </div>`;
         return;
@@ -816,11 +816,11 @@ function renderDashboard() {
         const acc = s.solved > 0 ? Math.round((s.correct / s.solved) * 100) : 0;
         return `
           <div class="dashboard-row">
-            <div style="min-width:120px;">
-              <div class="cat-name">${cat}</div>
+            <div class="dashboard-cat-cell">
+              <div class="cat-name">${escapeHtml(cat)}</div>
               <div class="cat-stats">${s.correct}/${s.solved} · ${acc}%</div>
             </div>
-            <div class="mini-bar"><div class="mini-bar-fill" style="width:${acc}%"></div></div>
+            <div class="mini-bar" role="progressbar" aria-valuenow="${acc}" aria-valuemin="0" aria-valuemax="100" aria-label="${escapeHtml(cat)} 정답률"><div class="mini-bar-fill" style="width:${acc}%"></div></div>
           </div>`;
     }).join("");
     const wrongCount = data.wrongQueue.length;
@@ -833,14 +833,14 @@ function renderDashboard() {
         <h2 class="scene-title">학습 대시보드</h2>
         <p class="scene-desc">과목별 정답률과 누적 성과를 확인할 수 있습니다.</p>
         <div class="dashboard-grid">${rows}</div>
-        <hr style="margin: 16px 0; border: 1px solid var(--border);">
-        <p class="scene-desc" style="margin:0;">
-          🔥 최고 콤보: <strong>${data.bestCombo}</strong> · 🏆 모의고사 최고점: <strong>${data.mockBest}</strong> · 📝 오답: <strong>${wrongCount}</strong>건 · 🎯 ${dailyMsg}
+        <hr class="dashboard-divider">
+        <p class="scene-desc dashboard-summary">
+          🔥 최고 콤보: <strong>${data.bestCombo}</strong> · 🏆 모의고사 최고점: <strong>${data.mockBest}</strong> · 📝 오답: <strong>${wrongCount}</strong>건 · 🎯 ${escapeHtml(dailyMsg)}
         </p>
-        <div class="choice-list" style="margin-top: 16px;">
-          <button class="choice-btn primary" onclick="reviewWrongAnswers()">오답 복습 (${wrongCount})</button>
-          <button class="choice-btn" onclick="confirmClearStats()">통계 초기화</button>
-          <button class="choice-btn center" onclick="returnToMenu()">메인 메뉴</button>
+        <div class="choice-list dashboard-actions">
+          <button class="choice-btn primary" data-action="reviewWrongAnswers">오답 복습 (${wrongCount})</button>
+          <button class="choice-btn" data-action="confirmClearStats">통계 초기화</button>
+          <button class="choice-btn center" data-action="returnToMenu">메인 메뉴</button>
         </div>
       </div>`;
 }
@@ -887,21 +887,21 @@ function returnToMenu() {
 
     UI.gameArea.innerHTML = `
       <div class="card menu-container">
-        <span class="scene-emoji">🏥</span>
-        <h2>간호사 시뮬레이터</h2>
-        <p style="color: var(--muted); font-size: 0.9rem; margin-bottom: 20px;">당신의 임상 판단력을 테스트하세요.</p>
-        <div style="margin-bottom: 16px;">
-          <button class="shift-option ${gameState.currentShift === 'Day' ? 'active' : ''}" onclick="setShift('Day', 1.0, this)">Day (기본)</button>
-          <button class="shift-option ${gameState.currentShift === 'Evening' ? 'active' : ''}" onclick="setShift('Evening', 1.2, this)">Evening (어려움)</button>
-          <button class="shift-option ${gameState.currentShift === 'Night' ? 'active' : ''}" onclick="setShift('Night', 1.5, this)">Night (지옥)</button>
+        <span class="scene-emoji" aria-hidden="true">🏥</span>
+        <h1 class="menu-title">간호사 시뮬레이터</h1>
+        <p class="menu-tagline">당신의 임상 판단력을 테스트하세요.</p>
+        <div class="menu-shift-row">
+          <button class="shift-option ${gameState.currentShift === 'Day' ? 'active' : ''}" data-action="setShift" data-shift="Day" data-mult="1.0">Day (기본)</button>
+          <button class="shift-option ${gameState.currentShift === 'Evening' ? 'active' : ''}" data-action="setShift" data-shift="Evening" data-mult="1.2">Evening (어려움)</button>
+          <button class="shift-option ${gameState.currentShift === 'Night' ? 'active' : ''}" data-action="setShift" data-shift="Night" data-mult="1.5">Night (지옥)</button>
         </div>
-        <button class="choice-btn primary" onclick="initSurvival()">실전 듀티 시작</button>
-        <button class="choice-btn" onclick="renderQuizMenu()">트레이닝 센터 (8과목)</button>
-        <button class="choice-btn" onclick="startMockExam()">📝 모의고사 (${MOCK_EXAM_TOTAL}문제 · ${MOCK_EXAM_SECONDS / 60}분)</button>
-        <button class="choice-btn" onclick="startDailyChallenge()">🎯 일일 챌린지 ${dailyDone ? "(오늘 완료)" : ""}</button>
-        <button class="choice-btn" onclick="reviewWrongAnswers()">📝 오답노트 (${wrongCount})</button>
-        <button class="choice-btn subtle center" onclick="renderDashboard()">📊 학습 대시보드</button>
-        <p style="margin-top: 16px; font-size: 11px; color: var(--muted);">
+        <button class="choice-btn primary" data-action="initSurvival">실전 듀티 시작</button>
+        <button class="choice-btn" data-action="renderQuizMenu">트레이닝 센터 (8과목)</button>
+        <button class="choice-btn" data-action="startMockExam">📝 모의고사 (${MOCK_EXAM_TOTAL}문제 · ${MOCK_EXAM_SECONDS / 60}분)</button>
+        <button class="choice-btn" data-action="startDailyChallenge">🎯 일일 챌린지 ${dailyDone ? "(오늘 완료)" : ""}</button>
+        <button class="choice-btn" data-action="reviewWrongAnswers">📝 오답노트 (${wrongCount})</button>
+        <button class="choice-btn subtle center" data-action="renderDashboard">📊 학습 대시보드</button>
+        <p class="menu-kbd-row">
           <span class="kbd-hint">1</span><span class="kbd-hint">2</span><span class="kbd-hint">3</span><span class="kbd-hint">4</span> 보기 선택 ·
           <span class="kbd-hint">Space</span> 다음 ·
           <span class="kbd-hint">T</span> 테마 ·
@@ -1051,6 +1051,7 @@ function boot() {
     if (UI.themeToggle) UI.themeToggle.addEventListener("click", toggleTheme);
     if (UI.soundToggle) UI.soundToggle.addEventListener("click", toggleSound);
     document.addEventListener("keydown", handleKeydown);
+    document.body.addEventListener("click", handleDelegatedAction);
     // 시스템 다크모드 변경에 반응 (사용자가 명시적으로 라이트/다크를 선택하지 않은 경우)
     try {
         const mq = window.matchMedia("(prefers-color-scheme: dark)");
@@ -1062,6 +1063,27 @@ function boot() {
         else if (mq.addListener) mq.addListener(onChange);
     } catch {}
     returnToMenu();
+}
+
+// 인라인 onclick 핸들러를 모두 data-action 위임으로 대체 → CSP `script-src 'self'`만 허용 가능
+const DELEGATED_ACTIONS = {
+    returnToMenu: () => returnToMenu(),
+    initSurvival: () => initSurvival(),
+    renderQuizMenu: () => renderQuizMenu(),
+    startQuiz: (t) => startQuiz(t.dataset.arg),
+    startMockExam: () => startMockExam(),
+    startDailyChallenge: () => startDailyChallenge(),
+    reviewWrongAnswers: () => reviewWrongAnswers(),
+    renderDashboard: () => renderDashboard(),
+    confirmClearStats: () => confirmClearStats(),
+    setShift: (t) => setShift(t.dataset.shift, parseFloat(t.dataset.mult), t),
+};
+function handleDelegatedAction(e) {
+    const target = e.target.closest("[data-action]");
+    if (!target) return;
+    const handler = DELEGATED_ACTIONS[target.dataset.action];
+    if (!handler) return;
+    handler(target);
 }
 
 if (typeof window !== "undefined") {
