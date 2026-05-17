@@ -1,0 +1,46 @@
+MIT License
+
+Copyright (c) 2026 nurse-simulator contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+==============================================================================
+
+  의료 학습 면책 고지 (MEDICAL EDUCATION DISCLAIMER)
+
+이 소프트웨어는 한국 간호사 국가고시 학습 보조 도구입니다.
+This software is a study aid for the Korean Registered Nurse licensing exam.
+
+본 소프트웨어가 제공하는 임상 시나리오·약물 정보·간호중재 권고는
+교육적 목적의 시뮬레이션이며, 실제 환자에 대한 의학적 자문·진단·치료를
+대체하지 않습니다. 실제 임상에서는 반드시 면허를 가진 의료인의 판단,
+공식 가이드라인(KDCA, ACLS, AHA 등), 의료기관 프로토콜을 따르십시오.
+
+The clinical scenarios, drug information, and nursing intervention guidance
+provided are educational simulations and DO NOT substitute for medical
+advice, diagnosis, or treatment by licensed clinicians. In real clinical
+practice, always follow the judgment of licensed healthcare professionals,
+official guidelines (KDCA, ACLS, AHA, etc.), and institutional protocols.
+
+작성자와 기여자는 이 소프트웨어의 사용 또는 오용에서 비롯된 환자 손상,
+의료 사고, 학습 결과의 부정확성에 대해 어떠한 책임도 지지 않습니다.
+
+The authors and contributors assume NO liability for any patient harm,
+medical error, or inaccuracy of learning outcomes arising from the use or
+misuse of this software.

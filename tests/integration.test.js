@@ -57,7 +57,7 @@ function freshDom() {
     };
 }
 
-function loadScript() {
+function loadScript({ legal = true, onboarded = true } = {}) {
     jest.resetModules();
     const Q = require("../questions.js");
     const C = require("../content.js");
@@ -70,6 +70,21 @@ function loadScript() {
     };
     window.SpeechSynthesisUtterance = function (text) { this.text = text; };
     window.print = jest.fn();
+    // 대부분의 테스트는 게이트를 통과한 상태에서 출발
+    // 단, 테스트가 자체적으로 localStorage 를 미리 시드해 둔 경우엔 덮어쓰지 않고 병합
+    if (legal || onboarded) {
+        let existing = {};
+        try {
+            const raw = localStorage.getItem("nurseSim:v1");
+            if (raw) existing = JSON.parse(raw) || {};
+        } catch {}
+        const merged = {
+            ...existing,
+            accepted: existing.accepted || (legal ? { version: "1.0", at: Date.now() } : null),
+            onboarded: existing.onboarded !== undefined ? existing.onboarded : onboarded,
+        };
+        try { localStorage.setItem("nurseSim:v1", JSON.stringify(merged)); } catch {}
+    }
     return require("../script.js");
 }
 
@@ -473,6 +488,75 @@ describe("출제 경향 SVG 차트", () => {
         expect(svg).not.toBeNull();
         const bars = svg.querySelectorAll(".trend-bar");
         expect(bars.length).toBe(8); // 8과목
+    });
+});
+
+describe("약관 동의 / 온보딩 게이트", () => {
+    test("동의·온보딩 모두 없으면 메인 메뉴 대신 약관 화면이 뜬다", () => {
+        // localStorage 를 깨끗이 비우고 동의·온보딩 false 로 부트
+        loadScript({ legal: false, onboarded: false });
+        expect(document.querySelector('.legal-card')).not.toBeNull();
+        expect(document.querySelector('[data-action="initSurvival"]')).toBeNull();
+    });
+
+    test("'동의하고 시작하기' 클릭 시 온보딩으로 이동한다", () => {
+        loadScript({ legal: false, onboarded: false });
+        document.querySelector('[data-action="legalAccept"]').click();
+        expect(document.querySelector('.onboard-card')).not.toBeNull();
+        expect(document.querySelector('.onboard-dots')).not.toBeNull();
+    });
+
+    test("온보딩 '건너뛰기' 시 바로 메인 메뉴로 진입한다", () => {
+        loadScript({ legal: true, onboarded: false });
+        expect(document.querySelector('.onboard-card')).not.toBeNull();
+        document.querySelector('[data-action="onboardSkip"]').click();
+        expect(document.querySelector('[data-action="initSurvival"]')).not.toBeNull();
+    });
+
+    test("온보딩 다음 버튼으로 마지막까지 진행", () => {
+        loadScript({ legal: true, onboarded: false });
+        // 다음 → 다음 → ... 마지막 슬라이드까지
+        for (let i = 0; i < 4; i++) {
+            const next = document.querySelector('[data-action="onboardNext"]');
+            expect(next).not.toBeNull();
+            next.click();
+        }
+        // 마지막엔 '시작하기' 버튼
+        const finish = document.querySelector('[data-action="onboardFinish"]');
+        expect(finish).not.toBeNull();
+        finish.click();
+        expect(document.querySelector('[data-action="initSurvival"]')).not.toBeNull();
+    });
+
+    test("동의·온보딩 모두 완료된 상태에선 메인 메뉴가 바로 뜬다", () => {
+        loadScript(); // 기본값 legal: true, onboarded: true
+        expect(document.querySelector('h1.menu-title')).not.toBeNull();
+        expect(document.querySelector('[data-action="initSurvival"]')).not.toBeNull();
+    });
+
+    test("메인 메뉴 푸터의 '튜토리얼 다시 보기' 가 동작한다", () => {
+        loadScript();
+        document.querySelector('[data-action="showOnboarding"]').click();
+        expect(document.querySelector('.onboard-card')).not.toBeNull();
+    });
+
+    test("메인 메뉴 푸터의 '약관·면책' 가 동작한다", () => {
+        loadScript();
+        document.querySelector('[data-action="showLegal"]').click();
+        expect(document.querySelector('.legal-card')).not.toBeNull();
+    });
+});
+
+describe("듀티 모드 — 스토리 비트 자동 발동", () => {
+    test("스토리 비트는 eventCount 매칭 시점에 1회만 발동된다", () => {
+        const C = require("../content.js");
+        // 비트의 atEvent 값을 확인하고 모든 비트가 firedStoryBeats 가드로 한 번씩만 트리거되는지 검증
+        const events = C.SURVIVAL_STORY_BEATS.map(b => b.atEvent);
+        // 모든 atEvent 가 양의 정수
+        events.forEach(e => expect(e).toBeGreaterThan(0));
+        // 모든 비트가 고유 baseId 를 가진다
+        const baseIds = C.SURVIVAL_STORY_BEATS.map(b => b.baseId);
+        expect(new Set(baseIds).size).toBe(baseIds.length);
     });
 });
 

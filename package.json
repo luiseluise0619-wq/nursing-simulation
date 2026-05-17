@@ -6,7 +6,10 @@
   "scripts": {
     "start": "electron .",
     "test": "jest",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "pack:mac": "electron-builder --mac --x64 --arm64",
+    "pack:win": "electron-builder --win --x64",
+    "pack:linux": "electron-builder --linux AppImage"
   },
   "keywords": [
     "nursing",
@@ -15,8 +18,28 @@
     "korea"
   ],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "type": "commonjs",
+  "build": {
+    "appId": "com.nursesim.app",
+    "productName": "간호사 시뮬레이터",
+    "directories": { "output": "dist" },
+    "files": [
+      "main.js",
+      "index.html",
+      "styles.css",
+      "script.js",
+      "questions.js",
+      "content.js",
+      "manifest.json",
+      "sw.js",
+      "package.json",
+      "LICENSE"
+    ],
+    "mac":   { "category": "public.app-category.education", "target": ["dmg"] },
+    "win":   { "target": ["nsis"] },
+    "linux": { "category": "Education", "target": ["AppImage"] }
+  },
   "devDependencies": {
     "electron": "^41.3.0",
     "jest": "^29.7.0",

@@ -69,8 +69,12 @@ describe("듀티(생존모드) 스토리 비트 invariants", () => {
 });
 
 describe("트리아지 케이스 invariants", () => {
-    test("최소 1개 이상의 트리아지 케이스가 존재한다", () => {
-        expect(C.TRIAGE_CASES.length).toBeGreaterThanOrEqual(1);
+    test("최소 7개 이상의 트리아지 케이스가 존재한다 (다양한 케이스)", () => {
+        expect(C.TRIAGE_CASES.length).toBeGreaterThanOrEqual(7);
+    });
+    test("케이스 id 가 모두 고유하다", () => {
+        const ids = C.TRIAGE_CASES.map(t => t.id);
+        expect(new Set(ids).size).toBe(ids.length);
     });
 
     C.TRIAGE_CASES.forEach(t => {
@@ -101,8 +105,12 @@ describe("트리아지 케이스 invariants", () => {
 });
 
 describe("임상 시나리오 invariants", () => {
-    test("최소 1개 이상의 시나리오가 존재한다", () => {
-        expect(C.SCENARIOS.length).toBeGreaterThanOrEqual(1);
+    test("최소 6개 이상의 시나리오가 존재한다", () => {
+        expect(C.SCENARIOS.length).toBeGreaterThanOrEqual(6);
+    });
+    test("시나리오 id 가 모두 고유하다", () => {
+        const ids = C.SCENARIOS.map(s => s.id);
+        expect(new Set(ids).size).toBe(ids.length);
     });
 
     C.SCENARIOS.forEach(s => {

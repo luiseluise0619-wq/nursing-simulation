@@ -714,6 +714,85 @@ body {
     }
 }
 
+/* ============================================================
+   약관 / 온보딩 / 메뉴 푸터
+   ============================================================ */
+.legal-card {
+    text-align: left;
+    line-height: 1.55;
+}
+.legal-section {
+    margin: 14px 0;
+    padding: 12px;
+    background: var(--softer);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+}
+.legal-h {
+    margin: 0 0 8px;
+    font-size: 14px;
+    color: var(--text);
+    font-weight: 700;
+}
+.legal-section p { margin: 6px 0; font-size: 13px; color: var(--muted); }
+.legal-section p strong { color: var(--text); }
+.legal-list {
+    margin: 6px 0 0 18px;
+    padding: 0;
+    font-size: 13px;
+    color: var(--muted);
+}
+.legal-list li { margin-bottom: 4px; }
+.legal-list strong { color: var(--text); }
+
+.onboard-card { text-align: center; }
+.onboard-body {
+    margin: 12px 0 16px;
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.55;
+    white-space: pre-wrap;
+}
+.onboard-dots {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin: 12px 0 16px;
+}
+.onboard-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--border);
+    transition: background .2s, transform .2s;
+}
+.onboard-dot.active {
+    background: var(--primary);
+    transform: scale(1.3);
+}
+
+.menu-footer {
+    margin-top: 10px;
+    text-align: center;
+    font-size: 11px;
+    color: var(--muted);
+}
+.text-link {
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    text-decoration: underline;
+    cursor: pointer;
+    font-size: 11px;
+    padding: 4px 6px;
+    font-family: inherit;
+}
+.text-link:hover { color: var(--text); }
+.text-link:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
 .print-only { display: none; }
 @media print {
     body * { visibility: hidden !important; }

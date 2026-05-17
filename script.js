@@ -134,6 +134,8 @@ const Storage = {
             handoffBest: Number.isFinite(raw.handoffBest) ? raw.handoffBest : 0,
             handoffSeen: Array.isArray(raw.handoffSeen) ? raw.handoffSeen.filter(x => typeof x === "string") : [],
             triageBest: Number.isFinite(raw.triageBest) ? raw.triageBest : 0,
+            accepted: (raw.accepted && typeof raw.accepted === "object") ? raw.accepted : null,
+            onboarded: raw.onboarded === true,
             scenarios: (raw.scenarios && typeof raw.scenarios === "object" && !Array.isArray(raw.scenarios)) ? raw.scenarios : {},
             daily: (raw.daily && typeof raw.daily === "object") ? raw.daily : {},
             history: Array.isArray(raw.history) ? raw.history : [],
@@ -199,9 +201,24 @@ const Storage = {
         const data = Storage.load();
         if (n > data.mockBest) { data.mockBest = n; Storage.save(data); }
     },
-    setHandoffBest(acc) {
+    // 사용 약관 / 개인정보 / 면책 — 첫 실행 시 동의 받음
+    setAccepted(version) {
         const data = Storage.load();
-        if (!Number.isFinite(data.handoffBest) || acc > data.handoffBest) { data.handoffBest = acc; Storage.save(data); }
+        data.accepted = { version, at: Date.now() };
+        Storage.save(data);
+    },
+    isAccepted(version) {
+        const data = Storage.load();
+        return data.accepted && data.accepted.version === version;
+    },
+    setOnboarded() {
+        const data = Storage.load();
+        data.onboarded = true;
+        Storage.save(data);
+    },
+    isOnboarded() {
+        const data = Storage.load();
+        return data.onboarded === true;
     },
     getHandoffSeen() {
         const data = Storage.load();
@@ -1395,6 +1412,108 @@ function confirmClearStats() {
 }
 
 // =========================================================================
+// 약관 / 개인정보 / 면책 (첫 실행 시 동의 게이트)
+// =========================================================================
+const LEGAL_VERSION = "1.0";
+
+function renderLegalGate(onAccept) {
+    hideCoreUI();
+    UI.topBar.classList.remove("hidden"); // 테마/사운드 토글은 유지
+    UI.gameArea.innerHTML = `
+      <div class="card legal-card">
+        <h1 class="menu-title">📜 시작 전 확인</h1>
+        <p class="menu-tagline">간호사 시뮬레이터는 학습 보조 도구입니다.</p>
+
+        <section class="legal-section">
+          <h2 class="legal-h">⚠️ 의료 학습 면책 고지</h2>
+          <p>이 앱이 제공하는 임상 시나리오·약물 정보·간호중재 권고는 <strong>교육적 시뮬레이션</strong>이며, 실제 환자에 대한 의학적 자문·진단·치료를 대체하지 않습니다.</p>
+          <p>실제 임상에서는 반드시 <strong>면허를 가진 의료인의 판단, 공식 가이드라인(KDCA, ACLS, AHA 등), 의료기관 프로토콜</strong>을 따르십시오.</p>
+          <p>작성자와 기여자는 이 앱의 사용·오용에서 비롯된 환자 손상, 의료 사고, 학습 결과의 부정확성에 대해 책임지지 않습니다.</p>
+        </section>
+
+        <section class="legal-section">
+          <h2 class="legal-h">🔒 개인정보 처리방침 (요약)</h2>
+          <ul class="legal-list">
+            <li>이 앱은 <strong>네트워크 통신을 하지 않습니다.</strong> 모든 데이터는 사용자의 기기 안에서만 처리됩니다.</li>
+            <li>저장되는 항목: 학습 통계, 오답 노트, 사운드/테마 설정, 일일 챌린지 기록 (브라우저 localStorage).</li>
+            <li>외부 서버로 전송되는 개인정보·식별정보는 <strong>없습니다.</strong></li>
+            <li>대시보드 "통계 초기화" 버튼으로 언제든 전체 데이터를 삭제할 수 있습니다.</li>
+          </ul>
+        </section>
+
+        <section class="legal-section">
+          <h2 class="legal-h">📑 이용 약관 (요약)</h2>
+          <ul class="legal-list">
+            <li>본 앱은 무료로 제공되며 학습·교육 목적으로만 사용됩니다.</li>
+            <li>MIT 라이선스에 따라 자유롭게 사용·수정·배포할 수 있습니다 (LICENSE 파일 참고).</li>
+            <li>임상 의사결정의 책임은 사용자에게 있습니다.</li>
+          </ul>
+        </section>
+
+        <div class="choice-list">
+          <button class="choice-btn primary" data-action="legalAccept">동의하고 시작하기</button>
+        </div>
+      </div>`;
+    UI._onLegalAccept = onAccept;
+}
+function legalAccept() {
+    Storage.setAccepted(LEGAL_VERSION);
+    const cb = UI._onLegalAccept;
+    UI._onLegalAccept = null;
+    if (typeof cb === "function") cb(); else returnToMenu();
+}
+
+// =========================================================================
+// 온보딩 (첫 실행 튜토리얼 — 5 슬라이드)
+// =========================================================================
+const ONBOARDING_SLIDES = [
+    { emoji: "🏥", title: "간호사 시뮬레이터에 오신 것을 환영합니다",
+      body: "국시 8과목 + 임상 시뮬레이션을 하나의 앱에서 연습할 수 있어요.\n시프트 난이도(Day/Evening/Night)에 따라 HP 손실이 달라집니다." },
+    { emoji: "📚", title: "9개 모드를 활용하세요",
+      body: "실전 듀티 · 트레이닝 · 모의고사 · 일일 챌린지 · 인계 시뮬 · 트리아지 · 시나리오 · 오답노트 · 대시보드.\n메인 메뉴에서 카드를 탭하면 바로 시작합니다." },
+    { emoji: "🎯", title: "오답은 자동으로 쌓입니다",
+      body: "틀린 문제는 오답노트에 저장되어, 정답을 맞힐 때까지 다시 출제됩니다.\n과목별 정답률은 대시보드에서 막대 그래프로 확인하세요." },
+    { emoji: "⌨️", title: "키보드 단축키",
+      body: "1~4 보기 선택 · Space 다음 문제 · T 테마 전환 · M 사운드 토글 · ESC 모달 닫기.\n모바일에서는 카드를 그냥 탭하시면 됩니다." },
+    { emoji: "📜", title: "학습 도구로만 사용하세요",
+      body: "본 앱은 교육 목적이며, 실제 임상 의사결정을 대체하지 않습니다.\n공식 가이드라인과 의료기관 프로토콜을 항상 우선하세요." },
+];
+let onboardingIndex = 0;
+
+function renderOnboarding(idx = 0) {
+    onboardingIndex = idx;
+    const slide = ONBOARDING_SLIDES[idx];
+    const total = ONBOARDING_SLIDES.length;
+    hideCoreUI();
+    UI.topBar.classList.remove("hidden");
+    const dots = ONBOARDING_SLIDES.map((_, i) =>
+        `<span class="onboard-dot ${i === idx ? "active" : ""}" aria-current="${i === idx ? "true" : "false"}"></span>`
+    ).join("");
+    UI.gameArea.innerHTML = `
+      <div class="card onboard-card">
+        <span class="scene-emoji" aria-hidden="true">${slide.emoji}</span>
+        <h1 class="menu-title">${escapeHtml(slide.title)}</h1>
+        <p class="onboard-body">${escapeHtml(slide.body)}</p>
+        <div class="onboard-dots" role="tablist" aria-label="튜토리얼 진행도">${dots}</div>
+        <div class="choice-list">
+          ${idx < total - 1
+              ? `<button class="choice-btn primary" data-action="onboardNext">다음 (${idx + 1}/${total})</button>
+                 <button class="choice-btn subtle center" data-action="onboardSkip">건너뛰기</button>`
+              : `<button class="choice-btn primary" data-action="onboardFinish">시작하기</button>`}
+        </div>
+      </div>`;
+}
+function onboardNext() {
+    if (onboardingIndex < ONBOARDING_SLIDES.length - 1) renderOnboarding(onboardingIndex + 1);
+    else onboardFinish();
+}
+function onboardSkip() { onboardFinish(); }
+function onboardFinish() {
+    Storage.setOnboarded();
+    returnToMenu();
+}
+
+// =========================================================================
 // 메인 메뉴 (returnToMenu)
 // =========================================================================
 function returnToMenu() {
@@ -1496,6 +1615,11 @@ function returnToMenu() {
           <span class="kbd-hint">M</span> 사운드 ·
           <span class="kbd-hint">ESC</span> 닫기
         </p>
+        <div class="menu-footer">
+          <button class="text-link" data-action="showOnboarding">튜토리얼 다시 보기</button>
+          ·
+          <button class="text-link" data-action="showLegal">약관·면책</button>
+        </div>
       </div>`;
 
     // 메인 메뉴에서도 상단 헤더는 표시(테마/사운드 토글 위해)
@@ -1650,7 +1774,23 @@ function boot() {
         if (mq.addEventListener) mq.addEventListener("change", onChange);
         else if (mq.addListener) mq.addListener(onChange);
     } catch {}
-    returnToMenu();
+    // 서비스 워커 등록 (PWA — Electron file:// 에서는 자동으로 무시됨)
+    try {
+        if (navigator.serviceWorker && location.protocol !== "file:") {
+            navigator.serviceWorker.register("./sw.js").catch(() => {});
+        }
+    } catch {}
+    // 첫 실행 → 약관 동의 → 온보딩 → 메뉴
+    if (!Storage.isAccepted(LEGAL_VERSION)) {
+        renderLegalGate(() => {
+            if (!Storage.isOnboarded()) renderOnboarding(0);
+            else returnToMenu();
+        });
+    } else if (!Storage.isOnboarded()) {
+        renderOnboarding(0);
+    } else {
+        returnToMenu();
+    }
 }
 
 // 인라인 onclick 핸들러를 모두 data-action 위임으로 대체 → CSP `script-src 'self'`만 허용 가능
@@ -1680,6 +1820,13 @@ const DELEGATED_ACTIONS = {
     startScenario: (t) => startScenario(t),
     printWrongQueue: () => printWrongQueue(),
     printDashboard: () => printDashboard(),
+    // 약관 / 온보딩
+    legalAccept: () => legalAccept(),
+    onboardNext: () => onboardNext(),
+    onboardSkip: () => onboardSkip(),
+    onboardFinish: () => onboardFinish(),
+    showLegal: () => renderLegalGate(() => returnToMenu()),
+    showOnboarding: () => renderOnboarding(0),
 };
 function handleDelegatedAction(e) {
     const target = e.target.closest("[data-action]");
