@@ -7,6 +7,9 @@
     "start": "electron .",
     "test": "jest",
     "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "lint": "eslint . --ext .js --ignore-pattern node_modules --ignore-pattern dist --ignore-pattern build",
+    "icons": "node scripts/generate-icons.js",
     "pack:mac": "electron-builder --mac --x64 --arm64",
     "pack:win": "electron-builder --win --x64",
     "pack:linux": "electron-builder --linux AppImage"
@@ -23,7 +26,9 @@
   "build": {
     "appId": "com.nursesim.app",
     "productName": "간호사 시뮬레이터",
-    "directories": { "output": "dist" },
+    "directories": {
+      "output": "dist"
+    },
     "files": [
       "main.js",
       "index.html",
@@ -36,14 +41,30 @@
       "package.json",
       "LICENSE"
     ],
-    "mac":   { "category": "public.app-category.education", "target": ["dmg"] },
-    "win":   { "target": ["nsis"] },
-    "linux": { "category": "Education", "target": ["AppImage"] }
+    "mac": {
+      "category": "public.app-category.education",
+      "target": [
+        "dmg"
+      ]
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    },
+    "linux": {
+      "category": "Education",
+      "target": [
+        "AppImage"
+      ]
+    }
   },
   "devDependencies": {
     "electron": "^41.3.0",
+    "eslint": "^8.57.1",
     "jest": "^29.7.0",
-    "jest-environment-jsdom": "^30.4.1"
+    "jest-environment-jsdom": "^30.4.1",
+    "sharp": "^0.34.5"
   },
   "jest": {
     "projects": [
@@ -58,7 +79,9 @@
       {
         "displayName": "integration",
         "testEnvironment": "jsdom",
-        "testMatch": ["<rootDir>/tests/integration.test.js"]
+        "testMatch": [
+          "<rootDir>/tests/integration.test.js"
+        ]
       }
     ]
   }

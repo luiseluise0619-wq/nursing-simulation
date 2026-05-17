@@ -152,7 +152,7 @@ describe("출제 경향 데이터 invariants", () => {
 
     test("모든 카테고리가 years 와 같은 길이의 값 배열을 가진다", () => {
         const len = C.EXAM_TRENDS.years.length;
-        Object.entries(C.EXAM_TRENDS.categories).forEach(([cat, values]) => {
+        Object.entries(C.EXAM_TRENDS.categories).forEach(([_cat, values]) => {
             expect(Array.isArray(values)).toBe(true);
             expect(values.length).toBe(len);
             values.forEach(v => expect(Number.isFinite(v)).toBe(true));

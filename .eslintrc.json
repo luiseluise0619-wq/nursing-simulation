@@ -1,0 +1,38 @@
+{
+  "root": true,
+  "env": {
+    "browser": true,
+    "node": true,
+    "es2022": true,
+    "jest": true
+  },
+  "parserOptions": {
+    "ecmaVersion": "latest",
+    "sourceType": "script"
+  },
+  "ignorePatterns": ["node_modules/", "dist/", "build/", "package-lock.json"],
+  "rules": {
+    "no-unused-vars": ["warn", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }],
+    "no-undef": "error",
+    "eqeqeq": ["error", "smart"],
+    "no-var": "error",
+    "prefer-const": "warn",
+    "no-console": "off",
+    "no-empty": ["error", { "allowEmptyCatch": true }],
+    "no-prototype-builtins": "off"
+  },
+  "overrides": [
+    {
+      "files": ["questions.js", "content.js"],
+      "globals": { "self": "readonly", "module": "readonly" }
+    },
+    {
+      "files": ["sw.js"],
+      "env": { "serviceworker": true }
+    },
+    {
+      "files": ["scripts/**/*.js"],
+      "env": { "node": true }
+    }
+  ]
+}

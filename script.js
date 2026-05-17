@@ -24,7 +24,7 @@ const NC = (typeof window !== "undefined" && window.NurseContent)
 // =========================================================================
 // 상태
 // =========================================================================
-let gameState = {
+const gameState = {
     mode: "menu",
     hp: 100, rep: 0,
     eventCount: 0,
@@ -462,7 +462,7 @@ function hideCoreUI() {
 // 문제 풀기
 // =========================================================================
 function generateClinicalEventByCategory(category = null) {
-    let pool = [];
+    const pool = [];
     for (const gen of NQ.allGenerators) {
         const ev = gen();
         if ((!category || ev.category === category) && !recentlyUsed(ev.baseId)) pool.push(ev);
@@ -964,7 +964,7 @@ const HANDOFF_SESSION_SIZE = 10;
 // 이전 세션에서 본 ID는 가급적 제외, 남은 풀이 N 미만이면 seen 을 리셋해 사이클 반복.
 function pickHandoffSession(n) {
     const all = NC.HANDOFF_PATIENTS;
-    let seen = Storage.getHandoffSeen();
+    const seen = Storage.getHandoffSeen();
     let pool = all.filter(p => !seen.includes(p.id));
     if (pool.length < n) {
         Storage.clearHandoffSeen();

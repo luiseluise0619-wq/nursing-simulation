@@ -11,9 +11,20 @@
 
 | 검증 항목 | 결과 | 출처 |
 | --- | :---: | --- |
-| 24개 핵심 사실 | **23 통과 / 1 수정** | StatPearls, AHA, AAFP, KDCA, ACOG, SCCM |
+| 30개 핵심 사실 | **29 통과 / 1 수정** | StatPearls, AHA, AAFP, KDCA, ACOG, SCCM, ASHP, ACEP, OpenStax |
 
 수정된 1건: `handoff h097` 의 tPA window 키워드 "3시간" → "4.5시간" (현 AHA/ASA 가이드라인 반영, 옛 3시간 기준은 1995년 NINDS 기준)
+
+### 2차 추가 검증 (25~30)
+
+| # | 항목 | 결과 |
+| --- | --- | :---: |
+| 25 | Warfarin INR 목표 2-3 (AFib), 비타민K 2.5mg 경구 역전 (Mayo/AAFP) | ✅ |
+| 26 | Vancomycin trough 15-20 (MRSA 중증), 60분 이상 주입, Red man syndrome (ASHP) | ✅ |
+| 27 | Heparin aPTT 목표 45-75초, 6시간 간격 모니터링 (AHA Circulation) | ✅ |
+| 28 | 소아 탈수 IV 20mL/kg bolus, 소변량 1mL/kg/hr 목표 (Merck/UTMB) | ✅ |
+| 29 | 신생아 광선치료 30~40cm 거리, 눈가리개 필수 (Stanford/RCH 범위 내) | ✅ |
+| 30 | 망상 환자 대화: 논쟁 금지, 감정 수용, 현실 지향 (OpenStax/NCBI) | ✅ |
 
 ---
 

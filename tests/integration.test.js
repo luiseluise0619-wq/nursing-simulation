@@ -202,8 +202,7 @@ describe("오답 큐 — 고유 id 기반 저장/제거", () => {
         loadScript();
         document.querySelector('[data-action="renderQuizMenu"]').click();
         document.querySelector('[data-action="startQuiz"]').click();
-        // 정답이 아닌 보기를 찾아 클릭
-        const choices = [...document.querySelectorAll('#choice-list .choice-btn')];
+        // 4개 보기 중 어떤 게 정답인지 모르므로 모두 클릭해 오답 큐 누적 검증
         // ev.choices 의 정답 인덱스를 모르므로, 보기 4개 중 첫 번째를 클릭하고
         // 결과적으로 정답이면 다음 문제로, 오답이면 wrongQueue 1건 누적되는지 확인
         const before = JSON.parse(localStorage.getItem("nurseSim:v1") || "{}");
