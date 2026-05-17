@@ -1,39 +1,76 @@
-// =========================
-// 상태
-// =========================
-const MAX_PROGRESS_EVENTS = 20;
+// =========================================================================
+// 간호사 시뮬레이터 — 메인 게임 로직
+// 의존: questions.js (window.NurseQuestions)
+// =========================================================================
 
+const MAX_PROGRESS_EVENTS = 20;
+const MAX_LOG_ENTRIES = 50;
+const RECENT_HISTORY_SIZE = 15;
+const MOCK_EXAM_TOTAL = 30;
+const MOCK_EXAM_SECONDS = 30 * 60;
+const DAILY_CHALLENGE_TOTAL = 10;
+const STORAGE_KEY = "nurseSim:v1";
+
+const CATEGORIES = [
+    "기본간호학", "성인간호학", "모성간호학", "아동간호학",
+    "지역사회간호학", "정신간호학", "간호관리학", "보건의약관계법규"
+];
+
+const NQ = (typeof window !== "undefined" && window.NurseQuestions)
+    || (typeof require !== "undefined" ? require("./questions.js") : null);
+const NC = (typeof window !== "undefined" && window.NurseContent)
+    || (typeof require !== "undefined" ? require("./content.js") : null);
+
+// =========================================================================
+// 상태
+// =========================================================================
 let gameState = {
     mode: "menu",
-    hp: 100,
-    rep: 0,
+    hp: 100, rep: 0,
     eventCount: 0,
     items: [],
     difficulty: 1.0,
     currentShift: "Day",
     quizCategory: null,
-    quizSolved: 0,
-    recentIds: [], // 중복 방지를 위한 Base ID 기록 배열
+    quizSolved: 0, quizCorrect: 0, quizWrong: 0,
+    recentIds: [],
+    combo: 0, bestCombo: 0,
+    // mock
+    mockTotal: 0, mockAnswered: 0, mockCorrect: 0, mockDeadlineTs: 0, mockTimerId: null, mockWrong: [],
+    // daily
+    dailySeed: 0, dailyIndex: 0, dailyCorrect: 0, dailySolved: 0,
+    // wrong review
+    wrongQueue: [],
+    // handoff
+    handoffIndex: 0, handoffCorrect: 0, handoffTotal: 0,
+    // triage
+    triageIndex: 0, triageCorrect: 0, triageTotal: 0, triagePicks: {},
+    // scenario
+    scenarioId: null, scenarioStep: 0,
 };
 
-const UI = {
-    hp: document.getElementById("hp"),
-    rep: document.getElementById("rep"),
-    gameArea: document.getElementById("game-area"),
-    topBar: document.getElementById("top-bar"),
-    logBar: document.getElementById("log-bar"),
-    inventory: document.getElementById("inventory-bar"),
-    modal: document.getElementById("modal"),
-    progressWrap: document.getElementById("progress-wrap"),
-    progressFill: document.getElementById("progress-fill"),
-    progressText: document.getElementById("progress-text"),
-    progressPercent: document.getElementById("progress-percent"),
-};
+const UI = {};
+function cacheUI() {
+    UI.hp = document.getElementById("hp");
+    UI.rep = document.getElementById("rep");
+    UI.gameArea = document.getElementById("game-area");
+    UI.topBar = document.getElementById("top-bar");
+    UI.logBar = document.getElementById("log-bar");
+    UI.inventory = document.getElementById("inventory-bar");
+    UI.modal = document.getElementById("modal");
+    UI.progressWrap = document.getElementById("progress-wrap");
+    UI.progressFill = document.getElementById("progress-fill");
+    UI.progressText = document.getElementById("progress-text");
+    UI.progressPercent = document.getElementById("progress-percent");
+    UI.progressInfo = document.getElementById("progress-info");
+    UI.themeToggle = document.getElementById("theme-toggle");
+    UI.soundToggle = document.getElementById("sound-toggle");
+}
 
-// =========================
+// =========================================================================
 // 유틸리티
-// =========================
-function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+// =========================================================================
+function clamp(n, lo, hi) { return Math.min(Math.max(n, lo), hi); }
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 function shuffle(arr) {
     const a = [...arr];
@@ -43,43 +80,320 @@ function shuffle(arr) {
     }
     return a;
 }
-function clamp(num, min, max) { return Math.min(Math.max(num, min), max); }
+function todayKey() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
 
+// 모드별 라인 아이콘 (24px viewBox, currentColor stroke, 외부 자원 0)
+const ICONS = {
+    survival:   '<svg class="mc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8 L4 12 a4 4 0 0 0 8 0 V8"/><path d="M12 14 a3 3 0 0 0 3 3 a3 3 0 0 0 3 -3 V11"/><circle cx="18" cy="9" r="2"/></svg>',
+    training:   '<svg class="mc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5 a2 2 0 0 1 2 -2 h12 a2 2 0 0 1 2 2 v14 a2 2 0 0 1 -2 2 H6 a2 2 0 0 1 -2 -2 z"/><path d="M8 7 h8 M8 11 h8 M8 15 h5"/></svg>',
+    mock:       '<svg class="mc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9 v4 l2.5 2"/><path d="M9 3 h6"/></svg>',
+    daily:      '<svg class="mc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>',
+    handoff:    '<svg class="mc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 12 a7 7 0 0 0 14 0"/><path d="M12 19 v3 M9 22 h6"/></svg>',
+    triage:     '<svg class="mc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="8" width="14" height="9" rx="1.5"/><path d="M16 11 h3 l3 3 v3 h-6"/><circle cx="7" cy="19" r="1.8"/><circle cx="18" cy="19" r="1.8"/><path d="M7 11 h4 M9 9 v4"/></svg>',
+    scenario:   '<svg class="mc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="1.5"/><path d="M9 3 h6 v3 H9 z" fill="currentColor" stroke="none"/><path d="M8 12 l1.5 1.5 L13 10 M8 17 h8"/></svg>',
+    wrong:      '<svg class="mc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3 h12 v18 l-6 -3 l-6 3 z"/></svg>',
+    dash:       '<svg class="mc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20 V10 M10 20 V4 M16 20 V14"/><path d="M3 20 h18"/></svg>',
+};
+
+// =========================================================================
+// 저장소 (localStorage)
+// =========================================================================
+const Storage = {
+    load() {
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            if (!raw) return Storage.defaults();
+            const parsed = JSON.parse(raw);
+            return Storage.validate(parsed);
+        } catch {
+            return Storage.defaults();
+        }
+    },
+    save(data) {
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch {}
+    },
+    defaults() {
+        const stats = {};
+        CATEGORIES.forEach(c => stats[c] = { solved: 0, correct: 0 });
+        return {
+            settings: { theme: "auto", sound: true },
+            stats,
+            wrongQueue: [],
+            bestCombo: 0,
+            mockBest: 0,
+            handoffBest: 0,
+            triageBest: 0,
+            scenarios: {},     // { scenarioId: { bestHp, bestRep, completed } }
+            daily: {},
+            history: [],
+        };
+    },
+    // localStorage 변조 시 타입을 보정해 무한루프/렌더 오류를 방지
+    validate(raw) {
+        const d = Storage.defaults();
+        if (!raw || typeof raw !== "object") return d;
+        const out = {
+            settings: (raw.settings && typeof raw.settings === "object") ? Object.assign(d.settings, raw.settings) : d.settings,
+            stats: d.stats,
+            wrongQueue: Array.isArray(raw.wrongQueue) ? raw.wrongQueue.filter(e => e && typeof e === "object" && Array.isArray(e.choices)) : [],
+            bestCombo: Number.isFinite(raw.bestCombo) ? raw.bestCombo : 0,
+            mockBest: Number.isFinite(raw.mockBest) ? raw.mockBest : 0,
+            handoffBest: Number.isFinite(raw.handoffBest) ? raw.handoffBest : 0,
+            handoffSeen: Array.isArray(raw.handoffSeen) ? raw.handoffSeen.filter(x => typeof x === "string") : [],
+            triageBest: Number.isFinite(raw.triageBest) ? raw.triageBest : 0,
+            accepted: (raw.accepted && typeof raw.accepted === "object") ? raw.accepted : null,
+            onboarded: raw.onboarded === true,
+            scenarios: (raw.scenarios && typeof raw.scenarios === "object" && !Array.isArray(raw.scenarios)) ? raw.scenarios : {},
+            daily: (raw.daily && typeof raw.daily === "object") ? raw.daily : {},
+            history: Array.isArray(raw.history) ? raw.history : [],
+        };
+        if (raw.stats && typeof raw.stats === "object") {
+            CATEGORIES.forEach(c => {
+                const s = raw.stats[c];
+                if (s && Number.isFinite(s.solved) && Number.isFinite(s.correct)) out.stats[c] = { solved: s.solved, correct: s.correct };
+            });
+        }
+        return out;
+    },
+    incrementStat(category, correct) {
+        const data = Storage.load();
+        if (!data.stats[category]) data.stats[category] = { solved: 0, correct: 0 };
+        data.stats[category].solved += 1;
+        if (correct) data.stats[category].correct += 1;
+        Storage.save(data);
+    },
+    addWrong(question) {
+        const data = Storage.load();
+        const entry = {
+            id: `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
+            baseId: question.baseId,
+            category: question.category,
+            part: question.part,
+            title: question.title,
+            desc: question.desc,
+            choices: question.choices.map(c => ({ text: c.text, correct: !!c.correct, log: c.log })),
+            ts: Date.now(),
+        };
+        if (data.wrongQueue.length >= 200) data.wrongQueue.shift();
+        data.wrongQueue.push(entry);
+        Storage.save(data);
+        return entry.id;
+    },
+    removeWrongById(id) {
+        const data = Storage.load();
+        const idx = data.wrongQueue.findIndex(e => e.id === id);
+        if (idx >= 0) {
+            data.wrongQueue.splice(idx, 1);
+            Storage.save(data);
+        }
+    },
+    clearWrong() {
+        const data = Storage.load();
+        data.wrongQueue = [];
+        Storage.save(data);
+    },
+    getWrongQueue() { return Storage.load().wrongQueue; },
+    getStats() { return Storage.load().stats; },
+    getSettings() { return Storage.load().settings; },
+    setSettings(s) {
+        const data = Storage.load();
+        data.settings = Object.assign(data.settings, s);
+        Storage.save(data);
+    },
+    setBestCombo(n) {
+        const data = Storage.load();
+        if (n > data.bestCombo) { data.bestCombo = n; Storage.save(data); }
+    },
+    setMockBest(n) {
+        const data = Storage.load();
+        if (n > data.mockBest) { data.mockBest = n; Storage.save(data); }
+    },
+    // 사용 약관 / 개인정보 / 면책 — 첫 실행 시 동의 받음
+    setAccepted(version) {
+        const data = Storage.load();
+        data.accepted = { version, at: Date.now() };
+        Storage.save(data);
+    },
+    isAccepted(version) {
+        const data = Storage.load();
+        return data.accepted && data.accepted.version === version;
+    },
+    setOnboarded() {
+        const data = Storage.load();
+        data.onboarded = true;
+        Storage.save(data);
+    },
+    isOnboarded() {
+        const data = Storage.load();
+        return data.onboarded === true;
+    },
+    getHandoffSeen() {
+        const data = Storage.load();
+        return Array.isArray(data.handoffSeen) ? data.handoffSeen : [];
+    },
+    addHandoffSeen(id) {
+        const data = Storage.load();
+        if (!Array.isArray(data.handoffSeen)) data.handoffSeen = [];
+        if (!data.handoffSeen.includes(id)) data.handoffSeen.push(id);
+        Storage.save(data);
+    },
+    clearHandoffSeen() {
+        const data = Storage.load();
+        data.handoffSeen = [];
+        Storage.save(data);
+    },
+    setTriageBest(acc) {
+        const data = Storage.load();
+        if (!Number.isFinite(data.triageBest) || acc > data.triageBest) { data.triageBest = acc; Storage.save(data); }
+    },
+    setScenarioResult(id, hp, rep, completed) {
+        const data = Storage.load();
+        const prev = data.scenarios[id] || { bestHp: 0, bestRep: 0, completed: false };
+        data.scenarios[id] = {
+            bestHp: Math.max(prev.bestHp, hp),
+            bestRep: Math.max(prev.bestRep, rep),
+            completed: prev.completed || completed,
+        };
+        Storage.save(data);
+    },
+    getDaily(dateKey) {
+        const data = Storage.load();
+        return data.daily[dateKey] || null;
+    },
+    setDaily(dateKey, state) {
+        const data = Storage.load();
+        data.daily[dateKey] = state;
+        Storage.save(data);
+    },
+    addHistory(entry) {
+        const data = Storage.load();
+        data.history.unshift(entry);
+        data.history = data.history.slice(0, 20);
+        Storage.save(data);
+    },
+};
+
+// =========================================================================
+// 사운드 (WebAudio, 외부 자원 없음)
+// =========================================================================
+const Sound = {
+    ctx: null,
+    enabled: true,
+    init() {
+        if (Sound.ctx) return;
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        if (!Ctx) return;
+        try { Sound.ctx = new Ctx(); } catch {}
+    },
+    beep(freq, duration = 0.12, type = "sine", vol = 0.08) {
+        if (!Sound.enabled) return;
+        Sound.init();
+        if (!Sound.ctx) return;
+        const ctx = Sound.ctx;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.frequency.value = freq;
+        osc.type = type;
+        gain.gain.setValueAtTime(vol, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + duration);
+    },
+    correct() { Sound.beep(880, 0.1); setTimeout(() => Sound.beep(1320, 0.16), 90); },
+    wrong()   { Sound.beep(220, 0.18, "sawtooth", 0.06); setTimeout(() => Sound.beep(160, 0.22, "sawtooth", 0.05), 110); },
+    combo(n)  { Sound.beep(660 + n * 60, 0.08, "triangle", 0.07); },
+    tick()    { Sound.beep(520, 0.04, "square", 0.04); },
+};
+
+// =========================================================================
+// 테마
+// =========================================================================
+function resolvedTheme(t) {
+    if (t === "auto" || !t) {
+        try { return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"; }
+        catch { return "light"; }
+    }
+    return t === "dark" ? "dark" : "light";
+}
+function applyTheme(theme) {
+    const r = resolvedTheme(theme);
+    document.documentElement.setAttribute("data-theme", r);
+    if (UI.themeToggle) UI.themeToggle.textContent = r === "dark" ? "☀️" : "🌙";
+}
+function toggleTheme() {
+    const cur = resolvedTheme(Storage.getSettings().theme);
+    const next = cur === "dark" ? "light" : "dark";
+    applyTheme(next);
+    Storage.setSettings({ theme: next });
+}
+function toggleSound() {
+    Sound.enabled = !Sound.enabled;
+    Storage.setSettings({ sound: Sound.enabled });
+    if (UI.soundToggle) UI.soundToggle.textContent = Sound.enabled ? "🔊" : "🔇";
+}
+
+// =========================================================================
+// 로그 / UI 업데이트
+// =========================================================================
 function addLog(text, type = "") {
     const entry = document.createElement("div");
     entry.className = `log-entry ${type}`.trim();
     entry.textContent = `> ${text}`;
     UI.logBar.prepend(entry);
+    while (UI.logBar.childElementCount > MAX_LOG_ENTRIES) {
+        UI.logBar.removeChild(UI.logBar.lastChild);
+    }
 }
 
-// 💡 똑같은 템플릿(유형)이 반복되지 않게 Base ID를 기억합니다.
 function rememberQuestion(baseId) {
-    if (!gameState.recentIds.includes(baseId)) {
-        gameState.recentIds.push(baseId);
-    }
-    // 최근 15개의 문제 유형을 기억하여 중복을 원천 차단
-    if (gameState.recentIds.length > 15) {
-        gameState.recentIds.shift();
-    }
+    if (!gameState.recentIds.includes(baseId)) gameState.recentIds.push(baseId);
+    if (gameState.recentIds.length > RECENT_HISTORY_SIZE) gameState.recentIds.shift();
 }
 function recentlyUsed(baseId) { return gameState.recentIds.includes(baseId); }
 
-// =========================
-// UI 업데이트
-// =========================
 function updateStats() {
     const shownHp = clamp(gameState.hp, 0, 100);
     UI.hp.textContent = shownHp;
     UI.rep.textContent = gameState.rep;
     UI.hp.style.color = shownHp < 30 ? "var(--danger)" : shownHp < 60 ? "var(--warning)" : "var(--success)";
+    // HP 게이지 fill + level (라이트→오렌지→빨강 펄스)
+    const hpFill = document.getElementById("hp-fill");
+    const hpGauge = document.getElementById("hp-gauge");
+    if (hpFill) hpFill.style.width = `${shownHp}%`;
+    if (hpGauge) hpGauge.dataset.level = shownHp > 60 ? "hi" : shownHp > 30 ? "mid" : "lo";
+    // 평판 게이지 fill (-60 ~ +120 범위를 0~100% 로 매핑)
+    const repFill = document.getElementById("rep-fill");
+    if (repFill) {
+        const repPct = clamp(Math.round(((gameState.rep + 60) / 180) * 100), 0, 100);
+        repFill.style.width = `${repPct}%`;
+    }
 
-    const progress = Math.min((gameState.eventCount / MAX_PROGRESS_EVENTS) * 100, 100);
+    let value = 0, total = 1, label = "진행도";
+    if (gameState.mode === "survival") { value = gameState.eventCount; total = MAX_PROGRESS_EVENTS; label = "듀티 진행도"; }
+    else if (gameState.mode === "quiz") { value = gameState.quizSolved; total = Math.max(gameState.quizSolved, 1); label = `학습 진행도 · ${gameState.quizCategory || ""}`; }
+    else if (gameState.mode === "mock") { value = gameState.mockAnswered; total = gameState.mockTotal; label = "모의고사"; }
+    else if (gameState.mode === "daily") { value = gameState.dailySolved; total = DAILY_CHALLENGE_TOTAL; label = "일일 챌린지"; }
+    else if (gameState.mode === "wrong_review") { value = gameState.quizSolved; total = Math.max(gameState.wrongQueue.length, 1); label = "오답노트"; }
+    else if (gameState.mode === "handoff") { value = gameState.handoffIndex; total = NC.HANDOFF_PATIENTS.length; label = "인계 시뮬레이터"; }
+    else if (gameState.mode === "triage") { value = gameState.triageIndex; total = NC.TRIAGE_CASES.length; label = "트리아지"; }
+    else if (gameState.mode === "scenario") {
+        const s = NC.SCENARIOS.find(x => x.id === gameState.scenarioId);
+        value = gameState.scenarioStep; total = s ? s.steps.length : 1; label = `시나리오 · ${s ? s.title : ""}`;
+    }
+
+    const progressRaw = total > 0 ? (value / total) * 100 : 0;
+    const progress = Math.min(Number.isFinite(progressRaw) ? progressRaw : 0, 100);
     UI.progressFill.style.width = `${progress}%`;
     UI.progressPercent.textContent = `${Math.round(progress)}%`;
-
-    if (gameState.mode === "survival") UI.progressText.textContent = "듀티 진행도";
-    else if (gameState.mode === "quiz") UI.progressText.textContent = `학습 진행도 · ${gameState.quizCategory || ""}`;
-    else UI.progressText.textContent = "진행도";
+    UI.progressText.textContent = label;
+    UI.progressWrap.setAttribute("aria-valuenow", String(Math.round(progress)));
 
     UI.inventory.innerHTML = "";
     const shiftBadge = document.createElement("span");
@@ -89,14 +403,33 @@ function updateStats() {
 
     const statusBadge = document.createElement("span");
     statusBadge.className = "badge";
-    statusBadge.textContent = gameState.mode === "survival" ? "상태: 실전 모드" : gameState.mode === "quiz" ? "상태: 트레이닝" : "상태: 대기";
+    statusBadge.textContent = ({
+        survival: "상태: 실전 모드", quiz: "상태: 트레이닝", mock: "상태: 모의고사",
+        daily: "상태: 일일 챌린지", wrong_review: "상태: 오답 복습", dashboard: "상태: 대시보드",
+    })[gameState.mode] || "상태: 대기";
     UI.inventory.appendChild(statusBadge);
 
-    if (gameState.quizSolved > 0) {
-        const solvedBadge = document.createElement("span");
-        solvedBadge.className = "badge success";
-        solvedBadge.textContent = `학습 완료: ${gameState.quizSolved}문제`;
-        UI.inventory.appendChild(solvedBadge);
+    if (gameState.combo >= 2) {
+        const b = document.createElement("span");
+        b.className = "badge combo combo-flash";
+        b.textContent = `🔥 ${gameState.combo} 콤보`;
+        UI.inventory.appendChild(b);
+    }
+    if ((gameState.mode === "quiz" || gameState.mode === "wrong_review" || gameState.mode === "daily") && (gameState.quizCorrect + gameState.quizWrong) > 0) {
+        const acc = Math.round((gameState.quizCorrect / Math.max(1, gameState.quizCorrect + gameState.quizWrong)) * 100);
+        const b = document.createElement("span");
+        b.className = "badge success";
+        b.textContent = `정답률 ${acc}% (${gameState.quizCorrect}/${gameState.quizCorrect + gameState.quizWrong})`;
+        UI.inventory.appendChild(b);
+    }
+    if (gameState.mode === "mock") {
+        const remain = Math.max(0, Math.ceil((gameState.mockDeadlineTs - Date.now()) / 1000));
+        const mm = String(Math.floor(remain / 60)).padStart(2, "0");
+        const ss = String(remain % 60).padStart(2, "0");
+        const b = document.createElement("span");
+        b.className = "badge danger timer-pill";
+        b.textContent = `⏰ ${mm}:${ss}`;
+        UI.inventory.appendChild(b);
     }
 }
 
@@ -105,296 +438,1420 @@ function showCoreUI() {
     UI.logBar.classList.remove("hidden");
     UI.inventory.classList.remove("hidden");
     UI.progressWrap.classList.remove("hidden");
+    UI.progressInfo.classList.remove("hidden");
+}
+function hideCoreUI() {
+    UI.topBar.classList.add("hidden");
+    UI.logBar.classList.add("hidden");
+    UI.inventory.classList.add("hidden");
+    UI.progressWrap.classList.add("hidden");
+    UI.progressInfo.classList.add("hidden");
 }
 
-// =========================
-// 4지선다 고정 문제은행
-// =========================
-const clinicalGenerators = [
-    generateDopamineQuestion, generateSepsisQuestion, generatePsychQuestion,
-    generateElectrolyteQuestion, generatePedsPriorityQuestion, generateOBQuestion,
-    generateManagementQuestion, generateRespQuestion, generateSafetyPriorityQuestion,
-    generateTransfusionQuestion, generateIICPQuestion, generateFHRQuestion,
-    generateLawQuestion, generateMIQuestion, generateABGAQuestion, generateTriageQuestion,
-    generatePositionQuestion, generateVaccineQuestion, generateNaegeleQuestion, 
-    generateApgarQuestion, generateBurnQuestion, generateShockQuestion, 
-    generateDiabeticQuestion, generateAsepticQuestion
-];
-
-function generateABGAQuestion() {
-    const isAcidosis = Math.random() < 0.5; const isResp = Math.random() < 0.5;
-    let pH, PaCO2, HCO3, correctType;
-    if (isAcidosis && isResp) { pH = (7.20 + Math.random() * 0.1).toFixed(2); PaCO2 = rand(46, 60); HCO3 = rand(22, 26); correctType = "호흡성 산증"; } 
-    else if (isAcidosis && !isResp) { pH = (7.20 + Math.random() * 0.1).toFixed(2); PaCO2 = rand(35, 45); HCO3 = rand(15, 21); correctType = "대사성 산증"; } 
-    else if (!isAcidosis && isResp) { pH = (7.46 + Math.random() * 0.1).toFixed(2); PaCO2 = rand(20, 34); HCO3 = rand(22, 26); correctType = "호흡성 알칼리증"; } 
-    else { pH = (7.46 + Math.random() * 0.1).toFixed(2); PaCO2 = rand(35, 45); HCO3 = rand(27, 35); correctType = "대사성 알칼리증"; }
-    const types = ["호흡성 산증", "대사성 산증", "호흡성 알칼리증", "대사성 알칼리증"]; const wrongs = types.filter(t => t !== correctType);
-    return { baseId: "abga", category: "성인간호학", part: "호흡/ABGA", emoji: "🩸", title: "ABGA 판독", desc: `pH ${pH}, PaCO2 ${PaCO2}, HCO3- ${HCO3}\n이 환자의 상태는?`, choices: shuffle([{ text: correctType, effect: { hp: -5, rep: 25 }, log: "정답입니다. pH와 PaCO2, HCO3 수치 해석이 정확합니다." }, { text: wrongs[0], effect: { hp: -30, rep: -15 }, log: "수치 해석 오류입니다." }, { text: wrongs[1], effect: { hp: -30, rep: -15 }, log: "수치 해석 오류입니다." }, { text: wrongs[2], effect: { hp: -30, rep: -15 }, log: "수치 해석 오류입니다." }]) };
-}
-function generateTriageQuestion() { return { baseId: "triage", category: "지역사회간호학", part: "재난간호", emoji: "🚨", title: "START 분류", desc: `기도 유지 후에도 무호흡인 환자의 중증도 분류 색상은?`, choices: shuffle([{ text: "흑색 (Black / 사망 또는 지연)", effect: { hp: -5, rep: 20 }, log: "정답. 기도 개방 후에도 무호흡이면 흑색입니다." }, { text: "적색 (Red / 긴급)", effect: { hp: -25, rep: -15 }, log: "적색은 생존 가능한 중증 환자입니다." }, { text: "황색 (Yellow / 응급)", effect: { hp: -20, rep: -10 }, log: "황색은 수시간 내 처치가 필요한 환자입니다." }, { text: "녹색 (Green / 비응급)", effect: { hp: -15, rep: -5 }, log: "녹색은 경증 환자입니다." }]) }; }
-function generatePositionQuestion() { return { baseId: "position", category: "기본간호학", part: "체위", emoji: "🛏️", title: "목적에 맞는 체위", desc: `관장(Enema) 시 용액이 잘 들어가도록 가장 적절히 취해줄 체위는?`, choices: shuffle([{ text: "좌측 심스위(Sims')", effect: { hp: -2, rep: 15 }, log: "정답. 구불결장으로 용액이 잘 흘러갑니다." }, { text: "파울러씨위", effect: { hp: -15, rep: -10 }, log: "호흡곤란 시 취하는 체위입니다." }, { text: "트렌델렌버그위", effect: { hp: -20, rep: -15 }, log: "쇼크 시 다리 거상 체위입니다." }, { text: "배횡와위", effect: { hp: -15, rep: -10 }, log: "여성 인공도뇨 시 취하는 체위입니다." }]) }; }
-function generateVaccineQuestion() { return { baseId: "vaccine", category: "아동간호학", part: "예방접종", emoji: "💉", title: "정기 예방접종", desc: `생후 12~15개월에 접종해야 하는 백신은?`, choices: shuffle([{ text: "MMR (홍역, 볼거리, 풍진)", effect: { hp: -2, rep: 18 }, log: "정답. 수두와 함께 12~15개월 접종입니다." }, { text: "BCG (결핵)", effect: { hp: -25, rep: -15 }, log: "생후 4주 이내 접종합니다." }, { text: "B형 간염", effect: { hp: -20, rep: -10 }, log: "0, 1, 6개월 접종입니다." }, { text: "DTaP", effect: { hp: -15, rep: -10 }, log: "2, 4, 6개월 접종입니다." }]) }; }
-function generateTransfusionQuestion() { return { baseId: "transfusion", category: "기본간호학", part: "수혈", emoji: "🩸", title: "수혈 부작용", desc: `수혈 15분 후 환자가 요통, 오한, 발열을 호소한다. 우선 중재는?`, choices: shuffle([{ text: "수혈을 중단하고 N/S를 연결한다", effect: { hp: -5, rep: 22 }, log: "정답. 용혈성 반응 의심 시 즉각 중단이 필수입니다." }, { text: "의사에게 먼저 보고하고 지시를 기다린다", effect: { hp: -30, rep: -15 }, log: "보고보다 원인 차단(중단)이 먼저입니다." }, { text: "주입 속도를 줄이고 활력징후를 재측정한다", effect: { hp: -40, rep: -20 }, log: "속도 조절이 아니라 완전 중단해야 합니다." }, { text: "처방된 항히스타민제를 투여한다", effect: { hp: -25, rep: -10 }, log: "알레르기 반응이 아닐 수 있으며 중단이 먼저입니다." }]) }; }
-function generateIICPQuestion() { return { baseId: "iicp", category: "성인간호학", part: "신경계", emoji: "🧠", title: "두개내압 상승", desc: `IICP(두개내압 상승) 환자에게 적절한 간호중재는?`, choices: shuffle([{ text: "침상 머리를 15~30도 올려 정맥 귀환을 돕는다", effect: { hp: -5, rep: 20 }, log: "정답. 뇌압 하강을 돕는 기본 체위입니다." }, { text: "객담 배출을 위해 기침과 심호흡을 강하게 유도한다", effect: { hp: -40, rep: -25 }, log: "발살바 수기, 기침은 뇌압을 급상승시킵니다." }, { text: "다리를 올려주는 트렌델렌버그 체위를 취한다", effect: { hp: -40, rep: -25 }, log: "뇌로 혈류가 몰려 뇌압이 크게 오릅니다." }, { text: "탈수를 막기 위해 수분 섭취를 적극 권장한다", effect: { hp: -20, rep: -10 }, log: "수분 제한 및 만니톨 투여가 필요합니다." }]) }; }
-function generateFHRQuestion() { return { baseId: "fhr", category: "모성간호학", part: "분만", emoji: "🤰", title: "태아심음 하강", desc: `자궁수축 정점 이후 태아심음이 떨어지는 '후기하강' 발생 시 올바른 중재는?`, choices: shuffle([{ text: "좌측위를 취해주고 산소를 공급한다", effect: { hp: -6, rep: 24 }, log: "정답. 태반 관류 부족이 원인이므로 체위변경과 산소가 핵심입니다." }, { text: "제대 압박이 원인이므로 슬흉위를 취해준다", effect: { hp: -20, rep: -10 }, log: "슬흉위는 가변성 하강의 중재입니다." }, { text: "정상적인 아두 압박 과정이므로 관찰한다", effect: { hp: -25, rep: -15 }, log: "조기하강에 대한 설명입니다. 후기하강은 응급입니다." }, { text: "유도분만제(옥시토신)의 주입 속도를 높인다", effect: { hp: -40, rep: -30 }, log: "수축을 촉진하면 태아가 더 위험해집니다. 즉시 중단해야 합니다." }]) }; }
-function generateLawQuestion() { return { baseId: "law", category: "보건의약관계법규", part: "감염병예방법", emoji: "⚖️", title: "감염병 신고", desc: `간호사가 법정감염병인 결핵 환자를 발견했다. 올바른 신고 절차는?`, choices: shuffle([{ text: "소속 의료기관의 장에게 즉시 보고한다", effect: { hp: -5, rep: 20 }, log: "정답. 의료인은 기관장에게 보고하고, 기관장이 보건소에 신고합니다." }, { text: "질병관리청장에게 즉시 전화로 유선 신고한다", effect: { hp: -20, rep: -10 }, log: "직접 신고 대상이 아닙니다." }, { text: "관할 경찰서에 먼저 알린다", effect: { hp: -20, rep: -10 }, log: "경찰 소관이 아닙니다." }, { text: "환자가 직접 보건소에 방문하도록 안내하고 끝낸다", effect: { hp: -30, rep: -20 }, log: "의료인의 신고 의무 위반입니다." }]) }; }
-function generateDopamineQuestion() { const w = rand(50, 70); const c = +(5*w*60/1000).toFixed(1); return { baseId: "dopamine", category: "기본간호학", part: "계산", emoji: "🔢", title: "약물 용량 계산", desc: `Dopamine 5mcg/kg/min 처방. 체중 ${w}kg, 약제 농도 1mg/ml일 때 주입 속도는?`, choices: shuffle([{ text: `${c} ml/hr`, effect: { hp: -2, rep: 15 }, log: "정답입니다. 정확한 계산입니다." }, { text: `${+(c*2).toFixed(1)} ml/hr`, effect: { hp: -20, rep: -10 }, log: "과용량입니다. 단위 변환을 확인하세요." }, { text: `${+(c/2).toFixed(1)} ml/hr`, effect: { hp: -20, rep: -10 }, log: "소용량입니다. 계산 오류." }, { text: `${+(c+5).toFixed(1)} ml/hr`, effect: { hp: -15, rep: -5 }, log: "오답입니다." }]) }; }
-function generateSepsisQuestion() { return { baseId: "sepsis", category: "성인간호학", part: "감염", emoji: "🌡️", title: "패혈증(Sepsis) 번들", desc: "환자가 혈압 80/50, 체온 39도, 의식 저하를 보일 때 우선 간호중재는?", choices: shuffle([{ text: "혈액배양 검사를 먼저 나간 후 광범위 항생제를 투여한다", effect: { hp: -2, rep: 15 }, log: "정답. 항생제 투여 전 혈액배양이 필수입니다." }, { text: "해열제를 최우선으로 투여하여 체온을 떨어뜨린다", effect: { hp: -20, rep: -10 }, log: "해열보다 관류 유지와 배양이 먼저입니다." }, { text: "스테로이드를 즉시 IV로 투여한다", effect: { hp: -20, rep: -10 }, log: "1차 선택약이 아닙니다." }, { text: "수분 섭취를 격려하고 경과를 관찰한다", effect: { hp: -30, rep: -20 }, log: "응급 수액 요법이 필요한 쇼크 상태입니다." }]) }; }
-function generatePsychQuestion() { return { baseId: "psych", category: "정신간호학", part: "망상", emoji: "🧠", title: "망상 환자 대화", desc: "환자가 '밥에 독을 탔다'며 식사를 강하게 거부할 때 적절한 반응은?", choices: shuffle([{ text: "두려운 감정을 수용하고 팩 포장된 음식을 제공해 본다", effect: { hp: -2, rep: 15 }, log: "정답. 망상에 논쟁하지 않고 불안을 감소시킵니다." }, { text: "밥에 독이 없다는 것을 과학적으로 증명해준다", effect: { hp: -15, rep: -10 }, log: "망상은 논리로 설득되지 않습니다." }, { text: "환자의 말을 무시하고 다른 주제로 대화를 돌린다", effect: { hp: -10, rep: -5 }, log: "환자의 감정을 외면하는 태도입니다." }, { text: "식사를 안 하면 콧줄(L-tube)을 꽂겠다고 단호히 말한다", effect: { hp: -30, rep: -20 }, log: "강압적인 태도는 불신을 더 키웁니다." }]) }; }
-function generateElectrolyteQuestion() { return { baseId: "electrolyte", category: "성인간호학", part: "전해질", emoji: "⚡", title: "고칼륨혈증 간호", desc: "혈청 K(칼륨) 수치가 7.0 mEq/L일 때 **절대 금기**인 행동은?", choices: shuffle([{ text: "처방된 KCL(염화칼륨) 앰플을 IV push로 투여한다", effect: { hp: -50, rep: -50 }, log: "정답(가장 위험). KCL 직접 정맥주사는 즉각적인 심정지를 유발합니다." }, { text: "Calcium gluconate를 정맥 투여한다", effect: { hp: -10, rep: -5 }, log: "이는 심근을 안정시키는 치료법입니다." }, { text: "포도당과 인슐린을 함께 정맥 투여한다", effect: { hp: -10, rep: -5 }, log: "칼륨을 세포 내로 이동시키는 치료법입니다." }, { text: "칼리메이트(Kalimate) 관장을 시행한다", effect: { hp: -10, rep: -5 }, log: "칼륨을 배출시키는 치료법입니다." }]) }; }
-function generatePedsPriorityQuestion() { return { baseId: "peds", category: "아동간호학", part: "호흡기계", emoji: "🧸", title: "아동 호흡곤란 우선순위", desc: "영아가 코벌렁임(비익호흡)과 흉벽 함몰을 보이며 칭얼거릴 때 가장 우선할 간호는?", choices: shuffle([{ text: "기도 유지와 호흡 상태를 사정하고 산소화를 준비한다", effect: { hp: -2, rep: 15 }, log: "정답. 소아는 호흡 문제가 가장 치명적으로 빠르게 악화됩니다." }, { text: "환아의 상태 변화를 차트에 상세히 기록한다", effect: { hp: -20, rep: -10 }, log: "기록보다 즉각적인 환아 사정과 처치가 먼저입니다." }, { text: "놀란 보호자를 병실 밖으로 안내하여 진정시킨다", effect: { hp: -15, rep: -5 }, log: "보호자 안위보다 환아 생명 유지가 먼저입니다." }, { text: "열이 있는지 확인 후 해열제부터 경구 투여한다", effect: { hp: -20, rep: -10 }, log: "호흡곤란 영아에게 경구 투여는 흡인 위험이 큽니다." }]) }; }
-function generateOBQuestion() { return { baseId: "ob", category: "모성간호학", part: "산후출혈", emoji: "🩸", title: "자궁이완성 출혈 중재", desc: "분만 1시간 뒤 산모의 패드가 다 젖고 자궁저부가 물렁하게 만져질 때 우선 중재는?", choices: shuffle([{ text: "즉시 자궁저부를 둥글게 마사지한다", effect: { hp: -2, rep: 15 }, log: "정답. 자궁 수축을 유도하는 가장 빠르고 필수적인 1차 중재입니다." }, { text: "마사지 없이 의사가 올 때까지 출혈량만 체크한다", effect: { hp: -20, rep: -10 }, log: "지연되면 출혈성 쇼크에 빠집니다." }, { text: "회복을 위해 복도 보행을 적극적으로 유도한다", effect: { hp: -30, rep: -15 }, log: "출혈 환자는 절대 안정(ABR)해야 합니다." }, { text: "따뜻한 물을 많이 마시도록 격려한다", effect: { hp: -15, rep: -5 }, log: "우선순위에서 크게 밀리는 행동입니다." }]) }; }
-function generateManagementQuestion() { return { baseId: "management", category: "간호관리학", part: "안전", emoji: "📑", title: "환자 안전과 보고", desc: "근무 종료 직전, 환자에게 투여할 약물이 바뀐 것을 당신이 발견했습니다. 올바른 행동은?", choices: shuffle([{ text: "환자 상태를 즉시 살피고 책임자에게 정직하게 보고한다", effect: { hp: -2, rep: 15 }, log: "정답. 환자 안전을 위한 투명한 보고 문화가 가장 중요합니다." }, { text: "환자에게 증상이 없으므로 아무에게도 말하지 않고 은폐한다", effect: { hp: -50, rep: -50 }, log: "은폐는 추후 환자 생명에 치명적인 결과를 낳습니다." }, { text: "환자에게 몰래 사과만 하고 투약 기록을 임의로 수정한다", effect: { hp: -40, rep: -40 }, log: "기록 조작은 심각한 범죄 행위입니다." }, { text: "동료 간호사에게만 털어놓고 의사에게는 숨긴다", effect: { hp: -30, rep: -20 }, log: "공식적인 사고 보고 절차를 위반했습니다." }]) }; }
-function generateRespQuestion() { return { baseId: "resp", category: "성인간호학", part: "호흡기계", emoji: "🫁", title: "저산소증 응급", desc: "병실 환자가 갑자기 SpO2 85%로 떨어지며 청색증을 보일 때 가장 먼저 할 조치는?", choices: shuffle([{ text: "기도를 확인하고 즉각적으로 산소 투여 및 반좌위를 취한다", effect: { hp: -2, rep: 15 }, log: "정답. ABC(기도, 호흡) 확보 및 산소화가 최우선입니다." }, { text: "일시적 현상일 수 있으니 30분 뒤 재측정한다", effect: { hp: -30, rep: -20 }, log: "저산소증을 방치하면 뇌손상이나 심정지가 옵니다." }, { text: "상황을 간호기록지에 먼저 상세히 남긴다", effect: { hp: -15, rep: -10 }, log: "처치가 기록보다 무조건 선행되어야 합니다." }, { text: "불안해하므로 수면제를 투여하여 재운다", effect: { hp: -40, rep: -30 }, log: "호흡을 억제시켜 환자를 사망하게 할 수 있습니다." }]) }; }
-function generateSafetyPriorityQuestion() { return { baseId: "priority", category: "성인간호학", part: "우선순위", emoji: "🚑", title: "응급 환자 분류", desc: "응급실에 4명의 환자가 도착했습니다. 가장 먼저 처치해야 할 환자는?", choices: shuffle([{ text: "갑작스러운 흉통과 식은땀을 흘리며 의식이 흐려지는 환자", effect: { hp: -2, rep: 15 }, log: "정답. 심근경색 의심 증상으로 즉각적 생명 위협이 있습니다." }, { text: "단순 열상으로 피가 조금 나며 퇴원 약을 기다리는 환자", effect: { hp: -10, rep: -5 }, log: "가장 후순위 환자입니다." }, { text: "수술 후 상처 부위 통증 5점(NRS)을 호소하는 환자", effect: { hp: -15, rep: -5 }, log: "통증 조절은 필요하나 생명 위협은 적습니다." }, { text: "아침 식사가 맛없다며 병동에서 난동을 피우는 환자", effect: { hp: -15, rep: -5 }, log: "의학적 응급상황이 아닙니다." }]) }; }
-function generateMIQuestion() { return { baseId: "mi", category: "성인간호학", part: "심혈관계", emoji: "💔", title: "급성 심근경색(MI)", desc: "니트로글리세린(NTG) 설하 투여에도 가라앉지 않는 쥐어짜는 듯한 흉통 환자 중재는?", choices: shuffle([{ text: "모니터링(ECG)하며 산소를 공급하고 처방된 모르핀을 투여한다(MONA)", effect: { hp: -2, rep: 15 }, log: "정답. 급성 MI의 표준 초기 중재(MONA)입니다." }, { text: "혈전 방지를 위해 복도 걷기 운동을 30분간 강제한다", effect: { hp: -30, rep: -20 }, log: "심근 산소요구량을 줄이기 위해 절대안정(ABR)해야 합니다." }, { text: "효과가 나타날 때까지 NTG를 1분 간격으로 계속 무한정 투여한다", effect: { hp: -25, rep: -15 }, log: "NTG는 5분 간격 3회까지만 투여합니다." }, { text: "호흡을 편하게 하기 위해 종이봉투를 입에 대고 심호흡을 시킨다", effect: { hp: -20, rep: -10 }, log: "과호흡 증후군 처치법입니다. MI에는 산소를 공급해야 합니다." }]) }; }
-function generateNaegeleQuestion() { const m = rand(1, 12); const d = rand(1, 20); let eddMonth = m - 3 <= 0 ? m + 9 : m - 3; let eddDay = d + 7; return { baseId: "naegele", category: "모성간호학", part: "임신", emoji: "📅", title: "분만예정일 계산", desc: `마지막 월경일(LMP)이 ${m}월 ${d}일인 임부의 분만예정일(EDD)은?`, choices: shuffle([{ text: `${eddMonth}월 ${eddDay}일`, effect: { hp: -2, rep: 20 }, log: "정답. 네겔법(월 -3/+9, 일 +7) 계산입니다." }, { text: `${eddMonth === 12 ? 1 : eddMonth + 1}월 ${eddDay}일`, effect: { hp: -15, rep: -10 }, log: "월 계산 오류입니다." }, { text: `${eddMonth}월 ${d - 7 > 0 ? d - 7 : d + 14}일`, effect: { hp: -15, rep: -10 }, log: "일 계산 오류입니다." }, { text: `${eddMonth === 1 ? 12 : eddMonth - 1}월 ${eddDay + 7}일`, effect: { hp: -20, rep: -15 }, log: "계산 공식 적용 실패입니다." }]) }; }
-function generateApgarQuestion() { const score = pick([4,5,6,7,8,9]); return { baseId: "apgar", category: "아동간호학", part: "신생아", emoji: "👶", title: "아프가 점수 계산", desc: `신생아가 심박동 100회 미만(1), 호흡 느림(1), 사지 약간 굽힘(1), 자극에 찡그림(1), 몸은 분홍 사지는 청색(1)이다. 점수는? (현재 ${score}점 예시 상황 가정)`, choices: shuffle([{ text: "5점", effect: { hp: -2, rep: 20 }, log: "정답. 1+1+1+1+1 = 5점입니다." }, { text: "3점", effect: { hp: -15, rep: -10 }, log: "계산 오류입니다." }, { text: "7점", effect: { hp: -15, rep: -10 }, log: "계산 오류입니다." }, { text: "9점", effect: { hp: -20, rep: -15 }, log: "정상 소견이 아닙니다." }]) }; }
-function generateBurnQuestion() { const bsa = pick([18, 27, 36, 45]); return { baseId: "burn", category: "성인간호학", part: "화상", emoji: "🔥", title: "9의 법칙 화상 면적", desc: `몸통 앞면 전체(18%)와 오른쪽 다리 전체(18%)에 화상을 입었다. 총 체표면적은?`, choices: shuffle([{ text: "36%", effect: { hp: -2, rep: 20 }, log: "정답. 18 + 18 = 36% 입니다." }, { text: "27%", effect: { hp: -15, rep: -10 }, log: "비율 적용 오류입니다." }, { text: "45%", effect: { hp: -15, rep: -10 }, log: "비율 적용 오류입니다." }, { text: "18%", effect: { hp: -20, rep: -15 }, log: "한 부위만 계산했습니다." }]) }; }
-function generateShockQuestion() { return { baseId: "shock", category: "성인간호학", part: "쇼크", emoji: "😰", title: "쇼크 분류", desc: `벌에 쏘이거나 페니실린 주사 후 두드러기와 심한 호흡곤란(천명음)이 발생하는 쇼크는?`, choices: shuffle([{ text: "아나필락시스 쇼크", effect: { hp: -2, rep: 20 }, log: "정답. 알레르기 반응에 의한 쇼크입니다." }, { text: "저혈량성 쇼크", effect: { hp: -15, rep: -10 }, log: "출혈 등에 의한 쇼크입니다." }, { text: "심인성 쇼크", effect: { hp: -15, rep: -10 }, log: "심근경색 등에 의한 심박출량 감소 쇼크입니다." }, { text: "패혈성 쇼크", effect: { hp: -15, rep: -10 }, log: "감염에 의한 쇼크입니다." }]) }; }
-function generateDiabeticQuestion() { return { baseId: "diabetic", category: "성인간호학", part: "내분비계", emoji: "🩸", title: "당뇨 응급상황", desc: `당뇨 환자가 식은땀, 빈맥, 손떨림을 호소하며 의식이 혼미해질 때 의심할 상황은?`, choices: shuffle([{ text: "저혈당증", effect: { hp: -2, rep: 20 }, log: "정답. 전형적인 저혈당 징후입니다." }, { text: "당뇨병성 케톤산증(DKA)", effect: { hp: -20, rep: -15 }, log: "고혈당 시 나타납니다 (과일냄새 호흡 등)." }, { text: "아나필락시스 쇼크", effect: { hp: -15, rep: -10 }, log: "알레르기 징후와 다릅니다." }, { text: "요붕증", effect: { hp: -15, rep: -10 }, log: "다뇨와 갈증이 주증상입니다." }]) }; }
-function generateAsepticQuestion() { return { baseId: "aseptic", category: "기본간호학", part: "무균술", emoji: "🧤", title: "외과적 무균술", desc: `외과적 무균술 원칙 중 **틀린** 것은?`, choices: shuffle([{ text: "시야에서 벗어난 멸균 물품도 계속 멸균 상태로 간주한다.", effect: { hp: -2, rep: 20 }, log: "정답(이것이 틀린 설명). 시야를 벗어나면 오염으로 간주합니다." }, { text: "멸균 물품이 습기나 물에 젖으면 오염으로 간주한다.", effect: { hp: -15, rep: -10 }, log: "올바른 원칙입니다." }, { text: "멸균포의 가장자리 2.5cm는 오염된 것으로 간주한다.", effect: { hp: -15, rep: -10 }, log: "올바른 원칙입니다." }, { text: "멸균 물품은 멸균된 물품과 접촉할 때만 멸균이 유지된다.", effect: { hp: -15, rep: -10 }, log: "올바른 원칙입니다." }]) }; }
-
-// =========================
-// 라우터 및 렌더링 (중복 방지 적용)
-// =========================
+// =========================================================================
+// 문제 풀기
+// =========================================================================
 function generateClinicalEventByCategory(category = null) {
     let pool = [];
-    
-    // 24개의 생성기를 모두 돌려 조건(과목, 중복여부)에 맞는 문제를 pool에 담습니다.
-    for (let generator of clinicalGenerators) {
-        const ev = generator();
-        if ((!category || ev.category === category) && !recentlyUsed(ev.baseId)) {
-            pool.push(ev);
-        }
+    for (const gen of NQ.allGenerators) {
+        const ev = gen();
+        if ((!category || ev.category === category) && !recentlyUsed(ev.baseId)) pool.push(ev);
     }
-
-    // 만약 풀이 비어있다면 (모든 문제가 최근 15번 안에 나왔다면) 기록을 초기화하고 다시 담습니다.
     if (pool.length === 0) {
         gameState.recentIds = [];
-        for (let generator of clinicalGenerators) {
-            const ev = generator();
-            if (!category || ev.category === category) {
-                pool.push(ev);
-            }
+        for (const gen of NQ.allGenerators) {
+            const ev = gen();
+            if (!category || ev.category === category) pool.push(ev);
         }
     }
-
-    // 풀에서 하나를 뽑고, Base ID를 기록합니다.
     const selected = pick(pool);
     rememberQuestion(selected.baseId);
     return selected;
 }
+function isCorrectChoice(c) { return c && c.correct === true; }
 
 function renderSceneCard(ev, options = {}) {
     const { mode = "survival", questionIndex = null, meta = [] } = options;
-    const tag = ev.category ? `<div class="category-tag" style="font-weight:bold; color:var(--primary); margin-bottom:5px;">[${ev.category}] ${ev.part || ""}</div>` : "";
-    const metaRow = meta.length ? `<div class="meta-row" style="margin-bottom:15px;">${meta.map((m) => `<div class="meta-chip" style="display:inline-block; margin-right:8px; font-size:12px; color:#64748b; background:#f1f5f9; padding:2px 6px; border-radius:4px;">${m}</div>`).join("")}</div>` : "";
+    const tag = ev.category ? `<div class="category-tag">[${escapeHtml(ev.category)}] ${escapeHtml(ev.part || "")}</div>` : "";
+    const metaRow = meta.length ? `<div class="meta-row">${meta.map(m => `<div class="meta-chip">${escapeHtml(m)}</div>`).join("")}</div>` : "";
 
     UI.gameArea.innerHTML = `
-    <div class="scene-card card">
-      ${tag}${metaRow}
-      <span class="scene-emoji">${ev.emoji || "🩺"}</span>
-      <h2 class="scene-title">${questionIndex !== null ? `[Q${questionIndex}] ` : ""}${ev.title}</h2>
-      <p class="scene-desc">${ev.desc}</p>
-      <div class="choice-list" id="choice-list"></div>
-      <div id="feedback-zone"></div>
-    </div>
-  `;
+      <div class="scene-card card">
+        ${tag}${metaRow}
+        <span class="scene-emoji" aria-hidden="true">${ev.emoji || "🩺"}</span>
+        <h2 class="scene-title">${questionIndex !== null ? `[Q${questionIndex}] ` : ""}${escapeHtml(ev.title)}</h2>
+        <p class="scene-desc">${escapeHtml(ev.desc)}</p>
+        <div class="choice-list" id="choice-list" role="list"></div>
+        <div id="feedback-zone" aria-live="polite" aria-atomic="true"></div>
+      </div>
+    `;
 
     const listEl = document.getElementById("choice-list");
     ev.choices.forEach((choice, idx) => {
         const btn = document.createElement("button");
         btn.className = "choice-btn";
-        btn.innerHTML = choice.text;
-        btn.onclick = () => {
-            if (mode === "survival") handleSurvivalChoice(choice);
-            else handleQuizChoice(choice, ev, idx);
-        };
+        btn.dataset.idx = String(idx);
+        const hint = document.createElement("span");
+        hint.className = "kbd-hint";
+        hint.textContent = String(idx + 1);
+        btn.appendChild(hint);
+        btn.appendChild(document.createTextNode(choice.text));
+        btn.onclick = () => dispatchChoice(choice, ev, idx, mode);
         listEl.appendChild(btn);
     });
     updateStats();
 }
 
+function dispatchChoice(choice, ev, idx, mode) {
+    if (mode === "survival") handleSurvivalChoice(choice);
+    else if (mode === "mock") handleMockChoice(choice, ev);
+    else if (mode === "daily") handleDailyChoice(choice, ev);
+    else if (mode === "wrong_review") handleWrongReviewChoice(choice, ev);
+    else if (mode === "scenario") handleScenarioChoice(choice, ev);
+    else handleQuizChoice(choice, ev);
+}
+
+// =========================================================================
+// 콤보
+// =========================================================================
+function bumpCombo() {
+    gameState.combo += 1;
+    if (gameState.combo > gameState.bestCombo) {
+        gameState.bestCombo = gameState.combo;
+        Storage.setBestCombo(gameState.bestCombo);
+    }
+    if (gameState.combo >= 3) Sound.combo(gameState.combo);
+    // 콤보 뱃지 burst 애니메이션 재트리거
+    requestAnimationFrame(() => {
+        const badge = document.querySelector(".badge.combo");
+        if (!badge) return;
+        badge.classList.remove("burst");
+        // 강제 reflow 로 애니메이션 재시작
+        void badge.offsetWidth;
+        badge.classList.add("burst");
+    });
+}
+function resetCombo() { gameState.combo = 0; }
+
+// =========================================================================
+// Survival 모드
+// =========================================================================
 function setShift(shift, mult, el) {
     gameState.currentShift = shift;
     gameState.difficulty = mult;
-    document.querySelectorAll(".shift-option").forEach((o) => o.classList.remove("active"));
-    el.classList.add("active");
+    document.querySelectorAll(".shift-option").forEach(o => o.classList.remove("active"));
+    if (el) el.classList.add("active");
 }
-
 function resetStateForMode() {
     gameState.hp = 100; gameState.rep = 0; gameState.eventCount = 0;
-    gameState.items = []; gameState.quizSolved = 0; gameState.recentIds = [];
+    gameState.items = []; gameState.quizSolved = 0;
+    gameState.quizCorrect = 0; gameState.quizWrong = 0;
+    gameState.recentIds = []; gameState.combo = 0;
+    gameState.mockTotal = 0; gameState.mockAnswered = 0; gameState.mockCorrect = 0;
+    gameState.mockDeadlineTs = 0; gameState.mockWrong = [];
+    gameState.dailySeed = 0; gameState.dailyIndex = 0;
+    gameState.dailyCorrect = 0; gameState.dailySolved = 0;
+    gameState.dailyQuestions = null;
+    gameState.wrongQueue = [];
+    gameState.currentWrongId = null;
+    gameState.handoffIndex = 0; gameState.handoffCorrect = 0; gameState.handoffTotal = 0;
+    gameState.handoffPool = null;
+    gameState.triageIndex = 0; gameState.triageCorrect = 0; gameState.triageTotal = 0;
+    gameState.triagePicks = {};
+    gameState.scenarioId = null; gameState.scenarioStep = 0;
+    gameState.firedStoryBeats = [];
 }
-
 function initSurvival() {
-    resetStateForMode(); gameState.mode = "survival"; gameState.quizCategory = null;
+    resetStateForMode();
+    gameState.mode = "survival"; gameState.quizCategory = null;
+    gameState.firedStoryBeats = [];
     showCoreUI(); UI.logBar.innerHTML = "";
     addLog("듀티가 시작되었습니다. 첫 판단부터 중요합니다.", "log-important");
     renderSurvivalEvent("intro");
 }
-
-function renderQuizMenu() {
-    gameState.mode = "quiz_menu"; resetStateForMode(); showCoreUI(); UI.logBar.innerHTML = "";
-    addLog("국가고시 8과목 트레이닝 모드입니다.", "log-important");
-    updateStats();
-
-    const categories = ["기본간호학", "성인간호학", "모성간호학", "아동간호학", "지역사회간호학", "정신간호학", "간호관리학", "보건의약관계법규"];
-    UI.gameArea.innerHTML = `
-    <div class="scene-card card">
-      <span class="scene-emoji">📖</span>
-      <h2 class="scene-title">국가고시 8과목 트레이닝</h2>
-      <p class="scene-desc">숫자와 상황이 계속 변하는 <strong>무한 랜덤 기출 변형 (4지선다)</strong>이 제공됩니다.</p>
-      <div class="choice-list">
-        ${categories.map((cat) => `<button class="choice-btn primary" onclick="startQuiz('${cat}')">${cat}</button>`).join("")}
-        <button class="choice-btn center" onclick="location.reload()">메인 메뉴</button>
-      </div>
-    </div>
-  `;
-}
-
-function startQuiz(category) {
-    gameState.mode = "quiz"; gameState.quizCategory = category; gameState.quizSolved = 0;
-    UI.logBar.innerHTML = ""; addLog(`${category} 기출 변형 풀이를 시작합니다.`, "log-important");
-    renderNextQuizQuestion();
-}
-
 function renderSurvivalEvent(eventId) {
     let ev;
     if (eventId === "intro") {
-        ev = {
-            baseId: "intro", category: "", title: "듀티의 시작", emoji: "🏥", desc: "병동 문이 열리고 특유의 긴장감이 밀려옵니다.",
+        ev = { baseId: "intro", category: "", title: "듀티의 시작", emoji: "🏥",
+            desc: "병동 문이 열리고 특유의 긴장감이 밀려옵니다.\n선임이 한 마디 — \"오늘 듀티 너야. 인계받고 시작해.\"",
             choices: [
-                { text: "심호흡하고 인계 핵심부터 정리한다", effect: { hp: -4, rep: 6 }, log: "기본기부터 챙겼습니다.", next: "random_hub" },
-                { text: "물품부터 챙긴다", effect: { hp: -2, item: "토니켓" }, log: "준비성이 좋습니다.", next: "random_hub" },
-            ],
-        };
+                { text: "심호흡하고 인계 핵심부터 정리한다", correct: true, effect: { hp: -4, rep: 6 }, log: "기본기부터 챙겼습니다.", next: "random_hub" },
+                { text: "물품부터 챙긴다", effect: { hp: -2, rep: 2, item: "토니켓" }, log: "준비성이 좋습니다.", next: "random_hub" },
+            ] };
     } else {
-        const chooseClinical = Math.random() < 0.9;
-        ev = chooseClinical ? generateClinicalEventByCategory(null) : pick([{ baseId:"rest", title:"휴식", emoji:"☕", desc:"잠깐 쉴 틈이 생겼습니다.", choices:[{text:"물 마시기", effect:{hp:15, rep:0}, log:"체력을 회복했습니다."}, {text:"스트레칭", effect:{hp:10, rep:2}, log:"몸이 풀립니다."}]}]);
+        // 특정 eventCount 시점에 스토리 비트가 있으면 강제 발동 (한 듀티당 1회씩)
+        const upcomingCount = gameState.eventCount + 1;
+        const beat = NC.SURVIVAL_STORY_BEATS && NC.SURVIVAL_STORY_BEATS.find(b => b.atEvent === upcomingCount && !gameState.firedStoryBeats.includes(b.baseId));
+        if (beat) {
+            gameState.firedStoryBeats.push(beat.baseId);
+            ev = {
+                baseId: beat.baseId, category: "스토리", part: `Event ${upcomingCount}`,
+                emoji: beat.emoji, title: beat.title, desc: beat.desc,
+                choices: beat.choices.map(c => ({ ...c })),
+            };
+        } else {
+            const clinical = Math.random() < 0.85;
+            ev = clinical ? generateClinicalEventByCategory(null) : pick([
+                { baseId: "rest", title: "잠깐의 휴식", emoji: "☕", desc: "복도 끝 자판기 앞. 잠깐 숨을 돌립니다.",
+                  choices: [
+                      { text: "물 한 잔 마시고 차트 정리", correct: true, effect: { hp: 15, rep: 1 }, log: "체력을 회복하고 정리도 마쳤습니다." },
+                      { text: "동료와 짧게 수다", effect: { hp: 8, rep: 3 }, log: "감정 환기 — 팀 분위기 좋아집니다." },
+                      { text: "그냥 패스, 일 계속", effect: { hp: -3, rep: 1 }, log: "체력 소진은 누적됩니다." }
+                  ] }
+            ]);
+        }
         gameState.eventCount += 1;
     }
-    renderSceneCard(ev, { mode: "survival", meta: [`난이도: ${gameState.currentShift}`, `누적: ${gameState.eventCount}건`] });
+    renderSceneCard(ev, { mode: "survival", meta: [`난이도: ${gameState.currentShift}`, `누적: ${gameState.eventCount}건`, `콤보: ${gameState.combo}`] });
 }
-
-function handleSurvivalChoice(choice) {
-    applyChoiceEffect(choice);
-    if (choice.log) addLog(choice.log, (choice.effect?.rep || 0) > 0 ? "log-good" : (choice.effect?.rep || 0) < 0 ? "log-bad" : "");
-
-    if (gameState.hp <= 0) return showGameOver("체력 고갈", "번아웃 되었습니다. 환자 안전을 위해 퇴근하세요.");
-    if (gameState.rep < -60) return showGameOver("평판 실추", "치명적인 실수 누적으로 투약 사고 위기입니다.");
-    if (gameState.eventCount >= MAX_PROGRESS_EVENTS) return showGameOver("듀티 무사 완수!", "수고하셨습니다. 당신은 훌륭한 간호사입니다.");
-
-    renderSurvivalEvent(choice.next || "random_hub");
-}
-
 function applyChoiceEffect(choice) {
     if (!choice.effect) return;
     let hpDelta = choice.effect.hp || 0;
-    if (hpDelta < 0) hpDelta = Math.round(hpDelta * gameState.difficulty);
+    // 시나리오 모드는 큐레이팅된 HP 손실/회복을 그대로 적용 (shift 가중치 미적용)
+    if (hpDelta < 0 && gameState.mode !== "scenario") hpDelta = Math.round(hpDelta * gameState.difficulty);
     gameState.hp = clamp(gameState.hp + hpDelta, 0, 100);
     gameState.rep += choice.effect.rep || 0;
     if (choice.effect.item) gameState.items.push(choice.effect.item);
     updateStats();
 }
+function handleSurvivalChoice(choice) {
+    applyChoiceEffect(choice);
+    const isCorrect = isCorrectChoice(choice);
+    if (isCorrect) { bumpCombo(); Sound.correct(); }
+    else { resetCombo(); Sound.wrong(); }
+    if (choice.log) addLog(choice.log, isCorrect ? "log-good" : (choice.effect?.rep || 0) < 0 ? "log-bad" : "");
+    if (gameState.hp <= 0) return showGameOver("체력 고갈", "번아웃 되었습니다. 환자 안전을 위해 퇴근하세요.");
+    if (gameState.rep < -60) return showGameOver("평판 실추", "치명적인 실수 누적으로 투약 사고 위기입니다.");
+    if (gameState.eventCount >= MAX_PROGRESS_EVENTS) {
+        Storage.addHistory({ mode: "survival", at: Date.now(), hp: gameState.hp, rep: gameState.rep, events: gameState.eventCount, bestCombo: gameState.bestCombo });
+        return showGameOver("듀티 무사 완수!", "수고하셨습니다. 당신은 훌륭한 간호사입니다.");
+    }
+    renderSurvivalEvent(choice.next || "random_hub");
+}
 
+// =========================================================================
+// Quiz (트레이닝) 모드
+// =========================================================================
+function renderQuizMenu() {
+    gameState.mode = "quiz_menu"; resetStateForMode();
+    showCoreUI(); UI.logBar.innerHTML = "";
+    addLog("국가고시 8과목 트레이닝 모드입니다.", "log-important");
+    updateStats();
+    UI.gameArea.innerHTML = `
+      <div class="scene-card card">
+        <span class="scene-emoji">📖</span>
+        <h2 class="scene-title">국가고시 8과목 트레이닝</h2>
+        <p class="scene-desc">숫자와 상황이 계속 변하는 무한 랜덤 4지선다 문제를 제공합니다.\n트레이닝 모드에서는 체력이 감소하지 않습니다.</p>
+        <div class="choice-list">
+          ${CATEGORIES.map(c => `<button class="choice-btn primary" data-action="startQuiz" data-arg="${escapeHtml(c)}">${c}</button>`).join("")}
+          <button class="choice-btn center" data-action="returnToMenu">메인 메뉴</button>
+        </div>
+      </div>`;
+}
+function startQuiz(category) {
+    gameState.mode = "quiz"; gameState.quizCategory = category;
+    gameState.quizSolved = 0; gameState.quizCorrect = 0; gameState.quizWrong = 0;
+    UI.logBar.innerHTML = ""; addLog(`${category} 풀이를 시작합니다.`, "log-important");
+    renderNextQuizQuestion();
+}
 function renderNextQuizQuestion() {
     renderSceneCard(generateClinicalEventByCategory(gameState.quizCategory), {
-        mode: "quiz", questionIndex: gameState.quizSolved + 1, meta: [`${gameState.quizCategory}`, `해결: ${gameState.quizSolved}`]
+        mode: "quiz", questionIndex: gameState.quizSolved + 1,
+        meta: [gameState.quizCategory, `해결: ${gameState.quizSolved}`, `정답 ${gameState.quizCorrect} / 오답 ${gameState.quizWrong}`]
+    });
+}
+function renderFeedback(ev, choice, opts = {}) {
+    const isCorrect = isCorrectChoice(choice);
+    const correctChoice = ev.choices.find(isCorrectChoice);
+    document.querySelectorAll("#choice-list .choice-btn").forEach(b => b.disabled = true);
+    const fb = document.getElementById("feedback-zone");
+    fb.innerHTML = "";
+    const box = document.createElement("div");
+    box.className = `feedback-box ${isCorrect ? "correct" : "wrong"}`;
+    const title = document.createElement("div");
+    title.textContent = isCorrect ? "✅ 정답" : `❌ 오답 (정답: ${correctChoice ? correctChoice.text : ""})`;
+    const text = document.createElement("div");
+    text.style.fontWeight = "normal"; text.style.marginTop = "6px";
+    text.textContent = choice.log || "해설이 없습니다.";
+    box.appendChild(title); box.appendChild(text);
+    fb.appendChild(box);
+
+    const next = document.createElement("button");
+    next.className = "choice-btn primary center";
+    next.textContent = opts.nextLabel || "다음 문제";
+    next.onclick = opts.onNext;
+    fb.appendChild(next);
+
+    if (opts.extraButton) {
+        const eb = document.createElement("button");
+        eb.className = "choice-btn center";
+        eb.textContent = opts.extraButton.label;
+        eb.onclick = opts.extraButton.onClick;
+        fb.appendChild(eb);
+    }
+}
+function handleQuizChoice(choice, ev) {
+    const isCorrect = isCorrectChoice(choice);
+    gameState.quizSolved += 1;
+    if (isCorrect) {
+        gameState.quizCorrect += 1; gameState.rep += 6;
+        bumpCombo(); Sound.correct();
+        addLog(`[정답] ${choice.log || ""}`, "log-good");
+    } else {
+        gameState.quizWrong += 1;
+        resetCombo(); Sound.wrong();
+        Storage.addWrong(ev);
+        addLog(`[오답] ${choice.log || ""}`, "log-bad");
+    }
+    Storage.incrementStat(ev.category, isCorrect);
+    updateStats();
+    renderFeedback(ev, choice, {
+        onNext: () => renderNextQuizQuestion(),
+        extraButton: { label: "과목 변경", onClick: renderQuizMenu },
     });
 }
 
-function handleQuizChoice(choice, ev) {
-    document.querySelectorAll("#choice-list .choice-btn").forEach((b) => (b.disabled = true));
-    const isCorrect = (choice.effect?.rep || 0) > 0;
+// =========================================================================
+// 모의고사 (시간제한 + 결과 채점표)
+// =========================================================================
+function startMockExam() {
+    resetStateForMode();
+    gameState.mode = "mock";
+    gameState._mockEnded = false;
+    gameState.mockTotal = MOCK_EXAM_TOTAL;
+    gameState.mockAnswered = 0; gameState.mockCorrect = 0; gameState.mockWrong = [];
+    gameState.mockDeadlineTs = Date.now() + MOCK_EXAM_SECONDS * 1000;
+    showCoreUI(); UI.logBar.innerHTML = "";
+    addLog(`모의고사 시작 — ${MOCK_EXAM_TOTAL}문제 / ${MOCK_EXAM_SECONDS / 60}분`, "log-important");
+    if (gameState.mockTimerId) clearInterval(gameState.mockTimerId);
+    gameState.mockTimerId = setInterval(() => {
+        updateStats();
+        if (Date.now() >= gameState.mockDeadlineTs) endMockExam("timeout");
+    }, 1000);
+    renderNextMockQuestion();
+}
+function renderNextMockQuestion() {
+    const ev = generateClinicalEventByCategory(null);
+    gameState._lastMockEv = ev;
+    renderSceneCard(ev, {
+        mode: "mock",
+        questionIndex: gameState.mockAnswered + 1,
+        meta: [ev.category, `진행 ${gameState.mockAnswered + 1}/${gameState.mockTotal}`]
+    });
+}
+function handleMockChoice(choice, ev) {
+    const isCorrect = isCorrectChoice(choice);
+    gameState.mockAnswered += 1;
+    if (isCorrect) { gameState.mockCorrect += 1; bumpCombo(); Sound.correct(); addLog(`[정답] ${ev.title}`, "log-good"); }
+    else { gameState.mockWrong.push(ev); resetCombo(); Sound.wrong(); Storage.addWrong(ev); addLog(`[오답] ${ev.title}`, "log-bad"); }
+    Storage.incrementStat(ev.category, isCorrect);
+    updateStats();
+    renderFeedback(ev, choice, {
+        onNext: () => {
+            if (gameState.mockAnswered >= gameState.mockTotal) endMockExam("complete");
+            else renderNextMockQuestion();
+        },
+        extraButton: { label: "포기하고 메뉴로", onClick: () => endMockExam("abort") },
+    });
+}
+function endMockExam(reason) {
+    if (gameState._mockEnded) return;
+    gameState._mockEnded = true;
+    if (gameState.mockTimerId) { clearInterval(gameState.mockTimerId); gameState.mockTimerId = null; }
+    const total = gameState.mockTotal;
+    const correct = gameState.mockCorrect;
+    const answered = gameState.mockAnswered;
+    const acc = answered > 0 ? Math.round((correct / answered) * 100) : 0;
+    Storage.setMockBest(correct);
+    Storage.addHistory({ mode: "mock", at: Date.now(), total, answered, correct, accuracy: acc, reason });
 
-    document.getElementById("feedback-zone").innerHTML = `
-    <div class="feedback-box ${isCorrect ? "correct" : "wrong"}">
-      <div class="feedback-title">${isCorrect ? "✅ 정답" : "❌ 오답"}</div>
-      <div class="feedback-text">${choice.log || "해설이 없습니다."}</div>
-    </div>
-    <div class="choice-list" style="margin-top:12px;">
-      <button class="choice-btn primary center" onclick="goNextQuiz()">다음 문제</button>
-      <button class="choice-btn center" onclick="renderQuizMenu()">과목 변경</button>
-    </div>
-  `;
+    const title = reason === "timeout" ? "⏰ 시간 종료" : reason === "abort" ? "모의고사 중단" : "🏁 모의고사 완료";
+    UI.gameArea.innerHTML = `
+      <div class="scene-card card">
+        <span class="scene-emoji">📊</span>
+        <h2 class="scene-title">${title}</h2>
+        <p class="scene-desc">총 ${total}문제 중 ${answered}문제 응답 / 정답 ${correct} (정답률 ${acc}%)</p>
+        <div class="choice-list">
+          <button class="choice-btn primary" data-action="startMockExam">한 번 더</button>
+          <button class="choice-btn" data-action="reviewWrongAnswers">오답 복습</button>
+          <button class="choice-btn center" data-action="returnToMenu">메인 메뉴</button>
+        </div>
+      </div>`;
+}
 
-    if (isCorrect) { gameState.rep += 6; gameState.quizSolved += 1; addLog(`[정답] ${choice.log}`, "log-good"); } 
-    else { gameState.hp -= Math.round(4 * gameState.difficulty); addLog(`[오답] ${choice.log}`, "log-bad"); }
-    gameState.hp = clamp(gameState.hp, 0, 100);
+// =========================================================================
+// 일일 챌린지 (날짜 기반 seeded — 같은 날 같은 generator 시퀀스)
+// =========================================================================
+function dailySeed(dateKey) {
+    let h = 2166136261;
+    for (let i = 0; i < dateKey.length; i++) { h ^= dateKey.charCodeAt(i); h = (h * 16777619) >>> 0; }
+    return h;
+}
+function seededRng(seed) {
+    let a = seed >>> 0;
+    return function () {
+        a = (a + 0x6D2B79F5) >>> 0;
+        let t = a;
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+}
+function pickDailyGenerators(seed, count) {
+    const rng = seededRng(seed);
+    const out = [];
+    const recentlyPicked = [];
+    for (let i = 0; i < count; i++) {
+        let idx;
+        let attempts = 0;
+        do {
+            idx = Math.floor(rng() * NQ.allGenerators.length);
+            attempts++;
+        } while (recentlyPicked.includes(idx) && attempts < 10);
+        recentlyPicked.push(idx);
+        if (recentlyPicked.length > 5) recentlyPicked.shift();
+        out.push(NQ.allGenerators[idx]);
+    }
+    return out;
+}
+function startDailyChallenge() {
+    resetStateForMode();
+    gameState.mode = "daily";
+    gameState.dailySolved = 0; gameState.dailyCorrect = 0;
+    gameState.dailySeed = dailySeed(todayKey());
+    gameState.dailyQuestions = pickDailyGenerators(gameState.dailySeed, DAILY_CHALLENGE_TOTAL);
+    showCoreUI(); UI.logBar.innerHTML = "";
+    addLog(`오늘의 일일 챌린지 — ${DAILY_CHALLENGE_TOTAL}문제`, "log-important");
+    renderNextDailyQuestion();
+}
+function renderNextDailyQuestion() {
+    const gen = gameState.dailyQuestions && gameState.dailyQuestions[gameState.dailySolved];
+    const ev = gen ? gen() : generateClinicalEventByCategory(null);
+    renderSceneCard(ev, {
+        mode: "daily",
+        questionIndex: gameState.dailySolved + 1,
+        meta: [`일일 챌린지`, `${gameState.dailySolved + 1}/${DAILY_CHALLENGE_TOTAL}`]
+    });
+}
+function handleDailyChoice(choice, ev) {
+    const isCorrect = isCorrectChoice(choice);
+    gameState.dailySolved += 1; gameState.quizSolved += 1;
+    if (isCorrect) { gameState.dailyCorrect += 1; gameState.quizCorrect += 1; bumpCombo(); Sound.correct(); }
+    else { gameState.quizWrong += 1; resetCombo(); Sound.wrong(); Storage.addWrong(ev); }
+    Storage.incrementStat(ev.category, isCorrect);
+    updateStats();
+    renderFeedback(ev, choice, {
+        onNext: () => {
+            if (gameState.dailySolved >= DAILY_CHALLENGE_TOTAL) endDailyChallenge();
+            else renderNextDailyQuestion();
+        },
+    });
+}
+function endDailyChallenge() {
+    const correct = gameState.dailyCorrect;
+    Storage.setDaily(todayKey(), { solved: DAILY_CHALLENGE_TOTAL, correct, completed: true, ts: Date.now() });
+    Storage.addHistory({ mode: "daily", at: Date.now(), total: DAILY_CHALLENGE_TOTAL, correct, date: todayKey() });
+    UI.gameArea.innerHTML = `
+      <div class="scene-card card">
+        <span class="scene-emoji">🎯</span>
+        <h2 class="scene-title">일일 챌린지 완료</h2>
+        <p class="scene-desc">정답 ${correct}/${DAILY_CHALLENGE_TOTAL}\n오늘의 도전을 마쳤습니다. 내일 다시 도전하세요!</p>
+        <div class="choice-list">
+          <button class="choice-btn primary" data-action="returnToMenu">메뉴로</button>
+        </div>
+      </div>`;
+}
+
+// =========================================================================
+// 오답노트 복습
+// =========================================================================
+function reviewWrongAnswers() {
+    resetStateForMode();
+    gameState.mode = "wrong_review";
+    gameState.wrongQueue = Storage.getWrongQueue();
+    if (gameState.wrongQueue.length === 0) {
+        UI.gameArea.innerHTML = `
+          <div class="scene-card card">
+            <span class="scene-emoji">📭</span>
+            <h2 class="scene-title">오답노트가 비었습니다</h2>
+            <p class="scene-desc">아직 저장된 오답이 없어요. 트레이닝/모의고사에서 문제를 풀면 자동으로 쌓입니다.</p>
+            <div class="choice-list">
+              <button class="choice-btn primary" data-action="returnToMenu">메인 메뉴</button>
+            </div>
+          </div>`;
+        showCoreUI(); updateStats();
+        return;
+    }
+    showCoreUI(); UI.logBar.innerHTML = "";
+    addLog(`오답노트 복습 시작 — ${gameState.wrongQueue.length}건`, "log-important");
+    renderNextWrongQuestion();
+}
+function renderNextWrongQuestion() {
+    if (gameState.wrongQueue.length === 0) {
+        UI.gameArea.innerHTML = `
+          <div class="scene-card card">
+            <span class="scene-emoji">🎉</span>
+            <h2 class="scene-title">오답을 모두 복습했습니다</h2>
+            <p class="scene-desc">정답 ${gameState.quizCorrect} / 다시 오답 ${gameState.quizWrong}</p>
+            <div class="choice-list">
+              <button class="choice-btn primary" data-action="returnToMenu">메인 메뉴</button>
+            </div>
+          </div>`;
+        return;
+    }
+    const snap = gameState.wrongQueue[0];
+    gameState.currentWrongId = snap.id;
+    const ev = {
+        baseId: snap.baseId, category: snap.category, part: snap.part,
+        emoji: "📝", title: snap.title, desc: snap.desc,
+        choices: snap.choices.map(c => ({ text: c.text, correct: c.correct, log: c.log })),
+    };
+    renderSceneCard(ev, {
+        mode: "wrong_review",
+        questionIndex: gameState.quizSolved + 1,
+        meta: ["오답 복습", `남은 ${gameState.wrongQueue.length}건`]
+    });
+}
+function handleWrongReviewChoice(choice, ev) {
+    const isCorrect = isCorrectChoice(choice);
+    const id = gameState.currentWrongId;
+    gameState.quizSolved += 1;
+    if (isCorrect) {
+        gameState.quizCorrect += 1; bumpCombo(); Sound.correct();
+        gameState.wrongQueue.shift();
+        if (id) Storage.removeWrongById(id);
+    } else {
+        gameState.quizWrong += 1; resetCombo(); Sound.wrong();
+        const item = gameState.wrongQueue.shift();
+        gameState.wrongQueue.push(item);
+    }
+    updateStats();
+    renderFeedback(ev, choice, { onNext: () => renderNextWrongQuestion() });
+}
+
+// =========================================================================
+// 인계 시뮬레이터 (TTS 인계 + 키워드 채점)
+// =========================================================================
+const Speech = {
+    speak(text, onEnd) {
+        try {
+            if (typeof window === "undefined" || !window.speechSynthesis) return false;
+            window.speechSynthesis.cancel();
+            const utter = new SpeechSynthesisUtterance(text);
+            utter.lang = "ko-KR";
+            utter.rate = 1.0;
+            if (onEnd) utter.onend = onEnd;
+            window.speechSynthesis.speak(utter);
+            return true;
+        } catch { return false; }
+    },
+    stop() { try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch {} },
+    supported() { return typeof window !== "undefined" && !!window.speechSynthesis; },
+};
+
+function normalizeKeyword(s) {
+    return String(s || "").toLowerCase().replace(/[^\w가-힣]/g, "");
+}
+
+const HANDOFF_SESSION_SIZE = 10;
+
+// 100명 풀에서 이번 세션용 환자 N명을 셔플로 선정.
+// 이전 세션에서 본 ID는 가급적 제외, 남은 풀이 N 미만이면 seen 을 리셋해 사이클 반복.
+function pickHandoffSession(n) {
+    const all = NC.HANDOFF_PATIENTS;
+    let seen = Storage.getHandoffSeen();
+    let pool = all.filter(p => !seen.includes(p.id));
+    if (pool.length < n) {
+        Storage.clearHandoffSeen();
+        pool = all.slice();
+        addLog("100명 환자 한 사이클 완료 — 풀을 초기화합니다.", "log-important");
+    }
+    return shuffle(pool).slice(0, n).map(p => p.id);
+}
+
+function startHandoff() {
+    resetStateForMode();
+    gameState.mode = "handoff";
+    gameState.handoffPool = pickHandoffSession(HANDOFF_SESSION_SIZE);
+    showCoreUI(); UI.logBar.innerHTML = "";
+    addLog(`인계 시뮬레이터 — 100명 풀에서 ${HANDOFF_SESSION_SIZE}명 무작위 출제.`, "log-important");
+    renderHandoffPatient();
+}
+
+function renderHandoffPatient() {
+    if (gameState.handoffIndex >= gameState.handoffPool.length) { endHandoff(); return; }
+    const id = gameState.handoffPool[gameState.handoffIndex];
+    const p = NC.HANDOFF_PATIENTS.find(x => x.id === id);
+    if (!p) { endHandoff(); return; }
+    Storage.addHandoffSeen(id);
+    const ttsHint = Speech.supported() ? "" : "\n⚠ 이 환경은 음성합성을 지원하지 않습니다. '본문 보기' 로 학습하세요.";
+    UI.gameArea.innerHTML = `
+      <div class="scene-card card">
+        <span class="scene-emoji" aria-hidden="true">🎙️</span>
+        <h2 class="scene-title">[인계 ${gameState.handoffIndex + 1}/${gameState.handoffPool.length}] ${escapeHtml(p.title)}</h2>
+        <p class="scene-desc">음성 인계를 듣고 핵심 키워드 ${p.keywords.length}개를 떠올려 답변창에 쉼표/공백으로 구분해 입력하세요.
+힌트: ${escapeHtml(p.hint)}${ttsHint}</p>
+        <div class="handoff-controls">
+          <button class="choice-btn primary" data-action="handoffPlay">▶ 인계 듣기</button>
+          <button class="choice-btn" data-action="handoffStop">⏹ 중지</button>
+          <button class="choice-btn" data-action="handoffShow">📄 본문 보기</button>
+        </div>
+        <div id="handoff-narration" class="handoff-narration hidden" aria-live="polite"></div>
+        <textarea id="handoff-answer" class="handoff-answer" rows="4" placeholder="기억나는 핵심 키워드를 적으세요" aria-label="인계 답변"></textarea>
+        <div class="choice-list">
+          <button class="choice-btn primary" data-action="handoffSubmit">제출</button>
+          <button class="choice-btn" data-action="returnToMenu">메뉴로</button>
+        </div>
+        <div id="handoff-feedback" aria-live="polite"></div>
+      </div>`;
     updateStats();
 }
 
-function goNextQuiz() {
-    if (gameState.hp <= 0) return showGameOver("학습 종료", "머리가 과열됐습니다. 오늘은 여기까지!");
-    renderNextQuizQuestion();
+function handoffPlay() {
+    const id = gameState.handoffPool && gameState.handoffPool[gameState.handoffIndex];
+    const p = id ? NC.HANDOFF_PATIENTS.find(x => x.id === id) : null;
+    if (!p) return;
+    const ok = Speech.speak(p.narration);
+    if (!ok) handoffShow();
+}
+function handoffStop() { Speech.stop(); }
+function handoffShow() {
+    const id = gameState.handoffPool && gameState.handoffPool[gameState.handoffIndex];
+    const p = id ? NC.HANDOFF_PATIENTS.find(x => x.id === id) : null;
+    if (!p) return;
+    const el = document.getElementById("handoff-narration");
+    if (!el) return;
+    el.textContent = p.narration;
+    el.classList.remove("hidden");
 }
 
-// =========================
-// 승급 심사 (무한 랜덤 생성)
-// =========================
+function handoffSubmit() {
+    const id = gameState.handoffPool && gameState.handoffPool[gameState.handoffIndex];
+    const p = id ? NC.HANDOFF_PATIENTS.find(x => x.id === id) : null;
+    if (!p) return;
+    Speech.stop();
+    const ans = document.getElementById("handoff-answer").value;
+    const tokens = ans.split(/[\s,·•。、]+/).map(normalizeKeyword).filter(Boolean);
+    const hits = [], misses = [];
+    p.keywords.forEach(k => {
+        const n = normalizeKeyword(k);
+        const found = tokens.some(t => t.includes(n) || n.includes(t));
+        if (found) hits.push(k); else misses.push(k);
+    });
+    gameState.handoffCorrect += hits.length;
+    gameState.handoffTotal += p.keywords.length;
+    const fb = document.getElementById("handoff-feedback");
+    fb.innerHTML = "";
+    const allHit = hits.length === p.keywords.length;
+    const box = document.createElement("div");
+    box.className = `feedback-box ${allHit ? "correct" : "wrong"}`;
+    const head = document.createElement("div");
+    head.textContent = `${hits.length}/${p.keywords.length} 키워드 일치`;
+    box.appendChild(head);
+    const detail = document.createElement("div");
+    detail.style.fontWeight = "normal"; detail.style.marginTop = "6px";
+    detail.style.whiteSpace = "pre-wrap";
+    detail.textContent = `✅ ${hits.join(", ") || "(없음)"}\n❌ 놓침: ${misses.join(", ") || "(없음)"}`;
+    box.appendChild(detail);
+    fb.appendChild(box);
+    if (allHit) { bumpCombo(); Sound.correct(); } else { resetCombo(); Sound.wrong(); }
+    const next = document.createElement("button");
+    next.className = "choice-btn primary center";
+    next.textContent = "다음 환자";
+    next.dataset.action = "handoffNext";
+    fb.appendChild(next);
+}
+function handoffNext() {
+    gameState.handoffIndex += 1;
+    renderHandoffPatient();
+}
+function endHandoff() {
+    Speech.stop();
+    const total = gameState.handoffTotal, correct = gameState.handoffCorrect;
+    const acc = total ? Math.round(correct / total * 100) : 0;
+    Storage.setHandoffBest(acc);
+    Storage.addHistory({ mode: "handoff", at: Date.now(), total, correct, accuracy: acc });
+    UI.gameArea.innerHTML = `
+      <div class="scene-card card">
+        <span class="scene-emoji" aria-hidden="true">🎙️</span>
+        <h2 class="scene-title">인계 시뮬레이션 완료</h2>
+        <p class="scene-desc">키워드 정확도: ${correct}/${total} (${acc}%)</p>
+        <div class="choice-list">
+          <button class="choice-btn primary" data-action="startHandoff">다시 시작</button>
+          <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
+        </div>
+      </div>`;
+}
+
+// =========================================================================
+// 트리아지 (다중환자 우선순위)
+// =========================================================================
+function startTriage() {
+    resetStateForMode();
+    gameState.mode = "triage";
+    showCoreUI(); UI.logBar.innerHTML = "";
+    addLog("응급실 트리아지 — 5명 환자에게 1(최우선)~5(후순위)를 매기세요.", "log-important");
+    renderTriageCase();
+}
+
+function renderTriageCase() {
+    const cases = NC.TRIAGE_CASES;
+    if (gameState.triageIndex >= cases.length) { endTriage(); return; }
+    const c = cases[gameState.triageIndex];
+    gameState.triagePicks = {};
+    const cards = c.patients.map(p => `
+        <div class="triage-card" data-patient="${escapeHtml(p.id)}">
+          <div class="triage-card-head">
+            <span class="triage-emoji" aria-hidden="true">${p.emoji}</span>
+            <span class="triage-desc">${escapeHtml(p.desc)}</span>
+          </div>
+          <div class="triage-pick" role="radiogroup" aria-label="${escapeHtml(p.desc)} 우선순위">
+            ${[1,2,3,4,5].map(n => `<button class="triage-num" data-action="triagePick" data-patient="${escapeHtml(p.id)}" data-num="${n}" aria-label="${n}순위">${n}</button>`).join("")}
+          </div>
+        </div>`).join("");
+    UI.gameArea.innerHTML = `
+      <div class="scene-card card">
+        <span class="scene-emoji" aria-hidden="true">🚑</span>
+        <h2 class="scene-title">[케이스 ${gameState.triageIndex + 1}/${cases.length}] ${escapeHtml(c.title)}</h2>
+        <p class="scene-desc">각 환자에게 1(최우선)~5(후순위)를 부여하세요. 같은 번호 중복 불가.</p>
+        <div class="triage-list">${cards}</div>
+        <div class="choice-list">
+          <button class="choice-btn primary" data-action="triageSubmit">제출</button>
+          <button class="choice-btn" data-action="returnToMenu">메뉴로</button>
+        </div>
+        <div id="triage-feedback" aria-live="polite"></div>
+      </div>`;
+    updateStats();
+}
+
+function triagePick(target) {
+    const pid = target.dataset.patient;
+    const n = parseInt(target.dataset.num, 10);
+    gameState.triagePicks[pid] = n;
+    // 환자 카드 안에서만 active 상태를 갱신 (id 셀렉터 escape 회피)
+    const card = target.closest(".triage-card");
+    if (!card) return;
+    card.querySelectorAll(".triage-num").forEach(b => {
+        b.classList.toggle("active", parseInt(b.dataset.num, 10) === n);
+    });
+}
+
+function triageSubmit() {
+    const c = NC.TRIAGE_CASES[gameState.triageIndex];
+    const picks = c.patients.map(p => gameState.triagePicks[p.id]);
+    const fb = document.getElementById("triage-feedback");
+    fb.innerHTML = "";
+    if (picks.some(v => !v)) {
+        const w = document.createElement("div"); w.className = "feedback-box wrong";
+        w.textContent = "모든 환자에게 순위를 매겨주세요.";
+        fb.appendChild(w); return;
+    }
+    if (new Set(picks).size !== 5) {
+        const w = document.createElement("div"); w.className = "feedback-box wrong";
+        w.textContent = "1~5번을 각 한 번씩만 사용하세요.";
+        fb.appendChild(w); return;
+    }
+    let correct = 0;
+    const results = c.patients.map(p => {
+        const pick = gameState.triagePicks[p.id];
+        const ok = pick === p.priority;
+        if (ok) correct++;
+        return { p, pick, ok };
+    });
+    gameState.triageCorrect += correct;
+    gameState.triageTotal += c.patients.length;
+    const allOk = correct === c.patients.length;
+    const box = document.createElement("div");
+    box.className = `feedback-box ${allOk ? "correct" : "wrong"}`;
+    const head = document.createElement("div");
+    head.textContent = `${correct}/${c.patients.length} 정답`;
+    box.appendChild(head);
+    results.sort((a,b) => a.p.priority - b.p.priority).forEach(r => {
+        const row = document.createElement("div");
+        row.style.fontWeight = "normal"; row.style.marginTop = "4px";
+        row.textContent = `${r.ok ? "✅" : "❌"} 정답 ${r.p.priority} (선택 ${r.pick}) — ${r.p.why}`;
+        box.appendChild(row);
+    });
+    const rationale = document.createElement("div");
+    rationale.style.marginTop = "8px"; rationale.style.fontStyle = "italic";
+    rationale.textContent = c.rationale;
+    box.appendChild(rationale);
+    fb.appendChild(box);
+    if (allOk) { bumpCombo(); Sound.correct(); } else { resetCombo(); Sound.wrong(); }
+    const next = document.createElement("button");
+    next.className = "choice-btn primary center";
+    next.textContent = "다음 케이스";
+    next.dataset.action = "triageNext";
+    fb.appendChild(next);
+}
+function triageNext() { gameState.triageIndex += 1; renderTriageCase(); }
+function endTriage() {
+    const total = gameState.triageTotal, correct = gameState.triageCorrect;
+    const acc = total ? Math.round(correct / total * 100) : 0;
+    Storage.setTriageBest(acc);
+    Storage.addHistory({ mode: "triage", at: Date.now(), total, correct, accuracy: acc });
+    UI.gameArea.innerHTML = `
+      <div class="scene-card card">
+        <span class="scene-emoji" aria-hidden="true">🚑</span>
+        <h2 class="scene-title">트리아지 완료</h2>
+        <p class="scene-desc">정답률: ${correct}/${total} (${acc}%)</p>
+        <div class="choice-list">
+          <button class="choice-btn primary" data-action="startTriage">다시 시작</button>
+          <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
+        </div>
+      </div>`;
+}
+
+// =========================================================================
+// 임상 시나리오 (멀티스텝, HP/평판 누적)
+// =========================================================================
+function renderScenarioMenu() {
+    resetStateForMode();
+    gameState.mode = "scenario_menu";
+    showCoreUI(); UI.logBar.innerHTML = "";
+    addLog("멀티스텝 임상 시나리오 — 한 환자의 의사결정을 끝까지 따라가세요.", "log-important");
+    updateStats();
+    const data = Storage.load();
+    UI.gameArea.innerHTML = `
+      <div class="scene-card card">
+        <span class="scene-emoji" aria-hidden="true">📋</span>
+        <h2 class="scene-title">임상 시나리오 챔버</h2>
+        <p class="scene-desc">한 환자의 입실 → 사정 → 처치 → 평가까지 3~5단계 의사결정을 진행합니다.\n각 결정이 환자 상태(HP)에 누적됩니다.</p>
+        <div class="choice-list">
+          ${NC.SCENARIOS.map(s => {
+              const rec = data.scenarios[s.id];
+              const tag = rec?.completed ? ` ✅ 최고 HP ${rec.bestHp}` : "";
+              return `<button class="choice-btn primary" data-action="startScenario" data-arg="${escapeHtml(s.id)}">${escapeHtml(s.title)}${tag}</button>`;
+          }).join("")}
+          <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
+        </div>
+      </div>`;
+}
+
+function startScenario(target) {
+    const id = target.dataset.arg;
+    const s = NC.SCENARIOS.find(x => x.id === id);
+    if (!s) return;
+    resetStateForMode();
+    gameState.mode = "scenario";
+    gameState.scenarioId = id;
+    gameState.scenarioStep = 0;
+    gameState.hp = 100; gameState.rep = 0;
+    showCoreUI(); UI.logBar.innerHTML = "";
+    addLog(`시나리오 시작: ${s.title}`, "log-important");
+    addLog(s.intro);
+    renderScenarioStep();
+}
+
+function renderScenarioStep() {
+    const s = NC.SCENARIOS.find(x => x.id === gameState.scenarioId);
+    if (!s) return;
+    if (gameState.scenarioStep >= s.steps.length) { endScenario(); return; }
+    const step = s.steps[gameState.scenarioStep];
+    const ev = {
+        baseId: "scenario", category: s.title, part: `Step ${gameState.scenarioStep + 1}/${s.steps.length}`,
+        emoji: "📋", title: step.prompt,
+        desc: gameState.scenarioStep === 0 ? s.intro : `현재 HP ${gameState.hp} / 평판 ${gameState.rep}`,
+        choices: step.choices.map(c => ({
+            text: c.text, correct: !!c.correct,
+            effect: { hp: c.hp || 0, rep: c.rep || 0 },
+            log: c.log || "",
+        })),
+    };
+    renderSceneCard(ev, { mode: "scenario", questionIndex: gameState.scenarioStep + 1, meta: [s.title, `Step ${gameState.scenarioStep + 1}/${s.steps.length}`] });
+}
+
+function handleScenarioChoice(choice, ev) {
+    applyChoiceEffect(choice);
+    const isCorrect = isCorrectChoice(choice);
+    if (isCorrect) { bumpCombo(); Sound.correct(); addLog(`[정답] ${choice.log}`, "log-good"); }
+    else { resetCombo(); Sound.wrong(); addLog(`[오답] ${choice.log}`, "log-bad"); }
+    if (gameState.hp <= 0) { renderFeedback(ev, choice, { onNext: () => endScenario("환자 상태 악화 — 시나리오 실패") }); return; }
+    renderFeedback(ev, choice, {
+        onNext: () => { gameState.scenarioStep += 1; renderScenarioStep(); },
+    });
+}
+
+function endScenario(failReason) {
+    const s = NC.SCENARIOS.find(x => x.id === gameState.scenarioId);
+    const title = failReason ? "❌ " + failReason : "✅ 시나리오 완수";
+    const completed = !failReason;
+    Storage.setScenarioResult(gameState.scenarioId, gameState.hp, gameState.rep, completed);
+    Storage.addHistory({ mode: "scenario", at: Date.now(), id: gameState.scenarioId, hp: gameState.hp, rep: gameState.rep, completed });
+    UI.gameArea.innerHTML = `
+      <div class="scene-card card">
+        <span class="scene-emoji" aria-hidden="true">📋</span>
+        <h2 class="scene-title">${escapeHtml(title)}</h2>
+        <p class="scene-desc">${escapeHtml(s ? s.title : "")}\n최종 HP ${gameState.hp} · 평판 ${gameState.rep}</p>
+        <div class="choice-list">
+          <button class="choice-btn primary" data-action="renderScenarioMenu">시나리오 목록</button>
+          <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
+        </div>
+      </div>`;
+}
+
+// =========================================================================
+// PDF/인쇄 (오답노트 + 대시보드)
+// =========================================================================
+// 잔여 print-only 영역을 정리하고 새 영역 추가 + 인쇄 미리보기 종료 후 제거
+function preparePrintArea() {
+    document.querySelectorAll(".print-only").forEach(n => n.remove());
+    const area = document.createElement("div");
+    area.className = "print-only";
+    return area;
+}
+function triggerPrint(area) {
+    document.body.appendChild(area);
+    const cleanup = () => area.remove();
+    // Chrome/Safari 는 print() 가 비동기 미리보기로 즉시 반환 — afterprint 후 제거해야 빈 페이지 방지
+    if (typeof window !== "undefined" && typeof window.addEventListener === "function") {
+        window.addEventListener("afterprint", cleanup, { once: true });
+    }
+    try { window.print(); }
+    catch { cleanup(); }
+}
+
+function printWrongQueue() {
+    const queue = Storage.getWrongQueue();
+    const area = preparePrintArea();
+    let html = `<h1>오답노트 — ${todayKey()}</h1><p>총 ${queue.length}건</p>`;
+    queue.forEach((q, i) => {
+        const correct = (q.choices || []).find(c => c.correct);
+        html += `
+            <div class="print-item">
+              <h3>${i + 1}. [${escapeHtml(q.category || "")}] ${escapeHtml(q.title || "")}</h3>
+              <p>${escapeHtml(q.desc || "").replace(/\n/g, "<br>")}</p>
+              <ul>
+                ${(q.choices || []).map(c => `<li>${c.correct ? "<strong>✓ " + escapeHtml(c.text) + "</strong>" : escapeHtml(c.text)}</li>`).join("")}
+              </ul>
+              <p class="print-log">해설: ${escapeHtml((correct && correct.log) || "")}</p>
+            </div>`;
+    });
+    area.innerHTML = html;
+    triggerPrint(area);
+}
+
+function printDashboard() {
+    const stats = Storage.getStats();
+    const data = Storage.load();
+    const area = preparePrintArea();
+    let html = `<h1>학습 대시보드 — ${todayKey()}</h1>`;
+    html += `<table class="print-stats"><thead><tr><th>과목</th><th>풀이</th><th>정답</th><th>정답률</th></tr></thead><tbody>`;
+    CATEGORIES.forEach(cat => {
+        const s = stats[cat] || { solved: 0, correct: 0 };
+        const acc = s.solved ? Math.round(s.correct / s.solved * 100) : 0;
+        html += `<tr><td>${escapeHtml(cat)}</td><td>${s.solved}</td><td>${s.correct}</td><td>${acc}%</td></tr>`;
+    });
+    html += `</tbody></table>`;
+    html += `<p>최고 콤보 ${data.bestCombo} · 모의고사 최고점 ${data.mockBest} · 인계 ${data.handoffBest || 0}% · 트리아지 ${data.triageBest || 0}% · 오답 ${data.wrongQueue.length}건</p>`;
+    area.innerHTML = html;
+    triggerPrint(area);
+}
+
+// =========================================================================
+// 출제 경향 차트 (SVG)
+// =========================================================================
+function renderTrendsChart() {
+    const t = NC.EXAM_TRENDS;
+    const cats = Object.keys(t.categories);
+    const totals = cats.map(c => t.categories[c].reduce((s, v) => s + v, 0) / t.categories[c].length);
+    const max = Math.max(...totals);
+    const barH = 22, gap = 6, labelW = 130;
+    const W = 360, H = cats.length * (barH + gap) + 20;
+    let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="최근 5개년 과목별 평균 문항 수" class="trends-svg">`;
+    cats.forEach((cat, i) => {
+        const v = totals[i];
+        const w = (v / max) * (W - labelW - 30);
+        const y = i * (barH + gap) + 5;
+        svg += `<text x="0" y="${y + 15}" class="trend-label">${escapeHtml(cat)}</text>`;
+        svg += `<rect x="${labelW}" y="${y}" width="${w}" height="${barH}" rx="4" class="trend-bar"/>`;
+        svg += `<text x="${labelW + w + 4}" y="${y + 15}" class="trend-value">${Math.round(v)}</text>`;
+    });
+    svg += `</svg>`;
+    return svg;
+}
+
+// =========================================================================
+// 대시보드 (과목별 통계)
+// =========================================================================
+function renderDashboard() {
+    gameState.mode = "dashboard";
+    showCoreUI(); updateStats();
+    const stats = Storage.getStats();
+    const data = Storage.load();
+    const rows = CATEGORIES.map(cat => {
+        const s = stats[cat] || { solved: 0, correct: 0 };
+        const acc = s.solved > 0 ? Math.round((s.correct / s.solved) * 100) : 0;
+        return `
+          <div class="dashboard-row">
+            <div class="dashboard-cat-cell">
+              <div class="cat-name">${escapeHtml(cat)}</div>
+              <div class="cat-stats">${s.correct}/${s.solved} · ${acc}%</div>
+            </div>
+            <div class="mini-bar" role="progressbar" aria-valuenow="${acc}" aria-valuemin="0" aria-valuemax="100" aria-label="${escapeHtml(cat)} 정답률"><div class="mini-bar-fill" style="width:${acc}%"></div></div>
+          </div>`;
+    }).join("");
+    const wrongCount = data.wrongQueue.length;
+    const todayDaily = data.daily[todayKey()];
+    const dailyMsg = todayDaily?.completed ? `오늘 완료 (${todayDaily.correct}/${DAILY_CHALLENGE_TOTAL})` : "오늘 미완료";
+
+    UI.gameArea.innerHTML = `
+      <div class="scene-card card">
+        <span class="scene-emoji" aria-hidden="true">📊</span>
+        <h2 class="scene-title">학습 대시보드</h2>
+        <p class="scene-desc">과목별 정답률과 누적 성과를 확인할 수 있습니다.</p>
+        <div class="dashboard-grid">${rows}</div>
+        <hr class="dashboard-divider">
+        <p class="scene-desc dashboard-summary">
+          🔥 최고 콤보 <strong>${data.bestCombo}</strong> · 🏆 모의고사 <strong>${data.mockBest}</strong> · 🎙️ 인계 <strong>${data.handoffBest || 0}%</strong> · 🚑 트리아지 <strong>${data.triageBest || 0}%</strong> · 📝 오답 <strong>${wrongCount}</strong>건 · 🎯 ${escapeHtml(dailyMsg)}
+        </p>
+        <hr class="dashboard-divider">
+        <h3 class="trends-title">📈 최근 5개년 과목별 출제 경향</h3>
+        ${renderTrendsChart()}
+        <div class="choice-list dashboard-actions">
+          <button class="choice-btn primary" data-action="reviewWrongAnswers">오답 복습 (${wrongCount})</button>
+          <button class="choice-btn" data-action="printWrongQueue">📄 오답노트 PDF/인쇄</button>
+          <button class="choice-btn" data-action="printDashboard">📄 대시보드 PDF/인쇄</button>
+          <button class="choice-btn" data-action="confirmClearStats">통계 초기화</button>
+          <button class="choice-btn center" data-action="returnToMenu">메인 메뉴</button>
+        </div>
+      </div>`;
+}
+function confirmClearStats() {
+    if (!confirm("모든 통계/오답/기록을 초기화합니다. 계속하시겠습니까?")) return;
+    localStorage.removeItem(STORAGE_KEY);
+    addLog("저장된 데이터를 초기화했습니다.", "log-important");
+    renderDashboard();
+}
+
+// =========================================================================
+// 약관 / 개인정보 / 면책 (첫 실행 시 동의 게이트)
+// =========================================================================
+const LEGAL_VERSION = "1.0";
+
+function renderLegalGate(onAccept) {
+    hideCoreUI();
+    UI.topBar.classList.remove("hidden"); // 테마/사운드 토글은 유지
+    UI.gameArea.innerHTML = `
+      <div class="card legal-card">
+        <h1 class="menu-title">📜 시작 전 확인</h1>
+        <p class="menu-tagline">간호사 시뮬레이터는 학습 보조 도구입니다.</p>
+
+        <section class="legal-section">
+          <h2 class="legal-h">⚠️ 의료 학습 면책 고지</h2>
+          <p>이 앱이 제공하는 임상 시나리오·약물 정보·간호중재 권고는 <strong>교육적 시뮬레이션</strong>이며, 실제 환자에 대한 의학적 자문·진단·치료를 대체하지 않습니다.</p>
+          <p>실제 임상에서는 반드시 <strong>면허를 가진 의료인의 판단, 공식 가이드라인(KDCA, ACLS, AHA 등), 의료기관 프로토콜</strong>을 따르십시오.</p>
+          <p>작성자와 기여자는 이 앱의 사용·오용에서 비롯된 환자 손상, 의료 사고, 학습 결과의 부정확성에 대해 책임지지 않습니다.</p>
+        </section>
+
+        <section class="legal-section">
+          <h2 class="legal-h">🔒 개인정보 처리방침 (요약)</h2>
+          <ul class="legal-list">
+            <li>이 앱은 <strong>네트워크 통신을 하지 않습니다.</strong> 모든 데이터는 사용자의 기기 안에서만 처리됩니다.</li>
+            <li>저장되는 항목: 학습 통계, 오답 노트, 사운드/테마 설정, 일일 챌린지 기록 (브라우저 localStorage).</li>
+            <li>외부 서버로 전송되는 개인정보·식별정보는 <strong>없습니다.</strong></li>
+            <li>대시보드 "통계 초기화" 버튼으로 언제든 전체 데이터를 삭제할 수 있습니다.</li>
+          </ul>
+        </section>
+
+        <section class="legal-section">
+          <h2 class="legal-h">📑 이용 약관 (요약)</h2>
+          <ul class="legal-list">
+            <li>본 앱은 무료로 제공되며 학습·교육 목적으로만 사용됩니다.</li>
+            <li>MIT 라이선스에 따라 자유롭게 사용·수정·배포할 수 있습니다 (LICENSE 파일 참고).</li>
+            <li>임상 의사결정의 책임은 사용자에게 있습니다.</li>
+          </ul>
+        </section>
+
+        <div class="choice-list">
+          <button class="choice-btn primary" data-action="legalAccept">동의하고 시작하기</button>
+        </div>
+      </div>`;
+    UI._onLegalAccept = onAccept;
+}
+function legalAccept() {
+    Storage.setAccepted(LEGAL_VERSION);
+    const cb = UI._onLegalAccept;
+    UI._onLegalAccept = null;
+    if (typeof cb === "function") cb(); else returnToMenu();
+}
+
+// =========================================================================
+// 온보딩 (첫 실행 튜토리얼 — 5 슬라이드)
+// =========================================================================
+const ONBOARDING_SLIDES = [
+    { emoji: "🏥", title: "간호사 시뮬레이터에 오신 것을 환영합니다",
+      body: "국시 8과목 + 임상 시뮬레이션을 하나의 앱에서 연습할 수 있어요.\n시프트 난이도(Day/Evening/Night)에 따라 HP 손실이 달라집니다." },
+    { emoji: "📚", title: "9개 모드를 활용하세요",
+      body: "실전 듀티 · 트레이닝 · 모의고사 · 일일 챌린지 · 인계 시뮬 · 트리아지 · 시나리오 · 오답노트 · 대시보드.\n메인 메뉴에서 카드를 탭하면 바로 시작합니다." },
+    { emoji: "🎯", title: "오답은 자동으로 쌓입니다",
+      body: "틀린 문제는 오답노트에 저장되어, 정답을 맞힐 때까지 다시 출제됩니다.\n과목별 정답률은 대시보드에서 막대 그래프로 확인하세요." },
+    { emoji: "⌨️", title: "키보드 단축키",
+      body: "1~4 보기 선택 · Space 다음 문제 · T 테마 전환 · M 사운드 토글 · ESC 모달 닫기.\n모바일에서는 카드를 그냥 탭하시면 됩니다." },
+    { emoji: "📜", title: "학습 도구로만 사용하세요",
+      body: "본 앱은 교육 목적이며, 실제 임상 의사결정을 대체하지 않습니다.\n공식 가이드라인과 의료기관 프로토콜을 항상 우선하세요." },
+];
+let onboardingIndex = 0;
+
+function renderOnboarding(idx = 0) {
+    onboardingIndex = idx;
+    const slide = ONBOARDING_SLIDES[idx];
+    const total = ONBOARDING_SLIDES.length;
+    hideCoreUI();
+    UI.topBar.classList.remove("hidden");
+    const dots = ONBOARDING_SLIDES.map((_, i) =>
+        `<span class="onboard-dot ${i === idx ? "active" : ""}" aria-current="${i === idx ? "true" : "false"}"></span>`
+    ).join("");
+    UI.gameArea.innerHTML = `
+      <div class="card onboard-card">
+        <span class="scene-emoji" aria-hidden="true">${slide.emoji}</span>
+        <h1 class="menu-title">${escapeHtml(slide.title)}</h1>
+        <p class="onboard-body">${escapeHtml(slide.body)}</p>
+        <div class="onboard-dots" role="tablist" aria-label="튜토리얼 진행도">${dots}</div>
+        <div class="choice-list">
+          ${idx < total - 1
+              ? `<button class="choice-btn primary" data-action="onboardNext">다음 (${idx + 1}/${total})</button>
+                 <button class="choice-btn subtle center" data-action="onboardSkip">건너뛰기</button>`
+              : `<button class="choice-btn primary" data-action="onboardFinish">시작하기</button>`}
+        </div>
+      </div>`;
+}
+function onboardNext() {
+    if (onboardingIndex < ONBOARDING_SLIDES.length - 1) renderOnboarding(onboardingIndex + 1);
+    else onboardFinish();
+}
+function onboardSkip() { onboardFinish(); }
+function onboardFinish() {
+    Storage.setOnboarded();
+    returnToMenu();
+}
+
+// =========================================================================
+// 메인 메뉴 (returnToMenu)
+// =========================================================================
+function returnToMenu() {
+    // 진행 중인 모의고사 → abort 로 일관 처리 (endMockExam이 history/timer 정리)
+    if (gameState.mode === "mock" && !gameState._mockEnded) {
+        gameState._mockEnded = true;
+        if (gameState.mockTimerId) { clearInterval(gameState.mockTimerId); gameState.mockTimerId = null; }
+        const total = gameState.mockTotal, correct = gameState.mockCorrect, answered = gameState.mockAnswered;
+        const acc = answered > 0 ? Math.round((correct / answered) * 100) : 0;
+        Storage.setMockBest(correct);
+        Storage.addHistory({ mode: "mock", at: Date.now(), total, answered, correct, accuracy: acc, reason: "abort" });
+    }
+    // 일일 챌린지 부분 진행 상태 저장 (메뉴에서 재방문 시 대시보드에 노출)
+    if (gameState.mode === "daily" && gameState.dailySolved > 0 && gameState.dailySolved < DAILY_CHALLENGE_TOTAL) {
+        Storage.setDaily(todayKey(), {
+            solved: gameState.dailySolved,
+            correct: gameState.dailyCorrect,
+            completed: false,
+            ts: Date.now(),
+        });
+    }
+    if (gameState.mockTimerId) { clearInterval(gameState.mockTimerId); gameState.mockTimerId = null; }
+    // 인계 시뮬레이터 등 TTS 재생을 메뉴 진입과 동시에 강제 중단
+    if (typeof Speech !== "undefined") Speech.stop();
+    if (UI.modal.classList.contains("active")) UI.modal.classList.remove("active");
+    resetStateForMode();
+    gameState.mode = "menu";
+    UI.logBar.innerHTML = "";
+    hideCoreUI();
+
+    const data = Storage.load();
+    const todayDaily = data.daily[todayKey()];
+    const dailyDone = todayDaily?.completed;
+    const wrongCount = data.wrongQueue.length;
+
+    UI.gameArea.innerHTML = `
+      <div class="card menu-container">
+        <h1 class="menu-title">간호사 시뮬레이터</h1>
+        <div class="menu-shift-row" role="radiogroup" aria-label="시프트 난이도">
+          <button class="shift-option ${gameState.currentShift === 'Day' ? 'active' : ''}" data-action="setShift" data-shift="Day" data-mult="1.0">Day</button>
+          <button class="shift-option ${gameState.currentShift === 'Evening' ? 'active' : ''}" data-action="setShift" data-shift="Evening" data-mult="1.2">Evening</button>
+          <button class="shift-option ${gameState.currentShift === 'Night' ? 'active' : ''}" data-action="setShift" data-shift="Night" data-mult="1.5">Night</button>
+        </div>
+        <div class="mode-grid" role="group" aria-label="게임 모드">
+          <button class="mode-card wide hero" data-mode="survival" data-action="initSurvival">
+            ${ICONS.survival}
+            <span class="mc-title">실전 듀티</span>
+            <span class="mc-sub">${escapeHtml(gameState.currentShift)} 시프트 · 20 이벤트</span>
+          </button>
+          <button class="mode-card" data-mode="training" data-action="renderQuizMenu">
+            ${ICONS.training}
+            <span class="mc-title">트레이닝</span>
+            <span class="mc-sub">8과목 · 무한</span>
+          </button>
+          <button class="mode-card" data-mode="mock" data-action="startMockExam">
+            ${ICONS.mock}
+            <span class="mc-title">모의고사</span>
+            <span class="mc-sub">${MOCK_EXAM_TOTAL}문제 · ${MOCK_EXAM_SECONDS / 60}분</span>
+          </button>
+          <button class="mode-card" data-mode="daily" data-action="startDailyChallenge">
+            ${ICONS.daily}
+            <span class="mc-title">일일 챌린지</span>
+            <span class="mc-sub">오늘의 ${DAILY_CHALLENGE_TOTAL}문제</span>
+            ${dailyDone ? '<span class="mc-badge done" aria-label="오늘 완료">✓</span>' : ''}
+          </button>
+          <button class="mode-card" data-mode="handoff" data-action="startHandoff">
+            ${ICONS.handoff}
+            <span class="mc-title">인계 시뮬</span>
+            <span class="mc-sub">TTS · 100명 풀</span>
+          </button>
+          <button class="mode-card" data-mode="triage" data-action="startTriage">
+            ${ICONS.triage}
+            <span class="mc-title">트리아지</span>
+            <span class="mc-sub">응급실 분류 · 7</span>
+          </button>
+          <button class="mode-card wide" data-mode="scenario" data-action="renderScenarioMenu">
+            ${ICONS.scenario}
+            <span class="mc-title">임상 시나리오</span>
+            <span class="mc-sub">멀티스텝 의사결정 · 6 케이스</span>
+          </button>
+          <button class="mode-card" data-mode="wrong" data-action="reviewWrongAnswers">
+            ${ICONS.wrong}
+            <span class="mc-title">오답노트</span>
+            <span class="mc-sub">${wrongCount}건</span>
+            ${wrongCount ? `<span class="mc-badge">${wrongCount}</span>` : ''}
+          </button>
+          <button class="mode-card" data-mode="dash" data-action="renderDashboard">
+            ${ICONS.dash}
+            <span class="mc-title">대시보드</span>
+            <span class="mc-sub">학습 통계</span>
+          </button>
+        </div>
+        <p class="menu-kbd-row">
+          <span class="kbd-hint">1-4</span> 보기 ·
+          <span class="kbd-hint">Space</span> 다음 ·
+          <span class="kbd-hint">T</span> 테마 ·
+          <span class="kbd-hint">M</span> 사운드
+        </p>
+        <div class="menu-footer">
+          <button class="text-link" data-action="showOnboarding">튜토리얼</button>
+          <span class="dot-sep" aria-hidden="true">·</span>
+          <button class="text-link" data-action="showLegal">약관·면책</button>
+        </div>
+      </div>`;
+
+    // 메인 메뉴에서도 상단 헤더는 표시(테마/사운드 토글 위해)
+    UI.topBar.classList.remove("hidden");
+}
+
+// =========================================================================
+// 게임오버 (Survival → 승급 심사 모달)
+// =========================================================================
 function showGameOver(title, desc) {
     document.getElementById("modal-title").textContent = title;
     document.getElementById("modal-desc").textContent = desc;
-    document.getElementById("modal-stats").innerHTML = `
-    최종 체력: <span class="highlight">${clamp(gameState.hp, 0, 100)}</span><br>
-    최종 평판: <span class="highlight">${gameState.rep}</span><br>
-    처리한 상황: <span class="highlight">${gameState.eventCount}</span>건
-  `;
+    const statsEl = document.getElementById("modal-stats");
+    statsEl.innerHTML = "";
+    const tpl = [
+        ["최종 체력", clamp(gameState.hp, 0, 100)],
+        ["최종 평판", gameState.rep],
+        ["처리한 상황", `${gameState.eventCount}건`],
+        ["최고 콤보", gameState.bestCombo],
+    ];
+    tpl.forEach(([k, v]) => {
+        const row = document.createElement("div");
+        row.appendChild(document.createTextNode(`${k}: `));
+        const sp = document.createElement("span");
+        sp.className = "highlight";
+        sp.textContent = String(v);
+        row.appendChild(sp);
+        statsEl.appendChild(row);
+    });
     UI.modal.classList.add("active");
 
-    let score = 0; let poolCount = 2000; let currentQ = null;
-
-    function generateDynamicQuestion() {
-        let rawQ = generateClinicalEventByCategory(null);
-        let answerIdx = rawQ.choices.findIndex(c => (c.effect && c.effect.rep > 0));
-        if (answerIdx === -1) answerIdx = 0;
-
-        return {
-            q: `[${rawQ.category} - ${rawQ.part}]\n${rawQ.title}\n\n${rawQ.desc}`,
-            choices: rawQ.choices.map(c => c.text),
-            answer: answerIdx,
-            explain: rawQ.choices[answerIdx].log
-        };
+    let score = 0, attempts = 0, currentQ = null;
+    function gen() {
+        const raw = generateClinicalEventByCategory(null);
+        const idx = raw.choices.findIndex(isCorrectChoice);
+        return { q: `[${raw.category} - ${raw.part}]\n${raw.title}\n\n${raw.desc}`, choices: raw.choices, answer: idx >= 0 ? idx : 0, explain: idx >= 0 ? raw.choices[idx].log : "" };
     }
-
-    function loadQuestion() {
-        if (poolCount <= 0) return;
-        currentQ = generateDynamicQuestion();
-        
-        document.getElementById("question-box").innerText = currentQ.q;
-        let html = "";
+    function load() {
+        currentQ = gen();
+        document.getElementById("question-box").textContent = currentQ.q;
+        const choicesEl = document.getElementById("choices");
+        choicesEl.innerHTML = "";
         currentQ.choices.forEach((c, i) => {
-            html += `<button class="choice-btn" onclick="document.getElementById('modal').checkAnswer(${i})">${c}</button>`;
+            const btn = document.createElement("button");
+            btn.className = "choice-btn";
+            btn.textContent = c.text;
+            btn.addEventListener("click", () => check(i));
+            choicesEl.appendChild(btn);
         });
-
-        document.getElementById("choices").innerHTML = html;
-        document.getElementById("left").innerText = poolCount;
-        document.getElementById("result").innerText = "";
+        document.getElementById("left").textContent = `${attempts + 1}회차`;
+        document.getElementById("result").textContent = "";
+        // 첫 보기에 포커스
+        const first = choicesEl.querySelector(".choice-btn");
+        if (first) first.focus();
     }
-
-    document.getElementById("modal").checkAnswer = function(i) {
-        if (i === currentQ.answer) {
-            score++;
-            document.getElementById("result").innerHTML = "<span style='color:var(--success)'>✅ 정답!</span>";
+    function renderResult(ok) {
+        const resultEl = document.getElementById("result");
+        resultEl.innerHTML = "";
+        if (ok) {
+            const s = document.createElement("span");
+            s.style.color = "var(--success)";
+            s.textContent = "✅ 정답!";
+            resultEl.appendChild(s);
         } else {
-            document.getElementById("result").innerHTML = `<span style='color:var(--danger)'>❌ 오답: ${currentQ.explain}</span>`;
+            const head = document.createElement("div");
+            head.className = "modal-result-wrong-head";
+            head.textContent = `❌ 오답 — 정답: ${currentQ.choices[currentQ.answer].text}`;
+            const exp = document.createElement("div");
+            exp.className = "modal-result-wrong-exp";
+            exp.textContent = currentQ.explain;
+            resultEl.appendChild(head);
+            resultEl.appendChild(exp);
         }
-        
-        poolCount--; updateRank(); document.getElementById("score").innerText = score;
-        document.getElementById("choices").innerHTML = ""; 
-        setTimeout(loadQuestion, 1500);
-    };
-
-    function updateRank() {
+    }
+    function check(i) {
+        attempts++;
+        const ok = i === currentQ.answer;
+        if (ok) { score++; Sound.correct(); }
+        else { Sound.wrong(); }
+        renderResult(ok);
+        const acc = attempts > 0 ? Math.round((score / attempts) * 100) : 0;
         let rank = "신규 간호사 (SN/RN)";
         if (score >= 10) rank = "RN 2년차 (1인분 가능)";
         if (score >= 30) rank = "RN 5년차 (에이스)";
         if (score >= 50) rank = "차지 널스 (Charge)";
         if (score >= 100) rank = "수간호사 (HN)";
-        document.getElementById("rank").innerText = rank;
+        document.getElementById("rank").textContent = `${rank} · 정답률 ${acc}%`;
+        document.getElementById("score").textContent = score;
+        const choicesEl = document.getElementById("choices");
+        choicesEl.querySelectorAll(".choice-btn").forEach(b => b.disabled = true);
+        // 자동 진행 대신 명시적 "다음 문제" 버튼 (느린 독해자 배려)
+        const nextBtn = document.createElement("button");
+        nextBtn.className = "choice-btn primary center";
+        nextBtn.textContent = "다음 문제 (Space)";
+        nextBtn.style.marginTop = "12px";
+        nextBtn.addEventListener("click", load);
+        choicesEl.appendChild(nextBtn);
+        nextBtn.focus();
     }
+    load();
+}
 
-    loadQuestion();
+// =========================================================================
+// 키보드 단축키
+// =========================================================================
+function handleKeydown(e) {
+    // 한국어 IME 조합 중 입력 무시 (1~4, t, m 등이 잘못 발동되지 않도록)
+    if (e.isComposing || e.keyCode === 229) return;
+    // 모달 활성 시 ESC 로 닫기 + 단축키 차단
+    if (UI.modal.classList.contains("active")) {
+        if (e.key === "Escape") { returnToMenu(); e.preventDefault(); }
+        return;
+    }
+    if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")) return;
+    const num = parseInt(e.key, 10);
+    if (num >= 1 && num <= 4) {
+        const btns = document.querySelectorAll("#choice-list .choice-btn");
+        const btn = btns[num - 1];
+        if (btn && !btn.disabled) { btn.click(); e.preventDefault(); }
+    } else if (e.key === " " || e.key === "Enter") {
+        const next = document.querySelector("#feedback-zone .choice-btn.primary");
+        if (next && !next.disabled) { next.click(); e.preventDefault(); }
+    } else if (e.key.toLowerCase() === "t") {
+        toggleTheme();
+    } else if (e.key.toLowerCase() === "m") {
+        toggleSound();
+    }
+}
+
+// =========================================================================
+// 부트
+// =========================================================================
+function boot() {
+    cacheUI();
+    const settings = Storage.getSettings();
+    applyTheme(settings.theme || "auto");
+    Sound.enabled = settings.sound !== false;
+    if (UI.soundToggle) UI.soundToggle.textContent = Sound.enabled ? "🔊" : "🔇";
+    const stored = Storage.load();
+    gameState.bestCombo = stored.bestCombo || 0;
+    if (UI.themeToggle) UI.themeToggle.addEventListener("click", toggleTheme);
+    if (UI.soundToggle) UI.soundToggle.addEventListener("click", toggleSound);
+    document.addEventListener("keydown", handleKeydown);
+    document.body.addEventListener("click", handleDelegatedAction);
+    // 시스템 다크모드 변경에 반응 (사용자가 명시적으로 라이트/다크를 선택하지 않은 경우)
+    try {
+        const mq = window.matchMedia("(prefers-color-scheme: dark)");
+        const onChange = () => {
+            const t = Storage.getSettings().theme;
+            if (t === "auto" || !t) applyTheme("auto");
+        };
+        if (mq.addEventListener) mq.addEventListener("change", onChange);
+        else if (mq.addListener) mq.addListener(onChange);
+    } catch {}
+    // 서비스 워커 등록 (PWA — Electron file:// 에서는 자동으로 무시됨)
+    try {
+        if (navigator.serviceWorker && location.protocol !== "file:") {
+            navigator.serviceWorker.register("./sw.js").catch(() => {});
+        }
+    } catch {}
+    // 첫 실행 → 약관 동의 → 온보딩 → 메뉴
+    if (!Storage.isAccepted(LEGAL_VERSION)) {
+        renderLegalGate(() => {
+            if (!Storage.isOnboarded()) renderOnboarding(0);
+            else returnToMenu();
+        });
+    } else if (!Storage.isOnboarded()) {
+        renderOnboarding(0);
+    } else {
+        returnToMenu();
+    }
+}
+
+// 인라인 onclick 핸들러를 모두 data-action 위임으로 대체 → CSP `script-src 'self'`만 허용 가능
+const DELEGATED_ACTIONS = {
+    returnToMenu: () => returnToMenu(),
+    initSurvival: () => initSurvival(),
+    renderQuizMenu: () => renderQuizMenu(),
+    startQuiz: (t) => startQuiz(t.dataset.arg),
+    startMockExam: () => startMockExam(),
+    startDailyChallenge: () => startDailyChallenge(),
+    reviewWrongAnswers: () => reviewWrongAnswers(),
+    renderDashboard: () => renderDashboard(),
+    confirmClearStats: () => confirmClearStats(),
+    setShift: (t) => setShift(t.dataset.shift, parseFloat(t.dataset.mult), t),
+    // 신규 모드
+    startHandoff: () => startHandoff(),
+    handoffPlay: () => handoffPlay(),
+    handoffStop: () => handoffStop(),
+    handoffShow: () => handoffShow(),
+    handoffSubmit: () => handoffSubmit(),
+    handoffNext: () => handoffNext(),
+    startTriage: () => startTriage(),
+    triagePick: (t) => triagePick(t),
+    triageSubmit: () => triageSubmit(),
+    triageNext: () => triageNext(),
+    renderScenarioMenu: () => renderScenarioMenu(),
+    startScenario: (t) => startScenario(t),
+    printWrongQueue: () => printWrongQueue(),
+    printDashboard: () => printDashboard(),
+    // 약관 / 온보딩
+    legalAccept: () => legalAccept(),
+    onboardNext: () => onboardNext(),
+    onboardSkip: () => onboardSkip(),
+    onboardFinish: () => onboardFinish(),
+    showLegal: () => renderLegalGate(() => returnToMenu()),
+    showOnboarding: () => renderOnboarding(0),
+};
+function handleDelegatedAction(e) {
+    const target = e.target.closest("[data-action]");
+    if (!target) return;
+    const handler = DELEGATED_ACTIONS[target.dataset.action];
+    if (!handler) return;
+    handler(target);
+}
+
+if (typeof window !== "undefined") {
+    if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
+    else boot();
+}
+
+// Node 환경 (테스트)에서 일부 헬퍼를 노출
+if (typeof module !== "undefined" && module.exports) {
+    module.exports = { dailySeed, todayKey, clamp, escapeHtml };
 }

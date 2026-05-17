@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="간호사 시뮬레이터">
+  <!-- maskable safe area: 76% inner zone -->
+  <rect width="512" height="512" rx="112" fill="#2563eb"/>
+  <!-- soft top sheen -->
+  <rect x="0" y="0" width="512" height="240" rx="112" fill="url(#sheen)" opacity="0.18"/>
+  <!-- nursing cross -->
+  <g transform="translate(256,256)">
+    <rect x="-44" y="-128" width="88" height="256" rx="18" fill="#ffffff"/>
+    <rect x="-128" y="-44" width="256" height="88" rx="18" fill="#ffffff"/>
+    <!-- heart pulse in center -->
+    <path d="M -36 12 C -36 -8 -16 -16 0 4 C 16 -16 36 -8 36 12 C 36 36 8 56 0 64 C -8 56 -36 36 -36 12 Z" fill="#ef4444"/>
+    <!-- EKG line across heart -->
+    <path d="M -28 12 L -10 12 L -4 -8 L 4 28 L 12 0 L 28 12" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <defs>
+    <linearGradient id="sheen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+</svg>

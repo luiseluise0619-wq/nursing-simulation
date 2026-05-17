@@ -1,0 +1,20 @@
+{
+  "name": "간호사 시뮬레이터",
+  "short_name": "간호 시뮬",
+  "description": "국시 8과목 + 임상 시뮬레이션 + 인계/트리아지/시나리오",
+  "lang": "ko",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f1f5f9",
+  "theme_color": "#3b82f6",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

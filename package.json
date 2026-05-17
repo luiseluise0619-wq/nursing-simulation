@@ -1,16 +1,65 @@
 {
   "name": "nurse-simulator",
-  "version": "1.0.0",
-  "description": "",
+  "version": "1.1.0",
+  "description": "간호 국시 시뮬레이터 — 임상 의사결정 + 8과목 트레이닝 + 모의고사",
   "main": "main.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "electron .",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "pack:mac": "electron-builder --mac --x64 --arm64",
+    "pack:win": "electron-builder --win --x64",
+    "pack:linux": "electron-builder --linux AppImage"
   },
-  "keywords": [],
+  "keywords": [
+    "nursing",
+    "simulation",
+    "education",
+    "korea"
+  ],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "type": "commonjs",
+  "build": {
+    "appId": "com.nursesim.app",
+    "productName": "간호사 시뮬레이터",
+    "directories": { "output": "dist" },
+    "files": [
+      "main.js",
+      "index.html",
+      "styles.css",
+      "script.js",
+      "questions.js",
+      "content.js",
+      "manifest.json",
+      "sw.js",
+      "package.json",
+      "LICENSE"
+    ],
+    "mac":   { "category": "public.app-category.education", "target": ["dmg"] },
+    "win":   { "target": ["nsis"] },
+    "linux": { "category": "Education", "target": ["AppImage"] }
+  },
   "devDependencies": {
-    "electron": "^41.3.0"
+    "electron": "^41.3.0",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^30.4.1"
+  },
+  "jest": {
+    "projects": [
+      {
+        "displayName": "unit",
+        "testEnvironment": "node",
+        "testMatch": [
+          "<rootDir>/tests/questions.test.js",
+          "<rootDir>/tests/content.test.js"
+        ]
+      },
+      {
+        "displayName": "integration",
+        "testEnvironment": "jsdom",
+        "testMatch": ["<rootDir>/tests/integration.test.js"]
+      }
+    ]
   }
 }
