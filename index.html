@@ -16,12 +16,17 @@
 <body>
 
     <div id="top-bar" class="hidden">
+        <button class="back-btn hidden" id="back-btn" data-action="returnToMenu" aria-label="메인 메뉴로 돌아가기">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M15 18l-6-6 6-6"/>
+            </svg>
+        </button>
         <div class="stat-gauge hp" id="hp-gauge" data-level="hi">
-            ❤️ <span id="hp">100</span>
+            <span id="hp">100</span>
             <span class="sg-bar"><span class="sg-fill" id="hp-fill" style="width:100%"></span></span>
         </div>
         <div class="stat-gauge rep" id="rep-gauge">
-            ⭐ <span id="rep">0</span>
+            <span id="rep">0</span>
             <span class="sg-bar"><span class="sg-fill" id="rep-fill" style="width:0%"></span></span>
         </div>
         <div class="top-actions">

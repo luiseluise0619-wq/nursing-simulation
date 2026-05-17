@@ -65,6 +65,15 @@ function cacheUI() {
     UI.progressInfo = document.getElementById("progress-info");
     UI.themeToggle = document.getElementById("theme-toggle");
     UI.soundToggle = document.getElementById("sound-toggle");
+    UI.backBtn = document.getElementById("back-btn");
+}
+
+// 메뉴/온보딩/약관 화면에선 뒤로 버튼을 숨김, 게임 모드에선 표시
+function updateBackButton() {
+    if (!UI.backBtn) return;
+    const hideOn = ["menu", "quiz_menu", "scenario_menu"];
+    const hide = hideOn.includes(gameState.mode);
+    UI.backBtn.classList.toggle("hidden", hide);
 }
 
 // =========================================================================
@@ -394,6 +403,7 @@ function updateStats() {
     UI.progressPercent.textContent = `${Math.round(progress)}%`;
     UI.progressText.textContent = label;
     UI.progressWrap.setAttribute("aria-valuenow", String(Math.round(progress)));
+    updateBackButton();
 
     UI.inventory.innerHTML = "";
     const shiftBadge = document.createElement("span");
@@ -639,7 +649,6 @@ function renderQuizMenu() {
     updateStats();
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
-        <span class="scene-emoji">📖</span>
         <h2 class="scene-title">국가고시 8과목 트레이닝</h2>
         <p class="scene-desc">숫자와 상황이 계속 변하는 무한 랜덤 4지선다 문제를 제공합니다.\n트레이닝 모드에서는 체력이 감소하지 않습니다.</p>
         <div class="choice-list">
@@ -768,7 +777,6 @@ function endMockExam(reason) {
     const title = reason === "timeout" ? "⏰ 시간 종료" : reason === "abort" ? "모의고사 중단" : "🏁 모의고사 완료";
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
-        <span class="scene-emoji">📊</span>
         <h2 class="scene-title">${title}</h2>
         <p class="scene-desc">총 ${total}문제 중 ${answered}문제 응답 / 정답 ${correct} (정답률 ${acc}%)</p>
         <div class="choice-list">
@@ -853,7 +861,6 @@ function endDailyChallenge() {
     Storage.addHistory({ mode: "daily", at: Date.now(), total: DAILY_CHALLENGE_TOTAL, correct, date: todayKey() });
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
-        <span class="scene-emoji">🎯</span>
         <h2 class="scene-title">일일 챌린지 완료</h2>
         <p class="scene-desc">정답 ${correct}/${DAILY_CHALLENGE_TOTAL}\n오늘의 도전을 마쳤습니다. 내일 다시 도전하세요!</p>
         <div class="choice-list">
@@ -872,7 +879,6 @@ function reviewWrongAnswers() {
     if (gameState.wrongQueue.length === 0) {
         UI.gameArea.innerHTML = `
           <div class="scene-card card">
-            <span class="scene-emoji">📭</span>
             <h2 class="scene-title">오답노트가 비었습니다</h2>
             <p class="scene-desc">아직 저장된 오답이 없어요. 트레이닝/모의고사에서 문제를 풀면 자동으로 쌓입니다.</p>
             <div class="choice-list">
@@ -890,7 +896,6 @@ function renderNextWrongQuestion() {
     if (gameState.wrongQueue.length === 0) {
         UI.gameArea.innerHTML = `
           <div class="scene-card card">
-            <span class="scene-emoji">🎉</span>
             <h2 class="scene-title">오답을 모두 복습했습니다</h2>
             <p class="scene-desc">정답 ${gameState.quizCorrect} / 다시 오답 ${gameState.quizWrong}</p>
             <div class="choice-list">
@@ -987,7 +992,6 @@ function renderHandoffPatient() {
     const ttsHint = Speech.supported() ? "" : "\n⚠ 이 환경은 음성합성을 지원하지 않습니다. '본문 보기' 로 학습하세요.";
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
-        <span class="scene-emoji" aria-hidden="true">🎙️</span>
         <h2 class="scene-title">[인계 ${gameState.handoffIndex + 1}/${gameState.handoffPool.length}] ${escapeHtml(p.title)}</h2>
         <p class="scene-desc">음성 인계를 듣고 핵심 키워드 ${p.keywords.length}개를 떠올려 답변창에 쉼표/공백으로 구분해 입력하세요.
 힌트: ${escapeHtml(p.hint)}${ttsHint}</p>
@@ -1073,7 +1077,6 @@ function endHandoff() {
     Storage.addHistory({ mode: "handoff", at: Date.now(), total, correct, accuracy: acc });
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
-        <span class="scene-emoji" aria-hidden="true">🎙️</span>
         <h2 class="scene-title">인계 시뮬레이션 완료</h2>
         <p class="scene-desc">키워드 정확도: ${correct}/${total} (${acc}%)</p>
         <div class="choice-list">
@@ -1111,7 +1114,6 @@ function renderTriageCase() {
         </div>`).join("");
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
-        <span class="scene-emoji" aria-hidden="true">🚑</span>
         <h2 class="scene-title">[케이스 ${gameState.triageIndex + 1}/${cases.length}] ${escapeHtml(c.title)}</h2>
         <p class="scene-desc">각 환자에게 1(최우선)~5(후순위)를 부여하세요. 같은 번호 중복 불가.</p>
         <div class="triage-list">${cards}</div>
@@ -1192,7 +1194,6 @@ function endTriage() {
     Storage.addHistory({ mode: "triage", at: Date.now(), total, correct, accuracy: acc });
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
-        <span class="scene-emoji" aria-hidden="true">🚑</span>
         <h2 class="scene-title">트리아지 완료</h2>
         <p class="scene-desc">정답률: ${correct}/${total} (${acc}%)</p>
         <div class="choice-list">
@@ -1214,7 +1215,6 @@ function renderScenarioMenu() {
     const data = Storage.load();
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
-        <span class="scene-emoji" aria-hidden="true">📋</span>
         <h2 class="scene-title">임상 시나리오 챔버</h2>
         <p class="scene-desc">한 환자의 입실 → 사정 → 처치 → 평가까지 3~5단계 의사결정을 진행합니다.\n각 결정이 환자 상태(HP)에 누적됩니다.</p>
         <div class="choice-list">
@@ -1280,7 +1280,6 @@ function endScenario(failReason) {
     Storage.addHistory({ mode: "scenario", at: Date.now(), id: gameState.scenarioId, hp: gameState.hp, rep: gameState.rep, completed });
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
-        <span class="scene-emoji" aria-hidden="true">📋</span>
         <h2 class="scene-title">${escapeHtml(title)}</h2>
         <p class="scene-desc">${escapeHtml(s ? s.title : "")}\n최종 HP ${gameState.hp} · 평판 ${gameState.rep}</p>
         <div class="choice-list">
@@ -1395,25 +1394,34 @@ function renderDashboard() {
     const todayDaily = data.daily[todayKey()];
     const dailyMsg = todayDaily?.completed ? `오늘 완료 (${todayDaily.correct}/${DAILY_CHALLENGE_TOTAL})` : "오늘 미완료";
 
+    const summaryRows = [
+        { label: "최고 콤보",        value: data.bestCombo },
+        { label: "모의고사 최고점",   value: data.mockBest },
+        { label: "인계 정확도",       value: `${data.handoffBest || 0}%` },
+        { label: "트리아지 정확도",   value: `${data.triageBest || 0}%` },
+        { label: "오답노트",         value: `${wrongCount}건` },
+        { label: "오늘의 챌린지",     value: dailyMsg },
+    ].map(s => `<div class="dash-stat"><span class="dash-stat-label">${escapeHtml(s.label)}</span><span class="dash-stat-value">${escapeHtml(String(s.value))}</span></div>`).join("");
+
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
-        <span class="scene-emoji" aria-hidden="true">📊</span>
         <h2 class="scene-title">학습 대시보드</h2>
         <p class="scene-desc">과목별 정답률과 누적 성과를 확인할 수 있습니다.</p>
+
+        <h3 class="dash-section-title">과목별 정답률</h3>
         <div class="dashboard-grid">${rows}</div>
-        <hr class="dashboard-divider">
-        <p class="scene-desc dashboard-summary">
-          🔥 최고 콤보 <strong>${data.bestCombo}</strong> · 🏆 모의고사 <strong>${data.mockBest}</strong> · 🎙️ 인계 <strong>${data.handoffBest || 0}%</strong> · 🚑 트리아지 <strong>${data.triageBest || 0}%</strong> · 📝 오답 <strong>${wrongCount}</strong>건 · 🎯 ${escapeHtml(dailyMsg)}
-        </p>
-        <hr class="dashboard-divider">
-        <h3 class="trends-title">📈 최근 5개년 과목별 출제 경향</h3>
+
+        <h3 class="dash-section-title">누적 성과</h3>
+        <div class="dash-stats-grid">${summaryRows}</div>
+
+        <h3 class="dash-section-title">최근 5개년 출제 경향</h3>
         ${renderTrendsChart()}
+
         <div class="choice-list dashboard-actions">
           <button class="choice-btn primary" data-action="reviewWrongAnswers">오답 복습 (${wrongCount})</button>
-          <button class="choice-btn" data-action="printWrongQueue">📄 오답노트 PDF/인쇄</button>
-          <button class="choice-btn" data-action="printDashboard">📄 대시보드 PDF/인쇄</button>
+          <button class="choice-btn" data-action="printWrongQueue">오답노트 PDF / 인쇄</button>
+          <button class="choice-btn" data-action="printDashboard">대시보드 PDF / 인쇄</button>
           <button class="choice-btn" data-action="confirmClearStats">통계 초기화</button>
-          <button class="choice-btn center" data-action="returnToMenu">메인 메뉴</button>
         </div>
       </div>`;
 }
@@ -1479,16 +1487,64 @@ function legalAccept() {
 // =========================================================================
 // 온보딩 (첫 실행 튜토리얼 — 5 슬라이드)
 // =========================================================================
+// 온보딩 SVG 일러스트 — 외부 자원 0, currentColor stroke 로 테마 따라가도록
+const ONBOARDING_ILLUSTRATIONS = [
+    // 0: 환영 — 건물 + 십자
+    `<svg class="onboard-svg" viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="20" y="30" width="80" height="70" rx="4"/>
+        <path d="M55 50 v20 M45 60 h20" stroke-width="4" stroke="var(--primary)"/>
+        <rect x="30" y="80" width="14" height="20" stroke-width="1.5"/>
+        <rect x="76" y="80" width="14" height="20" stroke-width="1.5"/>
+        <path d="M20 30 L60 10 L100 30" stroke="var(--primary)"/>
+    </svg>`,
+    // 1: 9개 모드 — 3x3 그리드
+    `<svg class="onboard-svg" viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="20" y="20" width="22" height="22" rx="4" fill="var(--primary)" stroke="none"/>
+        <rect x="49" y="20" width="22" height="22" rx="4"/>
+        <rect x="78" y="20" width="22" height="22" rx="4"/>
+        <rect x="20" y="49" width="22" height="22" rx="4"/>
+        <rect x="49" y="49" width="22" height="22" rx="4" fill="var(--primary)" stroke="none"/>
+        <rect x="78" y="49" width="22" height="22" rx="4"/>
+        <rect x="20" y="78" width="22" height="22" rx="4"/>
+        <rect x="49" y="78" width="22" height="22" rx="4"/>
+        <rect x="78" y="78" width="22" height="22" rx="4" fill="var(--primary)" stroke="none"/>
+    </svg>`,
+    // 2: 오답노트 — 책갈피 + 화살표 루프
+    `<svg class="onboard-svg" viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="35" y="20" width="50" height="80" rx="3"/>
+        <path d="M45 35 h30 M45 50 h30 M45 65 h20" stroke-width="1.5"/>
+        <path d="M65 75 l8 8 l-8 8" stroke="var(--primary)"/>
+        <path d="M45 91 q-8 -10 0 -20" stroke="var(--primary)" fill="none"/>
+    </svg>`,
+    // 3: 키보드
+    `<svg class="onboard-svg" viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="15" y="40" width="90" height="50" rx="6"/>
+        <rect x="24" y="50" width="10" height="10" rx="2"/>
+        <rect x="38" y="50" width="10" height="10" rx="2"/>
+        <rect x="52" y="50" width="10" height="10" rx="2"/>
+        <rect x="66" y="50" width="10" height="10" rx="2"/>
+        <rect x="80" y="50" width="16" height="10" rx="2" fill="var(--primary)" stroke="none"/>
+        <rect x="24" y="65" width="58" height="10" rx="2"/>
+        <rect x="86" y="65" width="10" height="10" rx="2"/>
+        <path d="M40 90 v8 M80 90 v8 M40 98 h40" stroke-width="1.5"/>
+    </svg>`,
+    // 4: 면책 — 방패 + 십자
+    `<svg class="onboard-svg" viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M60 15 L95 25 V60 Q95 90 60 105 Q25 90 25 60 V25 Z"/>
+        <path d="M60 45 v25 M48 57 h24" stroke="var(--primary)" stroke-width="3.5"/>
+    </svg>`,
+];
+
 const ONBOARDING_SLIDES = [
-    { emoji: "🏥", title: "간호사 시뮬레이터에 오신 것을 환영합니다",
+    { illust: 0, title: "간호사 시뮬레이터에 오신 것을 환영합니다",
       body: "국시 8과목 + 임상 시뮬레이션을 하나의 앱에서 연습할 수 있어요.\n시프트 난이도(Day/Evening/Night)에 따라 HP 손실이 달라집니다." },
-    { emoji: "📚", title: "9개 모드를 활용하세요",
+    { illust: 1, title: "9개 모드를 활용하세요",
       body: "실전 듀티 · 트레이닝 · 모의고사 · 일일 챌린지 · 인계 시뮬 · 트리아지 · 시나리오 · 오답노트 · 대시보드.\n메인 메뉴에서 카드를 탭하면 바로 시작합니다." },
-    { emoji: "🎯", title: "오답은 자동으로 쌓입니다",
+    { illust: 2, title: "오답은 자동으로 쌓입니다",
       body: "틀린 문제는 오답노트에 저장되어, 정답을 맞힐 때까지 다시 출제됩니다.\n과목별 정답률은 대시보드에서 막대 그래프로 확인하세요." },
-    { emoji: "⌨️", title: "키보드 단축키",
+    { illust: 3, title: "키보드 단축키",
       body: "1~4 보기 선택 · Space 다음 문제 · T 테마 전환 · M 사운드 토글 · ESC 모달 닫기.\n모바일에서는 카드를 그냥 탭하시면 됩니다." },
-    { emoji: "📜", title: "학습 도구로만 사용하세요",
+    { illust: 4, title: "학습 도구로만 사용하세요",
       body: "본 앱은 교육 목적이며, 실제 임상 의사결정을 대체하지 않습니다.\n공식 가이드라인과 의료기관 프로토콜을 항상 우선하세요." },
 ];
 let onboardingIndex = 0;
@@ -1504,7 +1560,7 @@ function renderOnboarding(idx = 0) {
     ).join("");
     UI.gameArea.innerHTML = `
       <div class="card onboard-card">
-        <span class="scene-emoji" aria-hidden="true">${slide.emoji}</span>
+        <div class="onboard-illust" aria-hidden="true">${ONBOARDING_ILLUSTRATIONS[slide.illust]}</div>
         <h1 class="menu-title">${escapeHtml(slide.title)}</h1>
         <p class="onboard-body">${escapeHtml(slide.body)}</p>
         <div class="onboard-dots" role="tablist" aria-label="튜토리얼 진행도">${dots}</div>

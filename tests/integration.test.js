@@ -4,7 +4,13 @@
 
 const BODY_TEMPLATE = `
   <div id="top-bar" class="hidden">
-    <span id="hp">100</span><span id="rep">0</span>
+    <button class="back-btn hidden" id="back-btn" data-action="returnToMenu"></button>
+    <div class="stat-gauge hp" id="hp-gauge"><span id="hp">100</span>
+      <span class="sg-bar"><span class="sg-fill" id="hp-fill"></span></span>
+    </div>
+    <div class="stat-gauge rep" id="rep-gauge"><span id="rep">0</span>
+      <span class="sg-bar"><span class="sg-fill" id="rep-fill"></span></span>
+    </div>
     <button id="theme-toggle"></button>
     <button id="sound-toggle"></button>
   </div>
@@ -544,6 +550,50 @@ describe("약관 동의 / 온보딩 게이트", () => {
         loadScript();
         document.querySelector('[data-action="showLegal"]').click();
         expect(document.querySelector('.legal-card')).not.toBeNull();
+    });
+});
+
+describe("뒤로가기 — top-bar 좌측 ← 버튼", () => {
+    test("메뉴에서는 뒤로 버튼이 숨겨진다", () => {
+        loadScript();
+        const back = document.getElementById("back-btn");
+        expect(back).not.toBeNull();
+        expect(back.classList.contains("hidden")).toBe(true);
+    });
+    test("트레이닝 진입 후엔 뒤로 버튼이 노출된다", () => {
+        loadScript();
+        document.querySelector('[data-action="renderQuizMenu"]').click();
+        document.querySelector('[data-action="startQuiz"]').click();
+        const back = document.getElementById("back-btn");
+        expect(back.classList.contains("hidden")).toBe(false);
+    });
+    test("뒤로 버튼 클릭 시 메뉴로 복귀", () => {
+        loadScript();
+        document.querySelector('[data-action="startTriage"]').click();
+        const back = document.getElementById("back-btn");
+        expect(back.classList.contains("hidden")).toBe(false);
+        back.click();
+        expect(document.querySelector('[data-action="initSurvival"]')).not.toBeNull();
+    });
+});
+
+describe("온보딩 — SVG 일러스트 사용 (이모지 제거 회귀 방지)", () => {
+    test("온보딩 슬라이드에 .onboard-svg 요소가 렌더된다", () => {
+        loadScript({ legal: true, onboarded: false });
+        const svg = document.querySelector(".onboard-illust .onboard-svg");
+        expect(svg).not.toBeNull();
+        expect(svg.tagName.toLowerCase()).toBe("svg");
+    });
+    test("5개 슬라이드 모두 SVG 일러스트를 가진다", () => {
+        loadScript({ legal: true, onboarded: false });
+        for (let i = 0; i < 4; i++) {
+            const svg = document.querySelector(".onboard-illust .onboard-svg");
+            expect(svg).not.toBeNull();
+            document.querySelector('[data-action="onboardNext"]').click();
+        }
+        // 마지막 슬라이드
+        const lastSvg = document.querySelector(".onboard-illust .onboard-svg");
+        expect(lastSvg).not.toBeNull();
     });
 });
 
