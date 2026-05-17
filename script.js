@@ -132,6 +132,7 @@ const Storage = {
             bestCombo: Number.isFinite(raw.bestCombo) ? raw.bestCombo : 0,
             mockBest: Number.isFinite(raw.mockBest) ? raw.mockBest : 0,
             handoffBest: Number.isFinite(raw.handoffBest) ? raw.handoffBest : 0,
+            handoffSeen: Array.isArray(raw.handoffSeen) ? raw.handoffSeen.filter(x => typeof x === "string") : [],
             triageBest: Number.isFinite(raw.triageBest) ? raw.triageBest : 0,
             scenarios: (raw.scenarios && typeof raw.scenarios === "object" && !Array.isArray(raw.scenarios)) ? raw.scenarios : {},
             daily: (raw.daily && typeof raw.daily === "object") ? raw.daily : {},
@@ -201,6 +202,21 @@ const Storage = {
     setHandoffBest(acc) {
         const data = Storage.load();
         if (!Number.isFinite(data.handoffBest) || acc > data.handoffBest) { data.handoffBest = acc; Storage.save(data); }
+    },
+    getHandoffSeen() {
+        const data = Storage.load();
+        return Array.isArray(data.handoffSeen) ? data.handoffSeen : [];
+    },
+    addHandoffSeen(id) {
+        const data = Storage.load();
+        if (!Array.isArray(data.handoffSeen)) data.handoffSeen = [];
+        if (!data.handoffSeen.includes(id)) data.handoffSeen.push(id);
+        Storage.save(data);
+    },
+    clearHandoffSeen() {
+        const data = Storage.load();
+        data.handoffSeen = [];
+        Storage.save(data);
     },
     setTriageBest(acc) {
         const data = Storage.load();
@@ -317,6 +333,17 @@ function updateStats() {
     UI.hp.textContent = shownHp;
     UI.rep.textContent = gameState.rep;
     UI.hp.style.color = shownHp < 30 ? "var(--danger)" : shownHp < 60 ? "var(--warning)" : "var(--success)";
+    // HP 게이지 fill + level (라이트→오렌지→빨강 펄스)
+    const hpFill = document.getElementById("hp-fill");
+    const hpGauge = document.getElementById("hp-gauge");
+    if (hpFill) hpFill.style.width = `${shownHp}%`;
+    if (hpGauge) hpGauge.dataset.level = shownHp > 60 ? "hi" : shownHp > 30 ? "mid" : "lo";
+    // 평판 게이지 fill (-60 ~ +120 범위를 0~100% 로 매핑)
+    const repFill = document.getElementById("rep-fill");
+    if (repFill) {
+        const repPct = clamp(Math.round(((gameState.rep + 60) / 180) * 100), 0, 100);
+        repFill.style.width = `${repPct}%`;
+    }
 
     let value = 0, total = 1, label = "진행도";
     if (gameState.mode === "survival") { value = gameState.eventCount; total = MAX_PROGRESS_EVENTS; label = "듀티 진행도"; }
@@ -464,6 +491,15 @@ function bumpCombo() {
         Storage.setBestCombo(gameState.bestCombo);
     }
     if (gameState.combo >= 3) Sound.combo(gameState.combo);
+    // 콤보 뱃지 burst 애니메이션 재트리거
+    requestAnimationFrame(() => {
+        const badge = document.querySelector(".badge.combo");
+        if (!badge) return;
+        badge.classList.remove("burst");
+        // 강제 reflow 로 애니메이션 재시작
+        void badge.offsetWidth;
+        badge.classList.add("burst");
+    });
 }
 function resetCombo() { gameState.combo = 0; }
 
@@ -489,13 +525,16 @@ function resetStateForMode() {
     gameState.wrongQueue = [];
     gameState.currentWrongId = null;
     gameState.handoffIndex = 0; gameState.handoffCorrect = 0; gameState.handoffTotal = 0;
+    gameState.handoffPool = null;
     gameState.triageIndex = 0; gameState.triageCorrect = 0; gameState.triageTotal = 0;
     gameState.triagePicks = {};
     gameState.scenarioId = null; gameState.scenarioStep = 0;
+    gameState.firedStoryBeats = [];
 }
 function initSurvival() {
     resetStateForMode();
     gameState.mode = "survival"; gameState.quizCategory = null;
+    gameState.firedStoryBeats = [];
     showCoreUI(); UI.logBar.innerHTML = "";
     addLog("듀티가 시작되었습니다. 첫 판단부터 중요합니다.", "log-important");
     renderSurvivalEvent("intro");
@@ -504,20 +543,33 @@ function renderSurvivalEvent(eventId) {
     let ev;
     if (eventId === "intro") {
         ev = { baseId: "intro", category: "", title: "듀티의 시작", emoji: "🏥",
-            desc: "병동 문이 열리고 특유의 긴장감이 밀려옵니다.",
+            desc: "병동 문이 열리고 특유의 긴장감이 밀려옵니다.\n선임이 한 마디 — \"오늘 듀티 너야. 인계받고 시작해.\"",
             choices: [
                 { text: "심호흡하고 인계 핵심부터 정리한다", correct: true, effect: { hp: -4, rep: 6 }, log: "기본기부터 챙겼습니다.", next: "random_hub" },
                 { text: "물품부터 챙긴다", effect: { hp: -2, rep: 2, item: "토니켓" }, log: "준비성이 좋습니다.", next: "random_hub" },
             ] };
     } else {
-        const clinical = Math.random() < 0.9;
-        ev = clinical ? generateClinicalEventByCategory(null) : pick([
-            { baseId: "rest", title: "휴식", emoji: "☕", desc: "잠깐 쉴 틈이 생겼습니다.",
-              choices: [
-                  { text: "물 마시기", correct: true, effect: { hp: 15, rep: 0 }, log: "체력을 회복했습니다." },
-                  { text: "스트레칭", effect: { hp: 10, rep: 2 }, log: "몸이 풀립니다." }
-              ] }
-        ]);
+        // 특정 eventCount 시점에 스토리 비트가 있으면 강제 발동 (한 듀티당 1회씩)
+        const upcomingCount = gameState.eventCount + 1;
+        const beat = NC.SURVIVAL_STORY_BEATS && NC.SURVIVAL_STORY_BEATS.find(b => b.atEvent === upcomingCount && !gameState.firedStoryBeats.includes(b.baseId));
+        if (beat) {
+            gameState.firedStoryBeats.push(beat.baseId);
+            ev = {
+                baseId: beat.baseId, category: "스토리", part: `Event ${upcomingCount}`,
+                emoji: beat.emoji, title: beat.title, desc: beat.desc,
+                choices: beat.choices.map(c => ({ ...c })),
+            };
+        } else {
+            const clinical = Math.random() < 0.85;
+            ev = clinical ? generateClinicalEventByCategory(null) : pick([
+                { baseId: "rest", title: "잠깐의 휴식", emoji: "☕", desc: "복도 끝 자판기 앞. 잠깐 숨을 돌립니다.",
+                  choices: [
+                      { text: "물 한 잔 마시고 차트 정리", correct: true, effect: { hp: 15, rep: 1 }, log: "체력을 회복하고 정리도 마쳤습니다." },
+                      { text: "동료와 짧게 수다", effect: { hp: 8, rep: 3 }, log: "감정 환기 — 팀 분위기 좋아집니다." },
+                      { text: "그냥 패스, 일 계속", effect: { hp: -3, rep: 1 }, log: "체력 소진은 누적됩니다." }
+                  ] }
+            ]);
+        }
         gameState.eventCount += 1;
     }
     renderSceneCard(ev, { mode: "survival", meta: [`난이도: ${gameState.currentShift}`, `누적: ${gameState.eventCount}건`, `콤보: ${gameState.combo}`] });
@@ -871,23 +923,42 @@ function normalizeKeyword(s) {
     return String(s || "").toLowerCase().replace(/[^\w가-힣]/g, "");
 }
 
+const HANDOFF_SESSION_SIZE = 10;
+
+// 100명 풀에서 이번 세션용 환자 N명을 셔플로 선정.
+// 이전 세션에서 본 ID는 가급적 제외, 남은 풀이 N 미만이면 seen 을 리셋해 사이클 반복.
+function pickHandoffSession(n) {
+    const all = NC.HANDOFF_PATIENTS;
+    let seen = Storage.getHandoffSeen();
+    let pool = all.filter(p => !seen.includes(p.id));
+    if (pool.length < n) {
+        Storage.clearHandoffSeen();
+        pool = all.slice();
+        addLog("100명 환자 한 사이클 완료 — 풀을 초기화합니다.", "log-important");
+    }
+    return shuffle(pool).slice(0, n).map(p => p.id);
+}
+
 function startHandoff() {
     resetStateForMode();
     gameState.mode = "handoff";
+    gameState.handoffPool = pickHandoffSession(HANDOFF_SESSION_SIZE);
     showCoreUI(); UI.logBar.innerHTML = "";
-    addLog("인계 시뮬레이터 — 음성을 듣고 핵심 키워드를 답변창에 적으세요.", "log-important");
+    addLog(`인계 시뮬레이터 — 100명 풀에서 ${HANDOFF_SESSION_SIZE}명 무작위 출제.`, "log-important");
     renderHandoffPatient();
 }
 
 function renderHandoffPatient() {
-    const patients = NC.HANDOFF_PATIENTS;
-    if (gameState.handoffIndex >= patients.length) { endHandoff(); return; }
-    const p = patients[gameState.handoffIndex];
+    if (gameState.handoffIndex >= gameState.handoffPool.length) { endHandoff(); return; }
+    const id = gameState.handoffPool[gameState.handoffIndex];
+    const p = NC.HANDOFF_PATIENTS.find(x => x.id === id);
+    if (!p) { endHandoff(); return; }
+    Storage.addHandoffSeen(id);
     const ttsHint = Speech.supported() ? "" : "\n⚠ 이 환경은 음성합성을 지원하지 않습니다. '본문 보기' 로 학습하세요.";
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
         <span class="scene-emoji" aria-hidden="true">🎙️</span>
-        <h2 class="scene-title">[인계 ${gameState.handoffIndex + 1}/${patients.length}] ${escapeHtml(p.title)}</h2>
+        <h2 class="scene-title">[인계 ${gameState.handoffIndex + 1}/${gameState.handoffPool.length}] ${escapeHtml(p.title)}</h2>
         <p class="scene-desc">음성 인계를 듣고 핵심 키워드 ${p.keywords.length}개를 떠올려 답변창에 쉼표/공백으로 구분해 입력하세요.
 힌트: ${escapeHtml(p.hint)}${ttsHint}</p>
         <div class="handoff-controls">
@@ -907,14 +978,16 @@ function renderHandoffPatient() {
 }
 
 function handoffPlay() {
-    const p = NC.HANDOFF_PATIENTS[gameState.handoffIndex];
+    const id = gameState.handoffPool && gameState.handoffPool[gameState.handoffIndex];
+    const p = id ? NC.HANDOFF_PATIENTS.find(x => x.id === id) : null;
     if (!p) return;
     const ok = Speech.speak(p.narration);
     if (!ok) handoffShow();
 }
 function handoffStop() { Speech.stop(); }
 function handoffShow() {
-    const p = NC.HANDOFF_PATIENTS[gameState.handoffIndex];
+    const id = gameState.handoffPool && gameState.handoffPool[gameState.handoffIndex];
+    const p = id ? NC.HANDOFF_PATIENTS.find(x => x.id === id) : null;
     if (!p) return;
     const el = document.getElementById("handoff-narration");
     if (!el) return;
@@ -923,7 +996,8 @@ function handoffShow() {
 }
 
 function handoffSubmit() {
-    const p = NC.HANDOFF_PATIENTS[gameState.handoffIndex];
+    const id = gameState.handoffPool && gameState.handoffPool[gameState.handoffIndex];
+    const p = id ? NC.HANDOFF_PATIENTS.find(x => x.id === id) : null;
     if (!p) return;
     Speech.stop();
     const ans = document.getElementById("handoff-answer").value;
@@ -1361,26 +1435,66 @@ function returnToMenu() {
         <span class="scene-emoji" aria-hidden="true">🏥</span>
         <h1 class="menu-title">간호사 시뮬레이터</h1>
         <p class="menu-tagline">당신의 임상 판단력을 테스트하세요.</p>
-        <div class="menu-shift-row">
-          <button class="shift-option ${gameState.currentShift === 'Day' ? 'active' : ''}" data-action="setShift" data-shift="Day" data-mult="1.0">Day (기본)</button>
-          <button class="shift-option ${gameState.currentShift === 'Evening' ? 'active' : ''}" data-action="setShift" data-shift="Evening" data-mult="1.2">Evening (어려움)</button>
-          <button class="shift-option ${gameState.currentShift === 'Night' ? 'active' : ''}" data-action="setShift" data-shift="Night" data-mult="1.5">Night (지옥)</button>
+        <div class="menu-shift-row" role="radiogroup" aria-label="시프트 난이도">
+          <button class="shift-option ${gameState.currentShift === 'Day' ? 'active' : ''}" data-action="setShift" data-shift="Day" data-mult="1.0">Day</button>
+          <button class="shift-option ${gameState.currentShift === 'Evening' ? 'active' : ''}" data-action="setShift" data-shift="Evening" data-mult="1.2">Evening</button>
+          <button class="shift-option ${gameState.currentShift === 'Night' ? 'active' : ''}" data-action="setShift" data-shift="Night" data-mult="1.5">Night</button>
         </div>
-        <button class="choice-btn primary" data-action="initSurvival">실전 듀티 시작</button>
-        <button class="choice-btn" data-action="renderQuizMenu">트레이닝 센터 (8과목)</button>
-        <button class="choice-btn" data-action="startMockExam">📝 모의고사 (${MOCK_EXAM_TOTAL}문제 · ${MOCK_EXAM_SECONDS / 60}분)</button>
-        <button class="choice-btn" data-action="startDailyChallenge">🎯 일일 챌린지 ${dailyDone ? "(오늘 완료)" : ""}</button>
-        <button class="choice-btn" data-action="startHandoff">🎙️ 인계 시뮬레이터 (TTS)</button>
-        <button class="choice-btn" data-action="startTriage">🚑 응급실 트리아지</button>
-        <button class="choice-btn" data-action="renderScenarioMenu">📋 임상 시나리오 챔버</button>
-        <button class="choice-btn" data-action="reviewWrongAnswers">📝 오답노트 (${wrongCount})</button>
-        <button class="choice-btn subtle center" data-action="renderDashboard">📊 학습 대시보드</button>
+        <div class="mode-grid" role="group" aria-label="게임 모드">
+          <button class="mode-card wide" data-mode="survival" data-action="initSurvival">
+            <span class="mc-emoji" aria-hidden="true">🩺</span>
+            <span class="mc-title">실전 듀티</span>
+            <span class="mc-sub">HP·평판으로 생존 · ${escapeHtml(gameState.currentShift)} 시프트</span>
+          </button>
+          <button class="mode-card" data-mode="training" data-action="renderQuizMenu">
+            <span class="mc-emoji" aria-hidden="true">📚</span>
+            <span class="mc-title">트레이닝</span>
+            <span class="mc-sub">8과목 무한 풀이</span>
+          </button>
+          <button class="mode-card" data-mode="mock" data-action="startMockExam">
+            <span class="mc-emoji" aria-hidden="true">📝</span>
+            <span class="mc-title">모의고사</span>
+            <span class="mc-sub">${MOCK_EXAM_TOTAL}문제 · ${MOCK_EXAM_SECONDS / 60}분</span>
+          </button>
+          <button class="mode-card" data-mode="daily" data-action="startDailyChallenge">
+            <span class="mc-emoji" aria-hidden="true">🎯</span>
+            <span class="mc-title">일일 챌린지</span>
+            <span class="mc-sub">${dailyDone ? '오늘 완료 ✓' : '오늘의 ' + DAILY_CHALLENGE_TOTAL + '문제'}</span>
+            ${dailyDone ? '<span class="mc-pill">DONE</span>' : ''}
+          </button>
+          <button class="mode-card" data-mode="handoff" data-action="startHandoff">
+            <span class="mc-emoji" aria-hidden="true">🎙️</span>
+            <span class="mc-title">인계 시뮬</span>
+            <span class="mc-sub">TTS · 100명 풀</span>
+          </button>
+          <button class="mode-card" data-mode="triage" data-action="startTriage">
+            <span class="mc-emoji" aria-hidden="true">🚑</span>
+            <span class="mc-title">트리아지</span>
+            <span class="mc-sub">응급실 분류</span>
+          </button>
+          <button class="mode-card wide" data-mode="scenario" data-action="renderScenarioMenu">
+            <span class="mc-emoji" aria-hidden="true">📋</span>
+            <span class="mc-title">임상 시나리오 챔버</span>
+            <span class="mc-sub">스토리형 멀티스텝 의사결정</span>
+          </button>
+          <button class="mode-card" data-mode="wrong" data-action="reviewWrongAnswers">
+            <span class="mc-emoji" aria-hidden="true">📝</span>
+            <span class="mc-title">오답노트</span>
+            <span class="mc-sub">${wrongCount}건 복습</span>
+            ${wrongCount ? `<span class="mc-pill">${wrongCount}</span>` : ''}
+          </button>
+          <button class="mode-card" data-mode="dash" data-action="renderDashboard">
+            <span class="mc-emoji" aria-hidden="true">📊</span>
+            <span class="mc-title">대시보드</span>
+            <span class="mc-sub">학습 통계</span>
+          </button>
+        </div>
         <p class="menu-kbd-row">
-          <span class="kbd-hint">1</span><span class="kbd-hint">2</span><span class="kbd-hint">3</span><span class="kbd-hint">4</span> 보기 선택 ·
+          <span class="kbd-hint">1</span><span class="kbd-hint">2</span><span class="kbd-hint">3</span><span class="kbd-hint">4</span> 보기 ·
           <span class="kbd-hint">Space</span> 다음 ·
           <span class="kbd-hint">T</span> 테마 ·
           <span class="kbd-hint">M</span> 사운드 ·
-          <span class="kbd-hint">ESC</span> 모달 닫기
+          <span class="kbd-hint">ESC</span> 닫기
         </p>
       </div>`;
 

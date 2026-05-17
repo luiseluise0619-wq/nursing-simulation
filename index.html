@@ -2,19 +2,29 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; base-uri 'none'; form-action 'none';">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5">
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; manifest-src 'self'; base-uri 'none'; form-action 'none';">
     <title>간호사 시뮬레이터</title>
+    <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
     <div id="top-bar" class="hidden">
-        <div>❤️ HP: <span id="hp" style="color:var(--success)">100</span></div>
-        <div>⭐ 평판: <span id="rep">0</span></div>
+        <div class="stat-gauge hp" id="hp-gauge" data-level="hi">
+            ❤️ <span id="hp">100</span>
+            <span class="sg-bar"><span class="sg-fill" id="hp-fill" style="width:100%"></span></span>
+        </div>
+        <div class="stat-gauge rep" id="rep-gauge">
+            ⭐ <span id="rep">0</span>
+            <span class="sg-bar"><span class="sg-fill" id="rep-fill" style="width:0%"></span></span>
+        </div>
         <div class="top-actions">
-            <button class="icon-btn" id="theme-toggle" title="테마">🌙</button>
-            <button class="icon-btn" id="sound-toggle" title="사운드">🔊</button>
+            <button class="icon-btn" id="theme-toggle" title="테마" aria-label="테마 전환">🌙</button>
+            <button class="icon-btn" id="sound-toggle" title="사운드" aria-label="사운드 전환">🔊</button>
         </div>
     </div>
 

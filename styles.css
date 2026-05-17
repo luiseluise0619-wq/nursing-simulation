@@ -513,6 +513,207 @@ body {
 }
 
 /* ===== 인쇄 ===== */
+/* ============================================================
+   v2 디자인 토큰 (모드 컬러·elevation·타이포 스케일)
+   ============================================================ */
+:root {
+    --mode-survival-1: #ef4444;   --mode-survival-2: #f97316;
+    --mode-training-1: #3b82f6;   --mode-training-2: #06b6d4;
+    --mode-mock-1:     #8b5cf6;   --mode-mock-2:     #ec4899;
+    --mode-daily-1:    #10b981;   --mode-daily-2:    #84cc16;
+    --mode-handoff-1:  #6366f1;   --mode-handoff-2:  #a855f7;
+    --mode-triage-1:   #dc2626;   --mode-triage-2:   #fbbf24;
+    --mode-scenario-1: #0ea5e9;   --mode-scenario-2: #14b8a6;
+    --mode-wrong-1:    #64748b;   --mode-wrong-2:    #94a3b8;
+    --mode-dash-1:     #475569;   --mode-dash-2:     #1e293b;
+
+    --hp-hi: #10b981; --hp-mid: #f59e0b; --hp-lo: #ef4444;
+    --rep-grad: linear-gradient(90deg, #fbbf24, #f59e0b, #ec4899);
+
+    --shadow-sm: 0 1px 2px rgba(15,23,42,.06), 0 1px 1px rgba(15,23,42,.04);
+    --shadow-md: 0 4px 12px rgba(15,23,42,.08), 0 2px 4px rgba(15,23,42,.04);
+    --shadow-lg: 0 12px 28px rgba(15,23,42,.12), 0 4px 10px rgba(15,23,42,.06);
+    --shadow-press: inset 0 2px 4px rgba(15,23,42,.12);
+
+    --radius-sm: 8px; --radius-md: 12px; --radius-lg: 16px; --radius-pill: 999px;
+}
+[data-theme="dark"] {
+    --shadow-sm: 0 1px 2px rgba(0,0,0,.4);
+    --shadow-md: 0 4px 12px rgba(0,0,0,.5), 0 2px 4px rgba(0,0,0,.3);
+    --shadow-lg: 0 12px 28px rgba(0,0,0,.6);
+    --shadow-press: inset 0 2px 4px rgba(0,0,0,.5);
+}
+
+/* 시스템 한글 폰트 스택 — Pretendard → Apple SD → 맑은고딕 (외부 폰트 0) */
+body {
+    font-family: 'Pretendard Variable', Pretendard, -apple-system,
+                 BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic',
+                 'Segoe UI', Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    letter-spacing: -0.01em;
+}
+/* iOS 노치 안전영역 */
+#top-bar { padding-top: calc(15px + env(safe-area-inset-top)); }
+#log-bar { padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
+#game-area { padding-bottom: calc(120px + env(safe-area-inset-bottom)); }
+
+/* ============================================================
+   .choice-btn 입체감 + 정답/오답 마이크로 인터랙션
+   ============================================================ */
+.choice-btn {
+    font-weight: 600;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    transition: transform .12s cubic-bezier(.2,.8,.2,1),
+                box-shadow .12s, background .2s, filter .2s;
+    -webkit-tap-highlight-color: transparent;
+}
+.choice-btn:active {
+    transform: translateY(1px) scale(.985);
+    box-shadow: var(--shadow-press);
+}
+.choice-btn.primary {
+    background: linear-gradient(135deg, var(--primary) 0%, #2563eb 100%);
+    box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,.25);
+}
+[data-theme="dark"] .choice-btn.primary {
+    background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
+}
+.choice-btn.correct-flash { animation: pulseGood .55s ease; }
+.choice-btn.wrong-flash   { animation: shake .35s ease; }
+@keyframes pulseGood {
+    0%   { box-shadow: 0 0 0 0 rgba(16,185,129,.6); }
+    70%  { box-shadow: 0 0 0 14px rgba(16,185,129,0); }
+    100% { box-shadow: var(--shadow-sm); }
+}
+@keyframes shake {
+    0%,100% { transform: translateX(0); }
+    20% { transform: translateX(-6px); }
+    40% { transform: translateX(6px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(4px); }
+}
+
+/* ============================================================
+   메인 메뉴 모드 카드 그리드 (2열, 모드별 그라디언트)
+   ============================================================ */
+.mode-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin: 16px 0;
+}
+.mode-card {
+    grid-column: span 1;
+    border: none;
+    border-radius: var(--radius-lg);
+    padding: 16px 14px;
+    min-height: 96px;
+    color: #fff;
+    text-align: left;
+    cursor: pointer;
+    box-shadow: var(--shadow-md);
+    display: flex; flex-direction: column; gap: 6px;
+    position: relative;
+    overflow: hidden;
+    transition: transform .15s cubic-bezier(.2,.8,.2,1), box-shadow .15s;
+    -webkit-tap-highlight-color: transparent;
+    font-family: inherit;
+}
+.mode-card:active {
+    transform: translateY(2px) scale(.97);
+    box-shadow: var(--shadow-sm);
+}
+.mode-card.wide { grid-column: span 2; min-height: 72px; }
+.mode-card .mc-emoji { font-size: 28px; line-height: 1; }
+.mode-card .mc-title { font-size: 15px; font-weight: 700; letter-spacing: -.02em; }
+.mode-card .mc-sub   { font-size: 11px; opacity: .9; font-weight: 500; }
+.mode-card .mc-pill {
+    position: absolute; top: 8px; right: 8px;
+    background: rgba(255,255,255,.22);
+    padding: 2px 8px; border-radius: var(--radius-pill);
+    font-size: 10px; font-weight: 700;
+}
+.mode-card[data-mode="survival"] { background: linear-gradient(135deg, var(--mode-survival-1), var(--mode-survival-2)); }
+.mode-card[data-mode="training"] { background: linear-gradient(135deg, var(--mode-training-1), var(--mode-training-2)); }
+.mode-card[data-mode="mock"]     { background: linear-gradient(135deg, var(--mode-mock-1), var(--mode-mock-2)); }
+.mode-card[data-mode="daily"]    { background: linear-gradient(135deg, var(--mode-daily-1), var(--mode-daily-2)); }
+.mode-card[data-mode="handoff"]  { background: linear-gradient(135deg, var(--mode-handoff-1), var(--mode-handoff-2)); }
+.mode-card[data-mode="triage"]   { background: linear-gradient(135deg, var(--mode-triage-1), var(--mode-triage-2)); }
+.mode-card[data-mode="scenario"] { background: linear-gradient(135deg, var(--mode-scenario-1), var(--mode-scenario-2)); }
+.mode-card[data-mode="wrong"]    { background: linear-gradient(135deg, var(--mode-wrong-1), var(--mode-wrong-2)); }
+.mode-card[data-mode="dash"]     { background: linear-gradient(135deg, var(--mode-dash-1), var(--mode-dash-2)); }
+.mode-card::before {
+    content: ""; position: absolute; top: -40%; right: -20%;
+    width: 130px; height: 130px;
+    background: radial-gradient(circle, rgba(255,255,255,.25), transparent 60%);
+    pointer-events: none;
+}
+
+/* ============================================================
+   HP/평판 게이지 (top-bar 시각화)
+   ============================================================ */
+.stat-gauge {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 13px; font-weight: 700;
+}
+.stat-gauge .sg-bar {
+    width: 56px; height: 8px;
+    background: var(--soft);
+    border-radius: var(--radius-pill);
+    overflow: hidden;
+    box-shadow: var(--shadow-press);
+}
+.stat-gauge .sg-fill {
+    height: 100%; border-radius: var(--radius-pill);
+    transition: width .4s cubic-bezier(.2,.8,.2,1), background .3s;
+}
+.stat-gauge.hp .sg-fill { background: var(--hp-hi); }
+.stat-gauge.hp[data-level="mid"] .sg-fill { background: var(--hp-mid); }
+.stat-gauge.hp[data-level="lo"]  .sg-fill {
+    background: var(--hp-lo);
+    animation: hpPulse 1.2s ease-in-out infinite;
+}
+.stat-gauge.rep .sg-fill { background: var(--rep-grad); }
+@keyframes hpPulse {
+    0%,100% { filter: brightness(1); }
+    50%     { filter: brightness(1.4); }
+}
+
+/* ============================================================
+   콤보 뱃지 폭발 (반복 shine + burst)
+   ============================================================ */
+.badge.combo {
+    background: linear-gradient(90deg, #ef4444, #f59e0b, #fbbf24);
+    background-size: 200% 100%;
+    box-shadow: 0 2px 8px rgba(239,68,68,.4);
+    font-size: 13px;
+    padding: 4px 12px;
+    animation: comboShine 2s linear infinite;
+}
+@keyframes comboShine {
+    0%   { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+}
+.badge.combo.burst {
+    animation: comboBurst .55s cubic-bezier(.2,.8,.2,1), comboShine 2s linear infinite;
+}
+@keyframes comboBurst {
+    0%   { transform: scale(1)   rotate(0); }
+    30%  { transform: scale(1.35) rotate(-4deg); box-shadow: 0 0 24px rgba(251,191,36,.9); }
+    60%  { transform: scale(1.1)  rotate(3deg); }
+    100% { transform: scale(1)    rotate(0); box-shadow: 0 2px 8px rgba(239,68,68,.4); }
+}
+
+/* 모션 줄이기 접근성 */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: .01ms !important;
+        transition-duration: .01ms !important;
+    }
+}
+
 .print-only { display: none; }
 @media print {
     body * { visibility: hidden !important; }

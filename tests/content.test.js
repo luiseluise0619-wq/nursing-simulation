@@ -1,13 +1,26 @@
 const C = require("../content.js");
 
+// scoreHandoff 와 동일한 normalization 으로 키워드 ↔ narration 매칭 검증
+function norm(s) { return String(s || "").toLowerCase().replace(/[^\w가-힣]/g, ""); }
+
 describe("인계 환자 컨텐츠 invariants", () => {
-    test("최소 2명 이상의 인계 환자가 존재한다", () => {
-        expect(C.HANDOFF_PATIENTS.length).toBeGreaterThanOrEqual(2);
+    test("100명 이상의 인계 환자가 존재한다", () => {
+        expect(C.HANDOFF_PATIENTS.length).toBeGreaterThanOrEqual(100);
+    });
+
+    test("모든 환자 ID가 고유하다", () => {
+        const ids = C.HANDOFF_PATIENTS.map(p => p.id);
+        expect(new Set(ids).size).toBe(ids.length);
+    });
+
+    test("모든 환자 narration 본문이 고유하다 (스토리 중복 방지)", () => {
+        const narrations = C.HANDOFF_PATIENTS.map(p => p.narration);
+        expect(new Set(narrations).size).toBe(narrations.length);
     });
 
     C.HANDOFF_PATIENTS.forEach(p => {
         describe(p.id, () => {
-            test("필수 필드(id, title, narration, keywords, hint)를 가진다", () => {
+            test("필수 필드를 가진다", () => {
                 expect(p.id).toBeTruthy();
                 expect(p.title).toBeTruthy();
                 expect(p.narration).toBeTruthy();
@@ -17,13 +30,39 @@ describe("인계 환자 컨텐츠 invariants", () => {
             test("최소 4개 이상의 채점 키워드를 가진다", () => {
                 expect(p.keywords.length).toBeGreaterThanOrEqual(4);
             });
-            test("키워드가 모두 narration 본문에 등장한다", () => {
+            test("키워드가 모두 narration 본문에 (normalized) 등장한다", () => {
+                const n = norm(p.narration);
                 p.keywords.forEach(k => {
-                    expect(p.narration).toEqual(expect.stringContaining(k));
+                    expect(n).toEqual(expect.stringContaining(norm(k)));
                 });
             });
             test("키워드끼리 중복되지 않는다", () => {
                 expect(new Set(p.keywords).size).toBe(p.keywords.length);
+            });
+        });
+    });
+});
+
+describe("듀티(생존모드) 스토리 비트 invariants", () => {
+    test("최소 5개 이상의 스토리 비트가 존재한다", () => {
+        expect(C.SURVIVAL_STORY_BEATS.length).toBeGreaterThanOrEqual(5);
+    });
+    test("모든 비트가 고유한 atEvent 값을 가진다", () => {
+        const events = C.SURVIVAL_STORY_BEATS.map(b => b.atEvent);
+        expect(new Set(events).size).toBe(events.length);
+    });
+    C.SURVIVAL_STORY_BEATS.forEach(b => {
+        describe(b.baseId, () => {
+            test("필수 필드(atEvent, title, desc, choices) 보유", () => {
+                expect(Number.isInteger(b.atEvent)).toBe(true);
+                expect(b.title).toBeTruthy();
+                expect(b.desc).toBeTruthy();
+                expect(Array.isArray(b.choices)).toBe(true);
+                expect(b.choices.length).toBeGreaterThanOrEqual(2);
+            });
+            test("정답 선택지가 정확히 1개", () => {
+                const correctCount = b.choices.filter(c => c.correct === true).length;
+                expect(correctCount).toBe(1);
             });
         });
     });

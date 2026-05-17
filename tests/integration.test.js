@@ -286,13 +286,38 @@ describe("인계 시뮬레이터 (TTS)", () => {
     test("정답 키워드를 모두 입력하면 정답률 100% 피드백이 표시된다", () => {
         loadScript();
         document.querySelector('[data-action="startHandoff"]').click();
+        // 100명 풀에서 셔플로 선정된 첫 환자의 ID 를 타이틀로 역추적
         const C = require("../content.js");
-        const ans = C.HANDOFF_PATIENTS[0].keywords.join(" ");
-        document.getElementById("handoff-answer").value = ans;
+        const titleEl = document.querySelector(".scene-title");
+        expect(titleEl).not.toBeNull();
+        const shown = C.HANDOFF_PATIENTS.find(p => titleEl.textContent.includes(p.title));
+        expect(shown).toBeDefined();
+        document.getElementById("handoff-answer").value = shown.keywords.join(" ");
         document.querySelector('[data-action="handoffSubmit"]').click();
         const fb = document.getElementById("handoff-feedback");
         expect(fb.textContent).toMatch(/\d+\/\d+/);
         expect(fb.querySelector(".feedback-box.correct")).not.toBeNull();
+    });
+
+    test("100명 풀에서 세션은 10명만 출제한다 (sessionSize)", () => {
+        loadScript();
+        document.querySelector('[data-action="startHandoff"]').click();
+        // 진행도 표시가 1/10 형식
+        const titleEl = document.querySelector(".scene-title");
+        expect(titleEl.textContent).toMatch(/1\/10/);
+    });
+
+    test("연속 세션에서 본 환자 ID는 다음 세션 풀에서 제외 (cycle)", () => {
+        loadScript();
+        // 1회차 세션 시작 → 첫 환자 ID 기록
+        document.querySelector('[data-action="startHandoff"]').click();
+        const C = require("../content.js");
+        const firstTitle = document.querySelector(".scene-title").textContent;
+        const firstPatient = C.HANDOFF_PATIENTS.find(p => firstTitle.includes(p.title));
+        expect(firstPatient).toBeDefined();
+        // localStorage 의 handoffSeen 에 첫 환자가 포함되어야 함
+        const stored = JSON.parse(localStorage.getItem("nurseSim:v1") || "{}");
+        expect(stored.handoffSeen).toContain(firstPatient.id);
     });
 
     test("handoffPlay 가 speechSynthesis.speak 를 호출한다", () => {
