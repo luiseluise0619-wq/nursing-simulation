@@ -106,6 +106,7 @@ const ICONS = {
     handoff:    '<svg class="mc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 12 a7 7 0 0 0 14 0"/><path d="M12 19 v3 M9 22 h6"/></svg>',
     triage:     '<svg class="mc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="8" width="14" height="9" rx="1.5"/><path d="M16 11 h3 l3 3 v3 h-6"/><circle cx="7" cy="19" r="1.8"/><circle cx="18" cy="19" r="1.8"/><path d="M7 11 h4 M9 9 v4"/></svg>',
     scenario:   '<svg class="mc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="1.5"/><path d="M9 3 h6 v3 H9 z" fill="currentColor" stroke="none"/><path d="M8 12 l1.5 1.5 L13 10 M8 17 h8"/></svg>',
+    episode:    '<svg class="mc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5 a2 2 0 0 1 2 -2 h8 l4 4 v12 a2 2 0 0 1 -2 2 H6 a2 2 0 0 1 -2 -2 z"/><path d="M14 3 v4 h4"/><path d="M8 14 h8 M8 17 h6"/></svg>',
     wrong:      '<svg class="mc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3 h12 v18 l-6 -3 l-6 3 z"/></svg>',
     dash:       '<svg class="mc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20 V10 M10 20 V4 M16 20 V14"/><path d="M3 20 h18"/></svg>',
 };
@@ -159,6 +160,7 @@ const Storage = {
             accepted: (raw.accepted && typeof raw.accepted === "object") ? raw.accepted : null,
             onboarded: raw.onboarded === true,
             scenarios: (raw.scenarios && typeof raw.scenarios === "object" && !Array.isArray(raw.scenarios)) ? raw.scenarios : {},
+            episodes: (raw.episodes && typeof raw.episodes === "object" && !Array.isArray(raw.episodes)) ? raw.episodes : {},
             daily: (raw.daily && typeof raw.daily === "object") ? raw.daily : {},
             history: Array.isArray(raw.history) ? raw.history : [],
         };
@@ -268,6 +270,20 @@ const Storage = {
             bestHp: Math.max(prev.bestHp, hp),
             bestRep: Math.max(prev.bestRep, rep),
             completed: prev.completed || completed,
+        };
+        Storage.save(data);
+    },
+    setEpisodeResult(id, ending, hp, rep) {
+        const data = Storage.load();
+        if (!data.episodes || typeof data.episodes !== "object") data.episodes = {};
+        const prev = data.episodes[id] || { bestEnding: null, bestHp: 0, bestRep: 0, runs: 0 };
+        const rank = { bad: 1, ok: 2, good: 3 };
+        const prevRank = rank[prev.bestEnding] || 0;
+        data.episodes[id] = {
+            bestEnding: (rank[ending] || 0) > prevRank ? ending : prev.bestEnding,
+            bestHp: Math.max(prev.bestHp, hp),
+            bestRep: Math.max(prev.bestRep, rep),
+            runs: (prev.runs || 0) + 1,
         };
         Storage.save(data);
     },
@@ -396,6 +412,10 @@ function updateStats() {
         const s = NC.SCENARIOS.find(x => x.id === gameState.scenarioId);
         value = gameState.scenarioStep; total = s ? s.steps.length : 1; label = `시나리오 · ${s ? s.title : ""}`;
     }
+    else if (gameState.mode === "episode") {
+        const ep = NC.EPISODES.find(x => x.id === gameState.episodeId);
+        value = gameState.episodeStep; total = ep ? ep.steps.length : 1; label = `에피소드 · ${ep ? ep.title : ""}`;
+    }
 
     const progressRaw = total > 0 ? (value / total) * 100 : 0;
     const progress = Math.min(Number.isFinite(progressRaw) ? progressRaw : 0, 100);
@@ -518,6 +538,7 @@ function dispatchChoice(choice, ev, idx, mode) {
     else if (mode === "daily") handleDailyChoice(choice, ev);
     else if (mode === "wrong_review") handleWrongReviewChoice(choice, ev);
     else if (mode === "scenario") handleScenarioChoice(choice, ev);
+    else if (mode === "episode") handleEpisodeChoice(choice, ev);
     else handleQuizChoice(choice, ev);
 }
 
@@ -569,6 +590,7 @@ function resetStateForMode() {
     gameState.triageIndex = 0; gameState.triageCorrect = 0; gameState.triageTotal = 0;
     gameState.triagePicks = {};
     gameState.scenarioId = null; gameState.scenarioStep = 0;
+    gameState.episodeId = null; gameState.episodeStep = 0;
     gameState.firedStoryBeats = [];
 }
 function initSurvival() {
@@ -1204,6 +1226,106 @@ function endTriage() {
 }
 
 // =========================================================================
+// 에피소드 (장편 스토리 — 한 듀티 전체)
+// =========================================================================
+function renderEpisodeMenu() {
+    resetStateForMode();
+    gameState.mode = "episode_menu";
+    showCoreUI(); UI.logBar.innerHTML = "";
+    addLog("에피소드 — 한 듀티 전체를 따라가는 장편 스토리.", "log-important");
+    updateStats();
+    UI.gameArea.innerHTML = `
+      <div class="scene-card card">
+        <h2 class="scene-title">에피소드</h2>
+        <p class="scene-desc">한 듀티 12~15단계의 연결된 스토리. 같은 환자·동료·의사가 계속 등장하고, 각 결정이 HP·평판에 누적됩니다.\n\n결과는 마지막 점수에 따라 좋은/평범/힘든 듀티 엔딩으로 갈립니다.</p>
+        <div class="choice-list">
+          ${NC.EPISODES.map(e => `<button class="choice-btn primary" data-action="startEpisode" data-arg="${escapeHtml(e.id)}">${escapeHtml(e.title)}</button>`).join("")}
+          <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
+        </div>
+      </div>`;
+}
+
+function startEpisode(target) {
+    const id = target.dataset.arg;
+    const ep = NC.EPISODES.find(x => x.id === id);
+    if (!ep) return;
+    resetStateForMode();
+    gameState.mode = "episode";
+    gameState.episodeId = id;
+    gameState.episodeStep = 0;
+    gameState.hp = 100; gameState.rep = 0;
+    showCoreUI(); UI.logBar.innerHTML = "";
+    addLog(`에피소드: ${ep.title}`, "log-important");
+    addLog(ep.setting);
+    if (ep.patients) ep.patients.forEach(p => addLog(`${p.ref} — ${p.desc}`));
+    if (ep.cast) addLog(`등장: ${ep.cast}`);
+    renderEpisodeStep();
+}
+
+function renderEpisodeStep() {
+    const ep = NC.EPISODES.find(x => x.id === gameState.episodeId);
+    if (!ep) return;
+    if (gameState.episodeStep >= ep.steps.length) { endEpisode(); return; }
+    const step = ep.steps[gameState.episodeStep];
+    const stepNum = gameState.episodeStep + 1;
+    const totalSteps = ep.steps.length;
+    const ev = {
+        baseId: "episode",
+        category: ep.title,
+        part: `${step.time || ""} · Step ${stepNum}/${totalSteps}`,
+        emoji: "📖",
+        title: step.title,
+        desc: step.narration,
+        choices: step.choices.map(c => ({
+            text: c.text, correct: !!c.correct,
+            effect: { hp: c.hp || 0, rep: c.rep || 0 },
+            log: c.log || "",
+        })),
+    };
+    renderSceneCard(ev, {
+        mode: "episode",
+        questionIndex: stepNum,
+        meta: [ep.title, step.time || "", `Step ${stepNum}/${totalSteps}`].filter(Boolean),
+    });
+}
+
+function handleEpisodeChoice(choice, ev) {
+    applyChoiceEffect(choice);
+    const isCorrect = isCorrectChoice(choice);
+    if (isCorrect) { bumpCombo(); Sound.correct(); addLog(`[정답] ${choice.log}`, "log-good"); }
+    else { resetCombo(); Sound.wrong(); addLog(`[오답] ${choice.log}`, "log-bad"); }
+    // HP 0 이하여도 에피소드는 계속 진행 (학습 흐름 유지) — 단, 마지막 ending 에서 차이남
+    renderFeedback(ev, choice, {
+        onNext: () => { gameState.episodeStep += 1; renderEpisodeStep(); },
+    });
+}
+
+function endEpisode() {
+    const ep = NC.EPISODES.find(x => x.id === gameState.episodeId);
+    if (!ep) return;
+    // ending 분기: HP + rep 가중 점수
+    const finalScore = gameState.hp + gameState.rep;
+    let endingKey;
+    if (finalScore >= 130) endingKey = "good";
+    else if (finalScore >= 70) endingKey = "ok";
+    else endingKey = "bad";
+    const ending = ep.endings[endingKey];
+    Storage.addHistory({ mode: "episode", at: Date.now(), id: gameState.episodeId, hp: gameState.hp, rep: gameState.rep, ending: endingKey });
+    Storage.setEpisodeResult(gameState.episodeId, endingKey, gameState.hp, gameState.rep);
+    UI.gameArea.innerHTML = `
+      <div class="scene-card card">
+        <h2 class="scene-title">${escapeHtml(ending.title)}</h2>
+        <p class="scene-desc">${escapeHtml(ending.body)}</p>
+        <hr class="dashboard-divider">
+        <p class="scene-desc">최종 HP <strong>${gameState.hp}</strong> · 평판 <strong>${gameState.rep}</strong> · 듀티 종료.</p>
+        <div class="choice-list">
+          <button class="choice-btn primary" data-action="renderEpisodeMenu">에피소드 목록</button>
+          <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
+        </div>
+      </div>`;
+}
+
+// =========================================================================
 // 임상 시나리오 (멀티스텝, HP/평판 누적)
 // =========================================================================
 function renderScenarioMenu() {
@@ -1658,10 +1780,15 @@ function returnToMenu() {
             <span class="mc-title">트리아지</span>
             <span class="mc-sub">응급실 분류 · 7</span>
           </button>
+          <button class="mode-card wide" data-mode="scenario" data-action="renderEpisodeMenu">
+            ${ICONS.episode}
+            <span class="mc-title">에피소드 — 한 듀티 전체</span>
+            <span class="mc-sub">12~15단계 연결 스토리 · 같은 환자가 계속 등장</span>
+          </button>
           <button class="mode-card wide" data-mode="scenario" data-action="renderScenarioMenu">
             ${ICONS.scenario}
             <span class="mc-title">임상 시나리오</span>
-            <span class="mc-sub">멀티스텝 의사결정 · 6 케이스</span>
+            <span class="mc-sub">짧은 의사결정 · 6 케이스</span>
           </button>
           <button class="mode-card" data-mode="wrong" data-action="reviewWrongAnswers">
             ${ICONS.wrong}
@@ -1884,6 +2011,8 @@ const DELEGATED_ACTIONS = {
     triageNext: () => triageNext(),
     renderScenarioMenu: () => renderScenarioMenu(),
     startScenario: (t) => startScenario(t),
+    renderEpisodeMenu: () => renderEpisodeMenu(),
+    startEpisode: (t) => startEpisode(t),
     printWrongQueue: () => printWrongQueue(),
     printDashboard: () => printDashboard(),
     // 약관 / 온보딩

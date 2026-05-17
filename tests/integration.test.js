@@ -407,6 +407,42 @@ describe("트리아지 (다중환자 우선순위)", () => {
     });
 });
 
+describe("에피소드 (장편 스토리)", () => {
+    test("메뉴에 에피소드 모드 카드가 노출되고 클릭 시 목록이 뜬다", () => {
+        loadScript();
+        const btn = document.querySelector('[data-action="renderEpisodeMenu"]');
+        expect(btn).not.toBeNull();
+        btn.click();
+        const starts = document.querySelectorAll('[data-action="startEpisode"]');
+        expect(starts.length).toBeGreaterThanOrEqual(1);
+    });
+    test("에피소드 시작 시 step 1 narration·choices 가 렌더된다", () => {
+        loadScript();
+        document.querySelector('[data-action="renderEpisodeMenu"]').click();
+        document.querySelector('[data-action="startEpisode"]').click();
+        expect(document.querySelector(".scene-title")).not.toBeNull();
+        const choices = document.querySelectorAll("#choice-list .choice-btn");
+        expect(choices.length).toBeGreaterThanOrEqual(3);
+    });
+    test("정답 클릭 후 다음 step 으로 진행한다", () => {
+        loadScript();
+        document.querySelector('[data-action="renderEpisodeMenu"]').click();
+        document.querySelector('[data-action="startEpisode"]').click();
+        const titleBefore = document.querySelector(".scene-title").textContent;
+        const C = require("../content.js");
+        const ep = C.EPISODES[0];
+        const correctText = ep.steps[0].choices.find(c => c.correct).text;
+        const btns = [...document.querySelectorAll("#choice-list .choice-btn")];
+        const correctBtn = btns.find(b => b.textContent.includes(correctText.slice(0, 12)));
+        expect(correctBtn).toBeDefined();
+        correctBtn.click();
+        const next = document.querySelector('#feedback-zone .choice-btn.primary');
+        next.click();
+        const titleAfter = document.querySelector(".scene-title").textContent;
+        expect(titleAfter).not.toBe(titleBefore);
+    });
+});
+
 describe("임상 시나리오", () => {
     test("시나리오 메뉴에서 시나리오 카드들이 노출된다", () => {
         loadScript();
@@ -597,10 +633,10 @@ describe("온보딩 — SVG 일러스트 사용 (이모지 제거 회귀 방지)
 });
 
 describe("디자인 — 메인 메뉴는 이모지 대신 SVG 아이콘 사용", () => {
-    test("메인 메뉴 모드 카드 9개에 .mc-icon SVG 가 포함된다", () => {
+    test("메인 메뉴 모드 카드 (10개)에 .mc-icon SVG 가 포함된다", () => {
         loadScript();
         const icons = document.querySelectorAll(".mode-card .mc-icon");
-        expect(icons.length).toBe(9);
+        expect(icons.length).toBe(10);
         icons.forEach(el => {
             // SVG 요소 또는 svg 태그여야 함 (이모지 텍스트 노드 아님)
             expect(el.tagName.toLowerCase()).toBe("svg");

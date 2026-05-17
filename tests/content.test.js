@@ -144,6 +144,49 @@ describe("임상 시나리오 invariants", () => {
     });
 });
 
+describe("에피소드 (장편 스토리) invariants", () => {
+    test("최소 1개 이상의 에피소드가 존재한다", () => {
+        expect(C.EPISODES.length).toBeGreaterThanOrEqual(1);
+    });
+    test("에피소드 id 가 모두 고유하다", () => {
+        const ids = C.EPISODES.map(e => e.id);
+        expect(new Set(ids).size).toBe(ids.length);
+    });
+    C.EPISODES.forEach(ep => {
+        describe(ep.id, () => {
+            test("필수 필드(id/title/setting/steps/endings)를 가진다", () => {
+                expect(ep.id).toBeTruthy();
+                expect(ep.title).toBeTruthy();
+                expect(ep.setting).toBeTruthy();
+                expect(Array.isArray(ep.steps)).toBe(true);
+                expect(ep.endings).toBeDefined();
+                expect(ep.endings.good).toBeDefined();
+                expect(ep.endings.ok).toBeDefined();
+                expect(ep.endings.bad).toBeDefined();
+            });
+            test("최소 10단계 이상의 step 을 가진다 (장편 스토리 기준)", () => {
+                expect(ep.steps.length).toBeGreaterThanOrEqual(10);
+            });
+            ep.steps.forEach((step, i) => {
+                test(`step ${i + 1} 은 정확히 1개의 정답을 가진 4개 이상의 선택지를 갖는다`, () => {
+                    expect(step.title).toBeTruthy();
+                    expect(step.narration).toBeTruthy();
+                    expect(Array.isArray(step.choices)).toBe(true);
+                    expect(step.choices.length).toBeGreaterThanOrEqual(3);
+                    const correctCount = step.choices.filter(c => c.correct === true).length;
+                    expect(correctCount).toBe(1);
+                });
+            });
+            test("각 ending 은 title 과 body 를 가진다", () => {
+                ["good", "ok", "bad"].forEach(key => {
+                    expect(ep.endings[key].title).toBeTruthy();
+                    expect(ep.endings[key].body).toBeTruthy();
+                });
+            });
+        });
+    });
+});
+
 describe("출제 경향 데이터 invariants", () => {
     test("years 배열이 단조 증가", () => {
         const y = C.EXAM_TRENDS.years;
