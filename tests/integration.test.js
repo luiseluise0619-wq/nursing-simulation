@@ -547,6 +547,28 @@ describe("약관 동의 / 온보딩 게이트", () => {
     });
 });
 
+describe("디자인 — 메인 메뉴는 이모지 대신 SVG 아이콘 사용", () => {
+    test("메인 메뉴 모드 카드 9개에 .mc-icon SVG 가 포함된다", () => {
+        loadScript();
+        const icons = document.querySelectorAll(".mode-card .mc-icon");
+        expect(icons.length).toBe(9);
+        icons.forEach(el => {
+            // SVG 요소 또는 svg 태그여야 함 (이모지 텍스트 노드 아님)
+            expect(el.tagName.toLowerCase()).toBe("svg");
+        });
+    });
+    test("메인 메뉴 모드 카드 안에 .mc-emoji 텍스트가 없다 (이모지 제거 회귀)", () => {
+        loadScript();
+        const emojiSpans = document.querySelectorAll(".mode-card .mc-emoji");
+        expect(emojiSpans.length).toBe(0);
+    });
+    test("hero 카드(실전 듀티)는 .mode-card.hero 클래스를 가진다", () => {
+        loadScript();
+        const hero = document.querySelector('.mode-card.hero[data-mode="survival"]');
+        expect(hero).not.toBeNull();
+    });
+});
+
 describe("듀티 모드 — 스토리 비트 자동 발동", () => {
     test("스토리 비트는 eventCount 매칭 시점에 1회만 발동된다", () => {
         const C = require("../content.js");

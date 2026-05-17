@@ -88,6 +88,19 @@ function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
 
+// 모드별 라인 아이콘 (24px viewBox, currentColor stroke, 외부 자원 0)
+const ICONS = {
+    survival:   '<svg class="mc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8 L4 12 a4 4 0 0 0 8 0 V8"/><path d="M12 14 a3 3 0 0 0 3 3 a3 3 0 0 0 3 -3 V11"/><circle cx="18" cy="9" r="2"/></svg>',
+    training:   '<svg class="mc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5 a2 2 0 0 1 2 -2 h12 a2 2 0 0 1 2 2 v14 a2 2 0 0 1 -2 2 H6 a2 2 0 0 1 -2 -2 z"/><path d="M8 7 h8 M8 11 h8 M8 15 h5"/></svg>',
+    mock:       '<svg class="mc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13" r="8"/><path d="M12 9 v4 l2.5 2"/><path d="M9 3 h6"/></svg>',
+    daily:      '<svg class="mc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></svg>',
+    handoff:    '<svg class="mc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 12 a7 7 0 0 0 14 0"/><path d="M12 19 v3 M9 22 h6"/></svg>',
+    triage:     '<svg class="mc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="8" width="14" height="9" rx="1.5"/><path d="M16 11 h3 l3 3 v3 h-6"/><circle cx="7" cy="19" r="1.8"/><circle cx="18" cy="19" r="1.8"/><path d="M7 11 h4 M9 9 v4"/></svg>',
+    scenario:   '<svg class="mc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="1.5"/><path d="M9 3 h6 v3 H9 z" fill="currentColor" stroke="none"/><path d="M8 12 l1.5 1.5 L13 10 M8 17 h8"/></svg>',
+    wrong:      '<svg class="mc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3 h12 v18 l-6 -3 l-6 3 z"/></svg>',
+    dash:       '<svg class="mc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20 V10 M10 20 V4 M16 20 V14"/><path d="M3 20 h18"/></svg>',
+};
+
 // =========================================================================
 // 저장소 (localStorage)
 // =========================================================================
@@ -1551,73 +1564,70 @@ function returnToMenu() {
 
     UI.gameArea.innerHTML = `
       <div class="card menu-container">
-        <span class="scene-emoji" aria-hidden="true">🏥</span>
         <h1 class="menu-title">간호사 시뮬레이터</h1>
-        <p class="menu-tagline">당신의 임상 판단력을 테스트하세요.</p>
         <div class="menu-shift-row" role="radiogroup" aria-label="시프트 난이도">
           <button class="shift-option ${gameState.currentShift === 'Day' ? 'active' : ''}" data-action="setShift" data-shift="Day" data-mult="1.0">Day</button>
           <button class="shift-option ${gameState.currentShift === 'Evening' ? 'active' : ''}" data-action="setShift" data-shift="Evening" data-mult="1.2">Evening</button>
           <button class="shift-option ${gameState.currentShift === 'Night' ? 'active' : ''}" data-action="setShift" data-shift="Night" data-mult="1.5">Night</button>
         </div>
         <div class="mode-grid" role="group" aria-label="게임 모드">
-          <button class="mode-card wide" data-mode="survival" data-action="initSurvival">
-            <span class="mc-emoji" aria-hidden="true">🩺</span>
+          <button class="mode-card wide hero" data-mode="survival" data-action="initSurvival">
+            ${ICONS.survival}
             <span class="mc-title">실전 듀티</span>
-            <span class="mc-sub">HP·평판으로 생존 · ${escapeHtml(gameState.currentShift)} 시프트</span>
+            <span class="mc-sub">${escapeHtml(gameState.currentShift)} 시프트 · 20 이벤트</span>
           </button>
           <button class="mode-card" data-mode="training" data-action="renderQuizMenu">
-            <span class="mc-emoji" aria-hidden="true">📚</span>
+            ${ICONS.training}
             <span class="mc-title">트레이닝</span>
-            <span class="mc-sub">8과목 무한 풀이</span>
+            <span class="mc-sub">8과목 · 무한</span>
           </button>
           <button class="mode-card" data-mode="mock" data-action="startMockExam">
-            <span class="mc-emoji" aria-hidden="true">📝</span>
+            ${ICONS.mock}
             <span class="mc-title">모의고사</span>
             <span class="mc-sub">${MOCK_EXAM_TOTAL}문제 · ${MOCK_EXAM_SECONDS / 60}분</span>
           </button>
           <button class="mode-card" data-mode="daily" data-action="startDailyChallenge">
-            <span class="mc-emoji" aria-hidden="true">🎯</span>
+            ${ICONS.daily}
             <span class="mc-title">일일 챌린지</span>
-            <span class="mc-sub">${dailyDone ? '오늘 완료 ✓' : '오늘의 ' + DAILY_CHALLENGE_TOTAL + '문제'}</span>
-            ${dailyDone ? '<span class="mc-pill">DONE</span>' : ''}
+            <span class="mc-sub">오늘의 ${DAILY_CHALLENGE_TOTAL}문제</span>
+            ${dailyDone ? '<span class="mc-badge done" aria-label="오늘 완료">✓</span>' : ''}
           </button>
           <button class="mode-card" data-mode="handoff" data-action="startHandoff">
-            <span class="mc-emoji" aria-hidden="true">🎙️</span>
+            ${ICONS.handoff}
             <span class="mc-title">인계 시뮬</span>
             <span class="mc-sub">TTS · 100명 풀</span>
           </button>
           <button class="mode-card" data-mode="triage" data-action="startTriage">
-            <span class="mc-emoji" aria-hidden="true">🚑</span>
+            ${ICONS.triage}
             <span class="mc-title">트리아지</span>
-            <span class="mc-sub">응급실 분류</span>
+            <span class="mc-sub">응급실 분류 · 7</span>
           </button>
           <button class="mode-card wide" data-mode="scenario" data-action="renderScenarioMenu">
-            <span class="mc-emoji" aria-hidden="true">📋</span>
-            <span class="mc-title">임상 시나리오 챔버</span>
-            <span class="mc-sub">스토리형 멀티스텝 의사결정</span>
+            ${ICONS.scenario}
+            <span class="mc-title">임상 시나리오</span>
+            <span class="mc-sub">멀티스텝 의사결정 · 6 케이스</span>
           </button>
           <button class="mode-card" data-mode="wrong" data-action="reviewWrongAnswers">
-            <span class="mc-emoji" aria-hidden="true">📝</span>
+            ${ICONS.wrong}
             <span class="mc-title">오답노트</span>
-            <span class="mc-sub">${wrongCount}건 복습</span>
-            ${wrongCount ? `<span class="mc-pill">${wrongCount}</span>` : ''}
+            <span class="mc-sub">${wrongCount}건</span>
+            ${wrongCount ? `<span class="mc-badge">${wrongCount}</span>` : ''}
           </button>
           <button class="mode-card" data-mode="dash" data-action="renderDashboard">
-            <span class="mc-emoji" aria-hidden="true">📊</span>
+            ${ICONS.dash}
             <span class="mc-title">대시보드</span>
             <span class="mc-sub">학습 통계</span>
           </button>
         </div>
         <p class="menu-kbd-row">
-          <span class="kbd-hint">1</span><span class="kbd-hint">2</span><span class="kbd-hint">3</span><span class="kbd-hint">4</span> 보기 ·
+          <span class="kbd-hint">1-4</span> 보기 ·
           <span class="kbd-hint">Space</span> 다음 ·
           <span class="kbd-hint">T</span> 테마 ·
-          <span class="kbd-hint">M</span> 사운드 ·
-          <span class="kbd-hint">ESC</span> 닫기
+          <span class="kbd-hint">M</span> 사운드
         </p>
         <div class="menu-footer">
-          <button class="text-link" data-action="showOnboarding">튜토리얼 다시 보기</button>
-          ·
+          <button class="text-link" data-action="showOnboarding">튜토리얼</button>
+          <span class="dot-sep" aria-hidden="true">·</span>
           <button class="text-link" data-action="showLegal">약관·면책</button>
         </div>
       </div>`;

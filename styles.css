@@ -185,15 +185,45 @@ body {
     color: #fff;
     border-color: var(--primary);
 }
-.menu-container { text-align: center; margin-top: 30px; }
-.menu-title { margin: 0 0 10px 0; font-size: 1.5rem; }
-.menu-tagline { color: var(--muted); font-size: 0.9rem; margin-bottom: 20px; }
-.menu-shift-row { margin-bottom: 16px; }
+.menu-container { text-align: left; margin-top: 18px; padding: 22px 18px; }
+.menu-title {
+    margin: 0 0 14px 0;
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--text);
+}
+.menu-tagline { color: var(--muted); font-size: 13px; margin-bottom: 16px; }
+.menu-shift-row {
+    display: inline-flex;
+    background: var(--softer);
+    border-radius: var(--radius-pill);
+    padding: 3px;
+    margin-bottom: 4px;
+}
+.menu-shift-row .shift-option {
+    margin: 0;
+    border: none;
+    background: transparent;
+    padding: 7px 14px;
+    border-radius: var(--radius-pill);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    min-height: 32px;
+}
+.menu-shift-row .shift-option.active {
+    background: var(--card);
+    color: var(--text);
+    box-shadow: var(--shadow-sm);
+}
 .menu-kbd-row {
-    margin-top: 16px;
+    margin-top: 12px;
     font-size: 11px;
     color: var(--muted);
+    text-align: center;
 }
+.dot-sep { margin: 0 4px; color: var(--border); }
 .dashboard-cat-cell { min-width: 120px; }
 .dashboard-divider { margin: 16px 0; border: none; border-top: 1px solid var(--border); }
 .dashboard-summary { margin: 0; }
@@ -596,59 +626,89 @@ body {
 }
 
 /* ============================================================
-   메인 메뉴 모드 카드 그리드 (2열, 모드별 그라디언트)
+   메인 메뉴 모드 카드 그리드 — 브랜드 컬러 1개 + 중성톤으로 정돈
    ============================================================ */
 .mode-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin: 16px 0;
+    gap: 8px;
+    margin: 16px 0 12px;
 }
 .mode-card {
     grid-column: span 1;
-    border: none;
-    border-radius: var(--radius-lg);
-    padding: 16px 14px;
-    min-height: 96px;
-    color: #fff;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    border-radius: var(--radius-md);
+    padding: 14px 12px;
+    min-height: 88px;
     text-align: left;
     cursor: pointer;
-    box-shadow: var(--shadow-md);
-    display: flex; flex-direction: column; gap: 6px;
+    box-shadow: var(--shadow-sm);
+    display: grid;
+    grid-template-rows: 22px auto auto;
+    gap: 4px;
     position: relative;
     overflow: hidden;
-    transition: transform .15s cubic-bezier(.2,.8,.2,1), box-shadow .15s;
+    transition: transform .12s cubic-bezier(.2,.8,.2,1), border-color .15s, box-shadow .15s, background .15s;
     -webkit-tap-highlight-color: transparent;
     font-family: inherit;
 }
+.mode-card:hover { border-color: var(--primary); }
 .mode-card:active {
-    transform: translateY(2px) scale(.97);
-    box-shadow: var(--shadow-sm);
+    transform: scale(.98);
+    box-shadow: var(--shadow-press);
+    background: var(--softer);
 }
-.mode-card.wide { grid-column: span 2; min-height: 72px; }
-.mode-card .mc-emoji { font-size: 28px; line-height: 1; }
-.mode-card .mc-title { font-size: 15px; font-weight: 700; letter-spacing: -.02em; }
-.mode-card .mc-sub   { font-size: 11px; opacity: .9; font-weight: 500; }
-.mode-card .mc-pill {
-    position: absolute; top: 8px; right: 8px;
+.mode-card.wide { grid-column: span 2; min-height: 96px; }
+.mode-card.hero {
+    background: linear-gradient(135deg, var(--primary), #2563eb);
+    color: #fff;
+    border: none;
+    box-shadow: var(--shadow-md);
+}
+[data-theme="dark"] .mode-card.hero {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+}
+.mode-card .mc-icon {
+    width: 22px; height: 22px;
+    color: var(--primary);
+}
+.mode-card.hero .mc-icon { color: #fff; opacity: .95; }
+.mode-card .mc-title {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: -.02em;
+    line-height: 1.25;
+}
+.mode-card .mc-sub {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 500;
+    line-height: 1.3;
+}
+.mode-card.hero .mc-sub { color: rgba(255,255,255,.85); }
+.mode-card .mc-badge {
+    position: absolute;
+    top: 10px; right: 10px;
+    background: var(--primary);
+    color: #fff;
+    padding: 2px 7px;
+    border-radius: var(--radius-pill);
+    font-size: 10px;
+    font-weight: 700;
+    min-width: 18px;
+    text-align: center;
+}
+.mode-card.hero .mc-badge {
     background: rgba(255,255,255,.22);
-    padding: 2px 8px; border-radius: var(--radius-pill);
-    font-size: 10px; font-weight: 700;
 }
-.mode-card[data-mode="survival"] { background: linear-gradient(135deg, var(--mode-survival-1), var(--mode-survival-2)); }
-.mode-card[data-mode="training"] { background: linear-gradient(135deg, var(--mode-training-1), var(--mode-training-2)); }
-.mode-card[data-mode="mock"]     { background: linear-gradient(135deg, var(--mode-mock-1), var(--mode-mock-2)); }
-.mode-card[data-mode="daily"]    { background: linear-gradient(135deg, var(--mode-daily-1), var(--mode-daily-2)); }
-.mode-card[data-mode="handoff"]  { background: linear-gradient(135deg, var(--mode-handoff-1), var(--mode-handoff-2)); }
-.mode-card[data-mode="triage"]   { background: linear-gradient(135deg, var(--mode-triage-1), var(--mode-triage-2)); }
-.mode-card[data-mode="scenario"] { background: linear-gradient(135deg, var(--mode-scenario-1), var(--mode-scenario-2)); }
-.mode-card[data-mode="wrong"]    { background: linear-gradient(135deg, var(--mode-wrong-1), var(--mode-wrong-2)); }
-.mode-card[data-mode="dash"]     { background: linear-gradient(135deg, var(--mode-dash-1), var(--mode-dash-2)); }
-.mode-card::before {
-    content: ""; position: absolute; top: -40%; right: -20%;
-    width: 130px; height: 130px;
-    background: radial-gradient(circle, rgba(255,255,255,.25), transparent 60%);
-    pointer-events: none;
+.mode-card .mc-badge.done {
+    background: var(--success);
+}
+.mode-card.hero .mc-badge.done {
+    background: rgba(255,255,255,.95);
+    color: var(--success);
 }
 
 /* ============================================================
@@ -682,28 +742,22 @@ body {
 }
 
 /* ============================================================
-   콤보 뱃지 폭발 (반복 shine + burst)
+   콤보 뱃지 — 절제된 강조 (과한 shine/회전 제거)
    ============================================================ */
 .badge.combo {
-    background: linear-gradient(90deg, #ef4444, #f59e0b, #fbbf24);
-    background-size: 200% 100%;
-    box-shadow: 0 2px 8px rgba(239,68,68,.4);
-    font-size: 13px;
-    padding: 4px 12px;
-    animation: comboShine 2s linear infinite;
-}
-@keyframes comboShine {
-    0%   { background-position: 0% 50%; }
-    100% { background-position: 200% 50%; }
+    background: var(--warning);
+    color: #fff;
+    font-size: 12px;
+    padding: 3px 10px;
+    box-shadow: 0 1px 3px rgba(245,158,11,.3);
 }
 .badge.combo.burst {
-    animation: comboBurst .55s cubic-bezier(.2,.8,.2,1), comboShine 2s linear infinite;
+    animation: comboBurst .35s cubic-bezier(.2,.8,.2,1);
 }
 @keyframes comboBurst {
-    0%   { transform: scale(1)   rotate(0); }
-    30%  { transform: scale(1.35) rotate(-4deg); box-shadow: 0 0 24px rgba(251,191,36,.9); }
-    60%  { transform: scale(1.1)  rotate(3deg); }
-    100% { transform: scale(1)    rotate(0); box-shadow: 0 2px 8px rgba(239,68,68,.4); }
+    0%   { transform: scale(1); }
+    50%  { transform: scale(1.12); }
+    100% { transform: scale(1); }
 }
 
 /* 모션 줄이기 접근성 */
