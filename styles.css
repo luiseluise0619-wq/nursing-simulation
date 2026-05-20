@@ -955,7 +955,8 @@ body {
 /* ============================================================
    베타 배지 — 메인 메뉴 타이틀 옆
    ============================================================ */
-.beta-badge {
+.beta-badge,
+.version-badge {
     display: inline-block;
     background: var(--warning);
     color: #fff;
@@ -967,6 +968,10 @@ body {
     letter-spacing: 0.04em;
     vertical-align: middle;
 }
+.version-badge {
+    background: var(--success);
+}
+[data-theme="dark"] .version-badge { background: #047857; }
 
 /* ============================================================
    오류 신고 모달 (in-card)
@@ -1029,6 +1034,56 @@ body {
 .legal-accept-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+}
+
+/* ============================================================
+   설정 · About · 개인정보 화면
+   ============================================================ */
+.settings-card, .about-card { padding: 22px 18px; }
+.settings-section {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--muted);
+    margin: 18px 0 8px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+.settings-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    background: var(--softer);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    margin-bottom: 4px;
+    color: var(--text);
+}
+.settings-row .settings-value {
+    color: var(--muted);
+    font-weight: 500;
+    font-size: 12px;
+}
+.about-meta {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.55;
+    margin: 6px 0;
+}
+.about-list {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.7;
+    margin: 4px 0 8px 18px;
+    padding: 0;
+}
+.about-card code, .legal-card code {
+    background: var(--soft);
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-family: monospace;
 }
 
 /* ============================================================

@@ -10,6 +10,7 @@ const MOCK_EXAM_TOTAL = 30;
 const MOCK_EXAM_SECONDS = 30 * 60;
 const DAILY_CHALLENGE_TOTAL = 10;
 const STORAGE_KEY = "nurseSim:v1";
+const APP_VERSION = "1.0.0";
 
 const CATEGORIES = [
     "기본간호학", "성인간호학", "모성간호학", "아동간호학",
@@ -1852,6 +1853,224 @@ function confirmClearStats() {
 }
 
 // =========================================================================
+// 설정 · About · 개인정보 · 백업/복원 (출시 1.0 페이지들)
+// =========================================================================
+function openSettings() {
+    if (UI.modal.classList.contains("active")) return;
+    gameState.mode = "settings";
+    showCoreUI(); updateStats();
+    const settings = Storage.getSettings();
+    const data = Storage.load();
+    const stats = data.stats || {};
+    const totalSolved = Object.values(stats).reduce((s, v) => s + (v.solved || 0), 0);
+    const totalCorrect = Object.values(stats).reduce((s, v) => s + (v.correct || 0), 0);
+    const acc = totalSolved ? Math.round(totalCorrect / totalSolved * 100) : 0;
+    UI.gameArea.innerHTML = `
+      <div class="card settings-card">
+        <h2 class="scene-title">⚙️ 설정</h2>
+
+        <h3 class="settings-section">일반</h3>
+        <div class="settings-row">
+          <span>테마</span>
+          <span class="settings-value">${settings.theme === "dark" ? "다크" : settings.theme === "light" ? "라이트" : "자동(시스템)"}</span>
+        </div>
+        <div class="settings-row">
+          <span>사운드</span>
+          <span class="settings-value">${settings.sound !== false ? "켜짐" : "꺼짐"}</span>
+        </div>
+        <div class="settings-row">
+          <span>언어</span>
+          <span class="settings-value">한국어 <small>(NCLEX 영어 모드 예정)</small></span>
+        </div>
+
+        <h3 class="settings-section">데이터</h3>
+        <div class="settings-row">
+          <span>총 풀이</span>
+          <span class="settings-value">${totalSolved}문제 · 정답 ${totalCorrect} (${acc}%)</span>
+        </div>
+        <div class="settings-row">
+          <span>오답노트</span>
+          <span class="settings-value">${(data.wrongQueue || []).length}건</span>
+        </div>
+        <div class="settings-row">
+          <span>에피소드 완료</span>
+          <span class="settings-value">${Object.keys(data.episodes || {}).length} / ${NC.EPISODES.length}</span>
+        </div>
+        <div class="settings-row">
+          <span>오류 신고</span>
+          <span class="settings-value">${(data.errorReports || []).length}건</span>
+        </div>
+
+        <div class="choice-list">
+          <button class="choice-btn" data-action="exportData">📦 데이터 백업 (JSON 다운로드)</button>
+          <button class="choice-btn" data-action="triggerImportData">📥 데이터 복원 (JSON 업로드)</button>
+          <input type="file" id="import-file-input" accept="application/json" style="display:none">
+          <button class="choice-btn" data-action="confirmClearStats">🗑 전체 데이터 초기화</button>
+        </div>
+
+        <h3 class="settings-section">정보</h3>
+        <div class="choice-list">
+          <button class="choice-btn" data-action="renderAbout">앱 정보 · 버전 · 변경 이력</button>
+          <button class="choice-btn" data-action="renderPrivacy">개인정보 처리방침</button>
+          <button class="choice-btn" data-action="showLegal">이용 약관 · 면책</button>
+          <button class="choice-btn" data-action="showOnboarding">튜토리얼 다시 보기</button>
+          <button class="choice-btn" data-action="openErrorReport">컨텐츠 오류 신고</button>
+        </div>
+
+        <div class="choice-list">
+          <button class="choice-btn primary" data-action="returnToMenu">메인 메뉴</button>
+        </div>
+      </div>`;
+    // 파일 업로드 핸들러 wiring
+    const fileInput = document.getElementById("import-file-input");
+    if (fileInput) {
+        fileInput.addEventListener("change", handleImportFile);
+    }
+}
+
+function exportData() {
+    const data = Storage.load();
+    const payload = JSON.stringify({
+        version: APP_VERSION,
+        exportedAt: new Date().toISOString(),
+        data,
+    }, null, 2);
+    try {
+        const blob = new Blob([payload], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `nurseSim-backup-${todayKey()}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        addLog("데이터 백업 파일이 다운로드됐습니다.", "log-good");
+    } catch (e) {
+        addLog("백업 실패: " + e.message, "log-bad");
+    }
+}
+function triggerImportData() {
+    const fileInput = document.getElementById("import-file-input");
+    if (fileInput) fileInput.click();
+}
+function handleImportFile(e) {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        try {
+            const parsed = JSON.parse(ev.target.result);
+            const payload = parsed.data || parsed; // 둘 다 허용
+            if (!payload || typeof payload !== "object") throw new Error("유효하지 않은 파일");
+            if (!confirm("기존 데이터가 모두 덮어쓰여집니다. 계속하시겠습니까?")) return;
+            const validated = Storage.validate(payload);
+            Storage.save(validated);
+            addLog("데이터가 복원됐습니다.", "log-good");
+            openSettings();
+        } catch (err) {
+            addLog("복원 실패: " + err.message, "log-bad");
+            alert("복원 실패: " + err.message);
+        }
+    };
+    reader.readAsText(file);
+}
+
+function renderAbout() {
+    gameState.mode = "about";
+    showCoreUI(); updateStats();
+    UI.gameArea.innerHTML = `
+      <div class="card about-card">
+        <h2 class="scene-title">앱 정보</h2>
+        <p><strong>간호사 시뮬레이터 v${APP_VERSION}</strong></p>
+        <p class="about-meta">한국 간호사 국가고시 학습을 위한 임상 시뮬레이션 + 문제풀이 하이브리드.</p>
+
+        <h3 class="settings-section">수록 컨텐츠</h3>
+        <ul class="about-list">
+          <li>📖 에피소드 ${NC.EPISODES.length}개 (313 단계)</li>
+          <li>🎙️ 인계 환자 ${NC.HANDOFF_PATIENTS.length}명 풀</li>
+          <li>📋 임상 시나리오 ${NC.SCENARIOS.length}개</li>
+          <li>🚑 트리아지 케이스 ${NC.TRIAGE_CASES.length}개</li>
+          <li>📚 4지선다 generator ${NQ.allGenerators.length}종 (8과목)</li>
+          <li>📚 검증된 의료 출처 ${KNOWN_SOURCES.length}건</li>
+        </ul>
+
+        <h3 class="settings-section">변경 이력</h3>
+        <p class="about-meta"><strong>v1.0.0</strong> — 정식 출시. 설정 · 백업/복원 · About · Privacy in-app · v1.0 배지.</p>
+        <p class="about-meta"><strong>v0.9</strong> — 이어하기 · spaced repetition · 검색 · 출처 표시 (P0 4건).</p>
+        <p class="about-meta"><strong>v0.8</strong> — 면책 스트립 · BETA 배지 · 오류 신고 · 동의 체크박스.</p>
+        <p class="about-meta"><strong>v0.7</strong> — 에피소드 26개 완비.</p>
+        <p class="about-meta"><strong>v0.6</strong> — 모바일 디자인 폴리시 · SVG 아이콘 · PNG 자동 생성.</p>
+        <p class="about-meta">전체 이력: <code>CHANGELOG.md</code></p>
+
+        <h3 class="settings-section">라이선스</h3>
+        <p class="about-meta">MIT License. 의료 면책 고지는 LICENSE 파일 참고.</p>
+
+        <div class="choice-list">
+          <button class="choice-btn primary" data-action="openSettings">설정으로</button>
+          <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
+        </div>
+      </div>`;
+}
+
+function renderPrivacy() {
+    gameState.mode = "privacy";
+    showCoreUI(); updateStats();
+    UI.gameArea.innerHTML = `
+      <div class="card legal-card">
+        <h2 class="scene-title">개인정보 처리방침</h2>
+        <p class="about-meta"><strong>최종 갱신: 2026-05-17 · 버전 1.0</strong></p>
+
+        <section class="legal-section">
+          <h3 class="legal-h">1. 수집·이용하는 정보</h3>
+          <p>본 앱은 <strong>외부 서버로 어떤 개인정보도 전송하지 않습니다.</strong> 다음 항목만 사용자 기기의 브라우저 localStorage 에 저장됩니다:</p>
+          <ul class="legal-list">
+            <li>학습 통계 (과목별 정답률·콤보 최고점)</li>
+            <li>오답 노트 (틀린 문제 + spaced repetition 메타데이터)</li>
+            <li>에피소드 진행 상태 (이어하기용)</li>
+            <li>사운드·테마 설정</li>
+            <li>약관 동의 일시</li>
+            <li>오류 신고 로컬 기록</li>
+          </ul>
+        </section>
+
+        <section class="legal-section">
+          <h3 class="legal-h">2. 보유·이용 기간</h3>
+          <p>모든 데이터는 사용자가 직접 삭제하거나 브라우저 데이터를 초기화할 때까지 보유됩니다. 외부로 자동 전송·동기화되지 않습니다.</p>
+        </section>
+
+        <section class="legal-section">
+          <h3 class="legal-h">3. 제3자 제공·공유</h3>
+          <p>없습니다. 본 앱은 광고·분석·외부 인증·결제 등 어떠한 제3자 SDK 도 포함하지 않습니다.</p>
+        </section>
+
+        <section class="legal-section">
+          <h3 class="legal-h">4. 정보 보호 조치</h3>
+          <ul class="legal-list">
+            <li><strong>네트워크 통신 0</strong> — Electron 로컬 실행 또는 PWA cache-first</li>
+            <li>CSP <code>script-src 'self'</code> — 외부 스크립트 차단</li>
+            <li>Storage 스키마 검증 — 변조 시 안전 복구</li>
+          </ul>
+        </section>
+
+        <section class="legal-section">
+          <h3 class="legal-h">5. 이용자 권리</h3>
+          <p>설정 → 데이터 백업으로 본인 데이터를 JSON 으로 내보낼 수 있습니다. 설정 → 전체 데이터 초기화로 모든 데이터를 영구 삭제할 수 있습니다.</p>
+        </section>
+
+        <section class="legal-section">
+          <h3 class="legal-h">6. 문의</h3>
+          <p>본 앱은 오픈소스 (MIT) 입니다. GitHub Issue 또는 이메일로 문의 가능합니다.</p>
+        </section>
+
+        <div class="choice-list">
+          <button class="choice-btn primary" data-action="openSettings">설정으로</button>
+          <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
+        </div>
+      </div>`;
+}
+
+// =========================================================================
 // 오류 신고 — 어디서든 접근 가능한 컨텐츠 신고 화면
 // =========================================================================
 function openErrorReport() {
@@ -2159,7 +2378,7 @@ function returnToMenu() {
 
     UI.gameArea.innerHTML = `
       <div class="card menu-container">
-        <h1 class="menu-title">간호사 시뮬레이터<span class="beta-badge" aria-label="베타 버전, 컨텐츠 미감수">BETA · 미감수</span></h1>
+        <h1 class="menu-title">간호사 시뮬레이터<span class="version-badge" aria-label="버전 1.0 자가 검증">v1.0 · 자가 검증</span></h1>
         <div class="menu-shift-row" role="radiogroup" aria-label="시프트 난이도">
           <button class="shift-option ${gameState.currentShift === 'Day' ? 'active' : ''}" data-action="setShift" data-shift="Day" data-mult="1.0">Day</button>
           <button class="shift-option ${gameState.currentShift === 'Evening' ? 'active' : ''}" data-action="setShift" data-shift="Evening" data-mult="1.2">Evening</button>
@@ -2231,9 +2450,15 @@ function returnToMenu() {
           <span class="kbd-hint">M</span> 사운드
         </p>
         <div class="menu-footer">
+          <button class="text-link" data-action="openSettings">설정</button>
+          <span class="dot-sep" aria-hidden="true">·</span>
           <button class="text-link" data-action="showOnboarding">튜토리얼</button>
           <span class="dot-sep" aria-hidden="true">·</span>
-          <button class="text-link" data-action="showLegal">약관·면책</button>
+          <button class="text-link" data-action="renderPrivacy">개인정보</button>
+          <span class="dot-sep" aria-hidden="true">·</span>
+          <button class="text-link" data-action="showLegal">약관</button>
+          <span class="dot-sep" aria-hidden="true">·</span>
+          <button class="text-link" data-action="renderAbout">v${APP_VERSION}</button>
         </div>
       </div>`;
 
@@ -2453,6 +2678,12 @@ const DELEGATED_ACTIONS = {
     episodeRestart: (t) => episodeRestart(t),
     openSearch: () => openSearch(),
     reviewWrongForce: () => reviewWrongForce(),
+    // 출시 1.0 페이지들
+    openSettings: () => openSettings(),
+    renderAbout: () => renderAbout(),
+    renderPrivacy: () => renderPrivacy(),
+    exportData: () => exportData(),
+    triggerImportData: () => triggerImportData(),
 };
 function handleDelegatedAction(e) {
     const target = e.target.closest("[data-action]");

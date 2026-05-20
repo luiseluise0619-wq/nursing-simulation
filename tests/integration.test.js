@@ -16,6 +16,7 @@ const BODY_TEMPLATE = `
     </div>
     <button id="theme-toggle"></button>
     <button id="sound-toggle"></button>
+    <button id="settings-btn" data-action="openSettings"></button>
   </div>
   <div id="progress-wrap" class="hidden" role="progressbar"
        aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-labelledby="progress-text">
@@ -601,6 +602,53 @@ describe("약관 동의 / 온보딩 게이트", () => {
     });
 });
 
+describe("v1.0 정식 출시 — 설정·백업/복원·About·Privacy", () => {
+    test("⚙️ 설정 버튼이 top-bar 에 있고 클릭 시 설정 화면이 열린다", () => {
+        loadScript();
+        const btn = document.getElementById("settings-btn");
+        expect(btn).not.toBeNull();
+        btn.click();
+        const card = document.querySelector(".settings-card");
+        expect(card).not.toBeNull();
+    });
+
+    test("v1.0 배지가 메뉴에 노출된다 (BETA 아님)", () => {
+        loadScript();
+        const ver = document.querySelector(".version-badge");
+        expect(ver).not.toBeNull();
+        expect(ver.textContent).toMatch(/v1\.0/);
+        expect(document.querySelector(".beta-badge")).toBeNull();
+    });
+
+    test("About 페이지에 컨텐츠 수치가 노출된다", () => {
+        loadScript();
+        document.querySelector('[data-action="openSettings"]').click();
+        document.querySelector('[data-action="renderAbout"]').click();
+        const card = document.querySelector(".about-card");
+        expect(card).not.toBeNull();
+        expect(card.textContent).toMatch(/에피소드/);
+        expect(card.textContent).toMatch(/v1\.0/);
+    });
+
+    test("개인정보 처리방침 페이지가 표시된다", () => {
+        loadScript();
+        document.querySelector('[data-action="openSettings"]').click();
+        document.querySelector('[data-action="renderPrivacy"]').click();
+        const body = document.body.textContent;
+        expect(body).toMatch(/개인정보/);
+        expect(body).toMatch(/localStorage/);
+        expect(body).toMatch(/외부 서버/);
+    });
+
+    test("메뉴 푸터에 설정·개인정보·약관·버전 링크가 있다", () => {
+        loadScript();
+        expect(document.querySelector('.menu-footer [data-action="openSettings"]')).not.toBeNull();
+        expect(document.querySelector('.menu-footer [data-action="renderPrivacy"]')).not.toBeNull();
+        expect(document.querySelector('.menu-footer [data-action="showLegal"]')).not.toBeNull();
+        expect(document.querySelector('.menu-footer [data-action="renderAbout"]')).not.toBeNull();
+    });
+});
+
 describe("P0 신규 — 이어하기·SM-2·검색·출처 표시", () => {
     test("에피소드 진행 중 returnToMenu 시 자동 저장된다", () => {
         loadScript();
@@ -692,12 +740,12 @@ describe("P0 신규 — 이어하기·SM-2·검색·출처 표시", () => {
     });
 });
 
-describe("면책 스트립 + BETA 배지 + 오류 신고 (출시 안전장치)", () => {
-    test("메인 메뉴에 BETA 미감수 배지가 노출된다", () => {
+describe("면책 스트립 + 버전 배지 + 오류 신고 (출시 안전장치)", () => {
+    test("메인 메뉴에 v1.0 자가 검증 배지가 노출된다", () => {
         loadScript();
-        const beta = document.querySelector(".beta-badge");
-        expect(beta).not.toBeNull();
-        expect(beta.textContent).toMatch(/BETA/);
+        const ver = document.querySelector(".version-badge");
+        expect(ver).not.toBeNull();
+        expect(ver.textContent).toMatch(/자가 검증/);
     });
     test("면책 스트립이 상단에 항상 존재한다", () => {
         loadScript();

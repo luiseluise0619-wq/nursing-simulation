@@ -2,6 +2,20 @@
 
 본 프로젝트는 [Keep a Changelog](https://keepachangelog.com/) 형식을 따르며, [Semantic Versioning](https://semver.org/) 을 사용합니다.
 
+## [1.0.0] — 2026-05-17 (정식 출시)
+
+### Added
+- 설정(⚙️) 페이지 — 테마·사운드·언어·데이터 백업/복원/초기화·통계 표시
+- About + 변경 이력 in-app 화면
+- 개인정보 처리방침 + 이용약관 전체 in-app 문서
+- 데이터 백업 (JSON 다운로드) / 복원 (파일 업로드)
+- 자동 업데이트 안내 (electron-updater 가이드 README 추가)
+- v1.0 정식 출시 배지
+
+### Changed
+- "BETA · 미감수" 배지 → "v1.0 · 자가 검증" 배지로 변경 (내용 정확성 표현은 유지하되 정식 버전 명시)
+- 면책 스트립 문구 정리
+
 ## [Unreleased]
 
 ### Added
