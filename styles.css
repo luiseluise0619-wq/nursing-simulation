@@ -1031,6 +1031,86 @@ body {
     cursor: not-allowed;
 }
 
+/* ============================================================
+   피드백 출처 표시
+   ============================================================ */
+.feedback-source {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(0,0,0,.08);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--muted);
+}
+[data-theme="dark"] .feedback-source { border-top-color: rgba(255,255,255,.08); }
+.feedback-source-unverified { color: var(--warning); font-style: italic; }
+.feedback-box .feedback-source { color: inherit; opacity: 0.75; }
+[data-theme="dark"] .feedback-box.correct .feedback-source { color: #a7f3d0; }
+[data-theme="dark"] .feedback-box.wrong .feedback-source { color: #fecaca; }
+
+/* ============================================================
+   검색 화면
+   ============================================================ */
+.search-card { padding: 22px 18px; }
+.search-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--card);
+    color: var(--text);
+    font-size: 15px;
+    font-family: inherit;
+    margin-bottom: 12px;
+}
+.search-input:focus {
+    outline: 2px solid var(--primary);
+    outline-offset: 1px;
+    border-color: var(--primary);
+}
+.search-results-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-height: 60vh;
+    overflow-y: auto;
+    margin-bottom: 16px;
+}
+.search-result {
+    text-align: left;
+    background: var(--softer);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 10px 12px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    font-family: inherit;
+    color: var(--text);
+}
+.search-result:hover { border-color: var(--primary); }
+.search-result:active { background: var(--soft); }
+.sr-type {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.sr-title {
+    font-size: 14px;
+    color: var(--text);
+    font-weight: 500;
+}
+.search-empty {
+    text-align: center;
+    color: var(--muted);
+    padding: 20px;
+    font-size: 13px;
+}
+
 .print-only { display: none; }
 @media print {
     body * { visibility: hidden !important; }

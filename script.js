@@ -97,6 +97,150 @@ function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
 
+// 검증된 의료 사실 출처 맵 (CONTENT_VERIFICATION.md 의 30건)
+// 정답 해설에 키워드가 매칭되면 자동 출처 표시
+const KNOWN_SOURCES = [
+    { pattern: /tPA|alteplase/i,                                source: "AHA/ASA 2019 Guidelines (4.5h window)" },
+    { pattern: /MgSO4|마그네슘.*독성|Calcium gluconate.*1g/i,  source: "CMQCC/USF Eclampsia Toolkit" },
+    { pattern: /고칼륨.*KCL|KCl.*IV.*push|Calcium gluconate.*심근/i, source: "ACEP/EMCrit Hyperkalemia Algorithm" },
+    { pattern: /Naegele|네겔/i,                                  source: "Korean OB 표준 (LMP +280일)" },
+    { pattern: /9의 법칙|TBSA|Parkland|화상.*면적/i,            source: "StatPearls Rule of Nines + Parkland" },
+    { pattern: /Apgar|아프가/i,                                  source: "ACOG Committee Opinion (Apgar)" },
+    { pattern: /Heparin.*aPTT|aPTT.*60|aPTT.*70|aPTT.*45-75/i,  source: "AHA Circulation Heparin Guide" },
+    { pattern: /Warfarin|INR.*2-3|비타민K.*경구/i,             source: "Mayo/AAFP Warfarin Therapy" },
+    { pattern: /Vancomycin|trough.*15-20|red.*man|60분.*주입/i, source: "ASHP/IDSA Vancomycin Consensus" },
+    { pattern: /패혈증|sepsis|1-hour bundle|혈액배양.*항생제/i, source: "SCCM Surviving Sepsis Campaign 2021" },
+    { pattern: /door-to-balloon|STEMI.*PCI.*90/i,               source: "ACC/AHA STEMI Guidelines" },
+    { pattern: /CPR.*100|CPR.*120|CPR.*5cm|CPR.*6cm|BLS/i,     source: "AHA 2025 BLS Guidelines" },
+    { pattern: /MMR|BCG|DTaP|HepB|예방접종/i,                  source: "KDCA 예방접종 가이드" },
+    { pattern: /결핵.*신고|법정감염병/i,                       source: "감염병예방법 시행규칙" },
+    { pattern: /후기하강|late deceleration|좌측위.*산소/i,     source: "Lecturio OB/AWHONN Fetal Monitoring" },
+    { pattern: /자궁이완|산후출혈|자궁저부.*마사지/i,         source: "AAFP/OpenStax PPH Management" },
+    { pattern: /광선치료|빌리루빈|황달.*신생아/i,             source: "Stanford NICU Phototherapy" },
+    { pattern: /무균술|sterile.*field|2\.5cm/i,                source: "Wisconsin AODA Sterile Technique" },
+    { pattern: /Dopamine.*5mcg|5mcg\/kg\/min/i,                source: "ACLS Drip Calculations" },
+    { pattern: /NTG.*5분|nitroglycerin.*sublingual/i,          source: "Mayo/Cleveland Cardiac" },
+    { pattern: /Lispro|식사.*직전.*15분/i,                     source: "Merck/UCSF Insulin Pharmacology" },
+    { pattern: /20mL\/kg|소아.*탈수.*bolus/i,                  source: "Merck/UTMB Pediatric Dehydration" },
+    { pattern: /망상.*논쟁.*금지|paranoid.*nursing/i,         source: "OpenStax Psychiatric Nursing" },
+    { pattern: /START.*분류|triage.*흑색|black.*sieve/i,      source: "AHRQ START Triage" },
+    { pattern: /FLACC|NIPS|PAINAD|NRS.*통증/i,                source: "Wisconsin Palliative Care Pain Tools" },
+    { pattern: /Doxorubicin.*외삼출|발포제.*차가운|vincristine.*cold/i, source: "ONS Antineoplastic Extravasation Guidelines" },
+    { pattern: /HELLP|혈소판.*100.*척추/i,                    source: "ACOG HELLP Bulletin" },
+    { pattern: /BEERS|노인.*약물/i,                            source: "AGS Beers Criteria 2023" },
+    { pattern: /Just Culture|시스템.*개선/i,                  source: "AHRQ Just Culture Framework" },
+    { pattern: /SBAR|인계.*표준/i,                            source: "IHI SBAR Communication" },
+];
+function lookupSource(text) {
+    if (!text) return null;
+    for (const { pattern, source } of KNOWN_SOURCES) {
+        if (pattern.test(text)) return source;
+    }
+    return null;
+}
+
+// 컨텐츠 검색 인덱스 — 모든 컨텐츠 type 한꺼번에 keyword 검색
+let _searchIndex = null;
+function buildSearchIndex() {
+    if (_searchIndex) return _searchIndex;
+    const idx = [];
+    // Episodes
+    (NC.EPISODES || []).forEach(e => {
+        idx.push({
+            type: "episode", id: e.id, title: e.title, body: `${e.setting} ${e.title}`,
+            action: { name: "startEpisode", arg: e.id },
+            label: "에피소드",
+        });
+        e.steps.forEach((s, i) => {
+            idx.push({
+                type: "episode_step", id: `${e.id}-${i}`, title: `${e.title} — ${s.title}`,
+                body: `${s.title} ${s.narration}`,
+                action: { name: "startEpisode", arg: e.id },
+                label: "에피소드 단계",
+            });
+        });
+    });
+    // Handoff patients
+    (NC.HANDOFF_PATIENTS || []).forEach(p => {
+        idx.push({
+            type: "handoff", id: p.id, title: p.title,
+            body: `${p.title} ${p.narration} ${p.keywords.join(" ")}`,
+            action: { name: "startHandoff" },
+            label: "인계 환자",
+        });
+    });
+    // Scenarios
+    (NC.SCENARIOS || []).forEach(s => {
+        idx.push({
+            type: "scenario", id: s.id, title: s.title,
+            body: `${s.title} ${s.intro} ${s.steps.map(st => st.prompt).join(" ")}`,
+            action: { name: "renderScenarioMenu" },
+            label: "임상 시나리오",
+        });
+    });
+    // Triage cases
+    (NC.TRIAGE_CASES || []).forEach(t => {
+        idx.push({
+            type: "triage", id: t.id, title: t.title,
+            body: `${t.title} ${t.patients.map(p => p.desc).join(" ")} ${t.rationale}`,
+            action: { name: "startTriage" },
+            label: "트리아지",
+        });
+    });
+    // Question generators — 한번 호출해서 카테고리/제목 수집
+    (NQ.allGenerators || []).forEach(gen => {
+        try {
+            const sample = gen();
+            idx.push({
+                type: "question", id: sample.baseId, title: `${sample.category} · ${sample.title}`,
+                body: `${sample.title} ${sample.category} ${sample.part} ${sample.desc}`,
+                action: { name: "renderQuizMenu" },
+                label: "4지선다 generator",
+            });
+        } catch {}
+    });
+    _searchIndex = idx;
+    return idx;
+}
+
+function renderSearchResults(query) {
+    const q = query.trim().toLowerCase();
+    const resultsEl = document.getElementById("search-results");
+    if (!resultsEl) return;
+    if (q.length < 2) { resultsEl.innerHTML = ""; return; }
+    const idx = buildSearchIndex();
+    const matches = idx.filter(e => e.body.toLowerCase().includes(q) || e.title.toLowerCase().includes(q)).slice(0, 20);
+    if (matches.length === 0) {
+        resultsEl.innerHTML = `<div class="search-empty">"${escapeHtml(q)}" 결과 없음</div>`;
+        return;
+    }
+    resultsEl.innerHTML = matches.map(m => {
+        const arg = m.action.arg ? ` data-arg="${escapeHtml(m.action.arg)}"` : "";
+        return `<button class="search-result" data-action="${m.action.name}"${arg}>
+          <span class="sr-type">${escapeHtml(m.label)}</span>
+          <span class="sr-title">${escapeHtml(m.title)}</span>
+        </button>`;
+    }).join("");
+}
+function openSearch() {
+    gameState.mode = "search";
+    showCoreUI(); updateStats();
+    UI.gameArea.innerHTML = `
+      <div class="card search-card">
+        <h2 class="scene-title">🔍 컨텐츠 검색</h2>
+        <input type="search" id="search-input" class="search-input" placeholder="에피소드·환자·시나리오·문제 키워드 (예: 자간증, 흡입화상, MgSO4)" autocomplete="off" aria-label="검색">
+        <div id="search-results" class="search-results-list" aria-live="polite"></div>
+        <div class="choice-list">
+          <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
+        </div>
+      </div>`;
+    const input = document.getElementById("search-input");
+    if (input) {
+        input.focus();
+        input.addEventListener("input", (e) => renderSearchResults(e.target.value));
+    }
+}
+
 // 모드별 라인 아이콘 (24px viewBox, currentColor stroke, 외부 자원 0)
 const ICONS = {
     survival:   '<svg class="mc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8 L4 12 a4 4 0 0 0 8 0 V8"/><path d="M12 14 a3 3 0 0 0 3 3 a3 3 0 0 0 3 -3 V11"/><circle cx="18" cy="9" r="2"/></svg>',
@@ -162,6 +306,7 @@ const Storage = {
             scenarios: (raw.scenarios && typeof raw.scenarios === "object" && !Array.isArray(raw.scenarios)) ? raw.scenarios : {},
             episodes: (raw.episodes && typeof raw.episodes === "object" && !Array.isArray(raw.episodes)) ? raw.episodes : {},
             errorReports: Array.isArray(raw.errorReports) ? raw.errorReports.filter(e => e && typeof e === "object") : [],
+            episodeProgress: (raw.episodeProgress && typeof raw.episodeProgress === "object" && !Array.isArray(raw.episodeProgress)) ? raw.episodeProgress : {},
             daily: (raw.daily && typeof raw.daily === "object") ? raw.daily : {},
             history: Array.isArray(raw.history) ? raw.history : [],
         };
@@ -191,11 +336,33 @@ const Storage = {
             desc: question.desc,
             choices: question.choices.map(c => ({ text: c.text, correct: !!c.correct, log: c.log })),
             ts: Date.now(),
+            // SM-2 간소화: 처음엔 즉시 복습 가능
+            interval: 0, repetitions: 0, easeFactor: 2.5, nextDue: Date.now(),
         };
         if (data.wrongQueue.length >= 200) data.wrongQueue.shift();
         data.wrongQueue.push(entry);
         Storage.save(data);
         return entry.id;
+    },
+    // SM-2 알고리즘 (간소화) — quality 0~5 (정답=5, 부분정답=3, 오답=0)
+    updateSpacedRepetition(id, quality) {
+        const data = Storage.load();
+        const item = data.wrongQueue.find(e => e.id === id);
+        if (!item) return;
+        if (quality < 3) {
+            // 오답 → 1일 후 다시
+            item.repetitions = 0;
+            item.interval = 1;
+        } else {
+            item.repetitions = (item.repetitions || 0) + 1;
+            if (item.repetitions === 1) item.interval = 1;
+            else if (item.repetitions === 2) item.interval = 3;
+            else item.interval = Math.round((item.interval || 1) * (item.easeFactor || 2.5));
+            item.easeFactor = Math.max(1.3, (item.easeFactor || 2.5) + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02)));
+        }
+        item.nextDue = Date.now() + item.interval * 24 * 60 * 60 * 1000;
+        item.lastReviewed = Date.now();
+        Storage.save(data);
     },
     removeWrongById(id) {
         const data = Storage.load();
@@ -286,6 +453,26 @@ const Storage = {
         Storage.save(data);
     },
     getErrorReports() { return Storage.load().errorReports || []; },
+
+    // 에피소드 중간 저장 / 이어하기
+    saveEpisodeProgress(id, step, hp, rep) {
+        const data = Storage.load();
+        if (!data.episodeProgress || typeof data.episodeProgress !== "object") data.episodeProgress = {};
+        data.episodeProgress[id] = { step, hp, rep, ts: Date.now() };
+        Storage.save(data);
+    },
+    getEpisodeProgress(id) {
+        const data = Storage.load();
+        return (data.episodeProgress && data.episodeProgress[id]) || null;
+    },
+    clearEpisodeProgress(id) {
+        const data = Storage.load();
+        if (data.episodeProgress && data.episodeProgress[id]) {
+            delete data.episodeProgress[id];
+            Storage.save(data);
+        }
+    },
+
     setEpisodeResult(id, ending, hp, rep) {
         const data = Storage.load();
         if (!data.episodes || typeof data.episodes !== "object") data.episodes = {};
@@ -718,6 +905,19 @@ function renderFeedback(ev, choice, opts = {}) {
     text.style.fontWeight = "normal"; text.style.marginTop = "6px";
     text.textContent = choice.log || "해설이 없습니다.";
     box.appendChild(title); box.appendChild(text);
+    // 검증된 출처 자동 표시
+    const sourceText = lookupSource(`${ev.title} ${correctChoice ? correctChoice.text : ""} ${correctChoice ? correctChoice.log : ""}`);
+    if (sourceText) {
+        const src = document.createElement("div");
+        src.className = "feedback-source";
+        src.textContent = `📚 출처: ${sourceText}`;
+        box.appendChild(src);
+    } else {
+        const noSrc = document.createElement("div");
+        noSrc.className = "feedback-source feedback-source-unverified";
+        noSrc.textContent = "ⓘ 자가 검증 — 외부 RN 감수 대기 중";
+        box.appendChild(noSrc);
+    }
     fb.appendChild(box);
 
     const next = document.createElement("button");
@@ -910,7 +1110,28 @@ function endDailyChallenge() {
 function reviewWrongAnswers() {
     resetStateForMode();
     gameState.mode = "wrong_review";
-    gameState.wrongQueue = Storage.getWrongQueue();
+    const now = Date.now();
+    const all = Storage.getWrongQueue();
+    // SM-2: 복습 만기된 항목만 (없으면 전체 큐 안내)
+    const due = all.filter(q => !q.nextDue || q.nextDue <= now);
+    gameState.wrongQueue = due.length > 0 ? due : [];
+    gameState._wrongTotalCount = all.length;
+    gameState._wrongDueCount = due.length;
+    if (all.length > 0 && due.length === 0) {
+        const nextDue = Math.min(...all.map(q => q.nextDue || now));
+        const hoursToNext = Math.max(0, Math.round((nextDue - now) / (60 * 60 * 1000)));
+        UI.gameArea.innerHTML = `
+          <div class="scene-card card">
+            <h2 class="scene-title">오늘 복습할 게 없어요</h2>
+            <p class="scene-desc">${all.length}건 오답 모두 복습 완료 상태.\n다음 복습 만기: 약 ${hoursToNext}시간 후 (spaced repetition).</p>
+            <div class="choice-list">
+              <button class="choice-btn primary" data-action="reviewWrongForce">그래도 복습할게요</button>
+              <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
+            </div>
+          </div>`;
+        showCoreUI(); updateStats();
+        return;
+    }
     if (gameState.wrongQueue.length === 0) {
         UI.gameArea.innerHTML = `
           <div class="scene-card card">
@@ -959,14 +1180,25 @@ function handleWrongReviewChoice(choice, ev) {
     if (isCorrect) {
         gameState.quizCorrect += 1; bumpCombo(); Sound.correct();
         gameState.wrongQueue.shift();
-        if (id) Storage.removeWrongById(id);
+        // SM-2: 정답이면 다음 만기 연장 (1→3→7→14→30일)
+        if (id) Storage.updateSpacedRepetition(id, 5);
     } else {
         gameState.quizWrong += 1; resetCombo(); Sound.wrong();
         const item = gameState.wrongQueue.shift();
         gameState.wrongQueue.push(item);
+        if (id) Storage.updateSpacedRepetition(id, 0);
     }
     updateStats();
     renderFeedback(ev, choice, { onNext: () => renderNextWrongQuestion() });
+}
+function reviewWrongForce() {
+    // SM-2 무시 + 전체 큐 즉시 복습
+    resetStateForMode();
+    gameState.mode = "wrong_review";
+    gameState.wrongQueue = Storage.getWrongQueue();
+    showCoreUI(); UI.logBar.innerHTML = "";
+    addLog(`강제 복습 모드 — ${gameState.wrongQueue.length}건`, "log-important");
+    renderNextWrongQuestion();
 }
 
 // =========================================================================
@@ -1252,7 +1484,12 @@ function renderEpisodeMenu() {
         <h2 class="scene-title">에피소드</h2>
         <p class="scene-desc">한 듀티 12~15단계의 연결된 스토리. 같은 환자·동료·의사가 계속 등장하고, 각 결정이 HP·평판에 누적됩니다.\n\n결과는 마지막 점수에 따라 좋은/평범/힘든 듀티 엔딩으로 갈립니다.</p>
         <div class="choice-list">
-          ${NC.EPISODES.map(e => `<button class="choice-btn primary" data-action="startEpisode" data-arg="${escapeHtml(e.id)}">${escapeHtml(e.title)}</button>`).join("")}
+          ${NC.EPISODES.map(e => {
+              const prog = Storage.getEpisodeProgress(e.id);
+              const pill = prog && prog.step > 0 && prog.step < e.steps.length
+                  ? ` <span class="mc-badge" style="position:static;background:var(--warning);">진행 중 ${prog.step}/${e.steps.length}</span>` : "";
+              return `<button class="choice-btn primary" data-action="startEpisode" data-arg="${escapeHtml(e.id)}">${escapeHtml(e.title)}${pill}</button>`;
+          }).join("")}
           <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
         </div>
       </div>`;
@@ -1262,16 +1499,58 @@ function startEpisode(target) {
     const id = target.dataset.arg;
     const ep = NC.EPISODES.find(x => x.id === id);
     if (!ep) return;
+    // 진행 중인 에피소드가 있으면 이어하기 안내
+    const progress = Storage.getEpisodeProgress(id);
+    if (progress && progress.step > 0 && progress.step < ep.steps.length) {
+        return renderEpisodeResumeChoice(ep, progress);
+    }
+    beginEpisode(id, 0, 100, 0);
+}
+
+function renderEpisodeResumeChoice(ep, progress) {
+    gameState.mode = "episode_menu";
+    showCoreUI(); updateStats();
+    const pctDone = Math.round((progress.step / ep.steps.length) * 100);
+    UI.gameArea.innerHTML = `
+      <div class="scene-card card">
+        <h2 class="scene-title">이어하기? — ${escapeHtml(ep.title)}</h2>
+        <p class="scene-desc">진행 중인 에피소드가 있습니다.\nStep ${progress.step + 1}/${ep.steps.length} (${pctDone}% 완료)\nHP ${progress.hp} · 평판 ${progress.rep}</p>
+        <div class="choice-list">
+          <button class="choice-btn primary" data-action="episodeResume" data-arg="${escapeHtml(ep.id)}">이어하기</button>
+          <button class="choice-btn" data-action="episodeRestart" data-arg="${escapeHtml(ep.id)}">처음부터 다시</button>
+          <button class="choice-btn" data-action="renderEpisodeMenu">에피소드 목록</button>
+        </div>
+      </div>`;
+}
+function episodeResume(target) {
+    const id = target.dataset.arg;
+    const ep = NC.EPISODES.find(x => x.id === id);
+    const progress = Storage.getEpisodeProgress(id);
+    if (!ep || !progress) return;
+    beginEpisode(id, progress.step, progress.hp, progress.rep);
+}
+function episodeRestart(target) {
+    const id = target.dataset.arg;
+    Storage.clearEpisodeProgress(id);
+    beginEpisode(id, 0, 100, 0);
+}
+function beginEpisode(id, step, hp, rep) {
+    const ep = NC.EPISODES.find(x => x.id === id);
+    if (!ep) return;
     resetStateForMode();
     gameState.mode = "episode";
     gameState.episodeId = id;
-    gameState.episodeStep = 0;
-    gameState.hp = 100; gameState.rep = 0;
+    gameState.episodeStep = step;
+    gameState.hp = hp; gameState.rep = rep;
     showCoreUI(); UI.logBar.innerHTML = "";
-    addLog(`에피소드: ${ep.title}`, "log-important");
-    addLog(ep.setting);
-    if (ep.patients) ep.patients.forEach(p => addLog(`${p.ref} — ${p.desc}`));
-    if (ep.cast) addLog(`등장: ${ep.cast}`);
+    addLog(`에피소드 ${step === 0 ? "시작" : "이어가기"}: ${ep.title}`, "log-important");
+    if (step === 0) {
+        addLog(ep.setting);
+        if (ep.patients) ep.patients.forEach(p => addLog(`${p.ref} — ${p.desc}`));
+        if (ep.cast) addLog(`등장: ${ep.cast}`);
+    } else {
+        addLog(`Step ${step + 1}/${ep.steps.length} 부터 이어갑니다.`);
+    }
     renderEpisodeStep();
 }
 
@@ -1307,9 +1586,13 @@ function handleEpisodeChoice(choice, ev) {
     const isCorrect = isCorrectChoice(choice);
     if (isCorrect) { bumpCombo(); Sound.correct(); addLog(`[정답] ${choice.log}`, "log-good"); }
     else { resetCombo(); Sound.wrong(); addLog(`[오답] ${choice.log}`, "log-bad"); }
-    // HP 0 이하여도 에피소드는 계속 진행 (학습 흐름 유지) — 단, 마지막 ending 에서 차이남
     renderFeedback(ev, choice, {
-        onNext: () => { gameState.episodeStep += 1; renderEpisodeStep(); },
+        onNext: () => {
+            gameState.episodeStep += 1;
+            // 다음 step 으로 진행하면서 자동 저장
+            Storage.saveEpisodeProgress(gameState.episodeId, gameState.episodeStep, gameState.hp, gameState.rep);
+            renderEpisodeStep();
+        },
     });
 }
 
@@ -1325,6 +1608,7 @@ function endEpisode() {
     const ending = ep.endings[endingKey];
     Storage.addHistory({ mode: "episode", at: Date.now(), id: gameState.episodeId, hp: gameState.hp, rep: gameState.rep, ending: endingKey });
     Storage.setEpisodeResult(gameState.episodeId, endingKey, gameState.hp, gameState.rep);
+    Storage.clearEpisodeProgress(gameState.episodeId); // 완수 시 진행 클리어
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
         <h2 class="scene-title">${escapeHtml(ending.title)}</h2>
@@ -1843,6 +2127,13 @@ function returnToMenu() {
         Storage.setMockBest(correct);
         Storage.addHistory({ mode: "mock", at: Date.now(), total, answered, correct, accuracy: acc, reason: "abort" });
     }
+    // 에피소드 중간 이탈 시 진행 자동 저장
+    if (gameState.mode === "episode" && gameState.episodeId) {
+        const ep = NC.EPISODES.find(x => x.id === gameState.episodeId);
+        if (ep && gameState.episodeStep > 0 && gameState.episodeStep < ep.steps.length) {
+            Storage.saveEpisodeProgress(gameState.episodeId, gameState.episodeStep, gameState.hp, gameState.rep);
+        }
+    }
     // 일일 챌린지 부분 진행 상태 저장 (메뉴에서 재방문 시 대시보드에 노출)
     if (gameState.mode === "daily" && gameState.dailySolved > 0 && gameState.dailySolved < DAILY_CHALLENGE_TOTAL) {
         Storage.setDaily(todayKey(), {
@@ -1926,6 +2217,11 @@ function returnToMenu() {
             ${ICONS.dash}
             <span class="mc-title">대시보드</span>
             <span class="mc-sub">학습 통계</span>
+          </button>
+          <button class="mode-card wide" data-mode="training" data-action="openSearch">
+            <svg class="mc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+            <span class="mc-title">🔍 컨텐츠 검색</span>
+            <span class="mc-sub">에피소드·인계·시나리오·문제 전체 키워드 검색</span>
           </button>
         </div>
         <p class="menu-kbd-row">
@@ -2152,6 +2448,11 @@ const DELEGATED_ACTIONS = {
     submitErrorReport: () => submitErrorReport(),
     submitErrorReportGithub: () => submitErrorReportGithub(),
     closeErrorReport: () => closeErrorReport(),
+    // 이어하기 + 검색 + 강제 복습
+    episodeResume: (t) => episodeResume(t),
+    episodeRestart: (t) => episodeRestart(t),
+    openSearch: () => openSearch(),
+    reviewWrongForce: () => reviewWrongForce(),
 };
 function handleDelegatedAction(e) {
     const target = e.target.closest("[data-action]");
