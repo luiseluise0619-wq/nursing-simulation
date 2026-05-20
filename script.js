@@ -140,6 +140,77 @@ function lookupSource(text) {
     return null;
 }
 
+// 모드별 진행 캡처 — returnToMenu 시 호출
+function captureModeProgress() {
+    const m = gameState.mode;
+    if (m === "survival" && gameState.eventCount > 0 && gameState.eventCount < MAX_PROGRESS_EVENTS) {
+        Storage.setModeProgress("survival", {
+            hp: gameState.hp, rep: gameState.rep, eventCount: gameState.eventCount,
+            items: gameState.items.slice(), currentShift: gameState.currentShift,
+            difficulty: gameState.difficulty, combo: gameState.combo,
+            firedStoryBeats: gameState.firedStoryBeats.slice(),
+        });
+    } else if (m === "mock" && !gameState._mockEnded && gameState.mockAnswered > 0 && gameState.mockAnswered < gameState.mockTotal) {
+        const remainMs = Math.max(0, gameState.mockDeadlineTs - Date.now());
+        Storage.setModeProgress("mock", {
+            mockTotal: gameState.mockTotal, mockAnswered: gameState.mockAnswered,
+            mockCorrect: gameState.mockCorrect, remainMs, combo: gameState.combo,
+        });
+    } else if (m === "daily" && gameState.dailySolved > 0 && gameState.dailySolved < DAILY_CHALLENGE_TOTAL) {
+        Storage.setModeProgress("daily", {
+            dailySolved: gameState.dailySolved, dailyCorrect: gameState.dailyCorrect,
+            dailySeed: gameState.dailySeed,
+        });
+    } else if (m === "scenario" && gameState.scenarioId && gameState.scenarioStep > 0) {
+        const s = NC.SCENARIOS.find(x => x.id === gameState.scenarioId);
+        if (s && gameState.scenarioStep < s.steps.length) {
+            Storage.setModeProgress("scenario", {
+                scenarioId: gameState.scenarioId, scenarioStep: gameState.scenarioStep,
+                hp: gameState.hp, rep: gameState.rep,
+            });
+        }
+    } else if (m === "handoff" && gameState.handoffPool && gameState.handoffIndex > 0 && gameState.handoffIndex < gameState.handoffPool.length) {
+        Storage.setModeProgress("handoff", {
+            handoffPool: gameState.handoffPool.slice(),
+            handoffIndex: gameState.handoffIndex,
+            handoffCorrect: gameState.handoffCorrect,
+            handoffTotal: gameState.handoffTotal,
+        });
+    } else if (m === "triage" && gameState.triageIndex > 0 && gameState.triageIndex < NC.TRIAGE_CASES.length) {
+        Storage.setModeProgress("triage", {
+            triageIndex: gameState.triageIndex,
+            triageCorrect: gameState.triageCorrect,
+            triageTotal: gameState.triageTotal,
+        });
+    } else if (m === "quiz" && gameState.quizCategory && gameState.quizSolved > 0) {
+        Storage.setModeProgress("quiz", {
+            quizCategory: gameState.quizCategory,
+            quizSolved: gameState.quizSolved,
+            quizCorrect: gameState.quizCorrect,
+            quizWrong: gameState.quizWrong,
+        });
+    }
+}
+
+// 이어하기 카드 — 공통 UI
+function renderResumeChoice(mode, title, summary, onResume, onRestart) {
+    showCoreUI(); updateStats();
+    UI.gameArea.innerHTML = `
+      <div class="scene-card card">
+        <h2 class="scene-title">이어하기? — ${escapeHtml(title)}</h2>
+        <p class="scene-desc">${escapeHtml(summary)}</p>
+        <div class="choice-list">
+          <button class="choice-btn primary" id="resume-yes">이어하기</button>
+          <button class="choice-btn" id="resume-no">처음부터 다시</button>
+          <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
+        </div>
+      </div>`;
+    const yes = document.getElementById("resume-yes");
+    const no = document.getElementById("resume-no");
+    if (yes) yes.addEventListener("click", () => { onResume(); });
+    if (no) no.addEventListener("click", () => { Storage.clearModeProgress(mode); onRestart(); });
+}
+
 // 컨텐츠 검색 인덱스 — 모든 컨텐츠 type 한꺼번에 keyword 검색
 let _searchIndex = null;
 function buildSearchIndex() {
@@ -308,6 +379,7 @@ const Storage = {
             episodes: (raw.episodes && typeof raw.episodes === "object" && !Array.isArray(raw.episodes)) ? raw.episodes : {},
             errorReports: Array.isArray(raw.errorReports) ? raw.errorReports.filter(e => e && typeof e === "object") : [],
             episodeProgress: (raw.episodeProgress && typeof raw.episodeProgress === "object" && !Array.isArray(raw.episodeProgress)) ? raw.episodeProgress : {},
+            modeProgress: (raw.modeProgress && typeof raw.modeProgress === "object" && !Array.isArray(raw.modeProgress)) ? raw.modeProgress : {},
             daily: (raw.daily && typeof raw.daily === "object") ? raw.daily : {},
             history: Array.isArray(raw.history) ? raw.history : [],
         };
@@ -470,6 +542,25 @@ const Storage = {
         const data = Storage.load();
         if (data.episodeProgress && data.episodeProgress[id]) {
             delete data.episodeProgress[id];
+            Storage.save(data);
+        }
+    },
+
+    // 모드별 통합 진행 저장 — survival·mock·daily·handoff·triage·scenario·quiz 공통
+    setModeProgress(mode, payload) {
+        const data = Storage.load();
+        if (!data.modeProgress || typeof data.modeProgress !== "object") data.modeProgress = {};
+        data.modeProgress[mode] = { ...payload, ts: Date.now() };
+        Storage.save(data);
+    },
+    getModeProgress(mode) {
+        const data = Storage.load();
+        return (data.modeProgress && data.modeProgress[mode]) || null;
+    },
+    clearModeProgress(mode) {
+        const data = Storage.load();
+        if (data.modeProgress && data.modeProgress[mode]) {
+            delete data.modeProgress[mode];
             Storage.save(data);
         }
     },
@@ -740,7 +831,6 @@ function dispatchChoice(choice, ev, idx, mode) {
     else if (mode === "wrong_review") handleWrongReviewChoice(choice, ev);
     else if (mode === "scenario") handleScenarioChoice(choice, ev);
     else if (mode === "episode") handleEpisodeChoice(choice, ev);
-    else if (mode === "episode_quiz") handleEpisodeQuizChoice(choice, ev);
     else handleQuizChoice(choice, ev);
 }
 
@@ -793,16 +883,38 @@ function resetStateForMode() {
     gameState.triagePicks = {};
     gameState.scenarioId = null; gameState.scenarioStep = 0;
     gameState.episodeId = null; gameState.episodeStep = 0;
-    gameState._quizAnswered = false;
     gameState.firedStoryBeats = [];
 }
 function initSurvival() {
+    const prog = Storage.getModeProgress("survival");
+    if (prog && prog.eventCount > 0 && prog.eventCount < MAX_PROGRESS_EVENTS) {
+        return renderResumeChoice(
+            "survival",
+            "실전 듀티",
+            `이벤트 ${prog.eventCount}/${MAX_PROGRESS_EVENTS} · HP ${prog.hp} · 평판 ${prog.rep}`,
+            () => beginSurvival(prog),
+            () => beginSurvival(null),
+        );
+    }
+    beginSurvival(null);
+}
+function beginSurvival(prog) {
     resetStateForMode();
     gameState.mode = "survival"; gameState.quizCategory = null;
-    gameState.firedStoryBeats = [];
+    if (prog) {
+        gameState.hp = prog.hp; gameState.rep = prog.rep;
+        gameState.eventCount = prog.eventCount;
+        gameState.items = (prog.items || []).slice();
+        gameState.currentShift = prog.currentShift || gameState.currentShift;
+        gameState.difficulty = prog.difficulty || 1.0;
+        gameState.combo = prog.combo || 0;
+        gameState.firedStoryBeats = (prog.firedStoryBeats || []).slice();
+    } else {
+        gameState.firedStoryBeats = [];
+    }
     showCoreUI(); UI.logBar.innerHTML = "";
-    addLog("듀티가 시작되었습니다. 첫 판단부터 중요합니다.", "log-important");
-    renderSurvivalEvent("intro");
+    addLog(prog ? `듀티 이어가기 — 이벤트 ${prog.eventCount}부터.` : "듀티가 시작되었습니다. 첫 판단부터 중요합니다.", "log-important");
+    renderSurvivalEvent(prog ? "random_hub" : "intro");
 }
 function renderSurvivalEvent(eventId) {
     let ev;
@@ -962,12 +1074,35 @@ function handleQuizChoice(choice, ev) {
 // 모의고사 (시간제한 + 결과 채점표)
 // =========================================================================
 function startMockExam() {
+    const prog = Storage.getModeProgress("mock");
+    if (prog && prog.mockAnswered > 0 && prog.mockAnswered < prog.mockTotal && prog.remainMs > 30000) {
+        return renderResumeChoice(
+            "mock",
+            "모의고사",
+            `${prog.mockAnswered}/${prog.mockTotal} 문제 · 정답 ${prog.mockCorrect} · 남은 시간 ${Math.round(prog.remainMs / 60000)}분`,
+            () => beginMockExam(prog),
+            () => beginMockExam(null),
+        );
+    }
+    beginMockExam(null);
+}
+function beginMockExam(prog) {
     resetStateForMode();
     gameState.mode = "mock";
     gameState._mockEnded = false;
-    gameState.mockTotal = MOCK_EXAM_TOTAL;
-    gameState.mockAnswered = 0; gameState.mockCorrect = 0; gameState.mockWrong = [];
-    gameState.mockDeadlineTs = Date.now() + MOCK_EXAM_SECONDS * 1000;
+    if (prog) {
+        gameState.mockTotal = prog.mockTotal;
+        gameState.mockAnswered = prog.mockAnswered;
+        gameState.mockCorrect = prog.mockCorrect;
+        gameState.combo = prog.combo || 0;
+        gameState.mockDeadlineTs = Date.now() + prog.remainMs;
+        gameState.mockWrong = [];
+    } else {
+        gameState.mockTotal = MOCK_EXAM_TOTAL;
+        gameState.mockAnswered = 0; gameState.mockCorrect = 0; gameState.mockWrong = [];
+        gameState.mockDeadlineTs = Date.now() + MOCK_EXAM_SECONDS * 1000;
+    }
+    Storage.clearModeProgress("mock"); // 시작 시 클리어 (도중 자동 저장 누적)
     showCoreUI(); UI.logBar.innerHTML = "";
     addLog(`모의고사 시작 — ${MOCK_EXAM_TOTAL}문제 / ${MOCK_EXAM_SECONDS / 60}분`, "log-important");
     if (gameState.mockTimerId) clearInterval(gameState.mockTimerId);
@@ -1061,13 +1196,29 @@ function pickDailyGenerators(seed, count) {
     return out;
 }
 function startDailyChallenge() {
+    const prog = Storage.getModeProgress("daily");
+    const todaySeed = dailySeed(todayKey());
+    if (prog && prog.dailySolved > 0 && prog.dailySolved < DAILY_CHALLENGE_TOTAL && prog.dailySeed === todaySeed) {
+        return renderResumeChoice(
+            "daily",
+            "일일 챌린지",
+            `${prog.dailySolved}/${DAILY_CHALLENGE_TOTAL} 완료 · 정답 ${prog.dailyCorrect}`,
+            () => beginDailyChallenge(prog),
+            () => beginDailyChallenge(null),
+        );
+    }
+    beginDailyChallenge(null);
+}
+function beginDailyChallenge(prog) {
     resetStateForMode();
     gameState.mode = "daily";
-    gameState.dailySolved = 0; gameState.dailyCorrect = 0;
     gameState.dailySeed = dailySeed(todayKey());
     gameState.dailyQuestions = pickDailyGenerators(gameState.dailySeed, DAILY_CHALLENGE_TOTAL);
+    gameState.dailySolved = prog ? prog.dailySolved : 0;
+    gameState.dailyCorrect = prog ? prog.dailyCorrect : 0;
+    Storage.clearModeProgress("daily");
     showCoreUI(); UI.logBar.innerHTML = "";
-    addLog(`오늘의 일일 챌린지 — ${DAILY_CHALLENGE_TOTAL}문제`, "log-important");
+    addLog(prog ? `일일 챌린지 이어가기 — ${prog.dailySolved}/${DAILY_CHALLENGE_TOTAL}` : `오늘의 일일 챌린지 — ${DAILY_CHALLENGE_TOTAL}문제`, "log-important");
     renderNextDailyQuestion();
 }
 function renderNextDailyQuestion() {
@@ -1245,11 +1396,32 @@ function pickHandoffSession(n) {
 }
 
 function startHandoff() {
+    const prog = Storage.getModeProgress("handoff");
+    if (prog && prog.handoffPool && prog.handoffIndex > 0 && prog.handoffIndex < prog.handoffPool.length) {
+        return renderResumeChoice(
+            "handoff",
+            "인계 시뮬레이터",
+            `${prog.handoffIndex}/${prog.handoffPool.length} 환자 완료 · 정답 키워드 ${prog.handoffCorrect}/${prog.handoffTotal}`,
+            () => beginHandoff(prog),
+            () => beginHandoff(null),
+        );
+    }
+    beginHandoff(null);
+}
+function beginHandoff(prog) {
     resetStateForMode();
     gameState.mode = "handoff";
-    gameState.handoffPool = pickHandoffSession(HANDOFF_SESSION_SIZE);
+    if (prog) {
+        gameState.handoffPool = prog.handoffPool.slice();
+        gameState.handoffIndex = prog.handoffIndex;
+        gameState.handoffCorrect = prog.handoffCorrect;
+        gameState.handoffTotal = prog.handoffTotal;
+    } else {
+        gameState.handoffPool = pickHandoffSession(HANDOFF_SESSION_SIZE);
+    }
+    Storage.clearModeProgress("handoff");
     showCoreUI(); UI.logBar.innerHTML = "";
-    addLog(`인계 시뮬레이터 — 100명 풀에서 ${HANDOFF_SESSION_SIZE}명 무작위 출제.`, "log-important");
+    addLog(prog ? `인계 이어가기 — ${prog.handoffIndex}/${prog.handoffPool.length} 환자부터.` : `인계 시뮬레이터 — 100명 풀에서 ${HANDOFF_SESSION_SIZE}명 무작위 출제.`, "log-important");
     renderHandoffPatient();
 }
 
@@ -1360,10 +1532,29 @@ function endHandoff() {
 // 트리아지 (다중환자 우선순위)
 // =========================================================================
 function startTriage() {
+    const prog = Storage.getModeProgress("triage");
+    if (prog && prog.triageIndex > 0 && prog.triageIndex < NC.TRIAGE_CASES.length) {
+        return renderResumeChoice(
+            "triage",
+            "응급실 트리아지",
+            `${prog.triageIndex}/${NC.TRIAGE_CASES.length} 케이스 완료 · 정답 ${prog.triageCorrect}/${prog.triageTotal}`,
+            () => beginTriage(prog),
+            () => beginTriage(null),
+        );
+    }
+    beginTriage(null);
+}
+function beginTriage(prog) {
     resetStateForMode();
     gameState.mode = "triage";
+    if (prog) {
+        gameState.triageIndex = prog.triageIndex;
+        gameState.triageCorrect = prog.triageCorrect;
+        gameState.triageTotal = prog.triageTotal;
+    }
+    Storage.clearModeProgress("triage");
     showCoreUI(); UI.logBar.innerHTML = "";
-    addLog("응급실 트리아지 — 5명 환자에게 1(최우선)~5(후순위)를 매기세요.", "log-important");
+    addLog(prog ? `트리아지 이어가기 — ${prog.triageIndex}번째 케이스부터.` : "응급실 트리아지 — 5명 환자에게 1(최우선)~5(후순위)를 매기세요.", "log-important");
     renderTriageCase();
 }
 
@@ -1562,11 +1753,6 @@ function renderEpisodeStep() {
     if (!ep) return;
     if (gameState.episodeStep >= ep.steps.length) { endEpisode(); return; }
     const step = ep.steps[gameState.episodeStep];
-    // 임상 지식 미니 문제가 있으면 먼저 표시, 답 후 행동 선택지로 진행
-    if (step.clinicalQuiz && !gameState._quizAnswered) {
-        return renderEpisodeQuiz(ep, step);
-    }
-    gameState._quizAnswered = false;
     const stepNum = gameState.episodeStep + 1;
     const totalSteps = ep.steps.length;
     const ev = {
@@ -1589,48 +1775,6 @@ function renderEpisodeStep() {
     });
 }
 
-function renderEpisodeQuiz(ep, step) {
-    const stepNum = gameState.episodeStep + 1;
-    const totalSteps = ep.steps.length;
-    const q = step.clinicalQuiz;
-    const ev = {
-        baseId: "episode-quiz",
-        category: ep.title,
-        part: `${step.time || ""} · Step ${stepNum}/${totalSteps} · 🧠 임상 지식`,
-        emoji: "🧠",
-        title: q.prompt,
-        desc: step.narration,
-        choices: q.choices.map(c => ({
-            text: c.text, correct: !!c.correct,
-            effect: { hp: 0, rep: c.correct ? 3 : -1 },
-            log: c.log || "",
-        })),
-    };
-    renderSceneCard(ev, {
-        mode: "episode_quiz",
-        questionIndex: stepNum,
-        meta: [ep.title, step.time || "", "임상 지식 체크"],
-    });
-}
-
-function handleEpisodeQuizChoice(choice, ev) {
-    const isCorrect = isCorrectChoice(choice);
-    // 지식 문제는 HP/REP 변동 없음 — 통계만 누적 (퀴즈 정답률)
-    gameState.rep += isCorrect ? 3 : -1;
-    if (isCorrect) { Sound.correct(); addLog(`[지식 정답] ${choice.log}`, "log-good"); }
-    else { Sound.wrong(); addLog(`[지식 오답] ${choice.log}`, "log-bad"); }
-    gameState.quizCorrect = (gameState.quizCorrect || 0) + (isCorrect ? 1 : 0);
-    gameState.quizSolved = (gameState.quizSolved || 0) + 1;
-    updateStats();
-    renderFeedback(ev, choice, {
-        nextLabel: "→ 임상 결정으로",
-        onNext: () => {
-            gameState._quizAnswered = true;
-            renderEpisodeStep();
-        },
-    });
-}
-
 function handleEpisodeChoice(choice, ev) {
     applyChoiceEffect(choice);
     const isCorrect = isCorrectChoice(choice);
@@ -1639,7 +1783,6 @@ function handleEpisodeChoice(choice, ev) {
     renderFeedback(ev, choice, {
         onNext: () => {
             gameState.episodeStep += 1;
-            gameState._quizAnswered = false; // 다음 step 의 quiz 다시 활성화
             // 다음 step 으로 진행하면서 자동 저장
             Storage.saveEpisodeProgress(gameState.episodeId, gameState.episodeStep, gameState.hp, gameState.rep);
             renderEpisodeStep();
@@ -1702,14 +1845,31 @@ function startScenario(target) {
     const id = target.dataset.arg;
     const s = NC.SCENARIOS.find(x => x.id === id);
     if (!s) return;
+    const prog = Storage.getModeProgress("scenario");
+    if (prog && prog.scenarioId === id && prog.scenarioStep > 0 && prog.scenarioStep < s.steps.length) {
+        return renderResumeChoice(
+            "scenario",
+            s.title,
+            `Step ${prog.scenarioStep + 1}/${s.steps.length} · HP ${prog.hp} · 평판 ${prog.rep}`,
+            () => beginScenario(id, prog),
+            () => beginScenario(id, null),
+        );
+    }
+    beginScenario(id, null);
+}
+function beginScenario(id, prog) {
+    const s = NC.SCENARIOS.find(x => x.id === id);
+    if (!s) return;
     resetStateForMode();
     gameState.mode = "scenario";
     gameState.scenarioId = id;
-    gameState.scenarioStep = 0;
-    gameState.hp = 100; gameState.rep = 0;
+    gameState.scenarioStep = prog ? prog.scenarioStep : 0;
+    gameState.hp = prog ? prog.hp : 100;
+    gameState.rep = prog ? prog.rep : 0;
+    Storage.clearModeProgress("scenario");
     showCoreUI(); UI.logBar.innerHTML = "";
-    addLog(`시나리오 시작: ${s.title}`, "log-important");
-    addLog(s.intro);
+    addLog(prog ? `시나리오 이어가기: ${s.title} (Step ${prog.scenarioStep + 1})` : `시나리오 시작: ${s.title}`, "log-important");
+    if (!prog) addLog(s.intro);
     renderScenarioStep();
 }
 
@@ -2387,14 +2547,11 @@ function onboardFinish() {
 // 메인 메뉴 (returnToMenu)
 // =========================================================================
 function returnToMenu() {
-    // 진행 중인 모의고사 → abort 로 일관 처리 (endMockExam이 history/timer 정리)
-    if (gameState.mode === "mock" && !gameState._mockEnded) {
-        gameState._mockEnded = true;
-        if (gameState.mockTimerId) { clearInterval(gameState.mockTimerId); gameState.mockTimerId = null; }
-        const total = gameState.mockTotal, correct = gameState.mockCorrect, answered = gameState.mockAnswered;
-        const acc = answered > 0 ? Math.round((correct / answered) * 100) : 0;
-        Storage.setMockBest(correct);
-        Storage.addHistory({ mode: "mock", at: Date.now(), total, answered, correct, accuracy: acc, reason: "abort" });
+    // 1단계: 모든 게임 모드 진행 저장 (이어하기 가능하게 — 모의고사 타이머 정지 전)
+    captureModeProgress();
+    // 2단계: 모의고사 타이머만 정리 (abort 로 처리하지 않음 — 사용자가 메뉴로 가는 건 일시정지)
+    if (gameState.mode === "mock" && gameState.mockTimerId) {
+        clearInterval(gameState.mockTimerId); gameState.mockTimerId = null;
     }
     // 에피소드 중간 이탈 시 진행 자동 저장
     if (gameState.mode === "episode" && gameState.episodeId) {

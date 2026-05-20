@@ -649,6 +649,84 @@ describe("v1.0 정식 출시 — 설정·백업/복원·About·Privacy", () => {
     });
 });
 
+describe("모든 모드 이어하기 (returnToMenu → 재진입)", () => {
+    test("실전 듀티 중간 이탈 시 진행 저장 → 재진입 시 '이어하기' 카드", () => {
+        loadScript();
+        document.querySelector('[data-action="initSurvival"]').click();
+        // intro 답변 (handleSurvivalChoice 는 feedback 미경유 — 직접 다음 이벤트로)
+        document.querySelector("#choice-list .choice-btn").click();
+        // 메뉴로
+        document.querySelector('[data-action="returnToMenu"]').click();
+        const stored = JSON.parse(localStorage.getItem("nurseSim:v1") || "{}");
+        expect(stored.modeProgress).toBeDefined();
+        expect(stored.modeProgress.survival).toBeDefined();
+        expect(stored.modeProgress.survival.eventCount).toBeGreaterThan(0);
+        // 재진입 시 이어하기 카드
+        document.querySelector('[data-action="initSurvival"]').click();
+        expect(document.getElementById("resume-yes")).not.toBeNull();
+    });
+
+    test("모의고사 중간 이탈 시 진행 저장 → 재진입 시 '이어하기' 카드", () => {
+        loadScript();
+        document.querySelector('[data-action="startMockExam"]').click();
+        // 첫 문제 답변
+        const firstBtn = document.querySelector("#choice-list .choice-btn");
+        firstBtn.click();
+        const next = document.querySelector('#feedback-zone .choice-btn.primary');
+        next.click();
+        // 메뉴로
+        document.querySelector('[data-action="returnToMenu"]').click();
+        const stored = JSON.parse(localStorage.getItem("nurseSim:v1") || "{}");
+        expect(stored.modeProgress.mock).toBeDefined();
+        expect(stored.modeProgress.mock.mockAnswered).toBe(1);
+        // 재진입 시 이어하기 카드
+        document.querySelector('[data-action="startMockExam"]').click();
+        expect(document.getElementById("resume-yes")).not.toBeNull();
+    });
+
+    test("일일 챌린지 중간 이탈 → 같은 날 재진입 시 이어하기", () => {
+        loadScript();
+        document.querySelector('[data-action="startDailyChallenge"]').click();
+        const firstBtn = document.querySelector("#choice-list .choice-btn");
+        firstBtn.click();
+        document.querySelector('#feedback-zone .choice-btn.primary').click();
+        document.querySelector('[data-action="returnToMenu"]').click();
+        const stored = JSON.parse(localStorage.getItem("nurseSim:v1") || "{}");
+        expect(stored.modeProgress.daily).toBeDefined();
+        document.querySelector('[data-action="startDailyChallenge"]').click();
+        expect(document.getElementById("resume-yes")).not.toBeNull();
+    });
+
+    test("인계 시뮬 중간 이탈 → 재진입 시 이어하기", () => {
+        loadScript();
+        document.querySelector('[data-action="startHandoff"]').click();
+        document.getElementById("handoff-answer").value = "test";
+        document.querySelector('[data-action="handoffSubmit"]').click();
+        document.querySelector('[data-action="handoffNext"]').click();
+        document.querySelector('[data-action="returnToMenu"]').click();
+        const stored = JSON.parse(localStorage.getItem("nurseSim:v1") || "{}");
+        expect(stored.modeProgress.handoff).toBeDefined();
+        expect(stored.modeProgress.handoff.handoffIndex).toBeGreaterThan(0);
+        document.querySelector('[data-action="startHandoff"]').click();
+        expect(document.getElementById("resume-yes")).not.toBeNull();
+    });
+
+    test("'처음부터 다시' 클릭 시 이전 진행 클리어 후 새로 시작", () => {
+        loadScript();
+        // 모의고사 진행 + 이탈
+        document.querySelector('[data-action="startMockExam"]').click();
+        document.querySelector("#choice-list .choice-btn").click();
+        document.querySelector('#feedback-zone .choice-btn.primary').click();
+        document.querySelector('[data-action="returnToMenu"]').click();
+        // 재진입 + 처음부터
+        document.querySelector('[data-action="startMockExam"]').click();
+        document.getElementById("resume-no").click();
+        const stored = JSON.parse(localStorage.getItem("nurseSim:v1") || "{}");
+        // 처음부터 = 새로 시작했으므로 modeProgress 초기 mockAnswered 는 0 (또는 클리어)
+        expect(stored.modeProgress.mock === undefined || stored.modeProgress.mock.mockAnswered === 0).toBe(true);
+    });
+});
+
 describe("P0 신규 — 이어하기·SM-2·검색·출처 표시", () => {
     test("에피소드 진행 중 returnToMenu 시 자동 저장된다", () => {
         loadScript();
@@ -739,29 +817,6 @@ describe("P0 신규 — 이어하기·SM-2·검색·출처 표시", () => {
         expect(src).not.toBeNull();
     });
 
-    test("clinicalQuiz 가 있는 에피소드 step 진입 시 임상 지식 문제가 먼저 노출된다", () => {
-        loadScript();
-        document.querySelector('[data-action="renderEpisodeMenu"]').click();
-        document.querySelector('[data-action="startEpisode"]').click();
-        // Episode 1 의 step 3 (503호 갑상선) 까지 진행 — clinicalQuiz 가 있음
-        const C = require("../content.js");
-        const ep = C.EPISODES[0];
-        for (let i = 0; i < 2; i++) {
-            const correct = ep.steps[i].choices.find(c => c.correct).text;
-            const btns = [...document.querySelectorAll("#choice-list .choice-btn")];
-            const target = btns.find(b => b.textContent.includes(correct.slice(0, 8)));
-            if (target) target.click();
-            const next = document.querySelector('#feedback-zone .choice-btn.primary');
-            if (next) next.click();
-        }
-        // step 3 의 clinicalQuiz prompt 가 노출
-        const sceneTitle = document.querySelector(".scene-title");
-        expect(sceneTitle).not.toBeNull();
-        const expected = ep.steps[2].clinicalQuiz && ep.steps[2].clinicalQuiz.prompt;
-        if (expected) {
-            expect(sceneTitle.textContent).toContain(expected.slice(0, 10));
-        }
-    });
 });
 
 describe("면책 스트립 + 버전 배지 + 오류 신고 (출시 안전장치)", () => {
