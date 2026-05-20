@@ -161,6 +161,7 @@ const Storage = {
             onboarded: raw.onboarded === true,
             scenarios: (raw.scenarios && typeof raw.scenarios === "object" && !Array.isArray(raw.scenarios)) ? raw.scenarios : {},
             episodes: (raw.episodes && typeof raw.episodes === "object" && !Array.isArray(raw.episodes)) ? raw.episodes : {},
+            errorReports: Array.isArray(raw.errorReports) ? raw.errorReports.filter(e => e && typeof e === "object") : [],
             daily: (raw.daily && typeof raw.daily === "object") ? raw.daily : {},
             history: Array.isArray(raw.history) ? raw.history : [],
         };
@@ -273,6 +274,18 @@ const Storage = {
         };
         Storage.save(data);
     },
+    addErrorReport(entry) {
+        const data = Storage.load();
+        if (!Array.isArray(data.errorReports)) data.errorReports = [];
+        data.errorReports.push({
+            id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+            ts: Date.now(),
+            ...entry,
+        });
+        if (data.errorReports.length > 200) data.errorReports.shift();
+        Storage.save(data);
+    },
+    getErrorReports() { return Storage.load().errorReports || []; },
     setEpisodeResult(id, ending, hp, rep) {
         const data = Storage.load();
         if (!data.episodes || typeof data.episodes !== "object") data.episodes = {};
@@ -1555,6 +1568,104 @@ function confirmClearStats() {
 }
 
 // =========================================================================
+// 오류 신고 — 어디서든 접근 가능한 컨텐츠 신고 화면
+// =========================================================================
+function openErrorReport() {
+    if (UI.modal.classList.contains("active")) return;
+    // 현재 컨텍스트 자동 캡처
+    const sceneTitle = document.querySelector(".scene-title");
+    const ctx = {
+        mode: gameState.mode,
+        title: sceneTitle ? sceneTitle.textContent : "",
+        episode: gameState.episodeId || null,
+        scenario: gameState.scenarioId || null,
+        category: gameState.quizCategory || null,
+    };
+    gameState._reportContext = ctx;
+    gameState._reportReturn = { mode: gameState.mode, html: UI.gameArea.innerHTML };
+    hideCoreUI();
+    UI.topBar.classList.remove("hidden");
+    UI.gameArea.innerHTML = `
+      <div class="card report-card">
+        <h2 class="menu-title">🚩 컨텐츠 오류 신고</h2>
+        <p class="menu-tagline">잘못된 답·해설·약물 정보·맞춤법 등 모든 오류를 신고해 주세요. 본인 학습과 다른 사용자 안전에 직접 도움됩니다.</p>
+        <div class="report-context">
+          <strong>신고 컨텍스트</strong><br>
+          모드: ${escapeHtml(ctx.mode || "메뉴")}<br>
+          ${ctx.title ? `위치: ${escapeHtml(ctx.title)}<br>` : ""}
+          ${ctx.episode ? `에피소드: ${escapeHtml(ctx.episode)}<br>` : ""}
+          ${ctx.scenario ? `시나리오: ${escapeHtml(ctx.scenario)}<br>` : ""}
+          ${ctx.category ? `카테고리: ${escapeHtml(ctx.category)}` : ""}
+        </div>
+        <label for="report-text" style="font-size:13px; color:var(--muted); display:block; margin-bottom:6px;">
+          무엇이 잘못됐나요? (출처가 있다면 함께 적어주세요)
+        </label>
+        <textarea id="report-text" class="report-textarea"
+          placeholder="예) Mg 독성 해독제는 Diazepam이 아니라 Calcium gluconate 입니다. 출처: ACOG 2021 가이드라인."
+          aria-label="오류 내용"></textarea>
+        <div class="report-button-row">
+          <button class="choice-btn primary" data-action="submitErrorReport">로컬 저장</button>
+          <button class="choice-btn" data-action="submitErrorReportGithub">GitHub 이슈로 보내기 ↗</button>
+          <button class="choice-btn" data-action="closeErrorReport">취소</button>
+        </div>
+      </div>`;
+}
+function submitErrorReport() {
+    const textEl = document.getElementById("report-text");
+    if (!textEl) return;
+    const text = textEl.value.trim();
+    if (!text) { textEl.focus(); return; }
+    const ctx = gameState._reportContext || {};
+    Storage.addErrorReport({ ...ctx, text });
+    UI.gameArea.innerHTML = `
+      <div class="card report-card">
+        <h2 class="menu-title">✓ 신고 접수</h2>
+        <p class="menu-tagline">로컬에 저장됐습니다 (${Storage.getErrorReports().length}건). 검토 후 다음 버전에 반영됩니다. 감사합니다.</p>
+        <div class="choice-list">
+          <button class="choice-btn primary" data-action="closeErrorReport">계속</button>
+        </div>
+      </div>`;
+}
+function submitErrorReportGithub() {
+    const textEl = document.getElementById("report-text");
+    if (!textEl) return;
+    const text = textEl.value.trim();
+    if (!text) { textEl.focus(); return; }
+    const ctx = gameState._reportContext || {};
+    Storage.addErrorReport({ ...ctx, text, sentToGithub: true });
+    const title = `[content] ${ctx.title || ctx.mode || "메뉴"} 오류 신고`;
+    const body = [
+        `## 컨텍스트`,
+        `- 모드: ${ctx.mode || "메뉴"}`,
+        ctx.title ? `- 위치: ${ctx.title}` : "",
+        ctx.episode ? `- 에피소드: ${ctx.episode}` : "",
+        ctx.scenario ? `- 시나리오: ${ctx.scenario}` : "",
+        ctx.category ? `- 카테고리: ${ctx.category}` : "",
+        ``,
+        `## 오류 내용`,
+        text,
+        ``,
+        `## 출처 / 참고`,
+        `(여기에 첨부)`,
+    ].filter(Boolean).join("\n");
+    const url = `https://github.com/luiseluise0619-wq/nursing-simulation/issues/new?labels=content,needs-clinical-review&title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}`;
+    try { window.open(url, "_blank", "noopener,noreferrer"); } catch {}
+    submitErrorReport(); // confirmation 화면도 띄움
+}
+function closeErrorReport() {
+    const ret = gameState._reportReturn;
+    gameState._reportContext = null;
+    gameState._reportReturn = null;
+    if (ret && ret.html && ret.mode && ret.mode !== "menu") {
+        UI.gameArea.innerHTML = ret.html;
+        gameState.mode = ret.mode;
+        showCoreUI(); updateStats();
+    } else {
+        returnToMenu();
+    }
+}
+
+// =========================================================================
 // 약관 / 개인정보 / 면책 (첫 실행 시 동의 게이트)
 // =========================================================================
 const LEGAL_VERSION = "1.0";
@@ -1593,17 +1704,32 @@ function renderLegalGate(onAccept) {
           </ul>
         </section>
 
+        <div class="legal-consent">
+          <input type="checkbox" id="legal-consent-check" aria-describedby="legal-consent-label">
+          <label for="legal-consent-check" id="legal-consent-label">
+            본 앱의 정보를 <strong>실제 환자에게 직접 적용하지 않을 것</strong>을 약속하며, 임상 의사결정에는 면허 의료인의 판단과 공식 가이드라인을 따를 것을 동의합니다.
+          </label>
+        </div>
         <div class="choice-list">
-          <button class="choice-btn primary" data-action="legalAccept">동의하고 시작하기</button>
+          <button class="choice-btn primary legal-accept-btn" data-action="legalAccept" disabled>동의하고 시작하기</button>
         </div>
       </div>`;
     UI._onLegalAccept = onAccept;
+    // 체크박스 활성/비활성 wiring — innerHTML 직후라 DOM 동기적으로 접근 가능
+    const cb = document.getElementById("legal-consent-check");
+    const btn = document.querySelector(".legal-accept-btn");
+    if (cb && btn) {
+        cb.addEventListener("change", () => { btn.disabled = !cb.checked; });
+    }
 }
 function legalAccept() {
+    // 체크박스 미체크 상태 클릭 방지 (키보드 우회 대비)
+    const cb = document.getElementById("legal-consent-check");
+    if (cb && !cb.checked) { cb.focus(); return; }
     Storage.setAccepted(LEGAL_VERSION);
-    const cb = UI._onLegalAccept;
+    const cont = UI._onLegalAccept;
     UI._onLegalAccept = null;
-    if (typeof cb === "function") cb(); else returnToMenu();
+    if (typeof cont === "function") cont(); else returnToMenu();
 }
 
 // =========================================================================
@@ -1742,7 +1868,7 @@ function returnToMenu() {
 
     UI.gameArea.innerHTML = `
       <div class="card menu-container">
-        <h1 class="menu-title">간호사 시뮬레이터</h1>
+        <h1 class="menu-title">간호사 시뮬레이터<span class="beta-badge" aria-label="베타 버전, 컨텐츠 미감수">BETA · 미감수</span></h1>
         <div class="menu-shift-row" role="radiogroup" aria-label="시프트 난이도">
           <button class="shift-option ${gameState.currentShift === 'Day' ? 'active' : ''}" data-action="setShift" data-shift="Day" data-mult="1.0">Day</button>
           <button class="shift-option ${gameState.currentShift === 'Evening' ? 'active' : ''}" data-action="setShift" data-shift="Evening" data-mult="1.2">Evening</button>
@@ -2022,6 +2148,10 @@ const DELEGATED_ACTIONS = {
     onboardFinish: () => onboardFinish(),
     showLegal: () => renderLegalGate(() => returnToMenu()),
     showOnboarding: () => renderOnboarding(0),
+    openErrorReport: () => openErrorReport(),
+    submitErrorReport: () => submitErrorReport(),
+    submitErrorReportGithub: () => submitErrorReportGithub(),
+    closeErrorReport: () => closeErrorReport(),
 };
 function handleDelegatedAction(e) {
     const target = e.target.closest("[data-action]");

@@ -3,6 +3,9 @@
  */
 
 const BODY_TEMPLATE = `
+  <div class="app-disclaimer">ⓘ <strong>교육 목적 · 임상 적용 금지</strong> ·
+    <button class="disclaimer-link" data-action="openErrorReport">오류 신고</button>
+  </div>
   <div id="top-bar" class="hidden">
     <button class="back-btn hidden" id="back-btn" data-action="returnToMenu"></button>
     <div class="stat-gauge hp" id="hp-gauge"><span id="hp">100</span>
@@ -540,8 +543,18 @@ describe("약관 동의 / 온보딩 게이트", () => {
         expect(document.querySelector('[data-action="initSurvival"]')).toBeNull();
     });
 
-    test("'동의하고 시작하기' 클릭 시 온보딩으로 이동한다", () => {
+    test("체크박스 미체크 상태에선 '동의하고 시작하기' 가 비활성화된다", () => {
         loadScript({ legal: false, onboarded: false });
+        const btn = document.querySelector('.legal-accept-btn');
+        expect(btn).not.toBeNull();
+        expect(btn.disabled).toBe(true);
+    });
+
+    test("체크박스 체크 후 '동의하고 시작하기' 클릭 시 온보딩으로 이동한다", () => {
+        loadScript({ legal: false, onboarded: false });
+        const cb = document.getElementById("legal-consent-check");
+        cb.checked = true;
+        cb.dispatchEvent(new Event("change"));
         document.querySelector('[data-action="legalAccept"]').click();
         expect(document.querySelector('.onboard-card')).not.toBeNull();
         expect(document.querySelector('.onboard-dots')).not.toBeNull();
@@ -585,6 +598,44 @@ describe("약관 동의 / 온보딩 게이트", () => {
         loadScript();
         document.querySelector('[data-action="showLegal"]').click();
         expect(document.querySelector('.legal-card')).not.toBeNull();
+    });
+});
+
+describe("면책 스트립 + BETA 배지 + 오류 신고 (출시 안전장치)", () => {
+    test("메인 메뉴에 BETA 미감수 배지가 노출된다", () => {
+        loadScript();
+        const beta = document.querySelector(".beta-badge");
+        expect(beta).not.toBeNull();
+        expect(beta.textContent).toMatch(/BETA/);
+    });
+    test("면책 스트립이 상단에 항상 존재한다", () => {
+        loadScript();
+        const strip = document.querySelector(".app-disclaimer");
+        expect(strip).not.toBeNull();
+        expect(strip.textContent).toMatch(/임상 적용 금지/);
+    });
+    test("'오류 신고' 클릭 시 신고 화면이 열린다", () => {
+        loadScript();
+        document.querySelector('[data-action="openErrorReport"]').click();
+        const ta = document.getElementById("report-text");
+        expect(ta).not.toBeNull();
+    });
+    test("빈 텍스트로 신고 시 저장되지 않는다", () => {
+        loadScript();
+        document.querySelector('[data-action="openErrorReport"]').click();
+        document.querySelector('[data-action="submitErrorReport"]').click();
+        const stored = JSON.parse(localStorage.getItem("nurseSim:v1") || "{}");
+        expect((stored.errorReports || []).length).toBe(0);
+    });
+    test("신고 텍스트 입력 후 저장 시 localStorage 에 누적된다", () => {
+        loadScript();
+        document.querySelector('[data-action="openErrorReport"]').click();
+        document.getElementById("report-text").value = "Mg 독성 해독제는 Calcium gluconate 임";
+        document.querySelector('[data-action="submitErrorReport"]').click();
+        const stored = JSON.parse(localStorage.getItem("nurseSim:v1") || "{}");
+        expect(stored.errorReports.length).toBe(1);
+        expect(stored.errorReports[0].text).toMatch(/Calcium/);
+        expect(typeof stored.errorReports[0].id).toBe("string");
     });
 });
 

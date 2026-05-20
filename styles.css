@@ -922,6 +922,115 @@ body {
     border-radius: 4px;
 }
 
+/* ============================================================
+   면책 스트립 — 모든 화면 상단 (modal 제외)
+   ============================================================ */
+.app-disclaimer {
+    background: var(--warning);
+    color: #fff;
+    padding: 5px 12px;
+    font-size: 11px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    line-height: 1.4;
+    letter-spacing: -0.005em;
+}
+[data-theme="dark"] .app-disclaimer {
+    background: #92400e;
+    color: #fef3c7;
+}
+.disclaimer-link {
+    background: transparent;
+    border: 1px solid rgba(255,255,255,.45);
+    color: #fff;
+    padding: 1px 7px;
+    border-radius: var(--radius-pill);
+    font-size: 11px;
+    cursor: pointer;
+    margin-left: 4px;
+    font-family: inherit;
+}
+.disclaimer-link:hover { background: rgba(255,255,255,.15); }
+
+/* ============================================================
+   베타 배지 — 메인 메뉴 타이틀 옆
+   ============================================================ */
+.beta-badge {
+    display: inline-block;
+    background: var(--warning);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 2px 7px;
+    border-radius: var(--radius-pill);
+    margin-left: 8px;
+    letter-spacing: 0.04em;
+    vertical-align: middle;
+}
+
+/* ============================================================
+   오류 신고 모달 (in-card)
+   ============================================================ */
+.report-card { text-align: left; }
+.report-textarea {
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 110px;
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--card);
+    color: var(--text);
+    font-size: 14px;
+    font-family: inherit;
+    resize: vertical;
+    margin-bottom: 10px;
+}
+.report-context {
+    background: var(--softer);
+    padding: 10px;
+    border-radius: var(--radius-md);
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 12px;
+    border: 1px solid var(--border);
+}
+.report-button-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.report-button-row .choice-btn { flex: 1; margin-bottom: 0; }
+
+/* 약관 게이트 동의 체크박스 */
+.legal-consent {
+    margin: 14px 0;
+    padding: 12px;
+    background: var(--softer);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+}
+.legal-consent input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    margin-top: 1px;
+    cursor: pointer;
+}
+.legal-consent label {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.45;
+    cursor: pointer;
+}
+.legal-accept-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 .print-only { display: none; }
 @media print {
     body * { visibility: hidden !important; }
