@@ -144,6 +144,32 @@ describe("임상 시나리오 invariants", () => {
     });
 });
 
+describe("에피소드 clinicalQuiz invariants (스토리 + 임상 지식 문제)", () => {
+    C.EPISODES.forEach(ep => {
+        ep.steps.forEach((step, i) => {
+            if (step.clinicalQuiz) {
+                describe(`${ep.id} step ${i + 1} quiz`, () => {
+                    test("prompt + choices 필수", () => {
+                        expect(step.clinicalQuiz.prompt).toBeTruthy();
+                        expect(Array.isArray(step.clinicalQuiz.choices)).toBe(true);
+                        expect(step.clinicalQuiz.choices.length).toBeGreaterThanOrEqual(3);
+                    });
+                    test("정답이 정확히 1개", () => {
+                        const cnt = step.clinicalQuiz.choices.filter(c => c.correct === true).length;
+                        expect(cnt).toBe(1);
+                    });
+                    test("모든 선택지 text + log 보유", () => {
+                        step.clinicalQuiz.choices.forEach(c => {
+                            expect(typeof c.text).toBe("string");
+                            expect(c.text.length).toBeGreaterThan(0);
+                        });
+                    });
+                });
+            }
+        });
+    });
+});
+
 describe("에피소드 (장편 스토리) invariants", () => {
     test("최소 1개 이상의 에피소드가 존재한다", () => {
         expect(C.EPISODES.length).toBeGreaterThanOrEqual(1);

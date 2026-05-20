@@ -797,6 +797,15 @@
                 {
                     time: "22:30", title: "503호 — 갑상선 수술 후 호흡",
                     narration: "김순영님은 침대에 앉아 있습니다. \"숨 쉴 때마다 목에 뭐가 걸린 거 같아요.\" 목 부위 드레싱 깨끗하지만 약간의 부종 느낌. SpO2 96%, R 22.",
+                    clinicalQuiz: {
+                        prompt: "갑상선 절제 후 24시간 동안 가장 우려되는 응급 합병증은?",
+                        choices: [
+                            { text: "혈종 또는 후두 부종에 의한 기도 폐쇄", correct: true, log: "정답. 갑상선 후 24h 사망 원인 #1 — 즉시 기관절개 키트 준비." },
+                            { text: "심부정맥혈전증", log: "DVT 는 와상 환자에서 위험. 24시간 응급은 아님." },
+                            { text: "수술 부위 감염", log: "감염은 24시간 후부터 진행. 분 단위 응급 아님." },
+                            { text: "재출혈로 인한 빈혈", log: "출혈은 가능하지만 기도 응급이 더 우선." },
+                        ],
+                    },
                     choices: [
                         { text: "기도 사정 + 침대 머리 30도 + 응급 기관절개 키트 위치 확인 + 의사 보고", correct: true, hp: -5, rep: 12, log: "정답. 갑상선 후 출혈/혈종은 기도 응급 — 즉시 보고와 준비." },
                         { text: "수술 후 정상 반응이라며 안심시킨다", hp: -25, rep: -15, log: "기도 응급의 초기 징후일 수 있어 즉시 평가 필요." },
@@ -819,6 +828,15 @@
                 {
                     time: "23:30", title: "522호 — 새로운 발견",
                     narration: "이미라님 화장실에서 \"간호사님!\" 부릅니다. 변기에 흑색변. 환자는 \"어지러워요\" 호소. BP 110/70 → 95/65, P 92.",
+                    clinicalQuiz: {
+                        prompt: "흑색변(melena) 은 위장관 어느 부위 출혈을 시사할까?",
+                        choices: [
+                            { text: "상부위장관 (식도·위·십이지장)", correct: true, log: "정답. 헤모글로빈이 위산·장내세균에 의해 변색 — Treitz 인대 상부 출혈." },
+                            { text: "직장·항문", log: "직장 출혈은 선홍색 (hematochezia)." },
+                            { text: "대장 (구불결장)", log: "대장 출혈은 적색 또는 적갈색." },
+                            { text: "소장 (회장 말단)", log: "소장 출혈은 양상이 다양 — 흑색변이 전형적 아님." },
+                        ],
+                    },
                     choices: [
                         { text: "기립성 확인 + IV·산소 준비 + Hgb·BUN/Cr 검사 + 의사 즉시 콜 + 침상 안정", correct: true, hp: -3, rep: 15, log: "정답. UGIB 활성 출혈 의심 — 즉시 보고와 안정화." },
                         { text: "변 한 번이니까 다음 V/S까지 본다", hp: -35, rep: -25, log: "흑색변 + 어지럼 + BP 하강은 즉시 보고 대상." },
@@ -959,6 +977,15 @@
                 {
                     time: "18:10", title: "Bay 3 — 첫 사정과 산소화",
                     narration: "최도윤 아기 (8개월). 엄마가 \"이틀 전부터 콧물 나더니 어제부터 숨소리가 이상했어요\" 라며 떨고 있습니다. 가습산소 2L 비강 시작 후 SpO2 92%. R 64, T 38.2. 가슴 청진 시 양측 천명음과 미세 수포음.",
+                    clinicalQuiz: {
+                        prompt: "8개월 영아 정상 호흡수 (RR) 범위는?",
+                        choices: [
+                            { text: "25~40회/분", correct: true, log: "정답. 영아 정상 RR 은 25~40. 현재 R 64 는 빈호흡 (tachypnea)." },
+                            { text: "12~20회/분", log: "성인 정상 범위. 영아에겐 서호흡." },
+                            { text: "60~80회/분", log: "이는 빈호흡 + 호흡곤란 — 정상 아님." },
+                            { text: "15~25회/분", log: "취학기 아동 범위에 가까움." },
+                        ],
+                    },
                     choices: [
                         { text: "보호자 무릎에 앉히고 산소 유지 + 비강 흡인 + IV 확보 + RSV 검사 + 격리 표시", correct: true, hp: -3, rep: 14, log: "정답. 소아는 분리불안 최소화 + RSV 의심 시 접촉/비말 격리." },
                         { text: "검사 정확성 위해 보호자 분리하고 베이 안으로", hp: -22, rep: -18, log: "분리는 호흡곤란 악화 — 절대 금기." },
@@ -1258,6 +1285,15 @@
                 {
                     time: "04:30", title: "1-hour 번들 — 우선순위",
                     narration: "의사 도착. 패혈증 1-hour 번들 시작. 락테이트 4.5 (>2), MAP 55 (<65), 항생제 아직 미투여. 시간이 곧 생존율.",
+                    clinicalQuiz: {
+                        prompt: "Surviving Sepsis Campaign 1-hour 번들 순서로 맞는 것은?",
+                        choices: [
+                            { text: "혈액배양 → 광범위 항생제 → 30mL/kg 수액 → 락테이트 재측정", correct: true, log: "정답. 배양 후 항생제 (진단 정확도) + 동시 진행." },
+                            { text: "항생제 → 혈액배양 → 수액 → 락테이트", log: "항생제 전 배양이 표준 — 배양 정확도 손상." },
+                            { text: "스테로이드 → 항생제 → 수액", log: "스테로이드는 1차 아님 — 수액 불응 쇼크에 보조." },
+                            { text: "Lasix 이뇨 → 수액 제한 → 항생제", log: "쇼크 단계 = 수액 충분 + 승압제 — 이뇨 절대 금기." },
+                        ],
+                    },
                     choices: [
                         { text: "혈액배양 2set → 광범위 항생제 IV → 30mL/kg 결정질 → 락테이트 재측정 — 순서 정확히", correct: true, hp: -2, rep: 18, log: "정답. SCCM 1-hour bundle 정석 — 배양 후 항생제." },
                         { text: "항생제부터 빨리 시작하고 배양은 나중에", hp: -22, rep: -16, log: "배양 정확도 떨어짐 — 추후 표적 항생제 어려워짐." },
@@ -3203,6 +3239,15 @@
                 {
                     time: "02:30", title: "검사 결과 — HELLP 확진",
                     narration: "검사 결과 도착. Hgb 9.0, 혈소판 65,000, AST 250, ALT 220, LDH 800, 말초혈 schistocyte. HELLP 확진. 의사 \"응급 C/S 갑니다.\"",
+                    clinicalQuiz: {
+                        prompt: "HELLP 증후군의 진단 기준 3가지는?",
+                        choices: [
+                            { text: "Hemolysis(용혈) + Elevated Liver enzymes + Low Platelets", correct: true, log: "정답. HELLP = H(용혈, schistocyte/LDH 상승) E(간효소 상승) LP(혈소판 100k 미만)." },
+                            { text: "고혈압 + 단백뇨 + 부종", log: "이는 자간전증 — HELLP 는 hematologic + hepatic." },
+                            { text: "두통 + 시야흐림 + 상복부통", log: "자간전증 중증 증상 — HELLP 진단 기준은 검사 수치." },
+                            { text: "발열 + 통증 + 출혈", log: "HELLP 의 진단은 lab 기반이지 임상 증상 아님." },
+                        ],
+                    },
                     choices: [
                         { text: "혈소판 수혈 준비 + 수술실·NICU 준비 + 동의서 + 가족 통보 + Magnesium 유지 + Steroid (Betamethasone) 검토", correct: true, hp: -2, rep: 22, log: "정답. HELLP + 33주 = 분만 + 미숙아 폐 성숙 + 출혈 준비." },
                         { text: "Betamethasone 만 24시간 대기", hp: -28, rep: -22, log: "HELLP 진행은 24시간 대기 위험." },
@@ -3505,6 +3550,15 @@
                 {
                     time: "01:15", title: "경련 멈춤 — 즉시 사정",
                     narration: "MgSO4 부하용량 후 경련 멈춤. 환자 의식 혼미 (postictal). BP 175/110, 단백뇨 4+, 심부건반사 4+. 자궁수축 없음 (분만 진행 X).",
+                    clinicalQuiz: {
+                        prompt: "MgSO4 정맥주입 중 모니터해야 할 4가지 (toxicity sign) 는?",
+                        choices: [
+                            { text: "호흡수 · 심부건반사 · 소변량 · 의식 수준", correct: true, log: "정답. RR<12 / DTR 소실 / UOP<30mL/h / 의식변화 = Mg 독성 → Calcium gluconate 1g IV." },
+                            { text: "체온 · 혈당 · BP · 호흡수", log: "체온·혈당은 Mg 독성 지표 아님." },
+                            { text: "ECG · 호흡수 · 산소포화도 · 통증", log: "통증은 Mg 독성 지표 아님 — DTR 이 핵심." },
+                            { text: "혈압 · 맥박 · 단백뇨 · 부종", log: "이는 자간전증 모니터 — Mg 독성과 다름." },
+                        ],
+                    },
                     choices: [
                         { text: "MgSO4 유지 2g/hr + 즉시 응급 C/S 결정 + 남편 동의 + 신생아과 콜 + 검사 (CBC·간기능·LDH·말초혈)", correct: true, hp: -2, rep: 22, log: "정답. 자간증 = 분만이 완치 — 36주 = 즉시 C/S." },
                         { text: "분만 진통 시작될 때까지 대기", hp: -32, rep: -25, log: "자간증 = 즉시 분만 — 자연 진통 대기는 사망 위험." },
@@ -4568,6 +4622,15 @@
                 {
                     time: "월 07:30", title: "Bed 1 이정훈 — 훈련 후 척추",
                     narration: "이정훈 (22세). 어제 행군 후 \"허리가 너무 아파요. 그런데 누구도 못 믿겠어요\" 라며 호소. 다리 감각 약함, 직장 검사 시 항문 괄약근 약함.",
+                    clinicalQuiz: {
+                        prompt: "Cauda equina 증후군의 red flag 4가지는?",
+                        choices: [
+                            { text: "안장 마비 · 직장 괄약근 약화 · 양측 하지 약화 · 요실금/요폐", correct: true, log: "정답. Cauda equina = 즉시 영상 + 외과. 24h 골든타임." },
+                            { text: "허리 통증 · 다리 저림 · 야간 통증 · 체중 감소", log: "이는 일반 요통/종양 red flag — cauda equina 와 다름." },
+                            { text: "근육 약화만 · 발열 · 야간 발한 · 식욕부진", log: "감염성 척추염 red flag — cauda equina 와 다름." },
+                            { text: "갑작스러운 통증 · 외상 · 항응고제 복용 · 고령", log: "외상성·혈종 red flag — cauda equina 와 다름." },
+                        ],
+                    },
                     choices: [
                         { text: "응급 사정 (척추 손상 + cauda equina 의심) + immobilization + 즉시 MRI + 군의관·외과 콜 + 가족 통보 + 정신건강 사정 (\"믿을 사람 없다\")", correct: true, hp: -3, rep: 22, log: "정답. Cauda equina = 즉시 영상 + 외과 — 신경 결손 24시간 내 처치." },
                         { text: "정형외과 외래로 의뢰", hp: -35, rep: -28, log: "Cauda equina = 응급 — 외래 X." },

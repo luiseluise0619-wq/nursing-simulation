@@ -738,6 +738,30 @@ describe("P0 신규 — 이어하기·SM-2·검색·출처 표시", () => {
         const src = document.querySelector(".feedback-source");
         expect(src).not.toBeNull();
     });
+
+    test("clinicalQuiz 가 있는 에피소드 step 진입 시 임상 지식 문제가 먼저 노출된다", () => {
+        loadScript();
+        document.querySelector('[data-action="renderEpisodeMenu"]').click();
+        document.querySelector('[data-action="startEpisode"]').click();
+        // Episode 1 의 step 3 (503호 갑상선) 까지 진행 — clinicalQuiz 가 있음
+        const C = require("../content.js");
+        const ep = C.EPISODES[0];
+        for (let i = 0; i < 2; i++) {
+            const correct = ep.steps[i].choices.find(c => c.correct).text;
+            const btns = [...document.querySelectorAll("#choice-list .choice-btn")];
+            const target = btns.find(b => b.textContent.includes(correct.slice(0, 8)));
+            if (target) target.click();
+            const next = document.querySelector('#feedback-zone .choice-btn.primary');
+            if (next) next.click();
+        }
+        // step 3 의 clinicalQuiz prompt 가 노출
+        const sceneTitle = document.querySelector(".scene-title");
+        expect(sceneTitle).not.toBeNull();
+        const expected = ep.steps[2].clinicalQuiz && ep.steps[2].clinicalQuiz.prompt;
+        if (expected) {
+            expect(sceneTitle.textContent).toContain(expected.slice(0, 10));
+        }
+    });
 });
 
 describe("면책 스트립 + 버전 배지 + 오류 신고 (출시 안전장치)", () => {

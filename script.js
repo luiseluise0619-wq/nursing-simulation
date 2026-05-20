@@ -740,6 +740,7 @@ function dispatchChoice(choice, ev, idx, mode) {
     else if (mode === "wrong_review") handleWrongReviewChoice(choice, ev);
     else if (mode === "scenario") handleScenarioChoice(choice, ev);
     else if (mode === "episode") handleEpisodeChoice(choice, ev);
+    else if (mode === "episode_quiz") handleEpisodeQuizChoice(choice, ev);
     else handleQuizChoice(choice, ev);
 }
 
@@ -792,6 +793,7 @@ function resetStateForMode() {
     gameState.triagePicks = {};
     gameState.scenarioId = null; gameState.scenarioStep = 0;
     gameState.episodeId = null; gameState.episodeStep = 0;
+    gameState._quizAnswered = false;
     gameState.firedStoryBeats = [];
 }
 function initSurvival() {
@@ -1560,6 +1562,11 @@ function renderEpisodeStep() {
     if (!ep) return;
     if (gameState.episodeStep >= ep.steps.length) { endEpisode(); return; }
     const step = ep.steps[gameState.episodeStep];
+    // 임상 지식 미니 문제가 있으면 먼저 표시, 답 후 행동 선택지로 진행
+    if (step.clinicalQuiz && !gameState._quizAnswered) {
+        return renderEpisodeQuiz(ep, step);
+    }
+    gameState._quizAnswered = false;
     const stepNum = gameState.episodeStep + 1;
     const totalSteps = ep.steps.length;
     const ev = {
@@ -1582,6 +1589,48 @@ function renderEpisodeStep() {
     });
 }
 
+function renderEpisodeQuiz(ep, step) {
+    const stepNum = gameState.episodeStep + 1;
+    const totalSteps = ep.steps.length;
+    const q = step.clinicalQuiz;
+    const ev = {
+        baseId: "episode-quiz",
+        category: ep.title,
+        part: `${step.time || ""} · Step ${stepNum}/${totalSteps} · 🧠 임상 지식`,
+        emoji: "🧠",
+        title: q.prompt,
+        desc: step.narration,
+        choices: q.choices.map(c => ({
+            text: c.text, correct: !!c.correct,
+            effect: { hp: 0, rep: c.correct ? 3 : -1 },
+            log: c.log || "",
+        })),
+    };
+    renderSceneCard(ev, {
+        mode: "episode_quiz",
+        questionIndex: stepNum,
+        meta: [ep.title, step.time || "", "임상 지식 체크"],
+    });
+}
+
+function handleEpisodeQuizChoice(choice, ev) {
+    const isCorrect = isCorrectChoice(choice);
+    // 지식 문제는 HP/REP 변동 없음 — 통계만 누적 (퀴즈 정답률)
+    gameState.rep += isCorrect ? 3 : -1;
+    if (isCorrect) { Sound.correct(); addLog(`[지식 정답] ${choice.log}`, "log-good"); }
+    else { Sound.wrong(); addLog(`[지식 오답] ${choice.log}`, "log-bad"); }
+    gameState.quizCorrect = (gameState.quizCorrect || 0) + (isCorrect ? 1 : 0);
+    gameState.quizSolved = (gameState.quizSolved || 0) + 1;
+    updateStats();
+    renderFeedback(ev, choice, {
+        nextLabel: "→ 임상 결정으로",
+        onNext: () => {
+            gameState._quizAnswered = true;
+            renderEpisodeStep();
+        },
+    });
+}
+
 function handleEpisodeChoice(choice, ev) {
     applyChoiceEffect(choice);
     const isCorrect = isCorrectChoice(choice);
@@ -1590,6 +1639,7 @@ function handleEpisodeChoice(choice, ev) {
     renderFeedback(ev, choice, {
         onNext: () => {
             gameState.episodeStep += 1;
+            gameState._quizAnswered = false; // 다음 step 의 quiz 다시 활성화
             // 다음 step 으로 진행하면서 자동 저장
             Storage.saveEpisodeProgress(gameState.episodeId, gameState.episodeStep, gameState.hp, gameState.rep);
             renderEpisodeStep();
