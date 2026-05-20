@@ -1,12 +1,13 @@
 :root {
-    --primary: #3b82f6;
-    --danger: #ef4444;
-    --warning: #f59e0b;
-    --success: #10b981;
+    --primary: #0e7490;
+    --primary-dark: #155e75;
+    --danger: #dc2626;
+    --warning: #d97706;
+    --success: #059669;
     --bg: #f1f5f9;
     --text: #0f172a;
     --card: #ffffff;
-    --muted: #64748b;
+    --muted: #475569;
     --border: #cbd5e1;
     --soft: #e2e8f0;
     --softer: #f8fafc;
@@ -17,14 +18,15 @@
 }
 
 [data-theme="dark"] {
-    --primary: #60a5fa;
+    --primary: #22d3ee;
+    --primary-dark: #06b6d4;
     --danger: #f87171;
     --warning: #fbbf24;
     --success: #34d399;
     --bg: #0f172a;
     --text: #f1f5f9;
     --card: #1e293b;
-    --muted: #94a3b8;
+    --muted: #cbd5e1;
     --border: #334155;
     --soft: #334155;
     --softer: #1e293b;
@@ -1165,6 +1167,75 @@ body {
     padding: 20px;
     font-size: 13px;
 }
+
+/* ============================================================
+   v3 디자인 패치 — 의료 청록 톤·콘트라스트·메뉴 그룹화·일관성
+   ============================================================ */
+body {
+    font-family: 'Pretendard Variable', Pretendard, -apple-system,
+                 BlinkMacSystemFont, 'Apple SD Gothic Neo',
+                 'Malgun Gothic', 'Segoe UI', Roboto, sans-serif;
+    letter-spacing: -0.012em;
+    line-height: 1.5;
+}
+
+/* hero 단색 + 미세 inner highlight (그라디언트 제거) */
+.mode-card.hero {
+    background: var(--primary);
+    box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,.18);
+}
+[data-theme="dark"] .mode-card.hero {
+    background: var(--primary-dark);
+}
+
+/* 카드 부제 — 한 줄, 작게 */
+.mode-card .mc-sub {
+    font-size: 11.5px;
+    line-height: 1.35;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+}
+.mode-card.wide .mc-sub { -webkit-line-clamp: 2; }
+
+/* 메뉴 섹션 라벨 (학습·시뮬레이션·도구 그룹) */
+.mode-section-label {
+    grid-column: span 2;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: 14px 4px 0;
+}
+
+/* 모달 quiz 라이트 모드 대응 */
+.modal-quiz-card {
+    background: var(--card);
+    color: var(--text);
+    box-shadow: var(--shadow-lg);
+}
+.modal-quiz-header { color: var(--muted); border-bottom-color: var(--border); }
+.modal-quiz-header strong { color: var(--text); }
+.modal-subdesc { color: var(--muted); }
+
+/* 컨테이너 패딩 통일 */
+.settings-row, .dashboard-row, .search-result, .triage-card { padding: 12px; }
+
+/* kbd-row 데스크탑 전용 */
+@media (max-width: 600px) { .menu-kbd-row { display: none; } }
+
+/* version-badge 줄바꿈 방지 */
+.version-badge { white-space: nowrap; font-size: 9px; }
+
+/* 다크 면책 스트립 콘트라스트 */
+[data-theme="dark"] .app-disclaimer { background: #78350f; color: #fef3c7; }
+
+/* top-bar SVG 아이콘 버튼 (이모지 대체) */
+.icon-btn svg { width: 16px; height: 16px; display: block; }
+.icon-btn[data-sound="off"] svg { opacity: 0.35; }
+.icon-btn[data-theme="dark"] svg { color: var(--warning); }
 
 .print-only { display: none; }
 @media print {

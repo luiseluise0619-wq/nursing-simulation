@@ -299,7 +299,7 @@ function openSearch() {
     showCoreUI(); updateStats();
     UI.gameArea.innerHTML = `
       <div class="card search-card">
-        <h2 class="scene-title">🔍 컨텐츠 검색</h2>
+        <h2 class="scene-title">컨텐츠 검색</h2>
         <input type="search" id="search-input" class="search-input" placeholder="에피소드·환자·시나리오·문제 키워드 (예: 자간증, 흡입화상, MgSO4)" autocomplete="off" aria-label="검색">
         <div id="search-results" class="search-results-list" aria-live="polite"></div>
         <div class="choice-list">
@@ -642,7 +642,7 @@ function resolvedTheme(t) {
 function applyTheme(theme) {
     const r = resolvedTheme(theme);
     document.documentElement.setAttribute("data-theme", r);
-    if (UI.themeToggle) UI.themeToggle.textContent = r === "dark" ? "☀️" : "🌙";
+    if (UI.themeToggle) UI.themeToggle.dataset.theme = r;
 }
 function toggleTheme() {
     const cur = resolvedTheme(Storage.getSettings().theme);
@@ -653,7 +653,7 @@ function toggleTheme() {
 function toggleSound() {
     Sound.enabled = !Sound.enabled;
     Storage.setSettings({ sound: Sound.enabled });
-    if (UI.soundToggle) UI.soundToggle.textContent = Sound.enabled ? "🔊" : "🔇";
+    if (UI.soundToggle) UI.soundToggle.dataset.sound = Sound.enabled ? "on" : "off";
 }
 
 // =========================================================================
@@ -2077,7 +2077,7 @@ function openSettings() {
     const acc = totalSolved ? Math.round(totalCorrect / totalSolved * 100) : 0;
     UI.gameArea.innerHTML = `
       <div class="card settings-card">
-        <h2 class="scene-title">⚙️ 설정</h2>
+        <h2 class="scene-title">설정</h2>
 
         <h3 class="settings-section">일반</h3>
         <div class="settings-row">
@@ -2300,7 +2300,7 @@ function openErrorReport() {
     UI.topBar.classList.remove("hidden");
     UI.gameArea.innerHTML = `
       <div class="card report-card">
-        <h2 class="menu-title">🚩 컨텐츠 오류 신고</h2>
+        <h2 class="menu-title">컨텐츠 오류 신고</h2>
         <p class="menu-tagline">잘못된 답·해설·약물 정보·맞춤법 등 모든 오류를 신고해 주세요. 본인 학습과 다른 사용자 안전에 직접 도움됩니다.</p>
         <div class="report-context">
           <strong>신고 컨텍스트</strong><br>
@@ -2332,7 +2332,7 @@ function submitErrorReport() {
     Storage.addErrorReport({ ...ctx, text });
     UI.gameArea.innerHTML = `
       <div class="card report-card">
-        <h2 class="menu-title">✓ 신고 접수</h2>
+        <h2 class="menu-title">신고 접수 완료</h2>
         <p class="menu-tagline">로컬에 저장됐습니다 (${Storage.getErrorReports().length}건). 검토 후 다음 버전에 반영됩니다. 감사합니다.</p>
         <div class="choice-list">
           <button class="choice-btn primary" data-action="closeErrorReport">계속</button>
@@ -2595,12 +2595,14 @@ function returnToMenu() {
           <button class="mode-card wide hero" data-mode="survival" data-action="initSurvival">
             ${ICONS.survival}
             <span class="mc-title">실전 듀티</span>
-            <span class="mc-sub">${escapeHtml(gameState.currentShift)} 시프트 · 20 이벤트</span>
+            <span class="mc-sub">${escapeHtml(gameState.currentShift)} · 20 이벤트</span>
           </button>
+
+          <div class="mode-section-label">학습</div>
           <button class="mode-card" data-mode="training" data-action="renderQuizMenu">
             ${ICONS.training}
             <span class="mc-title">트레이닝</span>
-            <span class="mc-sub">8과목 · 무한</span>
+            <span class="mc-sub">8과목 무한</span>
           </button>
           <button class="mode-card" data-mode="mock" data-action="startMockExam">
             ${ICONS.mock}
@@ -2610,28 +2612,8 @@ function returnToMenu() {
           <button class="mode-card" data-mode="daily" data-action="startDailyChallenge">
             ${ICONS.daily}
             <span class="mc-title">일일 챌린지</span>
-            <span class="mc-sub">오늘의 ${DAILY_CHALLENGE_TOTAL}문제</span>
+            <span class="mc-sub">오늘 ${DAILY_CHALLENGE_TOTAL}문제</span>
             ${dailyDone ? '<span class="mc-badge done" aria-label="오늘 완료">✓</span>' : ''}
-          </button>
-          <button class="mode-card" data-mode="handoff" data-action="startHandoff">
-            ${ICONS.handoff}
-            <span class="mc-title">인계 시뮬</span>
-            <span class="mc-sub">TTS · 100명 풀</span>
-          </button>
-          <button class="mode-card" data-mode="triage" data-action="startTriage">
-            ${ICONS.triage}
-            <span class="mc-title">트리아지</span>
-            <span class="mc-sub">응급실 분류 · 7</span>
-          </button>
-          <button class="mode-card wide" data-mode="scenario" data-action="renderEpisodeMenu">
-            ${ICONS.episode}
-            <span class="mc-title">에피소드 — 한 듀티 전체</span>
-            <span class="mc-sub">12~15단계 연결 스토리 · 같은 환자가 계속 등장</span>
-          </button>
-          <button class="mode-card wide" data-mode="scenario" data-action="renderScenarioMenu">
-            ${ICONS.scenario}
-            <span class="mc-title">임상 시나리오</span>
-            <span class="mc-sub">짧은 의사결정 · 6 케이스</span>
           </button>
           <button class="mode-card" data-mode="wrong" data-action="reviewWrongAnswers">
             ${ICONS.wrong}
@@ -2639,15 +2621,39 @@ function returnToMenu() {
             <span class="mc-sub">${wrongCount}건</span>
             ${wrongCount ? `<span class="mc-badge">${wrongCount}</span>` : ''}
           </button>
+
+          <div class="mode-section-label">시뮬레이션</div>
+          <button class="mode-card wide" data-mode="scenario" data-action="renderEpisodeMenu">
+            ${ICONS.episode}
+            <span class="mc-title">에피소드</span>
+            <span class="mc-sub">26편 · 313단계</span>
+          </button>
+          <button class="mode-card wide" data-mode="scenario" data-action="renderScenarioMenu">
+            ${ICONS.scenario}
+            <span class="mc-title">임상 시나리오</span>
+            <span class="mc-sub">6 케이스 멀티스텝</span>
+          </button>
+          <button class="mode-card" data-mode="handoff" data-action="startHandoff">
+            ${ICONS.handoff}
+            <span class="mc-title">인계 시뮬</span>
+            <span class="mc-sub">TTS · 100명</span>
+          </button>
+          <button class="mode-card" data-mode="triage" data-action="startTriage">
+            ${ICONS.triage}
+            <span class="mc-title">트리아지</span>
+            <span class="mc-sub">응급실 · 7</span>
+          </button>
+
+          <div class="mode-section-label">도구</div>
           <button class="mode-card" data-mode="dash" data-action="renderDashboard">
             ${ICONS.dash}
             <span class="mc-title">대시보드</span>
             <span class="mc-sub">학습 통계</span>
           </button>
-          <button class="mode-card wide" data-mode="training" data-action="openSearch">
+          <button class="mode-card" data-mode="training" data-action="openSearch">
             <svg class="mc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-            <span class="mc-title">🔍 컨텐츠 검색</span>
-            <span class="mc-sub">에피소드·인계·시나리오·문제 전체 키워드 검색</span>
+            <span class="mc-title">검색</span>
+            <span class="mc-sub">전체 컨텐츠</span>
           </button>
         </div>
         <p class="menu-kbd-row">
@@ -2804,7 +2810,7 @@ function boot() {
     const settings = Storage.getSettings();
     applyTheme(settings.theme || "auto");
     Sound.enabled = settings.sound !== false;
-    if (UI.soundToggle) UI.soundToggle.textContent = Sound.enabled ? "🔊" : "🔇";
+    if (UI.soundToggle) UI.soundToggle.dataset.sound = Sound.enabled ? "on" : "off";
     const stored = Storage.load();
     gameState.bestCombo = stored.bestCombo || 0;
     if (UI.themeToggle) UI.themeToggle.addEventListener("click", toggleTheme);
