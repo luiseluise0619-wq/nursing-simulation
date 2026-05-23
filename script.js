@@ -493,6 +493,218 @@ function pupilSvg(left, right) {
     </svg>`;
 }
 
+function gcsTableSvg(highlight) {
+    // highlight: "E4V5M6" 등 — 해당 칸을 강조
+    const W = 360, H = 220;
+    const cellW = 50, cellH = 24, x0 = 90, y0 = 50;
+    const rows = [
+        { label: "Eye (E)", code: "E", values: ["1:없음", "2:통증", "3:음성", "4:자발"] },
+        { label: "Verbal (V)", code: "V", values: ["1:없음", "2:이해X", "3:부적절", "4:혼동", "5:정상"] },
+        { label: "Motor (M)", code: "M", values: ["1:없음", "2:신전", "3:굴곡", "4:회피", "5:국재화", "6:명령수행"] },
+    ];
+    const hi = {};
+    if (highlight) {
+        for (const m of highlight.matchAll(/([EVM])(\d)/g)) hi[m[1]] = parseInt(m[2]);
+    }
+    let svg = `<rect width="${W}" height="${H}" fill="#fefcfa"/>
+      <text x="${W/2}" y="22" text-anchor="middle" font-size="14" font-weight="700" fill="#1e293b">Glasgow Coma Scale (GCS)</text>
+      <text x="${W/2}" y="38" text-anchor="middle" font-size="10" fill="#64748b">3~15점 · 8 이하 = 중증 의식 저하</text>`;
+    rows.forEach((row, ri) => {
+        const y = y0 + ri * (cellH + 6);
+        svg += `<text x="6" y="${y + cellH * 0.7}" font-size="11" font-weight="600" fill="#1e293b">${row.label}</text>`;
+        row.values.forEach((v, vi) => {
+            const cellX = x0 + vi * cellW;
+            const score = parseInt(v.split(":")[0]);
+            const isHi = hi[row.code] === score;
+            svg += `<rect x="${cellX}" y="${y}" width="${cellW - 2}" height="${cellH}" rx="3"
+              fill="${isHi ? '#7fa881' : '#fff'}" stroke="${isHi ? '#5a7a5c' : '#cbd5e1'}" stroke-width="${isHi ? 2 : 1}"/>
+              <text x="${cellX + cellW/2 - 1}" y="${y + cellH * 0.7}" text-anchor="middle" font-size="10"
+              font-weight="${isHi ? 700 : 400}" fill="${isHi ? '#fff' : '#1e293b'}">${v}</text>`;
+        });
+    });
+    if (highlight) {
+        const total = (hi.E || 0) + (hi.V || 0) + (hi.M || 0);
+        svg += `<text x="${W/2}" y="${H - 14}" text-anchor="middle" font-size="13" font-weight="700" fill="#7fa881">총 점수: ${highlight} = ${total}점</text>`;
+    }
+    return `<svg viewBox="0 0 ${W} ${H}" class="clinical-svg gcs-svg" role="img" aria-label="GCS 점수표">${svg}</svg>`;
+}
+
+function aedPadSvg(target) {
+    // target: "adult" | "child"
+    const W = 280, H = 220;
+    const head = target === "child" ? 28 : 24;
+    const bodyW = target === "child" ? 90 : 110;
+    const bodyH = target === "child" ? 110 : 130;
+    const cx = W/2;
+    let pads = "";
+    if (target === "adult") {
+        // 우상 흉골 + 좌측 흉부 외측
+        pads = `<rect x="${cx - 45}" y="65" width="36" height="48" rx="6" fill="#fff5d4" stroke="#c9a25b" stroke-width="2"/>
+                <text x="${cx - 27}" y="93" text-anchor="middle" font-size="9" font-weight="700">우상</text>
+                <rect x="${cx + 18}" y="120" width="36" height="48" rx="6" fill="#fff5d4" stroke="#c9a25b" stroke-width="2"/>
+                <text x="${cx + 36}" y="148" text-anchor="middle" font-size="9" font-weight="700">좌측</text>`;
+    } else {
+        // 소아 — 앞 가슴 + 뒤 (anterior-posterior) 시각화는 어려우니 표준 텍스트
+        pads = `<rect x="${cx - 18}" y="80" width="36" height="40" rx="6" fill="#fff5d4" stroke="#c9a25b" stroke-width="2"/>
+                <text x="${cx}" y="103" text-anchor="middle" font-size="9" font-weight="700">앞가슴</text>
+                <text x="${cx}" y="200" text-anchor="middle" font-size="10" fill="#64748b">+ 등 (Anterior-Posterior 배치)</text>`;
+    }
+    return `<svg viewBox="0 0 ${W} ${H}" class="clinical-svg aed-svg" role="img" aria-label="AED 패드 위치">
+      <rect width="${W}" height="${H}" fill="#fafdfb"/>
+      <text x="${W/2}" y="22" text-anchor="middle" font-size="14" font-weight="700" fill="#1e293b">AED 패드 위치 — ${target === "child" ? "소아 (8세 미만)" : "성인"}</text>
+      <circle cx="${cx}" cy="50" r="${head}" fill="#fce6cc" stroke="#94a3b8" stroke-width="1.2"/>
+      <rect x="${cx - bodyW/2}" y="55" width="${bodyW}" height="${bodyH}" rx="14" fill="#fce6cc" stroke="#94a3b8" stroke-width="1.2"/>
+      <line x1="${cx}" y1="65" x2="${cx}" y2="${55 + bodyH}" stroke="#94a3b8" stroke-width="0.5" stroke-dasharray="3 3"/>
+      ${pads}
+    </svg>`;
+}
+
+function fundalHeightSvg(weeks) {
+    // 자궁저부 높이 — 12 (치골결합), 16 (치골과 배꼽 사이), 20 (배꼽), 24~36 (배꼽 위로 올라감)
+    const W = 280, H = 280;
+    // 배꼽 = y 130, 치골 = y 220
+    const umbilicus = 130, pubis = 220;
+    let topY;
+    if (weeks <= 12) topY = pubis - 5;
+    else if (weeks <= 20) topY = pubis - ((weeks - 12) / 8) * (pubis - umbilicus);
+    else topY = umbilicus - ((weeks - 20) / 16) * 90;
+    topY = Math.max(40, topY);
+    return `<svg viewBox="0 0 ${W} ${H}" class="clinical-svg fundal-svg" role="img" aria-label="임신 ${weeks}주 자궁저부 높이">
+      <rect width="${W}" height="${H}" fill="#fafdfb"/>
+      <text x="${W/2}" y="22" text-anchor="middle" font-size="14" font-weight="700" fill="#1e293b">자궁저부 높이 — 임신 ${weeks}주</text>
+      <!-- 인체 윤곽 -->
+      <ellipse cx="${W/2}" cy="${H/2 + 20}" rx="60" ry="120" fill="#fcd9c1" stroke="#a18063" stroke-width="1.2"/>
+      <!-- 배꼽 -->
+      <circle cx="${W/2}" cy="${umbilicus}" r="3" fill="#a18063"/>
+      <text x="${W/2 + 90}" y="${umbilicus + 3}" font-size="11" fill="#64748b">배꼽 (20주)</text>
+      <!-- 치골결합 -->
+      <line x1="${W/2 - 30}" y1="${pubis}" x2="${W/2 + 30}" y2="${pubis}" stroke="#a18063" stroke-width="3"/>
+      <text x="${W/2 + 90}" y="${pubis + 4}" font-size="11" fill="#64748b">치골 (12주)</text>
+      <!-- 자궁 -->
+      <ellipse cx="${W/2}" cy="${(topY + pubis)/2}" rx="40" ry="${(pubis - topY)/2}" fill="#a3c4a5" stroke="#5a7a5c" stroke-width="1.5" opacity="0.85"/>
+      <!-- 자궁저부 표시 -->
+      <line x1="${W/2 - 50}" y1="${topY}" x2="${W/2 + 50}" y2="${topY}" stroke="#c97070" stroke-width="2" stroke-dasharray="5 3"/>
+      <text x="${W/2 + 90}" y="${topY + 3}" font-size="11" font-weight="700" fill="#c97070">${weeks}주 저부</text>
+    </svg>`;
+}
+
+function apgarTableSvg(scores) {
+    // scores: {appearance, pulse, grimace, activity, respiration} — 각 0~2점
+    const W = 380, H = 200;
+    const items = [
+        { key: "appearance", label: "외모 (피부색)", v0: "전신 청색", v1: "사지 청색", v2: "분홍" },
+        { key: "pulse", label: "맥박 (HR)", v0: "없음", v1: "<100", v2: "≥100" },
+        { key: "grimace", label: "찡그림 (자극반응)", v0: "없음", v1: "찡그림", v2: "기침/재채기" },
+        { key: "activity", label: "근긴장도", v0: "없음", v1: "약간", v2: "활발" },
+        { key: "respiration", label: "호흡", v0: "없음", v1: "느림·불규칙", v2: "강함·울음" },
+    ];
+    const cellW = 78, cellH = 22, x0 = 130, y0 = 50;
+    let svg = `<rect width="${W}" height="${H}" fill="#fefcfa"/>
+      <text x="${W/2}" y="22" text-anchor="middle" font-size="14" font-weight="700" fill="#1e293b">Apgar Score</text>
+      <text x="${x0 + cellW/2}" y="42" text-anchor="middle" font-size="10" font-weight="600" fill="#64748b">0점</text>
+      <text x="${x0 + cellW*1.5}" y="42" text-anchor="middle" font-size="10" font-weight="600" fill="#64748b">1점</text>
+      <text x="${x0 + cellW*2.5}" y="42" text-anchor="middle" font-size="10" font-weight="600" fill="#64748b">2점</text>`;
+    items.forEach((it, i) => {
+        const y = y0 + i * (cellH + 4);
+        svg += `<text x="6" y="${y + cellH * 0.7}" font-size="10" font-weight="600" fill="#1e293b">${it.label}</text>`;
+        [0, 1, 2].forEach(score => {
+            const cellX = x0 + score * cellW;
+            const isHi = scores && scores[it.key] === score;
+            svg += `<rect x="${cellX}" y="${y}" width="${cellW - 4}" height="${cellH}" rx="3"
+                fill="${isHi ? '#7fa881' : '#fff'}" stroke="${isHi ? '#5a7a5c' : '#cbd5e1'}" stroke-width="${isHi ? 2 : 1}"/>
+                <text x="${cellX + cellW/2 - 2}" y="${y + cellH * 0.7}" text-anchor="middle" font-size="9"
+                font-weight="${isHi ? 700 : 400}" fill="${isHi ? '#fff' : '#1e293b'}">${it['v' + score]}</text>`;
+        });
+    });
+    if (scores) {
+        const total = Object.values(scores).reduce((a, b) => a + b, 0);
+        svg += `<text x="${W/2}" y="${H - 14}" text-anchor="middle" font-size="13" font-weight="700" fill="#7fa881">총 점수: ${total}점</text>`;
+    }
+    return `<svg viewBox="0 0 ${W} ${H}" class="clinical-svg apgar-svg" role="img" aria-label="Apgar 점수표">${svg}</svg>`;
+}
+
+function auscultationSvg(pattern) {
+    // pattern: "normal" | "wheeze-lower" | "crackle-lower" | "stridor-upper" | "wheeze-diffuse"
+    const W = 280, H = 240;
+    const zones = [
+        { id: "RU", cx: 92, cy: 100, label: "RUL" },
+        { id: "LU", cx: 188, cy: 100, label: "LUL" },
+        { id: "RL", cx: 92, cy: 170, label: "RLL" },
+        { id: "LL", cx: 188, cy: 170, label: "LLL" },
+    ];
+    const colorMap = { normal: "#a3c4a5", abnormal: "#c97070", warn: "#c9a25b" };
+    function colorFor(zoneId) {
+        if (pattern === "normal") return colorMap.normal;
+        if (pattern === "wheeze-lower" && (zoneId === "RL" || zoneId === "LL")) return colorMap.abnormal;
+        if (pattern === "crackle-lower" && (zoneId === "RL" || zoneId === "LL")) return colorMap.warn;
+        if (pattern === "stridor-upper" && (zoneId === "RU" || zoneId === "LU")) return colorMap.abnormal;
+        if (pattern === "wheeze-diffuse") return colorMap.abnormal;
+        return colorMap.normal;
+    }
+    const titles = {
+        normal: "정상 — 모든 zone 청정음",
+        "wheeze-lower": "하부 wheeze — 천식·기관지수축",
+        "crackle-lower": "하부 crackle — 폐부종·폐렴",
+        "stridor-upper": "상부 stridor — 후두부종·기도폐쇄",
+        "wheeze-diffuse": "전반적 wheeze — 중증 천식·과민반응",
+    };
+    let zoneSvg = "";
+    zones.forEach(z => {
+        const c = colorFor(z.id);
+        zoneSvg += `<circle cx="${z.cx}" cy="${z.cy}" r="22" fill="${c}" stroke="#5a7a5c" stroke-width="1.5" opacity="0.85"/>
+                    <text x="${z.cx}" y="${z.cy + 4}" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">${z.label}</text>`;
+    });
+    return `<svg viewBox="0 0 ${W} ${H}" class="clinical-svg ausc-svg" role="img" aria-label="흉부 청진 위치">
+      <rect width="${W}" height="${H}" fill="#fafdfb"/>
+      <text x="${W/2}" y="22" text-anchor="middle" font-size="13" font-weight="700" fill="#1e293b">${titles[pattern] || "흉부 청진"}</text>
+      <!-- 흉부 윤곽 -->
+      <path d="M 60 70 Q 60 50 90 50 L 190 50 Q 220 50 220 70 L 220 200 Q 220 220 200 220 L 80 220 Q 60 220 60 200 Z" fill="#fce6cc" stroke="#a18063" stroke-width="1.5"/>
+      <!-- 정중선 -->
+      <line x1="${W/2}" y1="55" x2="${W/2}" y2="220" stroke="#a18063" stroke-width="0.6" stroke-dasharray="3 3"/>
+      <!-- 청진 zones -->
+      ${zoneSvg}
+      <!-- 범례 -->
+      <text x="20" y="${H - 10}" font-size="9" fill="#5a7a5c">● 정상</text>
+      <text x="80" y="${H - 10}" font-size="9" fill="#c9a25b">● 약한 이상음</text>
+      <text x="180" y="${H - 10}" font-size="9" fill="#c97070">● 명백한 이상음</text>
+    </svg>`;
+}
+
+function kramerZoneSvg(zone) {
+    // zone: 1~5 (신생아 황달 진행 영역)
+    const W = 220, H = 280;
+    const zoneInfo = [
+        { z: 1, label: "Zone 1: 머리·목", bili: "<6 mg/dL" },
+        { z: 2, label: "Zone 2: 가슴·상복부", bili: "6~9" },
+        { z: 3, label: "Zone 3: 하복부·허벅지", bili: "9~12" },
+        { z: 4, label: "Zone 4: 팔·종아리", bili: "12~15" },
+        { z: 5, label: "Zone 5: 손·발", bili: ">15" },
+    ];
+    function fillZ(z) { return z <= zone ? "#f4d35e" : "#fef9e7"; }
+    return `<svg viewBox="0 0 ${W} ${H}" class="clinical-svg kramer-svg" role="img" aria-label="Kramer's zones 신생아 황달">
+      <rect width="${W}" height="${H}" fill="#fafdfb"/>
+      <text x="${W/2}" y="20" text-anchor="middle" font-size="13" font-weight="700" fill="#1e293b">Kramer's zones — Zone ${zone}</text>
+      <!-- 머리 (Zone 1) -->
+      <circle cx="${W/2}" cy="50" r="22" fill="${fillZ(1)}" stroke="#a18063" stroke-width="1.5"/>
+      <!-- 가슴·상복부 (Zone 2) -->
+      <rect x="${W/2 - 30}" y="73" width="60" height="50" fill="${fillZ(2)}" stroke="#a18063" stroke-width="1.5"/>
+      <!-- 하복부·허벅지 (Zone 3) -->
+      <rect x="${W/2 - 30}" y="123" width="60" height="50" fill="${fillZ(3)}" stroke="#a18063" stroke-width="1.5"/>
+      <!-- 팔 (Zone 4) -->
+      <rect x="${W/2 - 60}" y="78" width="20" height="80" fill="${fillZ(4)}" stroke="#a18063" stroke-width="1.5"/>
+      <rect x="${W/2 + 40}" y="78" width="20" height="80" fill="${fillZ(4)}" stroke="#a18063" stroke-width="1.5"/>
+      <!-- 종아리 -->
+      <rect x="${W/2 - 27}" y="173" width="22" height="60" fill="${fillZ(4)}" stroke="#a18063" stroke-width="1.5"/>
+      <rect x="${W/2 + 5}" y="173" width="22" height="60" fill="${fillZ(4)}" stroke="#a18063" stroke-width="1.5"/>
+      <!-- 손·발 (Zone 5) -->
+      <circle cx="${W/2 - 50}" cy="165" r="9" fill="${fillZ(5)}" stroke="#a18063" stroke-width="1.5"/>
+      <circle cx="${W/2 + 50}" cy="165" r="9" fill="${fillZ(5)}" stroke="#a18063" stroke-width="1.5"/>
+      <circle cx="${W/2 - 16}" cy="240" r="9" fill="${fillZ(5)}" stroke="#a18063" stroke-width="1.5"/>
+      <circle cx="${W/2 + 16}" cy="240" r="9" fill="${fillZ(5)}" stroke="#a18063" stroke-width="1.5"/>
+      <text x="${W/2}" y="265" text-anchor="middle" font-size="11" font-weight="700" fill="#c97070">${zoneInfo[zone-1]?.bili || ''} 빌리루빈</text>
+    </svg>`;
+}
+
 const CLINICAL_SVG = {
     ecg: ecgStrip,
     pressureUlcer: pressureUlcerSvg,
@@ -500,6 +712,12 @@ const CLINICAL_SVG = {
     ruleOfNines: ruleOfNinesSvg,
     fhr: fhrSvg,
     pupil: pupilSvg,
+    gcs: gcsTableSvg,
+    aedPad: aedPadSvg,
+    fundalHeight: fundalHeightSvg,
+    apgar: apgarTableSvg,
+    auscultation: auscultationSvg,
+    kramer: kramerZoneSvg,
 };
 
 // 이미지 키 → SVG 변환 (generator/episode 에서 사용)
@@ -517,6 +735,20 @@ function renderClinicalImage(key) {
         const [L, R] = arg.split(",").map(Number);
         return CLINICAL_SVG.pupil(L, R);
     }
+    if (type === "gcs") return CLINICAL_SVG.gcs(arg);
+    if (type === "aed") return CLINICAL_SVG.aedPad(arg);
+    if (type === "fundal") return CLINICAL_SVG.fundalHeight(Number(arg));
+    if (type === "apgar") {
+        // 형식: "apgar:appearance=1,pulse=2,grimace=1,activity=2,respiration=2"
+        const scores = {};
+        arg.split(",").forEach(p => {
+            const [k, v] = p.split("=");
+            scores[k] = parseInt(v);
+        });
+        return CLINICAL_SVG.apgar(scores);
+    }
+    if (type === "ausc") return CLINICAL_SVG.auscultation(arg);
+    if (type === "kramer") return CLINICAL_SVG.kramer(Number(arg));
     return "";
 }
 

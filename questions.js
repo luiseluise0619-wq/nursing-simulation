@@ -1074,7 +1074,124 @@
             ]) };
     }
 
-    // ── 이미지 기반 식별 문제 (v1.2 — SVG 시각자료 학습) ────────────────
+    // ── 이미지 기반 식별/사정 문제 (v1.2 — SVG 시각자료) ────────────────
+    function generateGCSAssessQuestion() {
+        const cases = [
+            { code: "E4V5M6", total: 15, interp: "정상 의식", action: "정상 — 일반 모니터링 진행", wrong: ["즉시 기관삽관 준비", "응급 두부 CT 의뢰", "Mannitol IV 즉시 투여"] },
+            { code: "E3V4M5", total: 12, interp: "경도 의식 저하 (mild)", action: "신경학적 사정 강화 + 1시간 간격 GCS 재평가", wrong: ["정상이므로 관찰 불요", "즉시 기관삽관", "통증 자극 중단"] },
+            { code: "E2V2M4", total: 8, interp: "중등도 의식 저하", action: "신경외과 콜 + 기도 보호 평가 + 응급 CT", wrong: ["관찰만 진행", "환자 깨우기 위해 큰소리·자극", "수면제 추가"] },
+            { code: "E1V1M3", total: 5, interp: "중증 의식 저하 (혼수)", action: "즉시 기관삽관 + ICU 이송 + 응급 영상", wrong: ["관찰 + 수면 권유", "경구 식이 시도", "물리 자극으로 깨우기"] },
+        ];
+        const c = pick(cases);
+        const wrongs = shuffle(c.wrong);
+        return { baseId: "gcs", category: "성인간호학", part: "신경학적 사정", emoji: "🧠", title: "GCS 점수 해석 및 중재",
+            image: `gcs:${c.code}`,
+            desc: `위 GCS 점수표 (${c.code} = ${c.total}점, "${c.interp}") 환자의 우선 중재는?`,
+            choices: shuffle([
+                { text: c.action, correct: true, effect: { hp: -3, rep: 22 }, log: `정답. GCS ${c.total}점 (${c.interp}) 의 표준 중재입니다.` },
+                { text: wrongs[0], effect: { hp: -25, rep: -18 }, log: "GCS 해석에 적합하지 않은 중재입니다." },
+                { text: wrongs[1], effect: { hp: -25, rep: -18 }, log: "GCS 해석에 적합하지 않은 중재입니다." },
+                { text: wrongs[2], effect: { hp: -25, rep: -18 }, log: "GCS 해석에 적합하지 않은 중재입니다." }
+            ]) };
+    }
+
+    function generateAEDPadQuestion() {
+        const cases = [
+            { who: "성인 (8세 이상)", img: "aed:adult", correct: "우상 흉골 (쇄골 아래) + 좌측 중액와선 (앞-옆 anterolateral)", wrong: ["양쪽 어깨 위", "복부 정중앙 양측", "양 측면 옆구리"] },
+            { who: "소아 (1~8세)", img: "aed:child", correct: "앞가슴 + 등 (anterior-posterior 배치) 또는 소아용 패드", wrong: ["성인과 동일 위치 + 성인용 패드", "이마와 가슴", "양 발등"] },
+        ];
+        const c = pick(cases);
+        const wrongs = shuffle(c.wrong);
+        return { baseId: "aed", category: "성인간호학", part: "응급 제세동", emoji: "⚡", title: "AED 패드 적용 위치",
+            image: c.img,
+            desc: `${c.who} 환자에게 AED 패드를 적용할 때 올바른 위치는?`,
+            choices: shuffle([
+                { text: c.correct, correct: true, effect: { hp: -2, rep: 22 }, log: `정답. ${c.who} 의 표준 AED 패드 위치입니다.` },
+                { text: wrongs[0], effect: { hp: -28, rep: -22 }, log: "AED 효과 없음 + 환자 위해 가능성." },
+                { text: wrongs[1], effect: { hp: -25, rep: -20 }, log: "AED 효과 없음." },
+                { text: wrongs[2], effect: { hp: -28, rep: -22 }, log: "AED 효과 없음." }
+            ]) };
+    }
+
+    function generateFundalHeightQuestion() {
+        const cases = [
+            { weeks: 12, finding: "치골결합 (pubis) 수준", wrongs: ["배꼽 (umbilicus) 수준", "검상돌기 아래", "치골과 배꼽 사이"] },
+            { weeks: 20, finding: "배꼽 (umbilicus) 수준", wrongs: ["치골결합 수준", "검상돌기 수준", "검상돌기 아래"] },
+            { weeks: 36, finding: "검상돌기 (xiphoid) 근처", wrongs: ["배꼽 아래 4cm", "치골결합 수준", "배꼽 수준"] },
+        ];
+        const c = pick(cases);
+        const wrongs = shuffle(c.wrongs);
+        return { baseId: "fundal", category: "모성간호학", part: "산전 사정", emoji: "🤰", title: "임신 주수별 자궁저부 높이",
+            image: `fundal:${c.weeks}`,
+            desc: `임신 ${c.weeks}주의 정상 자궁저부(fundal height) 높이는?`,
+            choices: shuffle([
+                { text: c.finding, correct: true, effect: { hp: -2, rep: 20 }, log: `정답. 임신 ${c.weeks}주의 정상 자궁저부 위치입니다.` },
+                { text: wrongs[0], effect: { hp: -18, rep: -12 }, log: "정상 자궁저부 위치가 아닙니다." },
+                { text: wrongs[1], effect: { hp: -18, rep: -12 }, log: "정상 자궁저부 위치가 아닙니다." },
+                { text: wrongs[2], effect: { hp: -18, rep: -12 }, log: "정상 자궁저부 위치가 아닙니다." }
+            ]) };
+    }
+
+    function generateApgarVisualQuestion() {
+        const cases = [
+            { scores: { appearance: 2, pulse: 2, grimace: 2, activity: 2, respiration: 2 }, total: 10, action: "정상 신생아 — 모-아 동침 + 모유수유 시작", wrong: ["즉시 인공호흡 시작", "산소 80% 적용 + 흡인", "복와위로 즉시 옮기기"] },
+            { scores: { appearance: 1, pulse: 2, grimace: 1, activity: 2, respiration: 2 }, total: 8, action: "정상 범위 — 수건으로 닦고 모니터링 + 5분 재평가", wrong: ["즉시 NICU 호출", "기관삽관 준비", "포도당 IV bolus"] },
+            { scores: { appearance: 1, pulse: 1, grimace: 1, activity: 1, respiration: 1 }, total: 5, action: "신생아 소생 시작 — 자극·산소·필요시 양압환기", wrong: ["정상 — 산모에게 안기기", "30분 후 재평가", "단순 흡인만 시행"] },
+            { scores: { appearance: 0, pulse: 0, grimace: 0, activity: 0, respiration: 0 }, total: 0, action: "즉시 신생아 소생술 + 응급 의료팀 호출 + 양압환기·흉부압박", wrong: ["관찰만 진행", "단순 자극 시도", "체온 보온만 시행"] },
+        ];
+        const c = pick(cases);
+        const wrongs = shuffle(c.wrong);
+        const scoreKey = Object.entries(c.scores).map(([k, v]) => `${k}=${v}`).join(",");
+        return { baseId: "apgar_visual", category: "아동간호학", part: "신생아 사정", emoji: "👶", title: "Apgar 점수 해석 및 중재",
+            image: `apgar:${scoreKey}`,
+            desc: `위 Apgar 점수표 (총 ${c.total}점) 신생아의 우선 중재는?`,
+            choices: shuffle([
+                { text: c.action, correct: true, effect: { hp: -3, rep: 22 }, log: `정답. Apgar ${c.total}점 의 표준 중재입니다.` },
+                { text: wrongs[0], effect: { hp: -25, rep: -18 }, log: "Apgar 해석에 맞지 않습니다." },
+                { text: wrongs[1], effect: { hp: -25, rep: -18 }, log: "Apgar 해석에 맞지 않습니다." },
+                { text: wrongs[2], effect: { hp: -25, rep: -18 }, log: "Apgar 해석에 맞지 않습니다." }
+            ]) };
+    }
+
+    function generateAuscultationQuestion() {
+        const cases = [
+            { key: "wheeze-lower", finding: "양측 하부에서 호기성 wheezing", interp: "급성 천식 발작", action: "산소 + 단시간작용 β2 작용제(SABA) 흡입 + 의사 보고", wrong: ["관찰만 진행", "베타차단제 IV 투여", "히스타민 점안"] },
+            { key: "crackle-lower", finding: "양측 하부에서 흡기말 crackle (rales)", interp: "폐부종 또는 폐렴", action: "산소 + 침대 머리 거상 + 의사 보고 + 이뇨제 처방 확인", wrong: ["천명음으로 보고 SABA만 적용", "관찰만 진행", "흡인기로 강제 흡인"] },
+            { key: "stridor-upper", finding: "상부 기도에서 흡기성 stridor", interp: "후두부종·기도 폐쇄 응급", action: "즉시 응급 콜 + 기도 확보 준비 + Epinephrine nebulizer 고려", wrong: ["관찰만 진행", "안정제 IV 투여", "복와위로 자세 변경"] },
+            { key: "normal", finding: "양측 청정음 (clear)", interp: "정상 호흡음", action: "정상 — 추가 평가 불필요", wrong: ["즉시 기관삽관", "광범위 항생제 시작", "이뇨제 IV 투여"] },
+        ];
+        const c = pick(cases);
+        const wrongs = shuffle(c.wrong);
+        return { baseId: "ausc", category: "성인간호학", part: "호흡 사정", emoji: "🩺", title: "흉부 청진 결과 해석",
+            image: `ausc:${c.key}`,
+            desc: `청진 결과: ${c.finding} (${c.interp}). 우선 중재는?`,
+            choices: shuffle([
+                { text: c.action, correct: true, effect: { hp: -3, rep: 22 }, log: `정답. ${c.interp} 의 표준 중재입니다.` },
+                { text: wrongs[0], effect: { hp: -25, rep: -18 }, log: "청진 해석에 맞지 않습니다." },
+                { text: wrongs[1], effect: { hp: -25, rep: -18 }, log: "청진 해석에 맞지 않습니다." },
+                { text: wrongs[2], effect: { hp: -25, rep: -18 }, log: "청진 해석에 맞지 않습니다." }
+            ]) };
+    }
+
+    function generateKramerJaundiceQuestion() {
+        const cases = [
+            { zone: 1, biliRange: "<6 mg/dL", action: "정상 범위 — 모유수유 강화 + 24시간 후 재평가", wrong: ["즉시 광선치료(phototherapy) 시작", "교환수혈 준비", "수액 IV bolus 시행"] },
+            { zone: 3, biliRange: "약 9~12 mg/dL", action: "혈청 빌리루빈 검사 + 광선치료 적응 여부 평가 + 다음 평가 예약", wrong: ["정상이므로 무관찰", "교환수혈 즉시 준비", "환아 모유수유 중단"] },
+            { zone: 5, biliRange: ">15 mg/dL", action: "응급 — 즉시 광선치료 시작 + 빌리루빈 검사 + 교환수혈 가능성 평가", wrong: ["관찰만 진행", "햇볕에 직접 노출", "수액 제한"] },
+        ];
+        const c = pick(cases);
+        const wrongs = shuffle(c.wrong);
+        return { baseId: "kramer", category: "아동간호학", part: "신생아 황달", emoji: "👶", title: "신생아 황달 Zone 사정",
+            image: `kramer:${c.zone}`,
+            desc: `Kramer's zone ${c.zone} (${c.biliRange}) 의 신생아 중재는?`,
+            choices: shuffle([
+                { text: c.action, correct: true, effect: { hp: -3, rep: 22 }, log: `정답. Zone ${c.zone} 의 표준 중재입니다.` },
+                { text: wrongs[0], effect: { hp: -25, rep: -18 }, log: "Zone 해석에 맞지 않는 중재입니다." },
+                { text: wrongs[1], effect: { hp: -25, rep: -18 }, log: "Zone 해석에 맞지 않는 중재입니다." },
+                { text: wrongs[2], effect: { hp: -25, rep: -18 }, log: "Zone 해석에 맞지 않는 중재입니다." }
+            ]) };
+    }
+
     function generateECGStripQuestion() {
         const rhythms = [
             { key: "normal", name: "정상 동성리듬 (NSR)", wrongs: ["심방세동", "심실세동", "심실빈맥"] },
@@ -1175,8 +1292,10 @@
         generateCBTechniqueQuestion, generateAddictionQuestion,
         generateSchoolHealthQuestion, generateHomeCareQuestion,
         generateFHRDecelQuestion, generatePedsRespQuestion,
-        // v1.2 이미지 기반 식별 (ECG strip / 동공 사정)
+        // v1.2 이미지 기반 (12종)
         generateECGStripQuestion, generatePupilAssessQuestion,
+        generateGCSAssessQuestion, generateAEDPadQuestion, generateFundalHeightQuestion,
+        generateApgarVisualQuestion, generateAuscultationQuestion, generateKramerJaundiceQuestion,
     ];
 
     return {
@@ -1213,5 +1332,7 @@
         generateSchoolHealthQuestion, generateHomeCareQuestion,
         generateFHRDecelQuestion, generatePedsRespQuestion,
         generateECGStripQuestion, generatePupilAssessQuestion,
+        generateGCSAssessQuestion, generateAEDPadQuestion, generateFundalHeightQuestion,
+        generateApgarVisualQuestion, generateAuscultationQuestion, generateKramerJaundiceQuestion,
     };
 });

@@ -247,6 +247,12 @@ body {
 .scene-image .clinical-svg.pos-svg { aspect-ratio: 320 / 180; max-width: 360px; }
 .scene-image .clinical-svg.burn-svg { aspect-ratio: 320 / 280; max-width: 340px; }
 .scene-image .clinical-svg.pupil-svg { aspect-ratio: 280 / 130; max-width: 340px; }
+.scene-image .clinical-svg.gcs-svg { aspect-ratio: 360 / 220; max-width: 400px; }
+.scene-image .clinical-svg.aed-svg { aspect-ratio: 280 / 220; max-width: 320px; }
+.scene-image .clinical-svg.fundal-svg { aspect-ratio: 280 / 280; max-width: 320px; }
+.scene-image .clinical-svg.apgar-svg { aspect-ratio: 380 / 200; max-width: 420px; }
+.scene-image .clinical-svg.ausc-svg { aspect-ratio: 280 / 240; max-width: 320px; }
+.scene-image .clinical-svg.kramer-svg { aspect-ratio: 220 / 280; max-width: 260px; }
 [data-theme="dark"] .scene-image .clinical-svg { background: #ebeef0; }
 
 /* 부활 슬롯 — 게임 오버 모달에서 광고 시청 → HP 회복 */

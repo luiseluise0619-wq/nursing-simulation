@@ -1254,6 +1254,22 @@ describe("P2 — AdMob 어댑터 (Capacitor 호환)", () => {
         }).not.toThrow();
     });
 
+    test("스토리 모드(episode/scenario)는 일반 문제 generator 를 절대 호출하지 않는다 (정적 검증)", () => {
+        const fs = require("fs");
+        const path = require("path");
+        const src = fs.readFileSync(path.join(__dirname, "..", "script.js"), "utf-8");
+        // renderEpisodeStep 함수 본문 추출
+        const epMatch = src.match(/function\s+renderEpisodeStep\s*\([^)]*\)\s*\{([\s\S]*?)\n\}\n/);
+        expect(epMatch).not.toBeNull();
+        const epBody = epMatch[1];
+        // 일반 문제 generator 관련 호출이 episode 본문에 없어야 함
+        expect(epBody).not.toMatch(/generateClinicalEventByCategory|NQ\.allGenerators|pickDailyGenerators/);
+        // renderScenarioStep 함수 본문도 동일 검증
+        const scMatch = src.match(/function\s+renderScenarioStep\s*\([^)]*\)\s*\{([\s\S]*?)\n\}\n/);
+        expect(scMatch).not.toBeNull();
+        expect(scMatch[1]).not.toMatch(/generateClinicalEventByCategory|NQ\.allGenerators|pickDailyGenerators/);
+    });
+
     test("CLINICAL_SVG 이미지 시스템 — 6종 시각자료 모두 SVG 반환", () => {
         const fs = require("fs");
         const path = require("path");
