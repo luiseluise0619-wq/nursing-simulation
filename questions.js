@@ -428,6 +428,526 @@
             ]) };
     }
 
+    // =====================================================================
+    // 추가 생성기 (카테고리 균형 확장 — 기본/모성/아동/정신/지역사회/관리/법규)
+    // =====================================================================
+
+    // ── 기본간호학 ──────────────────────────────────────────────────────
+    function generateOxygenTherapyQuestion() {
+        const cases = [
+            { rate: "비강캐뉼라 4L/min", fio2: "약 36%", wrong: ["약 100%", "약 60%", "약 21%"] },
+            { rate: "단순마스크 6L/min", fio2: "약 40~50%", wrong: ["약 21%", "약 90%", "약 100%"] },
+            { rate: "비재호흡마스크(NRB) 10L/min", fio2: "약 80~95%", wrong: ["약 24%", "약 30%", "약 50%"] },
+            { rate: "벤츄리마스크 24% 설정", fio2: "약 24%", wrong: ["약 100%", "약 60%", "측정 불가"] },
+        ];
+        const c = pick(cases);
+        const wrongs = shuffle(c.wrong);
+        return { baseId: "oxygen", category: "기본간호학", part: "산소요법", emoji: "🫁", title: "산소 공급 장치별 FiO2",
+            desc: `${c.rate} 적용 시 예상 흡입 산소농도(FiO2)는?`,
+            choices: shuffle([
+                { text: c.fio2, correct: true, effect: { hp: -2, rep: 18 }, log: `정답. ${c.rate} 의 표준 FiO2 입니다.` },
+                { text: wrongs[0], effect: { hp: -18, rep: -12 }, log: "FiO2 추정이 잘못되었습니다." },
+                { text: wrongs[1], effect: { hp: -18, rep: -12 }, log: "FiO2 추정이 잘못되었습니다." },
+                { text: wrongs[2], effect: { hp: -18, rep: -12 }, log: "FiO2 추정이 잘못되었습니다." }
+            ]) };
+    }
+
+    function generateUrinaryCathQuestion() {
+        return { baseId: "foley", category: "기본간호학", part: "도뇨관 관리", emoji: "💧", title: "유치도뇨관 관리",
+            desc: `유치도뇨(Foley) 환자의 요로감염(CAUTI) 예방을 위한 가장 우선되는 중재는?`,
+            choices: shuffle([
+                { text: "도뇨주머니는 항상 방광 아래에 위치시킨다", correct: true, effect: { hp: -2, rep: 20 }, log: "정답. 역류 방지를 위해 방광 높이 아래 유지가 핵심입니다." },
+                { text: "주기적으로 도뇨관을 잠가둔다 (clamping)", effect: { hp: -18, rep: -12 }, log: "정체로 감염 위험만 증가시킵니다." },
+                { text: "8시간마다 멸균 식염수로 방광 세척한다", effect: { hp: -20, rep: -14 }, log: "일상적 방광세척은 권장되지 않습니다." },
+                { text: "삽입 부위에 항생제 연고를 도포한다", effect: { hp: -15, rep: -10 }, log: "근거 없는 중재입니다." }
+            ]) };
+    }
+
+    function generateNGTubeQuestion() {
+        return { baseId: "ng_tube", category: "기본간호학", part: "비위관 관리", emoji: "🥼", title: "비위관(NG tube) 위치 확인",
+            desc: `비위관 삽입 후 위 내 위치 확인의 가장 신뢰할 수 있는 방법은?`,
+            choices: shuffle([
+                { text: "흉부 X-ray 촬영", correct: true, effect: { hp: -3, rep: 22 }, log: "정답. 영상학적 확인이 표준입니다." },
+                { text: "공기를 주입하며 청진(whoosh sound) 확인", effect: { hp: -15, rep: -10 }, log: "전통적이지만 단독 사용은 권장되지 않습니다." },
+                { text: "위 흡인액의 색만 확인", effect: { hp: -15, rep: -10 }, log: "단독으로는 신뢰성이 낮습니다." },
+                { text: "삽입 길이 측정만으로 확인", effect: { hp: -18, rep: -12 }, log: "위치 확인 방법이 아닙니다." }
+            ]) };
+    }
+
+    function generateWoundCareQuestion() {
+        const cases = [
+            { stage: "1단계 (Stage I) 욕창", action: "체위변경 강화 + 압력 분산 매트리스", wrong: ["습윤 드레싱만 적용", "데브리망(절제)", "항생제 정맥주입"] },
+            { stage: "건강한 육아조직이 있는 2단계 욕창", action: "하이드로콜로이드 또는 폼 드레싱", wrong: ["거즈로 압박", "건조 상태 유지", "삼출물 무관 거즈 매일 교환"] },
+            { stage: "감염 징후가 있는 깊은 욕창", action: "상처 배양 + 의사 보고 + 적절한 항생제", wrong: ["폐쇄성 드레싱 적용", "그대로 관찰", "심부 마사지"] },
+        ];
+        const c = pick(cases);
+        const wrongs = shuffle(c.wrong);
+        return { baseId: "wound", category: "기본간호학", part: "상처 간호", emoji: "🩹", title: "욕창 단계별 중재",
+            desc: `${c.stage} 환자에게 가장 적절한 중재는?`,
+            choices: shuffle([
+                { text: c.action, correct: true, effect: { hp: -2, rep: 20 }, log: `정답. ${c.stage} 의 표준 중재입니다.` },
+                { text: wrongs[0], effect: { hp: -18, rep: -12 }, log: "단계에 맞지 않는 중재입니다." },
+                { text: wrongs[1], effect: { hp: -18, rep: -12 }, log: "단계에 맞지 않는 중재입니다." },
+                { text: wrongs[2], effect: { hp: -18, rep: -12 }, log: "단계에 맞지 않는 중재입니다." }
+            ]) };
+    }
+
+    function generateRestraintQuestion() {
+        return { baseId: "restraint", category: "기본간호학", part: "신체보호대", emoji: "🛡️", title: "신체보호대 적용 원칙",
+            desc: `의사 처방 하에 신체보호대 적용 중인 환자의 관찰 및 관리 원칙은?`,
+            choices: shuffle([
+                { text: "최소 2시간마다 풀어주고 피부·순환 사정", correct: true, effect: { hp: -2, rep: 22 }, log: "정답. 2시간마다 해제·피부 사정이 표준입니다." },
+                { text: "8시간마다 한 번씩만 사정", effect: { hp: -20, rep: -15 }, log: "간격이 너무 깁니다." },
+                { text: "가족 동의만 있으면 의사 처방 없이도 적용 가능", effect: { hp: -25, rep: -18 }, log: "의사 처방이 반드시 필요합니다." },
+                { text: "한 번 적용하면 24시간 유지 후 재평가", effect: { hp: -22, rep: -16 }, log: "최단 시간 사용이 원칙입니다." }
+            ]) };
+    }
+
+    // ── 모성간호학 ──────────────────────────────────────────────────────
+    function generateLochiaQuestion() {
+        const cases = [
+            { day: "분만 1~3일", color: "Lochia Rubra (선홍색)", wrong: ["Lochia Serosa (분홍/갈색)", "Lochia Alba (희끄무레)", "맑은 점액"] },
+            { day: "분만 4~10일", color: "Lochia Serosa (분홍/갈색)", wrong: ["Lochia Rubra (선홍색)", "Lochia Alba (희끄무레)", "맑은 점액"] },
+            { day: "분만 10일 이후~6주", color: "Lochia Alba (희끄무레/노랑)", wrong: ["Lochia Rubra (선홍색)", "Lochia Serosa (분홍/갈색)", "혈괴 다량"] },
+        ];
+        const c = pick(cases);
+        const wrongs = shuffle(c.wrong);
+        return { baseId: "lochia", category: "모성간호학", part: "산후 사정", emoji: "🤱", title: "산후 오로(Lochia) 단계",
+            desc: `${c.day} 산모에게서 관찰되는 정상 오로는?`,
+            choices: shuffle([
+                { text: c.color, correct: true, effect: { hp: -2, rep: 20 }, log: `정답. ${c.day} 의 정상 오로 양상입니다.` },
+                { text: wrongs[0], effect: { hp: -15, rep: -10 }, log: "해당 시기 정상 양상이 아닙니다." },
+                { text: wrongs[1], effect: { hp: -15, rep: -10 }, log: "해당 시기 정상 양상이 아닙니다." },
+                { text: wrongs[2], effect: { hp: -15, rep: -10 }, log: "해당 시기 정상 양상이 아닙니다." }
+            ]) };
+    }
+
+    function generatePreEclampsiaQuestion() {
+        return { baseId: "preeclampsia", category: "모성간호학", part: "임신성 고혈압", emoji: "🤰", title: "중증 자간전증 사정",
+            desc: `임신 32주 산모 BP 168/112mmHg, 단백뇨 3+, 두통/시야흐림 호소. 우선 중재는?`,
+            choices: shuffle([
+                { text: "자극 최소화한 좌측위 안정 + MgSO4 정맥 주입 준비", correct: true, effect: { hp: -3, rep: 25 }, log: "정답. 경련 예방을 위한 MgSO4 와 자극 차단이 우선입니다." },
+                { text: "당장 분만 유도를 위한 옥시토신 시작", effect: { hp: -30, rep: -20 }, log: "혈압/경련 안정이 우선입니다." },
+                { text: "조용한 환경에서 관찰만 진행", effect: { hp: -35, rep: -25 }, log: "중증 자간전증은 적극 중재가 필요합니다." },
+                { text: "수분 부하를 위한 N/S 1L bolus", effect: { hp: -25, rep: -18 }, log: "폐부종 위험으로 신중해야 합니다." }
+            ]) };
+    }
+
+    function generateBreastfeedingQuestion() {
+        return { baseId: "breastfeed", category: "모성간호학", part: "모유수유", emoji: "🤱", title: "올바른 모유수유 자세 평가",
+            desc: `초산모가 모유수유 중 유두통을 호소한다. 자세 교정의 핵심은?`,
+            choices: shuffle([
+                { text: "아기의 입이 유륜까지 깊게 물도록 유도", correct: true, effect: { hp: -2, rep: 20 }, log: "정답. 깊게 물기(deep latch) 가 유두 손상을 줄입니다." },
+                { text: "수유 시간을 한 쪽 5분 이내로 제한", effect: { hp: -15, rep: -10 }, log: "충분한 수유시간 확보가 더 중요합니다." },
+                { text: "분유로 보충 수유를 시작", effect: { hp: -18, rep: -12 }, log: "초기 수유 확립 전에는 권장되지 않습니다." },
+                { text: "유방에 알코올 솜으로 소독 후 수유", effect: { hp: -20, rep: -15 }, log: "유두 건조와 자극을 유발합니다." }
+            ]) };
+    }
+
+    function generateContractionQuestion() {
+        return { baseId: "contraction", category: "모성간호학", part: "분만 진행", emoji: "👶", title: "자궁 수축 평가",
+            desc: `분만 1기 활동기 산모의 자궁 수축 양상으로 가장 적절한 것은?`,
+            choices: shuffle([
+                { text: "3~5분 간격, 40~70초 지속, 중강도~강함", correct: true, effect: { hp: -2, rep: 22 }, log: "정답. 활동기 전형적 수축 양상입니다." },
+                { text: "10분 간격, 30초 지속, 약함", effect: { hp: -15, rep: -10 }, log: "잠재기 양상에 가깝습니다." },
+                { text: "1분 간격, 90초 지속, 매우 강함", effect: { hp: -18, rep: -12 }, log: "과강축으로 위험 신호입니다." },
+                { text: "불규칙한 5~15분 간격, 강도 변화 큼", effect: { hp: -15, rep: -10 }, log: "가진통(false labor) 양상입니다." }
+            ]) };
+    }
+
+    // ── 아동간호학 ──────────────────────────────────────────────────────
+    function generateGrowthQuestion() {
+        const cases = [
+            { age: "2개월", milestone: "사회적 미소, 머리 들기", wrong: ["혼자 앉기", "기기", "두 단어 문장"] },
+            { age: "6개월", milestone: "지지없이 앉기, 옹알이", wrong: ["혼자 걷기", "달리기", "5~6 단어 사용"] },
+            { age: "12개월", milestone: "혼자 서기/한두 발자국, '엄마/아빠' 사용", wrong: ["뛰기", "세 단어 문장", "옷 단추 채우기"] },
+            { age: "24개월", milestone: "두 단어 문장, 계단 오르내리기", wrong: ["혼자 앉기 시작", "출생체중의 2배", "사회적 미소"] },
+        ];
+        const c = pick(cases);
+        const wrongs = shuffle(c.wrong);
+        return { baseId: "growth", category: "아동간호학", part: "발달이정표", emoji: "🧒", title: "영유아 발달이정표",
+            desc: `${c.age} 영유아의 정상 발달 이정표는?`,
+            choices: shuffle([
+                { text: c.milestone, correct: true, effect: { hp: -2, rep: 20 }, log: `정답. ${c.age} 의 표준 발달 단계입니다.` },
+                { text: wrongs[0], effect: { hp: -15, rep: -10 }, log: "해당 연령 발달 단계가 아닙니다." },
+                { text: wrongs[1], effect: { hp: -15, rep: -10 }, log: "해당 연령 발달 단계가 아닙니다." },
+                { text: wrongs[2], effect: { hp: -15, rep: -10 }, log: "해당 연령 발달 단계가 아닙니다." }
+            ]) };
+    }
+
+    function generateFebrileSeizureQuestion() {
+        return { baseId: "febrile_seizure", category: "아동간호학", part: "응급간호", emoji: "🌡️", title: "열성경련 응급 처치",
+            desc: `15개월 영아가 발열 39.2℃ 중 전신 강직간대 경련 발생. 우선 중재는?`,
+            choices: shuffle([
+                { text: "옆으로 눕히고 기도 확보, 주변 안전 확보", correct: true, effect: { hp: -3, rep: 25 }, log: "정답. 측위·기도확보가 우선입니다." },
+                { text: "입에 설압자를 물려 혀를 보호한다", effect: { hp: -30, rep: -22 }, log: "구강 내 삽입은 외상과 흡인 위험입니다." },
+                { text: "팔다리를 잡아 경련을 멈춘다", effect: { hp: -28, rep: -20 }, log: "골절·관절 손상 위험. 절대 금지입니다." },
+                { text: "얼음물로 즉시 전신을 닦는다", effect: { hp: -25, rep: -18 }, log: "혈관 수축과 떨림으로 체온이 오히려 상승합니다." }
+            ]) };
+    }
+
+    function generateDehydrationQuestion() {
+        const cases = [
+            { sev: "경증 (체중감소 3~5%)", action: "경구수액(ORS) 시행", wrong: ["IV bolus 20ml/kg", "수액 제한", "관장 시행"] },
+            { sev: "중등도 (체중감소 6~9%)", action: "ORS 시도 후 효과 없으면 IV", wrong: ["관찰만 진행", "관장 시행", "구토 시까지 ORS 중단"] },
+            { sev: "중증 (체중감소 ≥10%, 쇼크 징후)", action: "IV 등장성 수액 20ml/kg bolus", wrong: ["ORS 단독 시도", "수분 제한", "이뇨제 투여"] },
+        ];
+        const c = pick(cases);
+        const wrongs = shuffle(c.wrong);
+        return { baseId: "peds_dehydration", category: "아동간호학", part: "수분/전해질", emoji: "💧", title: "소아 탈수 중증도별 중재",
+            desc: `${c.sev} 영아의 우선 중재는?`,
+            choices: shuffle([
+                { text: c.action, correct: true, effect: { hp: -3, rep: 22 }, log: `정답. ${c.sev} 의 표준 중재입니다.` },
+                { text: wrongs[0], effect: { hp: -20, rep: -15 }, log: "중증도에 맞지 않는 중재입니다." },
+                { text: wrongs[1], effect: { hp: -20, rep: -15 }, log: "중증도에 맞지 않는 중재입니다." },
+                { text: wrongs[2], effect: { hp: -20, rep: -15 }, log: "중증도에 맞지 않는 중재입니다." }
+            ]) };
+    }
+
+    function generatePedsDoseQuestion() {
+        const wt = rand(8, 28);
+        const dosePerKg = pick([10, 15, 20]);
+        const dose = wt * dosePerKg;
+        const wrong1 = dose * 2;
+        const wrong2 = Math.round(dose / 2);
+        const wrong3 = wt + dosePerKg;
+        return { baseId: "peds_dose", category: "아동간호학", part: "약물 용량 계산", emoji: "💊", title: "소아 체중 기반 용량 계산",
+            desc: `체중 ${wt}kg 의 아동에게 ${dosePerKg}mg/kg 처방 시 1회 용량은?`,
+            choices: shuffle([
+                { text: `${dose}mg`, correct: true, effect: { hp: -2, rep: 20 }, log: `정답. ${wt} × ${dosePerKg} = ${dose}mg.` },
+                { text: `${wrong1}mg`, effect: { hp: -25, rep: -18 }, log: "용량 과다입니다." },
+                { text: `${wrong2}mg`, effect: { hp: -22, rep: -16 }, log: "용량 부족입니다." },
+                { text: `${wrong3}mg`, effect: { hp: -25, rep: -18 }, log: "계산 방식이 잘못되었습니다." }
+            ]) };
+    }
+
+    // ── 정신간호학 ──────────────────────────────────────────────────────
+    function generateSuicideRiskQuestion() {
+        return { baseId: "suicide_risk", category: "정신간호학", part: "자살 위기", emoji: "🆘", title: "자살 위험 사정",
+            desc: `우울증 환자가 "더 이상 살고 싶지 않다" 고 말한다. 간호사의 가장 적절한 반응은?`,
+            choices: shuffle([
+                { text: "구체적인 자살 계획이 있는지 직접 물어본다", correct: true, effect: { hp: -3, rep: 25 }, log: "정답. 직접 질문이 위험 평가의 표준입니다." },
+                { text: "다른 화제로 돌려 환자를 안심시킨다", effect: { hp: -28, rep: -22 }, log: "회피는 위험 평가를 못 합니다." },
+                { text: "그런 생각은 잘못된 것이라고 설명한다", effect: { hp: -25, rep: -20 }, log: "비판적 반응은 치료적이지 않습니다." },
+                { text: "환자에게 비밀로 하고 다른 환자와 격리한다", effect: { hp: -22, rep: -18 }, log: "솔직한 평가와 다학제 대응이 필요합니다." }
+            ]) };
+    }
+
+    function generateSchizophreniaQuestion() {
+        return { baseId: "schizo_communication", category: "정신간호학", part: "치료적 의사소통", emoji: "🗨️", title: "환각·망상 환자 대응",
+            desc: `조현병 환자가 "벽에서 누군가 내 이름을 부른다" 고 호소한다. 간호사의 적절한 반응은?`,
+            choices: shuffle([
+                { text: "\"저는 그 소리가 들리지 않지만 환자분께는 들린다는 것을 알겠습니다\"", correct: true, effect: { hp: -2, rep: 22 }, log: "정답. 환자의 경험을 부정하지 않으면서 현실을 제시합니다." },
+                { text: "\"그건 환청이니까 신경 쓰지 마세요\"", effect: { hp: -22, rep: -18 }, log: "환자의 경험을 무시하는 반응입니다." },
+                { text: "\"그 사람이 뭐라고 하는데요? 자세히 말해보세요\"", effect: { hp: -20, rep: -15 }, log: "환청 내용 탐색은 망상을 강화할 수 있습니다." },
+                { text: "조용한 방에서 혼자 있게 한다", effect: { hp: -18, rep: -12 }, log: "고립은 증상을 악화시킬 수 있습니다." }
+            ]) };
+    }
+
+    function generateAntipsychoticQuestion() {
+        return { baseId: "antipsychotic", category: "정신간호학", part: "약물 부작용", emoji: "💊", title: "정형 항정신병약 추체외로 증상(EPS)",
+            desc: `Haloperidol 투여 환자가 목이 한쪽으로 강하게 돌아가고 고열·근경직을 보인다. 의심해야 할 것은?`,
+            choices: shuffle([
+                { text: "신경이완제 악성증후군(NMS) — 즉시 중단 + 응급 처치", correct: true, effect: { hp: -5, rep: 30 }, log: "정답. NMS 는 치명적입니다. 즉시 약물 중단·해열·수액·dantrolene 고려." },
+                { text: "단순 불안 반응", effect: { hp: -30, rep: -22 }, log: "고열·근경직은 NMS 의심 징후입니다." },
+                { text: "약물 효과 부족 — 용량 증량 필요", effect: { hp: -35, rep: -25 }, log: "오히려 중단이 필요합니다." },
+                { text: "단순 정좌불능(akathisia)", effect: { hp: -25, rep: -18 }, log: "akathisia 는 고열·근경직을 동반하지 않습니다." }
+            ]) };
+    }
+
+    function generateBipolarQuestion() {
+        return { baseId: "bipolar_mania", category: "정신간호학", part: "양극성 장애", emoji: "🎢", title: "조증 삽화 환자 간호",
+            desc: `급성 조증 삽화 환자가 잠을 안 자고 끊임없이 말하며 다른 환자에게 시비를 건다. 우선 중재는?`,
+            choices: shuffle([
+                { text: "자극이 적은 조용한 환경으로 옮기고 안전 확보", correct: true, effect: { hp: -3, rep: 22 }, log: "정답. 자극 감소가 우선입니다." },
+                { text: "함께 활동하며 긴 대화로 에너지를 소진시킨다", effect: { hp: -22, rep: -18 }, log: "오히려 자극을 늘립니다." },
+                { text: "혼자 방에 두고 문을 잠근다", effect: { hp: -28, rep: -22 }, log: "법적·윤리적 문제 + 자해 위험." },
+                { text: "흥분을 가라앉히기 위해 카페인 음료를 제공한다", effect: { hp: -25, rep: -20 }, log: "각성제는 절대 금기입니다." }
+            ]) };
+    }
+
+    function generateMSEQuestion() {
+        const cases = [
+            { item: "지남력(Orientation)", q: "환자에게 \"오늘 며칠인가요?\" 라고 물어 평가하는 정신상태 항목은?" },
+            { item: "사고형태(Thought Process)", q: "환자의 말이 주제와 무관하게 계속 튀는 것을 평가하는 항목은?" },
+            { item: "정동(Affect)", q: "환자가 슬픈 이야기를 하며 웃는 부적절한 표정을 평가하는 항목은?" },
+            { item: "통찰력(Insight)", q: "환자가 자신의 병에 대해 이해하는 정도를 평가하는 항목은?" },
+        ];
+        const c = pick(cases);
+        const wrongs = shuffle(cases.filter(x => x.item !== c.item).map(x => x.item));
+        return { baseId: "mse", category: "정신간호학", part: "정신상태검사", emoji: "🧠", title: "MSE 항목 식별",
+            desc: c.q,
+            choices: shuffle([
+                { text: c.item, correct: true, effect: { hp: -2, rep: 18 }, log: `정답. ${c.item} 의 평가 방법입니다.` },
+                { text: wrongs[0], effect: { hp: -15, rep: -10 }, log: "다른 MSE 항목입니다." },
+                { text: wrongs[1], effect: { hp: -15, rep: -10 }, log: "다른 MSE 항목입니다." },
+                { text: wrongs[2], effect: { hp: -15, rep: -10 }, log: "다른 MSE 항목입니다." }
+            ]) };
+    }
+
+    // ── 지역사회간호학 ─────────────────────────────────────────────────
+    function generateInfectionDiseaseQuestion() {
+        const cases = [
+            { disease: "결핵", grade: "제2급", wrong: ["제1급", "제3급", "제4급"] },
+            { disease: "에볼라바이러스병", grade: "제1급", wrong: ["제2급", "제3급", "제4급"] },
+            { disease: "B형간염", grade: "제3급", wrong: ["제1급", "제2급", "제4급"] },
+            { disease: "수두", grade: "제2급", wrong: ["제1급", "제3급", "제4급"] },
+        ];
+        const c = pick(cases);
+        const wrongs = shuffle(c.wrong);
+        return { baseId: "infection_law", category: "지역사회간호학", part: "법정감염병", emoji: "🦠", title: "법정감염병 등급 분류",
+            desc: `${c.disease} 의 법정감염병 분류(2020 개정)는?`,
+            choices: shuffle([
+                { text: c.grade, correct: true, effect: { hp: -2, rep: 20 }, log: `정답. ${c.disease} 은(는) ${c.grade} 입니다.` },
+                { text: wrongs[0], effect: { hp: -15, rep: -10 }, log: "분류가 다릅니다." },
+                { text: wrongs[1], effect: { hp: -15, rep: -10 }, log: "분류가 다릅니다." },
+                { text: wrongs[2], effect: { hp: -15, rep: -10 }, log: "분류가 다릅니다." }
+            ]) };
+    }
+
+    function generateImmunizationScheduleQuestion() {
+        const cases = [
+            { vaccine: "BCG", age: "출생 후 4주 이내", wrong: ["12개월", "2개월", "6개월"] },
+            { vaccine: "DTaP 1차", age: "생후 2개월", wrong: ["출생 직후", "12개월", "만 4세"] },
+            { vaccine: "MMR 1차", age: "생후 12~15개월", wrong: ["생후 2개월", "생후 6개월", "만 6세"] },
+            { vaccine: "일본뇌염 사백신 1차", age: "생후 12~23개월", wrong: ["출생 직후", "생후 2개월", "만 12세"] },
+        ];
+        const c = pick(cases);
+        const wrongs = shuffle(c.wrong);
+        return { baseId: "imm_schedule", category: "지역사회간호학", part: "예방접종", emoji: "💉", title: "표준 예방접종 일정",
+            desc: `${c.vaccine} 의 표준 첫 접종 시기는?`,
+            choices: shuffle([
+                { text: c.age, correct: true, effect: { hp: -2, rep: 18 }, log: `정답. ${c.vaccine} 표준 일정입니다.` },
+                { text: wrongs[0], effect: { hp: -15, rep: -10 }, log: "표준 일정이 아닙니다." },
+                { text: wrongs[1], effect: { hp: -15, rep: -10 }, log: "표준 일정이 아닙니다." },
+                { text: wrongs[2], effect: { hp: -15, rep: -10 }, log: "표준 일정이 아닙니다." }
+            ]) };
+    }
+
+    function generateMaternalChildQuestion() {
+        return { baseId: "mch_program", category: "지역사회간호학", part: "모자보건", emoji: "👪", title: "모자보건사업",
+            desc: `우리나라 모자보건법상 영유아 정기 건강검진의 주된 목적은?`,
+            choices: shuffle([
+                { text: "성장발달 평가 + 예방접종 확인 + 조기 이상 발견", correct: true, effect: { hp: -2, rep: 20 }, log: "정답. 통합적 영유아 건강관리 목적입니다." },
+                { text: "치료 위주의 의료 서비스 제공", effect: { hp: -15, rep: -10 }, log: "예방·발견 중심입니다." },
+                { text: "부모 면담을 통한 양육비 지원 심사", effect: { hp: -18, rep: -12 }, log: "사업 목적이 아닙니다." },
+                { text: "감염병 발생 후 격리 조치 시행", effect: { hp: -18, rep: -12 }, log: "예방접종 중심입니다." }
+            ]) };
+    }
+
+    function generateOccupationalHealthQuestion() {
+        return { baseId: "occ_health", category: "지역사회간호학", part: "산업보건", emoji: "🏭", title: "산업재해 응급처치",
+            desc: `염산이 작업자 눈에 튄 직장 보건실 응급처치의 우선 순위는?`,
+            choices: shuffle([
+                { text: "즉시 흐르는 미온수로 최소 15~20분 세척", correct: true, effect: { hp: -3, rep: 25 }, log: "정답. 화학물질 세척이 최우선입니다." },
+                { text: "환자를 안정시키고 안과 진료 의뢰만 한다", effect: { hp: -30, rep: -22 }, log: "세척이 먼저입니다." },
+                { text: "중화제(베이킹소다)를 즉시 점안한다", effect: { hp: -28, rep: -20 }, log: "중화 반응열로 추가 손상 가능." },
+                { text: "안대를 적용한 후 이송한다", effect: { hp: -25, rep: -18 }, log: "세척 없이 안대는 손상을 키웁니다." }
+            ]) };
+    }
+
+    function generateChronicDiseaseQuestion() {
+        return { baseId: "chronic_dz", category: "지역사회간호학", part: "만성질환 관리", emoji: "📊", title: "고혈압 환자 교육",
+            desc: `고혈압 환자 가정방문 시 가장 우선 교육해야 할 생활습관은?`,
+            choices: shuffle([
+                { text: "저염식(나트륨 2g/일 이하) + 규칙적 유산소 운동 + 금연", correct: true, effect: { hp: -2, rep: 22 }, log: "정답. 비약물 치료의 핵심입니다." },
+                { text: "필요시에만 혈압을 측정하고 약은 증상 있을 때만 복용", effect: { hp: -25, rep: -20 }, log: "고혈압은 무증상이 흔합니다. 규칙적 복용 필수." },
+                { text: "수분 섭취를 1일 500mL 로 제한", effect: { hp: -22, rep: -18 }, log: "탈수 위험. 적절한 수분 필요." },
+                { text: "운동은 혈압이 정상화되면 중단", effect: { hp: -20, rep: -15 }, log: "지속적 운동이 필요합니다." }
+            ]) };
+    }
+
+    // ── 간호관리학 ──────────────────────────────────────────────────────
+    function generateLeadershipQuestion() {
+        const cases = [
+            { sit: "응급 코드블루 상황", style: "독재형(authoritarian) 리더십", wrong: ["자유방임형", "민주형", "변혁형"] },
+            { sit: "병동 환경개선 위원회 운영", style: "민주형(democratic) 리더십", wrong: ["독재형", "자유방임형", "거래형"] },
+            { sit: "고도 전문 연구팀 신약 개발", style: "자유방임형(laissez-faire) 리더십", wrong: ["독재형", "거래형", "민주형"] },
+        ];
+        const c = pick(cases);
+        const wrongs = shuffle(c.wrong);
+        return { baseId: "leadership", category: "간호관리학", part: "리더십 이론", emoji: "🎯", title: "상황에 맞는 리더십 스타일",
+            desc: `${c.sit} 에 가장 적합한 리더십 유형은?`,
+            choices: shuffle([
+                { text: c.style, correct: true, effect: { hp: -2, rep: 20 }, log: `정답. ${c.sit} 에 적합한 스타일입니다.` },
+                { text: wrongs[0], effect: { hp: -15, rep: -10 }, log: "해당 상황에 맞지 않습니다." },
+                { text: wrongs[1], effect: { hp: -15, rep: -10 }, log: "해당 상황에 맞지 않습니다." },
+                { text: wrongs[2], effect: { hp: -15, rep: -10 }, log: "해당 상황에 맞지 않습니다." }
+            ]) };
+    }
+
+    function generateDelegationQuestion() {
+        return { baseId: "delegation", category: "간호관리학", part: "위임", emoji: "🤝", title: "위임의 5권리",
+            desc: `간호사가 보조인력에게 업무를 위임할 때 따라야 할 '5권리'에 포함되지 않는 것은?`,
+            choices: shuffle([
+                { text: "올바른 환자의 가족 동의", correct: true, effect: { hp: -2, rep: 18 }, log: "정답. 위임 5권리는 과업·상황·인력·지시·감독입니다. 환자 가족 동의는 위임 권리에 포함되지 않습니다." },
+                { text: "올바른 과업 (right task)", effect: { hp: -15, rep: -10 }, log: "5권리에 포함됩니다." },
+                { text: "올바른 인력 (right person)", effect: { hp: -15, rep: -10 }, log: "5권리에 포함됩니다." },
+                { text: "올바른 감독 (right supervision)", effect: { hp: -15, rep: -10 }, log: "5권리에 포함됩니다." }
+            ]) };
+    }
+
+    function generatePatientSafetyQuestion() {
+        return { baseId: "pt_safety", category: "간호관리학", part: "환자안전", emoji: "🛡️", title: "환자안전사고 분류 (적신호)",
+            desc: `보고가 가장 시급한 '적신호(sentinel) 사건'으로 분류되는 것은?`,
+            choices: shuffle([
+                { text: "수술 부위 오류로 인한 환자 사망", correct: true, effect: { hp: -3, rep: 25 }, log: "정답. 적신호 사건은 사망·영구손상 등 중대 결과입니다." },
+                { text: "투약 시 처방 확인을 미흡하게 한 근접오류(near miss)", effect: { hp: -15, rep: -10 }, log: "근접오류는 위해사건으로 진행되지 않은 사건입니다." },
+                { text: "환자가 낙상했으나 부상이 없는 경우", effect: { hp: -18, rep: -12 }, log: "사고는 발생했지만 적신호는 아닙니다." },
+                { text: "정맥주사 자국 발생", effect: { hp: -20, rep: -14 }, log: "경미한 사건입니다." }
+            ]) };
+    }
+
+    function generateQIQuestion() {
+        const cases = [
+            { def: "Plan-Do-Check-Act 4단계 순환을 통한 지속적 개선 기법", name: "PDCA 사이클 (Deming Cycle)", wrong: ["Six Sigma", "Root Cause Analysis", "벤치마킹"] },
+            { def: "결함률을 백만 분의 3.4 수준까지 줄이는 통계적 품질 관리 기법", name: "Six Sigma", wrong: ["PDCA 사이클", "벤치마킹", "Failure Mode Analysis"] },
+            { def: "사건의 근본 원인을 다단계로 추적해 재발 방지책을 도출하는 분석", name: "Root Cause Analysis (RCA)", wrong: ["Six Sigma", "PDCA 사이클", "벤치마킹"] },
+        ];
+        const c = pick(cases);
+        const wrongs = shuffle(c.wrong);
+        return { baseId: "qi", category: "간호관리학", part: "질 관리", emoji: "📈", title: "질 관리 기법 식별",
+            desc: `다음 설명에 해당하는 기법은? "${c.def}"`,
+            choices: shuffle([
+                { text: c.name, correct: true, effect: { hp: -2, rep: 20 }, log: `정답. ${c.name} 의 정의입니다.` },
+                { text: wrongs[0], effect: { hp: -15, rep: -10 }, log: "다른 기법입니다." },
+                { text: wrongs[1], effect: { hp: -15, rep: -10 }, log: "다른 기법입니다." },
+                { text: wrongs[2], effect: { hp: -15, rep: -10 }, log: "다른 기법입니다." }
+            ]) };
+    }
+
+    // ── 보건의약관계법규 ───────────────────────────────────────────────
+    function generateMedicalLawQuestion() {
+        return { baseId: "medical_law_facility", category: "보건의약관계법규", part: "의료법", emoji: "⚖️", title: "의료기관 종별 구분",
+            desc: `의료법상 30개 이상 100개 미만의 병상을 갖춘 의료기관의 종별은?`,
+            choices: shuffle([
+                { text: "병원", correct: true, effect: { hp: -2, rep: 20 }, log: "정답. 의료법상 병원은 30개 이상 병상을 가진 의료기관입니다." },
+                { text: "의원", effect: { hp: -15, rep: -10 }, log: "의원은 외래 중심의 30 병상 미만 기관입니다." },
+                { text: "종합병원", effect: { hp: -15, rep: -10 }, log: "종합병원은 100 병상 이상이며 진료과목 기준이 추가됩니다." },
+                { text: "요양병원", effect: { hp: -15, rep: -10 }, log: "요양병원은 장기 요양이 필요한 환자를 위한 별도 종별입니다." }
+            ]) };
+    }
+
+    function generateNarcoticLawQuestion() {
+        return { baseId: "narcotic_law", category: "보건의약관계법규", part: "마약류관리법", emoji: "🔒", title: "마약류 보관 원칙",
+            desc: `마약류 관리법상 마약(향정신성의약품 제외)의 보관 원칙으로 옳은 것은?`,
+            choices: shuffle([
+                { text: "이중 잠금장치가 있는 철제 금고에 마약만 분리 보관", correct: true, effect: { hp: -2, rep: 22 }, log: "정답. 마약은 이중 잠금 + 분리 보관이 법적 요구사항입니다." },
+                { text: "다른 응급 약품과 함께 응급카트에 보관", effect: { hp: -25, rep: -18 }, log: "분리 보관 위반입니다." },
+                { text: "병동 약품장에 일반약과 함께 보관", effect: { hp: -28, rep: -20 }, log: "법 위반입니다." },
+                { text: "환자별 서랍에 처방 즉시 분배 보관", effect: { hp: -25, rep: -18 }, log: "잠금장치 의무를 위반합니다." }
+            ]) };
+    }
+
+    function generateMentalHealthLawQuestion() {
+        return { baseId: "mh_law_admit", category: "보건의약관계법규", part: "정신건강복지법", emoji: "📜", title: "정신건강복지법 입원 유형",
+            desc: `정신건강복지법상 보호의무자 2명의 동의와 정신과 전문의 1인의 진단에 의한 입원 유형은?`,
+            choices: shuffle([
+                { text: "보호의무자에 의한 입원", correct: true, effect: { hp: -2, rep: 22 }, log: "정답. 보호의무자 2인 동의 + 전문의 1인 진단으로 진행됩니다." },
+                { text: "자의입원", effect: { hp: -15, rep: -10 }, log: "자의입원은 본인 동의에 의한 입원입니다." },
+                { text: "행정입원", effect: { hp: -15, rep: -10 }, log: "행정입원은 자·타해 위험으로 지자체장이 입원을 신청합니다." },
+                { text: "응급입원", effect: { hp: -15, rep: -10 }, log: "응급입원은 의사·경찰 동의로 72시간 한정입니다." }
+            ]) };
+    }
+
+    function generateBloodLawQuestion() {
+        return { baseId: "blood_law", category: "보건의약관계법규", part: "혈액관리법", emoji: "🩸", title: "혈액관리법 채혈 기준",
+            desc: `혈액관리법상 전혈 채혈의 채혈 간격은?`,
+            choices: shuffle([
+                { text: "동일인이 전혈 채혈 후 2개월(8주) 경과 후 재채혈 가능", correct: true, effect: { hp: -2, rep: 20 }, log: "정답. 전혈 채혈은 8주 간격이 원칙입니다." },
+                { text: "1주 경과 후 재채혈 가능", effect: { hp: -25, rep: -18 }, log: "철 결핍 위험으로 부적절합니다." },
+                { text: "1년 경과 후 재채혈 가능", effect: { hp: -18, rep: -12 }, log: "간격이 너무 길어 실제 규정과 다릅니다." },
+                { text: "건강검진 결과에 따라 제한 없음", effect: { hp: -22, rep: -16 }, log: "법령상 최소 간격이 명시되어 있습니다." }
+            ]) };
+    }
+
+    function generateInfectionLawGradeQuestion() {
+        return { baseId: "infection_law_report", category: "보건의약관계법규", part: "감염병예방관리법", emoji: "📋", title: "감염병 신고 기한",
+            desc: `제1급 감염병을 발견한 의사는 언제까지 신고해야 하는가?`,
+            choices: shuffle([
+                { text: "즉시 (지체 없이)", correct: true, effect: { hp: -2, rep: 22 }, log: "정답. 1급은 즉시 신고가 법적 의무입니다." },
+                { text: "24시간 이내", effect: { hp: -15, rep: -10 }, log: "2급의 기준입니다." },
+                { text: "7일 이내", effect: { hp: -18, rep: -12 }, log: "3급에 가까운 기준입니다." },
+                { text: "월 1회 보고", effect: { hp: -22, rep: -16 }, log: "1급에는 맞지 않습니다." }
+            ]) };
+    }
+
+    // ── 성인간호학 추가 ─────────────────────────────────────────────────
+    function generateAnticoagulantQuestion() {
+        const cases = [
+            { drug: "Heparin (정맥)", lab: "aPTT — 정상의 1.5~2.5배", wrong: ["PT/INR 2.0~3.0", "혈소판만 모니터링", "ALT/AST 만 추적"] },
+            { drug: "Warfarin (경구)", lab: "PT/INR — 보통 2.0~3.0", wrong: ["aPTT 1.5~2.5배", "BUN/Cr 추적", "전혈구 검사만"] },
+            { drug: "Enoxaparin (LMWH)", lab: "Anti-Xa level (필요 시)", wrong: ["aPTT 일상 모니터링", "PT/INR 매일", "전해질만 추적"] },
+        ];
+        const c = pick(cases);
+        const wrongs = shuffle(c.wrong);
+        return { baseId: "anticoag", category: "성인간호학", part: "혈액/약물", emoji: "💉", title: "항응고제 모니터링 검사",
+            desc: `${c.drug} 사용 환자의 표준 모니터링 지표는?`,
+            choices: shuffle([
+                { text: c.lab, correct: true, effect: { hp: -2, rep: 22 }, log: `정답. ${c.drug} 의 표준 모니터링입니다.` },
+                { text: wrongs[0], effect: { hp: -22, rep: -16 }, log: "해당 약물의 표준이 아닙니다." },
+                { text: wrongs[1], effect: { hp: -22, rep: -16 }, log: "해당 약물의 표준이 아닙니다." },
+                { text: wrongs[2], effect: { hp: -22, rep: -16 }, log: "해당 약물의 표준이 아닙니다." }
+            ]) };
+    }
+
+    function generateChestTubeQuestion() {
+        return { baseId: "chest_tube", category: "성인간호학", part: "호흡기/수술 후", emoji: "🫁", title: "흉관(Chest tube) 관리",
+            desc: `흉관 배액 시스템의 물밀폐병(water seal) 에서 지속적인 거품이 보인다. 의미는?`,
+            choices: shuffle([
+                { text: "공기 누출(air leak) — 연결부 점검 후 의사 보고", correct: true, effect: { hp: -3, rep: 25 }, log: "정답. 지속적 bubbling 은 air leak 신호입니다." },
+                { text: "정상 호흡 변동 — 관찰만 진행", effect: { hp: -28, rep: -20 }, log: "정상 변동은 호흡 따라 oscillation 만 나타납니다." },
+                { text: "흡인 압력 과다 — 흡인 차단", effect: { hp: -22, rep: -16 }, log: "흡인 조절병의 bubbling 과 혼동입니다." },
+                { text: "환자 회복 신호 — 흉관 제거 준비", effect: { hp: -25, rep: -18 }, log: "오히려 누출 의심 신호입니다." }
+            ]) };
+    }
+
+    function generateRenalFailureQuestion() {
+        const cases = [
+            { stage: "AKI 1단계 (KDIGO)", finding: "Cr 1.5~1.9배 상승 또는 0.3mg/dL 증가", wrong: ["Cr 3배 이상", "투석 필요 수준", "정상 범위"] },
+            { stage: "CKD 3단계", finding: "GFR 30~59mL/min/1.73㎡", wrong: ["GFR 90 이상", "GFR 15 미만 (말기)", "단백뇨만 있음"] },
+            { stage: "ESRD (말기 신부전)", finding: "GFR 15 미만, 신대체요법 필요", wrong: ["GFR 60 이상", "GFR 45 수준", "급성 가역성 손상"] },
+        ];
+        const c = pick(cases);
+        const wrongs = shuffle(c.wrong);
+        return { baseId: "renal_stage", category: "성인간호학", part: "신장/배뇨", emoji: "🫘", title: "신부전 단계 판정",
+            desc: `${c.stage} 의 진단 기준은?`,
+            choices: shuffle([
+                { text: c.finding, correct: true, effect: { hp: -2, rep: 22 }, log: `정답. ${c.stage} 의 표준 정의입니다.` },
+                { text: wrongs[0], effect: { hp: -18, rep: -12 }, log: "기준이 다릅니다." },
+                { text: wrongs[1], effect: { hp: -18, rep: -12 }, log: "기준이 다릅니다." },
+                { text: wrongs[2], effect: { hp: -18, rep: -12 }, log: "기준이 다릅니다." }
+            ]) };
+    }
+
+    function generateStrokeQuestion() {
+        return { baseId: "stroke_assess", category: "성인간호학", part: "신경계", emoji: "🧠", title: "급성 뇌졸중 신속 사정 (FAST)",
+            desc: `응급실 도착 환자의 뇌졸중 의심 시 'FAST' 평가 항목이 아닌 것은?`,
+            choices: shuffle([
+                { text: "Fever (발열)", correct: true, effect: { hp: -2, rep: 20 }, log: "정답. FAST 는 Face/Arm/Speech/Time 입니다. 발열은 포함되지 않습니다." },
+                { text: "Face (안면 비대칭)", effect: { hp: -15, rep: -10 }, log: "FAST 의 첫 항목입니다." },
+                { text: "Arm (팔 처짐)", effect: { hp: -15, rep: -10 }, log: "FAST 의 두 번째 항목입니다." },
+                { text: "Speech (말 어눌함)", effect: { hp: -15, rep: -10 }, log: "FAST 의 세 번째 항목입니다." }
+            ]) };
+    }
+
+    function generateThyroidQuestion() {
+        const cases = [
+            { state: "갑상선기능항진증", finding: "체중감소, 빈맥, 발한, 안구돌출", wrong: ["체중증가, 서맥, 추위 인내성↓", "수면 과다, 무기력", "변비, 피부 건조"] },
+            { state: "갑상선기능저하증", finding: "체중증가, 서맥, 추위 인내성↓, 변비", wrong: ["체중감소, 빈맥, 발한", "불면증, 흥분", "안구돌출, 발한"] },
+        ];
+        const c = pick(cases);
+        const wrongs = shuffle(c.wrong);
+        return { baseId: "thyroid", category: "성인간호학", part: "내분비", emoji: "🦋", title: "갑상선 기능 이상 임상양상",
+            desc: `${c.state} 환자의 전형적인 증상은?`,
+            choices: shuffle([
+                { text: c.finding, correct: true, effect: { hp: -2, rep: 20 }, log: `정답. ${c.state} 의 전형적인 양상입니다.` },
+                { text: wrongs[0], effect: { hp: -18, rep: -12 }, log: "반대 상태의 양상입니다." },
+                { text: wrongs[1], effect: { hp: -18, rep: -12 }, log: "다른 상태의 양상입니다." },
+                { text: wrongs[2], effect: { hp: -18, rep: -12 }, log: "다른 상태의 양상입니다." }
+            ]) };
+    }
+
     const allGenerators = [
         generateDopamineQuestion, generateSepsisQuestion, generatePsychQuestion,
         generateElectrolyteQuestion, generatePedsPriorityQuestion, generateOBQuestion,
@@ -438,7 +958,31 @@
         generateApgarQuestion, generateBurnQuestion, generateShockQuestion,
         generateDiabeticQuestion, generateAsepticQuestion,
         generateECGQuestion, generateLabValueQuestion, generateCPRQuestion,
-        generateInsulinQuestion, generatePainAssessmentQuestion
+        generateInsulinQuestion, generatePainAssessmentQuestion,
+        // 신규 (기본간호학 5)
+        generateOxygenTherapyQuestion, generateUrinaryCathQuestion, generateNGTubeQuestion,
+        generateWoundCareQuestion, generateRestraintQuestion,
+        // 신규 (모성간호학 4)
+        generateLochiaQuestion, generatePreEclampsiaQuestion, generateBreastfeedingQuestion,
+        generateContractionQuestion,
+        // 신규 (아동간호학 4)
+        generateGrowthQuestion, generateFebrileSeizureQuestion, generateDehydrationQuestion,
+        generatePedsDoseQuestion,
+        // 신규 (정신간호학 5)
+        generateSuicideRiskQuestion, generateSchizophreniaQuestion, generateAntipsychoticQuestion,
+        generateBipolarQuestion, generateMSEQuestion,
+        // 신규 (지역사회간호학 5)
+        generateInfectionDiseaseQuestion, generateImmunizationScheduleQuestion,
+        generateMaternalChildQuestion, generateOccupationalHealthQuestion, generateChronicDiseaseQuestion,
+        // 신규 (간호관리학 4)
+        generateLeadershipQuestion, generateDelegationQuestion, generatePatientSafetyQuestion,
+        generateQIQuestion,
+        // 신규 (보건의약관계법규 5)
+        generateMedicalLawQuestion, generateNarcoticLawQuestion, generateMentalHealthLawQuestion,
+        generateBloodLawQuestion, generateInfectionLawGradeQuestion,
+        // 신규 (성인간호학 5)
+        generateAnticoagulantQuestion, generateChestTubeQuestion, generateRenalFailureQuestion,
+        generateStrokeQuestion, generateThyroidQuestion,
     ];
 
     return {
@@ -453,5 +997,22 @@
         generateShockQuestion, generateDiabeticQuestion, generateAsepticQuestion,
         generateECGQuestion, generateLabValueQuestion, generateCPRQuestion,
         generateInsulinQuestion, generatePainAssessmentQuestion,
+        // v1.1 신규 (37개)
+        generateOxygenTherapyQuestion, generateUrinaryCathQuestion, generateNGTubeQuestion,
+        generateWoundCareQuestion, generateRestraintQuestion,
+        generateLochiaQuestion, generatePreEclampsiaQuestion, generateBreastfeedingQuestion,
+        generateContractionQuestion,
+        generateGrowthQuestion, generateFebrileSeizureQuestion, generateDehydrationQuestion,
+        generatePedsDoseQuestion,
+        generateSuicideRiskQuestion, generateSchizophreniaQuestion, generateAntipsychoticQuestion,
+        generateBipolarQuestion, generateMSEQuestion,
+        generateInfectionDiseaseQuestion, generateImmunizationScheduleQuestion,
+        generateMaternalChildQuestion, generateOccupationalHealthQuestion, generateChronicDiseaseQuestion,
+        generateLeadershipQuestion, generateDelegationQuestion, generatePatientSafetyQuestion,
+        generateQIQuestion,
+        generateMedicalLawQuestion, generateNarcoticLawQuestion, generateMentalHealthLawQuestion,
+        generateBloodLawQuestion, generateInfectionLawGradeQuestion,
+        generateAnticoagulantQuestion, generateChestTubeQuestion, generateRenalFailureQuestion,
+        generateStrokeQuestion, generateThyroidQuestion,
     };
 });
