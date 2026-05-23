@@ -212,7 +212,10 @@ function renderSearchResults(query) {
     const idx = buildSearchIndex();
     const matches = idx.filter(e => e.body.toLowerCase().includes(q) || e.title.toLowerCase().includes(q)).slice(0, 20);
     if (matches.length === 0) {
-        resultsEl.innerHTML = `<div class="search-empty">"${escapeHtml(q)}" 결과 없음</div>`;
+        resultsEl.innerHTML = `<div class="search-empty">
+          <div class="empty-state-illust">${EMPTY_ILLUST.searchEmpty}</div>
+          "${escapeHtml(q)}" 결과 없음
+        </div>`;
         return;
     }
     resultsEl.innerHTML = matches.map(m => {
@@ -255,6 +258,29 @@ const ICONS = {
     wrong:      '<svg class="mc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3 h12 v18 l-6 -3 l-6 3 z"/></svg>',
     dash:       '<svg class="mc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20 V10 M10 20 V4 M16 20 V14"/><path d="M3 20 h18"/></svg>',
 };
+
+// 빈 상태 일러스트 — 세이지 톤 단색 SVG (외부 자원 0)
+const EMPTY_ILLUST = {
+    // 오답노트 0건 — 체크된 노트
+    wrongDone: '<svg viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="32" y="22" width="56" height="76" rx="6"/><path d="M44 40 h32 M44 54 h32 M44 68 h22"/><circle cx="86" cy="80" r="16" fill="var(--primary-soft)" stroke="var(--primary)"/><path d="M78 80 l6 6 l12 -12" stroke="var(--primary)" stroke-width="3"/></svg>',
+    // 일일 챌린지 완료 — 체크 동그라미
+    dailyDone: '<svg viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="60" cy="60" r="42" fill="var(--primary-soft)" stroke="currentColor"/><path d="M40 60 l14 14 l28 -28" stroke="var(--primary)" stroke-width="4"/><path d="M60 18 v6 M60 96 v6 M18 60 h6 M96 60 h6" stroke="var(--primary)" opacity="0.6"/></svg>',
+    // 검색 결과 0건 — 돋보기 + 점선 원
+    searchEmpty: '<svg viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="50" cy="50" r="26" stroke-dasharray="3 4"/><path d="M70 70 l22 22" stroke-width="4" stroke-linecap="round"/><path d="M40 50 h20" stroke="var(--primary)"/></svg>',
+};
+
+function renderEmptyState({ illust, title, desc, primaryAction, primaryLabel = "메인 메뉴", secondaryAction, secondaryLabel }) {
+    const buttons = [];
+    if (primaryAction) buttons.push(`<button class="choice-btn primary" data-action="${primaryAction}">${escapeHtml(primaryLabel)}</button>`);
+    if (secondaryAction) buttons.push(`<button class="choice-btn" data-action="${secondaryAction}">${escapeHtml(secondaryLabel)}</button>`);
+    return `
+      <div class="scene-card card empty-state">
+        <div class="empty-state-illust">${EMPTY_ILLUST[illust] || ''}</div>
+        <h2 class="empty-state-title">${escapeHtml(title)}</h2>
+        <p class="empty-state-desc">${escapeHtml(desc)}</p>
+        <div class="choice-list">${buttons.join("")}</div>
+      </div>`;
+}
 
 // =========================================================================
 // 저장소 (localStorage)
@@ -702,13 +728,27 @@ function generateClinicalEventByCategory(category = null) {
 function isCorrectChoice(c) { return c && c.correct === true; }
 
 function renderSceneCard(ev, options = {}) {
-    const { mode = "survival", questionIndex = null, meta = [] } = options;
+    const { mode = "survival", questionIndex = null, meta = [], totalSteps = null } = options;
     const tag = ev.category ? `<div class="category-tag">[${escapeHtml(ev.category)}] ${escapeHtml(ev.part || "")}</div>` : "";
     const metaRow = meta.length ? `<div class="meta-row">${meta.map(m => `<div class="meta-chip">${escapeHtml(m)}</div>`).join("")}</div>` : "";
+
+    // 단계 진행 시각화 — 에피소드 등 다단계 모드에서 현재 단계를 dot 으로 표시
+    let stepProgressHtml = "";
+    if (totalSteps && questionIndex !== null && totalSteps > 1) {
+        const segs = [];
+        for (let i = 1; i <= totalSteps; i++) {
+            const cls = i < questionIndex ? "seg done" : i === questionIndex ? "seg current" : "seg";
+            segs.push(`<span class="${cls}" aria-hidden="true"></span>`);
+        }
+        stepProgressHtml = `
+          <div class="step-progress" role="progressbar" aria-valuenow="${questionIndex}" aria-valuemin="1" aria-valuemax="${totalSteps}" aria-label="단계 진행">${segs.join("")}</div>
+          <div class="step-progress-label">${questionIndex} / ${totalSteps} 단계</div>`;
+    }
 
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
         ${tag}${metaRow}
+        ${stepProgressHtml}
         <span class="scene-emoji" aria-hidden="true">${ev.emoji || "🩺"}</span>
         <h2 class="scene-title">${questionIndex !== null ? `[Q${questionIndex}] ` : ""}${escapeHtml(ev.title)}</h2>
         <p class="scene-desc">${escapeHtml(ev.desc)}</p>
@@ -1059,6 +1099,25 @@ function pickDailyGenerators(seed, count) {
     return out;
 }
 function startDailyChallenge() {
+    // 이미 오늘 완료한 경우 → 빈 상태 (재도전은 명시적 선택)
+    const data = Storage.load();
+    const today = data.daily?.[todayKey()];
+    if (today?.completed) {
+        resetStateForMode();
+        gameState.mode = "daily_done";
+        showCoreUI(); updateStats();
+        UI.gameArea.innerHTML = renderEmptyState({
+            illust: "dailyDone",
+            title: "오늘 일일 챌린지 완료!",
+            desc: `오늘 ${today.correct}/${DAILY_CHALLENGE_TOTAL} 정답.\n내일 0시에 새 챌린지가 열려요.`,
+            primaryAction: "returnToMenu", primaryLabel: "메인 메뉴",
+            secondaryAction: "startDailyChallengeForce", secondaryLabel: "그래도 다시 풀기",
+        });
+        return;
+    }
+    startDailyChallengeForce();
+}
+function startDailyChallengeForce() {
     resetStateForMode();
     gameState.mode = "daily";
     gameState.dailySolved = 0; gameState.dailyCorrect = 0;
@@ -1121,27 +1180,23 @@ function reviewWrongAnswers() {
     if (all.length > 0 && due.length === 0) {
         const nextDue = Math.min(...all.map(q => q.nextDue || now));
         const hoursToNext = Math.max(0, Math.round((nextDue - now) / (60 * 60 * 1000)));
-        UI.gameArea.innerHTML = `
-          <div class="scene-card card">
-            <h2 class="scene-title">오늘 복습할 게 없어요</h2>
-            <p class="scene-desc">${all.length}건 오답 모두 복습 완료 상태.\n다음 복습 만기: 약 ${hoursToNext}시간 후 (spaced repetition).</p>
-            <div class="choice-list">
-              <button class="choice-btn primary" data-action="reviewWrongForce">그래도 복습할게요</button>
-              <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
-            </div>
-          </div>`;
+        UI.gameArea.innerHTML = renderEmptyState({
+            illust: "wrongDone",
+            title: "오늘 복습할 게 없어요",
+            desc: `${all.length}건 오답 모두 복습 완료 상태.\n다음 복습 만기: 약 ${hoursToNext}시간 후 (spaced repetition).`,
+            primaryAction: "reviewWrongForce", primaryLabel: "그래도 복습할게요",
+            secondaryAction: "returnToMenu", secondaryLabel: "메인 메뉴",
+        });
         showCoreUI(); updateStats();
         return;
     }
     if (gameState.wrongQueue.length === 0) {
-        UI.gameArea.innerHTML = `
-          <div class="scene-card card">
-            <h2 class="scene-title">오답노트가 비었습니다</h2>
-            <p class="scene-desc">아직 저장된 오답이 없어요. 트레이닝/모의고사에서 문제를 풀면 자동으로 쌓입니다.</p>
-            <div class="choice-list">
-              <button class="choice-btn primary" data-action="returnToMenu">메인 메뉴</button>
-            </div>
-          </div>`;
+        UI.gameArea.innerHTML = renderEmptyState({
+            illust: "wrongDone",
+            title: "오답노트가 비었습니다",
+            desc: "아직 저장된 오답이 없어요. 트레이닝/모의고사에서 문제를 풀면 자동으로 쌓입니다.",
+            primaryAction: "returnToMenu", primaryLabel: "메인 메뉴",
+        });
         showCoreUI(); updateStats();
         return;
     }
@@ -1151,14 +1206,12 @@ function reviewWrongAnswers() {
 }
 function renderNextWrongQuestion() {
     if (gameState.wrongQueue.length === 0) {
-        UI.gameArea.innerHTML = `
-          <div class="scene-card card">
-            <h2 class="scene-title">오답을 모두 복습했습니다</h2>
-            <p class="scene-desc">정답 ${gameState.quizCorrect} / 다시 오답 ${gameState.quizWrong}</p>
-            <div class="choice-list">
-              <button class="choice-btn primary" data-action="returnToMenu">메인 메뉴</button>
-            </div>
-          </div>`;
+        UI.gameArea.innerHTML = renderEmptyState({
+            illust: "wrongDone",
+            title: "오답을 모두 복습했습니다",
+            desc: `정답 ${gameState.quizCorrect} / 다시 오답 ${gameState.quizWrong}`,
+            primaryAction: "returnToMenu", primaryLabel: "메인 메뉴",
+        });
         return;
     }
     const snap = gameState.wrongQueue[0];
@@ -1578,6 +1631,7 @@ function renderEpisodeStep() {
     renderSceneCard(ev, {
         mode: "episode",
         questionIndex: stepNum,
+        totalSteps,
         meta: [ep.title, step.time || "", `Step ${stepNum}/${totalSteps}`].filter(Boolean),
     });
 }
@@ -1678,7 +1732,7 @@ function renderScenarioStep() {
             log: c.log || "",
         })),
     };
-    renderSceneCard(ev, { mode: "scenario", questionIndex: gameState.scenarioStep + 1, meta: [s.title, `Step ${gameState.scenarioStep + 1}/${s.steps.length}`] });
+    renderSceneCard(ev, { mode: "scenario", questionIndex: gameState.scenarioStep + 1, totalSteps: s.steps.length, meta: [s.title, `Step ${gameState.scenarioStep + 1}/${s.steps.length}`] });
 }
 
 function handleScenarioChoice(choice, ev) {
@@ -2755,6 +2809,7 @@ const DELEGATED_ACTIONS = {
     startQuiz: (t) => startQuiz(t.dataset.arg),
     startMockExam: () => startMockExam(),
     startDailyChallenge: () => startDailyChallenge(),
+    startDailyChallengeForce: () => startDailyChallengeForce(),
     reviewWrongAnswers: () => reviewWrongAnswers(),
     renderDashboard: () => renderDashboard(),
     confirmClearStats: () => confirmClearStats(),

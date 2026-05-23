@@ -921,3 +921,106 @@ describe("일일 챌린지 시드 결정성 (jsdom 환경)", () => {
         expect(secondCat).toBe(firstCat);
     });
 });
+
+describe("P1 — 디자인 폴리시 (빈 상태 / 단계 진행 / fade-in / 콤보 톤다운)", () => {
+    function todayKeyHelper() {
+        const d = new Date();
+        const z = n => String(n).padStart(2, "0");
+        return `${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())}`;
+    }
+
+    test("오답노트가 비었을 때 .empty-state SVG 일러스트가 노출된다", () => {
+        loadScript();
+        document.querySelector('[data-action="reviewWrongAnswers"]').click();
+        const card = document.querySelector(".scene-card.empty-state");
+        expect(card).not.toBeNull();
+        const illust = card.querySelector(".empty-state-illust svg");
+        expect(illust).not.toBeNull();
+        expect(card.textContent).toMatch(/오답노트/);
+    });
+
+    test("검색 결과 0건일 때 .search-empty 안에 SVG 일러스트가 노출된다", () => {
+        loadScript();
+        document.querySelector('[data-action="openSearch"]').click();
+        const input = document.getElementById("search-input");
+        input.value = "존재하지않는키워드XYZ123";
+        input.dispatchEvent(new Event("input"));
+        const empty = document.querySelector(".search-empty");
+        expect(empty).not.toBeNull();
+        const illust = empty.querySelector(".empty-state-illust svg");
+        expect(illust).not.toBeNull();
+    });
+
+    test("일일 챌린지가 오늘 이미 완료된 상태면 .empty-state 가 노출된다", () => {
+        const seed = {
+            accepted: { version: "1.0", at: Date.now() }, onboarded: true,
+            daily: { [todayKeyHelper()]: { solved: 10, correct: 8, completed: true, ts: Date.now() } },
+        };
+        localStorage.setItem("nurseSim:v1", JSON.stringify(seed));
+        loadScript();
+        document.querySelector('[data-action="startDailyChallenge"]').click();
+        const card = document.querySelector(".scene-card.empty-state");
+        expect(card).not.toBeNull();
+        expect(card.textContent).toMatch(/완료/);
+        // 강제 재도전 버튼이 존재
+        expect(card.querySelector('[data-action="startDailyChallengeForce"]')).not.toBeNull();
+    });
+
+    test("startDailyChallengeForce 는 완료 상태에서도 새 문제를 시작한다", () => {
+        const seed = {
+            accepted: { version: "1.0", at: Date.now() }, onboarded: true,
+            daily: { [todayKeyHelper()]: { solved: 10, correct: 8, completed: true, ts: Date.now() } },
+        };
+        localStorage.setItem("nurseSim:v1", JSON.stringify(seed));
+        loadScript();
+        document.querySelector('[data-action="startDailyChallenge"]').click();
+        document.querySelector('[data-action="startDailyChallengeForce"]').click();
+        // 정상 출제 화면 진입 — 카테고리 태그가 있어야 함
+        expect(document.querySelector('.category-tag')).not.toBeNull();
+    });
+
+    test("에피소드 진행 시 .step-progress 세그먼티드 바가 렌더된다", () => {
+        loadScript();
+        document.querySelector('[data-action="renderEpisodeMenu"]').click();
+        document.querySelector('[data-action="startEpisode"]').click();
+        const bar = document.querySelector(".step-progress");
+        expect(bar).not.toBeNull();
+        const segs = bar.querySelectorAll(".seg");
+        expect(segs.length).toBeGreaterThan(1);
+        // 첫 단계 → 첫 segment 가 current
+        expect(bar.querySelector(".seg.current")).not.toBeNull();
+    });
+
+    test("scene-card 는 sceneFadeIn 200ms 애니메이션을 가진다 (CSS 규칙 확인)", () => {
+        const fs = require("fs");
+        const path = require("path");
+        const css = fs.readFileSync(path.join(__dirname, "..", "styles.css"), "utf-8");
+        expect(css).toMatch(/\.scene-card\s*\{[^}]*animation:\s*sceneFadeIn\s+200ms/);
+        expect(css).toMatch(/@keyframes\s+sceneFadeIn/);
+    });
+
+    test("콤보 burst 애니메이션은 scale 1.05 + 글로우 없음 (sage 톤다운)", () => {
+        const fs = require("fs");
+        const path = require("path");
+        const css = fs.readFileSync(path.join(__dirname, "..", "styles.css"), "utf-8");
+        // keyframe 의 50% scale 이 1.05 여야 함 (이전 1.12 톤다운)
+        const m = css.match(/@keyframes\s+comboBurst\s*\{[\s\S]*?50%\s*\{\s*transform:\s*scale\(([\d.]+)\)/);
+        expect(m).not.toBeNull();
+        expect(parseFloat(m[1])).toBeLessThanOrEqual(1.06);
+        // box-shadow rgba 가 sage(127,168,129) 톤이어야 함 (orange 245,158,11 → sage 톤다운)
+        expect(css).toMatch(/rgba\(127,\s*168,\s*129/);
+        // 더이상 orange/amber rgba(245,158,11) 톤이 .badge.combo 에 사용되지 않음
+        const badgeBlock = css.match(/\.badge\.combo\s*\{[\s\S]*?\n\}/);
+        expect(badgeBlock).not.toBeNull();
+        expect(badgeBlock[0]).not.toMatch(/rgba\(245,\s*158,\s*11/);
+    });
+
+    test("icon.svg 는 sage(#7fa881) 단색 배경을 가진다 (BETA blue 제거)", () => {
+        const fs = require("fs");
+        const path = require("path");
+        const svg = fs.readFileSync(path.join(__dirname, "..", "icon.svg"), "utf-8");
+        expect(svg).toMatch(/#7fa881/i);
+        expect(svg).not.toMatch(/#2563eb/i);
+        expect(svg).not.toMatch(/#ef4444/i);
+    });
+});
