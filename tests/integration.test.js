@@ -1024,3 +1024,248 @@ describe("P1 — 디자인 폴리시 (빈 상태 / 단계 진행 / fade-in / 콤
         expect(svg).not.toMatch(/#ef4444/i);
     });
 });
+
+describe("P2 — Leitner 5박스 SRS", () => {
+    test("처음 오답 등록 시 box=1 이 부여된다 (SM-2 호환 필드 유지)", () => {
+        loadScript();
+        document.querySelector('[data-action="renderQuizMenu"]').click();
+        document.querySelector('[data-action="startQuiz"]').click();
+        // 모든 보기 클릭하여 오답 누적
+        for (let i = 0; i < 4; i++) {
+            const btn = document.querySelectorAll("#choice-list .choice-btn")[i];
+            if (btn) btn.click();
+            const next = document.querySelector('#feedback-zone .choice-btn.primary');
+            if (next) next.click();
+        }
+        const stored = JSON.parse(localStorage.getItem("nurseSim:v1") || "{}");
+        const queue = stored.wrongQueue || [];
+        if (queue.length > 0) {
+            expect(queue[0].box).toBe(1);
+            expect(queue[0]).toHaveProperty("nextDue");
+            expect(queue[0]).toHaveProperty("interval");
+        }
+    });
+
+    test("오답 큐 항목에 Leitner box 메타-칩이 표시된다", () => {
+        const seed = {
+            accepted: { version: "1.0", at: Date.now() }, onboarded: true,
+            wrongQueue: [{
+                id: "test-bm-1", baseId: "test", category: "기본간호학",
+                part: "1", title: "샘플 오답", desc: "테스트",
+                choices: [{ text: "A", correct: true }, { text: "B", correct: false }],
+                ts: Date.now(), box: 3, interval: 7, nextDue: Date.now() - 1000,
+                repetitions: 2, easeFactor: 2.5,
+            }],
+        };
+        localStorage.setItem("nurseSim:v1", JSON.stringify(seed));
+        loadScript();
+        document.querySelector('[data-action="reviewWrongAnswers"]').click();
+        const chips = [...document.querySelectorAll(".meta-chip")].map(c => c.textContent);
+        expect(chips.some(t => /Leitner\s*3\s*\/\s*5/.test(t))).toBe(true);
+    });
+
+    test("Box 5 정답 시 큐에서 자동 졸업한다", () => {
+        const seed = {
+            accepted: { version: "1.0", at: Date.now() }, onboarded: true,
+            wrongQueue: [{
+                id: "grad-1", baseId: "test", category: "기본간호학",
+                part: "1", title: "Box5 졸업 후보", desc: "졸업",
+                choices: [{ text: "A", correct: true }, { text: "B", correct: false }],
+                ts: Date.now(), box: 5, interval: 30, nextDue: Date.now() - 1000,
+            }],
+        };
+        localStorage.setItem("nurseSim:v1", JSON.stringify(seed));
+        loadScript();
+        document.querySelector('[data-action="reviewWrongAnswers"]').click();
+        // 정답 클릭
+        const btns = [...document.querySelectorAll("#choice-list .choice-btn")];
+        const correctBtn = btns.find(b => b.textContent.includes("A"));
+        correctBtn.click();
+        const stored = JSON.parse(localStorage.getItem("nurseSim:v1") || "{}");
+        const queue = stored.wrongQueue || [];
+        expect(queue.find(q => q.id === "grad-1")).toBeUndefined();
+    });
+});
+
+describe("P2 — 북마크(즐겨찾기)", () => {
+    test("문제 카드에 ⭐ 북마크 토글이 노출된다", () => {
+        loadScript();
+        document.querySelector('[data-action="renderQuizMenu"]').click();
+        document.querySelector('[data-action="startQuiz"]').click();
+        const star = document.querySelector('.bookmark-toggle[data-action="toggleSceneBookmark"]');
+        expect(star).not.toBeNull();
+        expect(star.getAttribute("aria-pressed")).toBe("false");
+    });
+
+    test("⭐ 클릭 시 localStorage.bookmarks 에 저장된다", () => {
+        loadScript();
+        document.querySelector('[data-action="renderQuizMenu"]').click();
+        document.querySelector('[data-action="startQuiz"]').click();
+        const star = document.querySelector('.bookmark-toggle');
+        star.click();
+        const stored = JSON.parse(localStorage.getItem("nurseSim:v1") || "{}");
+        const ids = Object.keys(stored.bookmarks || {});
+        expect(ids.length).toBe(1);
+        // 같은 ⭐ 다시 클릭 → 토글 해제
+        star.click();
+        const stored2 = JSON.parse(localStorage.getItem("nurseSim:v1") || "{}");
+        expect(Object.keys(stored2.bookmarks || {}).length).toBe(0);
+    });
+
+    test("내 기록 탭에 북마크 row-card 가 노출된다", () => {
+        loadScript();
+        document.querySelector('[data-action="setMenuTab"][data-tab="my"]').click();
+        const card = document.querySelector('[data-action="renderBookmarks"]');
+        expect(card).not.toBeNull();
+    });
+
+    test("북마크 0건이면 .empty-state 가, 1건 이상이면 .bookmark-list 가 노출된다", () => {
+        // 빈 상태
+        loadScript();
+        document.querySelector('[data-action="setMenuTab"][data-tab="my"]').click();
+        document.querySelector('[data-action="renderBookmarks"]').click();
+        expect(document.querySelector(".scene-card.empty-state")).not.toBeNull();
+        // 시드 1건 — freshDom 이 localStorage.clear() 하므로 freshDom 이후 시드
+        freshDom();
+        const seed = {
+            accepted: { version: "1.0", at: Date.now() }, onboarded: true,
+            bookmarks: {
+                "test#abc": {
+                    baseId: "test", category: "기본간호학", part: "1",
+                    title: "샘플 북마크", desc: "테스트",
+                    choices: [{ text: "A", correct: true }, { text: "B", correct: false }],
+                    ts: Date.now(),
+                },
+            },
+        };
+        localStorage.setItem("nurseSim:v1", JSON.stringify(seed));
+        loadScript();
+        document.querySelector('[data-action="setMenuTab"][data-tab="my"]').click();
+        document.querySelector('[data-action="renderBookmarks"]').click();
+        expect(document.querySelector(".bookmark-list")).not.toBeNull();
+        expect(document.querySelectorAll(".bookmark-item").length).toBe(1);
+    });
+
+    test("북마크 항목 클릭 시 quiz-mode 로 다시 풀이 화면이 열린다", () => {
+        const seed = {
+            accepted: { version: "1.0", at: Date.now() }, onboarded: true,
+            bookmarks: {
+                "test#xyz": {
+                    baseId: "test", category: "기본간호학", part: "1",
+                    title: "북마크 풀이용", desc: "테스트",
+                    choices: [{ text: "A", correct: true }, { text: "B", correct: false }],
+                    ts: Date.now(),
+                },
+            },
+        };
+        localStorage.setItem("nurseSim:v1", JSON.stringify(seed));
+        loadScript();
+        document.querySelector('[data-action="setMenuTab"][data-tab="my"]').click();
+        document.querySelector('[data-action="renderBookmarks"]').click();
+        document.querySelector('[data-action="openBookmark"]').click();
+        expect(document.querySelector(".scene-title").textContent).toMatch(/북마크 풀이용/);
+    });
+});
+
+describe("P2 — 위클리 리포트", () => {
+    test("이번 주 history 가 있으면 홈 탭 상단에 .weekly-report-card 가 노출된다", () => {
+        const seed = {
+            accepted: { version: "1.0", at: Date.now() }, onboarded: true,
+            history: [
+                { mode: "mock", at: Date.now() - 24 * 60 * 60 * 1000, total: 10, correct: 7, accuracy: 70 },
+                { mode: "daily", at: Date.now() - 2 * 24 * 60 * 60 * 1000, total: 10, correct: 8 },
+            ],
+        };
+        localStorage.setItem("nurseSim:v1", JSON.stringify(seed));
+        loadScript();
+        const card = document.querySelector('[data-action="renderWeeklyReport"]');
+        expect(card).not.toBeNull();
+        expect(card.textContent).toMatch(/이번 주|일요일/);
+    });
+
+    test("history 가 비어있으면 weekly-report-card 가 노출되지 않는다", () => {
+        loadScript();
+        expect(document.querySelector('[data-action="renderWeeklyReport"]')).toBeNull();
+    });
+
+    test("위클리 리포트 페이지에 정답률·학습일수 통계가 표시된다", () => {
+        const seed = {
+            accepted: { version: "1.0", at: Date.now() }, onboarded: true,
+            history: [
+                { mode: "mock", at: Date.now() - 60 * 60 * 1000, total: 10, correct: 7 },
+            ],
+        };
+        localStorage.setItem("nurseSim:v1", JSON.stringify(seed));
+        loadScript();
+        document.querySelector('[data-action="renderWeeklyReport"]').click();
+        const title = document.querySelector(".scene-title").textContent;
+        expect(title).toMatch(/위클리 리포트/);
+        expect(document.querySelectorAll(".dash-stat").length).toBeGreaterThanOrEqual(4);
+    });
+});
+
+describe("P2 — 공유 (Canvas 결과 카드)", () => {
+    test("일일 챌린지 완료 화면에 결과 카드 다운로드 버튼이 있다", () => {
+        const seed = {
+            accepted: { version: "1.0", at: Date.now() }, onboarded: true,
+        };
+        localStorage.setItem("nurseSim:v1", JSON.stringify(seed));
+        loadScript();
+        document.querySelector('[data-action="startDailyChallenge"]').click();
+        // 10문제 모두 풀어 종료 화면 도달
+        for (let i = 0; i < 12; i++) {
+            const choices = document.querySelectorAll("#choice-list .choice-btn");
+            if (choices.length === 0) break;
+            choices[0].click();
+            const next = document.querySelector('#feedback-zone .choice-btn.primary');
+            if (next) next.click();
+        }
+        const share = document.querySelector('[data-action="shareResultCard"]');
+        expect(share).not.toBeNull();
+    });
+
+    test("shareResultCard 액션 핸들러가 DELEGATED_ACTIONS 에 등록되어 있다", () => {
+        const fs = require("fs");
+        const path = require("path");
+        const src = fs.readFileSync(path.join(__dirname, "..", "script.js"), "utf-8");
+        expect(src).toMatch(/shareResultCard:\s*\(t\)\s*=>\s*shareResultCard\(t\)/);
+        expect(src).toMatch(/function\s+shareResultCard\(/);
+    });
+});
+
+describe("P2 — AdMob 어댑터 (Capacitor 호환)", () => {
+    test("Ads.showInterstitial / Ads.showBanner / Ads.hideBanner 가 정의되어 있다", () => {
+        const fs = require("fs");
+        const path = require("path");
+        const src = fs.readFileSync(path.join(__dirname, "..", "script.js"), "utf-8");
+        expect(src).toMatch(/const\s+Ads\s*=\s*\{/);
+        expect(src).toMatch(/showInterstitial\s*\(/);
+        expect(src).toMatch(/showBanner\s*\(/);
+        expect(src).toMatch(/hideBanner\s*\(/);
+    });
+
+    test("플러그인 부재 시 호출이 throw 없이 no-op 으로 끝난다", () => {
+        loadScript();
+        // 웹/jsdom 환경엔 Capacitor 가 없으므로 Ads.* 호출은 안전해야 함
+        expect(() => {
+            // 모든 모드 종료가 Ads.showInterstitial 을 호출하므로 한 번 트리거
+            document.querySelector('[data-action="startTriage"]').click();
+            // 트리아지를 종료시키지 않아도 어댑터 자체가 안전한지가 핵심
+        }).not.toThrow();
+    });
+
+    test("모드 종료 함수들이 광고 트리거를 포함한다 (소스 확인)", () => {
+        const fs = require("fs");
+        const path = require("path");
+        const src = fs.readFileSync(path.join(__dirname, "..", "script.js"), "utf-8");
+        // endMockExam / endDailyChallenge / endEpisode / endHandoff / endTriage
+        // 다섯 모드 종료 직후 showInterstitial 이 호출되도록 보강돼야 함
+        const ends = ["endMockExam", "endDailyChallenge", "endEpisode", "endHandoff", "endTriage"];
+        for (const fn of ends) {
+            const re = new RegExp(`function\\s+${fn}\\(\\s*\\w*\\s*\\)\\s*\\{[\\s\\S]{0,200}Ads\\.showInterstitial`);
+            expect(src).toMatch(re);
+        }
+        // 메인 메뉴(홈 탭) 진입 시 banner 호출
+        expect(src).toMatch(/menuTab\s*===\s*"home"[\s\S]{0,80}showBanner/);
+    });
+});

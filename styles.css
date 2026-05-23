@@ -223,6 +223,119 @@ body {
     letter-spacing: -0.01em;
 }
 
+/* 북마크 (즐겨찾기) — scene-card 우상단 ⭐ 토글 + 리스트 */
+.scene-card { position: relative; }
+.bookmark-toggle {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 44px;
+    height: 44px;
+    border: none;
+    background: var(--bg);
+    color: var(--muted);
+    border-radius: 50%;
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 120ms ease;
+}
+.bookmark-toggle svg { width: 22px; height: 22px; }
+.bookmark-toggle:hover { color: var(--primary-dark); }
+.bookmark-toggle.on { color: var(--primary); }
+.bookmark-toggle.on:hover { color: var(--primary-dark); }
+.bookmark-toggle:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+.bookmark-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 12px 0 18px;
+}
+.bookmark-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.bookmark-open {
+    flex: 1;
+    text-align: left;
+    background: var(--bg);
+    color: var(--text);
+    border: none;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    padding: 12px 14px;
+    cursor: pointer;
+    min-height: 44px;
+}
+.bookmark-open:hover { box-shadow: var(--shadow-md); }
+.bookmark-open .bm-cat {
+    font-size: 11px;
+    color: var(--primary-dark);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin-bottom: 4px;
+}
+.bookmark-open .bm-title {
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.4;
+}
+.bookmark-remove {
+    width: 36px;
+    height: 36px;
+    font-size: 14px;
+    color: var(--muted);
+    background: var(--bg);
+    border: none;
+    border-radius: 50%;
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+}
+.bookmark-remove:hover { color: var(--danger); }
+
+/* 위클리 리포트 — 일요일 홈 탭 상단 카드 */
+.weekly-report-card {
+    margin: 0 0 14px 0;
+    padding: 16px;
+    background: var(--card);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    display: block;
+    width: 100%;
+    border: none;
+    text-align: left;
+    cursor: pointer;
+}
+.weekly-report-card .wr-label {
+    font-size: 11px;
+    color: var(--primary-dark);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+.weekly-report-card .wr-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin-top: 4px;
+    color: var(--text);
+}
+.weekly-report-card .wr-stats {
+    display: flex;
+    gap: 16px;
+    margin-top: 10px;
+    font-size: 13px;
+    color: var(--muted);
+}
+.weekly-report-card .wr-stats strong {
+    color: var(--text);
+    font-size: 18px;
+    font-weight: 700;
+    margin-right: 4px;
+}
+
 /* 빈 상태 카드 — 세이지 뉴모픽 일러스트 + 한 줄 안내 */
 .empty-state {
     text-align: center;

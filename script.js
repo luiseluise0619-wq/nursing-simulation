@@ -306,6 +306,7 @@ const Storage = {
             settings: { theme: "auto", sound: true },
             stats,
             wrongQueue: [],
+            bookmarks: {},     // { contentId: { type, label, ts } } — 즐겨찾기
             bestCombo: 0,
             mockBest: 0,
             handoffBest: 0,
@@ -323,6 +324,7 @@ const Storage = {
             settings: (raw.settings && typeof raw.settings === "object") ? Object.assign(d.settings, raw.settings) : d.settings,
             stats: d.stats,
             wrongQueue: Array.isArray(raw.wrongQueue) ? raw.wrongQueue.filter(e => e && typeof e === "object" && Array.isArray(e.choices)) : [],
+            bookmarks: (raw.bookmarks && typeof raw.bookmarks === "object" && !Array.isArray(raw.bookmarks)) ? raw.bookmarks : {},
             bestCombo: Number.isFinite(raw.bestCombo) ? raw.bestCombo : 0,
             mockBest: Number.isFinite(raw.mockBest) ? raw.mockBest : 0,
             handoffBest: Number.isFinite(raw.handoffBest) ? raw.handoffBest : 0,
@@ -363,7 +365,8 @@ const Storage = {
             desc: question.desc,
             choices: question.choices.map(c => ({ text: c.text, correct: !!c.correct, log: c.log })),
             ts: Date.now(),
-            // SM-2 간소화: 처음엔 즉시 복습 가능
+            // Leitner 5-box: 1d → 3d → 7d → 14d → 30d (box 1~5)
+            box: 1,
             interval: 0, repetitions: 0, easeFactor: 2.5, nextDue: Date.now(),
         };
         if (data.wrongQueue.length >= 200) data.wrongQueue.shift();
@@ -371,24 +374,33 @@ const Storage = {
         Storage.save(data);
         return entry.id;
     },
-    // SM-2 알고리즘 (간소화) — quality 0~5 (정답=5, 부분정답=3, 오답=0)
+    // Leitner 5-box 알고리즘 — quality 0~5 (정답=5, 부분정답=3, 오답=0)
+    // box 1→2→3→4→5 (정답시 승급), 오답시 box 1 강등. 박스 5 졸업 시 자동 제거.
     updateSpacedRepetition(id, quality) {
         const data = Storage.load();
         const item = data.wrongQueue.find(e => e.id === id);
         if (!item) return;
+        const LEITNER_DAYS = [1, 3, 7, 14, 30];
+        if (typeof item.box !== "number" || item.box < 1 || item.box > 5) item.box = 1;
+        let graduate = false;
         if (quality < 3) {
-            // 오답 → 1일 후 다시
+            item.box = 1;
             item.repetitions = 0;
-            item.interval = 1;
         } else {
+            if (item.box >= 5) {
+                graduate = true;
+            } else {
+                item.box = Math.min(5, item.box + 1);
+            }
             item.repetitions = (item.repetitions || 0) + 1;
-            if (item.repetitions === 1) item.interval = 1;
-            else if (item.repetitions === 2) item.interval = 3;
-            else item.interval = Math.round((item.interval || 1) * (item.easeFactor || 2.5));
-            item.easeFactor = Math.max(1.3, (item.easeFactor || 2.5) + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02)));
         }
+        item.interval = LEITNER_DAYS[item.box - 1];
         item.nextDue = Date.now() + item.interval * 24 * 60 * 60 * 1000;
         item.lastReviewed = Date.now();
+        if (graduate) {
+            const idx = data.wrongQueue.findIndex(e => e.id === id);
+            if (idx >= 0) data.wrongQueue.splice(idx, 1);
+        }
         Storage.save(data);
     },
     removeWrongById(id) {
@@ -405,6 +417,37 @@ const Storage = {
         Storage.save(data);
     },
     getWrongQueue() { return Storage.load().wrongQueue; },
+    // 즐겨찾기 (북마크) — 문제 스냅샷을 ⭐ 토글로 보관
+    getBookmarks() { return Storage.load().bookmarks || {}; },
+    isBookmarked(id) {
+        const bm = Storage.load().bookmarks || {};
+        return !!bm[id];
+    },
+    toggleBookmark(id, snapshot = null) {
+        const data = Storage.load();
+        if (!data.bookmarks || typeof data.bookmarks !== "object") data.bookmarks = {};
+        if (data.bookmarks[id]) {
+            delete data.bookmarks[id];
+            Storage.save(data);
+            return false;
+        }
+        const entry = snapshot ? {
+            baseId: snapshot.baseId, category: snapshot.category, part: snapshot.part,
+            title: snapshot.title, desc: snapshot.desc,
+            choices: (snapshot.choices || []).map(c => ({ text: c.text, correct: !!c.correct, log: c.log })),
+            ts: Date.now(),
+        } : { ts: Date.now() };
+        data.bookmarks[id] = entry;
+        Storage.save(data);
+        return true;
+    },
+    removeBookmark(id) {
+        const data = Storage.load();
+        if (data.bookmarks && data.bookmarks[id]) {
+            delete data.bookmarks[id];
+            Storage.save(data);
+        }
+    },
     getStats() { return Storage.load().stats; },
     getSettings() { return Storage.load().settings; },
     setSettings(s) {
@@ -727,6 +770,19 @@ function generateClinicalEventByCategory(category = null) {
 }
 function isCorrectChoice(c) { return c && c.correct === true; }
 
+// 북마크용 안정 id — 동일 컨텐츠가 동일 id 를 갖도록 baseId + title 해시
+function bookmarkIdFor(ev) {
+    if (!ev) return "";
+    const base = String(ev.baseId || "");
+    const title = String(ev.title || "");
+    let hash = 0;
+    for (let i = 0; i < title.length; i++) hash = ((hash << 5) - hash + title.charCodeAt(i)) | 0;
+    return `${base}#${Math.abs(hash).toString(36)}`;
+}
+
+// 북마크 가능 모드 — 에피소드/시나리오 step 자체는 컨텍스트가 필요해 제외
+const BOOKMARKABLE_MODES = new Set(["survival", "quiz", "mock", "daily", "wrong_review"]);
+
 function renderSceneCard(ev, options = {}) {
     const { mode = "survival", questionIndex = null, meta = [], totalSteps = null } = options;
     const tag = ev.category ? `<div class="category-tag">[${escapeHtml(ev.category)}] ${escapeHtml(ev.part || "")}</div>` : "";
@@ -745,8 +801,19 @@ function renderSceneCard(ev, options = {}) {
           <div class="step-progress-label">${questionIndex} / ${totalSteps} 단계</div>`;
     }
 
+    // 북마크 버튼 — 가능 모드에서만 노출
+    let bookmarkBtnHtml = "";
+    if (BOOKMARKABLE_MODES.has(mode) && ev.baseId) {
+        const bmId = bookmarkIdFor(ev);
+        const on = Storage.isBookmarked(bmId);
+        bookmarkBtnHtml = `<button class="bookmark-toggle ${on ? 'on' : ''}" data-action="toggleSceneBookmark" data-bm-id="${escapeHtml(bmId)}" aria-pressed="${on}" aria-label="${on ? '북마크 해제' : '북마크 추가'}" title="${on ? '북마크 해제' : '북마크 추가'}">
+          <svg viewBox="0 0 24 24" fill="${on ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 15 9 22 9.5 17 14.5 18.5 22 12 18 5.5 22 7 14.5 2 9.5 9 9"/></svg>
+        </button>`;
+    }
+
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
+        ${bookmarkBtnHtml}
         ${tag}${metaRow}
         ${stepProgressHtml}
         <span class="scene-emoji" aria-hidden="true">${ev.emoji || "🩺"}</span>
@@ -756,6 +823,8 @@ function renderSceneCard(ev, options = {}) {
         <div id="feedback-zone" aria-live="polite" aria-atomic="true"></div>
       </div>
     `;
+    // 현재 ev 를 토글에서 참조하도록 저장
+    gameState._currentEv = ev;
 
     const listEl = document.getElementById("choice-list");
     ev.choices.forEach((choice, idx) => {
@@ -1040,6 +1109,7 @@ function handleMockChoice(choice, ev) {
     });
 }
 function endMockExam(reason) {
+    Ads.showInterstitial(ADS_UNITS.interstitial);
     if (gameState._mockEnded) return;
     gameState._mockEnded = true;
     if (gameState.mockTimerId) { clearInterval(gameState.mockTimerId); gameState.mockTimerId = null; }
@@ -1151,6 +1221,7 @@ function handleDailyChoice(choice, ev) {
     });
 }
 function endDailyChallenge() {
+    Ads.showInterstitial(ADS_UNITS.interstitial);
     const correct = gameState.dailyCorrect;
     Storage.setDaily(todayKey(), { solved: DAILY_CHALLENGE_TOTAL, correct, completed: true, ts: Date.now() });
     Storage.addHistory({ mode: "daily", at: Date.now(), total: DAILY_CHALLENGE_TOTAL, correct, date: todayKey() });
@@ -1159,6 +1230,7 @@ function endDailyChallenge() {
         <h2 class="scene-title">일일 챌린지 완료</h2>
         <p class="scene-desc">정답 ${correct}/${DAILY_CHALLENGE_TOTAL}\n오늘의 도전을 마쳤습니다. 내일 다시 도전하세요!</p>
         <div class="choice-list">
+          <button class="choice-btn" data-action="shareResultCard" data-mode="daily" data-title="일일 챌린지 ${correct}/${DAILY_CHALLENGE_TOTAL}" data-lines="${todayKey()}|정답 ${correct} 문제|간호사 시뮬레이터">결과 카드 다운로드</button>
           <button class="choice-btn primary" data-action="returnToMenu">메뉴로</button>
         </div>
       </div>`;
@@ -1221,10 +1293,11 @@ function renderNextWrongQuestion() {
         emoji: "📝", title: snap.title, desc: snap.desc,
         choices: snap.choices.map(c => ({ text: c.text, correct: c.correct, log: c.log })),
     };
+    const box = (snap.box && snap.box >= 1 && snap.box <= 5) ? snap.box : 1;
     renderSceneCard(ev, {
         mode: "wrong_review",
         questionIndex: gameState.quizSolved + 1,
-        meta: ["오답 복습", `남은 ${gameState.wrongQueue.length}건`]
+        meta: ["오답 복습", `남은 ${gameState.wrongQueue.length}건`, `Leitner ${box}/5`]
     });
 }
 function handleWrongReviewChoice(choice, ev) {
@@ -1391,6 +1464,7 @@ function handoffNext() {
     renderHandoffPatient();
 }
 function endHandoff() {
+    Ads.showInterstitial(ADS_UNITS.interstitial);
     Speech.stop();
     const total = gameState.handoffTotal, correct = gameState.handoffCorrect;
     const acc = total ? Math.round(correct / total * 100) : 0;
@@ -1509,6 +1583,7 @@ function triageSubmit() {
 }
 function triageNext() { gameState.triageIndex += 1; renderTriageCase(); }
 function endTriage() {
+    Ads.showInterstitial(ADS_UNITS.interstitial);
     const total = gameState.triageTotal, correct = gameState.triageCorrect;
     const acc = total ? Math.round(correct / total * 100) : 0;
     Storage.setTriageBest(acc);
@@ -1652,6 +1727,7 @@ function handleEpisodeChoice(choice, ev) {
 }
 
 function endEpisode() {
+    Ads.showInterstitial(ADS_UNITS.interstitial);
     const ep = NC.EPISODES.find(x => x.id === gameState.episodeId);
     if (!ep) return;
     // ending 분기: HP + rep 가중 점수
@@ -2434,6 +2510,10 @@ function returnToMenu() {
 
     // 메인 메뉴에서도 상단 헤더는 표시(테마/사운드 토글 위해)
     UI.topBar.classList.remove("hidden");
+
+    // 홈 탭에서만 배너 노출 (Capacitor 환경에서만 활성)
+    if (gameState.menuTab === "home") Ads.showBanner(ADS_UNITS.banner);
+    else Ads.hideBanner();
 }
 
 // 3탭 메뉴 시스템
@@ -2442,6 +2522,8 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
     const tab = gameState.menuTab;
     const todayDaily = data.daily[todayKey()];
     const dailyCorrect = todayDaily?.correct || 0;
+    const bookmarkCount = Object.keys(data.bookmarks || {}).length;
+    const weekly = computeWeeklyReport(Date.now(), data);
 
     // 활성 에피소드(이어하기) 탐지
     let resumeEp = null;
@@ -2455,8 +2537,19 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
         }
     }
 
+    const weeklyHtml = (weekly.modesPlayed > 0) ? `
+      <button class="weekly-report-card" data-action="renderWeeklyReport" aria-label="이번 주 학습 요약 보기">
+        <div class="wr-label">${weekly.isSundayAfternoon ? '🗓 일요일 위클리 리포트' : '🗓 이번 주 요약'}</div>
+        <div class="wr-title">${weekly.totalSolved}문제 풀이 · 정답률 ${weekly.accuracy}%</div>
+        <div class="wr-stats">
+          <span><strong>${weekly.daysActive}</strong>일 학습</span>
+          <span><strong>${weekly.modesPlayed}</strong>회 모드 완료</span>
+        </div>
+      </button>` : '';
+
     const renderHome = () => `
       <div class="tab-section">
+        ${weeklyHtml}
         ${resumeEp ? `
           <button class="resume-card" data-action="startEpisode" data-arg="${escapeHtml(resumeEp.ep.id)}">
             <div class="resume-label">이어하기</div>
@@ -2574,7 +2667,15 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
           <div class="row-icon big">${ICONS.wrong}</div>
           <div class="row-body">
             <div class="row-title">오답노트 ${wrongCount > 0 ? `<span class="row-pill warn">${wrongCount}</span>` : ''}</div>
-            <div class="row-sub">${wrongCount > 0 ? `복습 대기 ${wrongCount}건` : '오답 없음'}</div>
+            <div class="row-sub">${wrongCount > 0 ? `복습 대기 ${wrongCount}건 · Leitner 5박스` : '오답 없음'}</div>
+          </div>
+          <div class="row-chev">›</div>
+        </button>
+        <button class="row-card big" data-action="renderBookmarks">
+          <div class="row-icon big"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 15 9 22 9.5 17 14.5 18.5 22 12 18 5.5 22 7 14.5 2 9.5 9 9"/></svg></div>
+          <div class="row-body">
+            <div class="row-title">북마크 ${bookmarkCount > 0 ? `<span class="row-pill">${bookmarkCount}</span>` : ''}</div>
+            <div class="row-sub">${bookmarkCount > 0 ? `별표 ${bookmarkCount}건` : '⭐ 로 즐겨찾기'}</div>
           </div>
           <div class="row-chev">›</div>
         </button>
@@ -2801,6 +2902,281 @@ function boot() {
     }
 }
 
+// =========================================================================
+// 광고 (Capacitor AdMob 통합 어댑터) — 웹/PWA 에서는 no-op,
+// `npx cap add ios|android` 이후 Capacitor AdMob 플러그인이 주입되면 자동 활성화
+// =========================================================================
+const Ads = {
+    _lastInterstitialAt: 0,
+    _bannerShown: false,
+    get plugin() {
+        try {
+            return (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AdMob) || null;
+        } catch { return null; }
+    },
+    initialized: false,
+    async init() {
+        const p = Ads.plugin;
+        if (!p || Ads.initialized) return;
+        try {
+            await p.initialize({
+                initializeForTesting: !!window.NURSESIM_ADS_TESTING,
+            });
+            Ads.initialized = true;
+        } catch (e) {
+            // 광고 SDK 부재/에러는 조용히 무시 (앱 정상 동작 유지)
+        }
+    },
+    // 모드 종료 시 호출 — 직전 호출 후 최소 1.5초가 지나야 표시 (UX 가드)
+    async showInterstitial(adUnitId) {
+        const now = Date.now();
+        if (now - Ads._lastInterstitialAt < 1500) return;
+        Ads._lastInterstitialAt = now;
+        const p = Ads.plugin;
+        if (!p) return;
+        try {
+            await Ads.init();
+            await p.prepareInterstitial({ adId: adUnitId });
+            await p.showInterstitial();
+        } catch { /* no-op */ }
+    },
+    // 홈 탭 하단 배너 — 1회만 보이게
+    async showBanner(adUnitId) {
+        if (Ads._bannerShown) return;
+        const p = Ads.plugin;
+        if (!p) return;
+        try {
+            await Ads.init();
+            await p.showBanner({ adId: adUnitId, position: "BOTTOM_CENTER", margin: 0 });
+            Ads._bannerShown = true;
+        } catch { /* no-op */ }
+    },
+    hideBanner() {
+        Ads._bannerShown = false;
+        const p = Ads.plugin;
+        if (!p) return;
+        try { p.hideBanner(); } catch { /* no-op */ }
+    },
+};
+// AdMob unit IDs — 출시 시 실 ID 로 교체 (테스트 ID 는 Google 공식)
+const ADS_UNITS = {
+    interstitial: "ca-app-pub-3940256099942544/1033173712", // Google test interstitial
+    banner: "ca-app-pub-3940256099942544/6300978111",      // Google test banner
+};
+
+// =========================================================================
+// 위클리 리포트 (일요일 오후 홈 탭 상단)
+// =========================================================================
+function computeWeeklyReport(now, data) {
+    const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
+    const cutoff = now - SEVEN_DAYS;
+    const history = Array.isArray(data?.history) ? data.history : [];
+    const recent = history.filter(h => h && Number.isFinite(h.at) && h.at >= cutoff);
+    let totalSolved = 0, totalCorrect = 0;
+    const days = new Set();
+    recent.forEach(h => {
+        if (Number.isFinite(h.total)) totalSolved += h.total;
+        if (Number.isFinite(h.correct)) totalCorrect += h.correct;
+        if (h.at) {
+            const d = new Date(h.at);
+            days.add(`${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`);
+        }
+    });
+    // 일일 챌린지도 포함
+    const daily = data?.daily || {};
+    Object.entries(daily).forEach(([key, v]) => {
+        if (!v) return;
+        const ts = v.ts || 0;
+        if (ts >= cutoff) {
+            if (Number.isFinite(v.solved)) totalSolved += v.solved;
+            if (Number.isFinite(v.correct)) totalCorrect += v.correct;
+            days.add(key);
+        }
+    });
+    const accuracy = totalSolved > 0 ? Math.round((totalCorrect / totalSolved) * 100) : 0;
+    const d = new Date(now);
+    return {
+        totalSolved, totalCorrect, accuracy,
+        daysActive: days.size,
+        modesPlayed: recent.length,
+        isSundayAfternoon: d.getDay() === 0 && d.getHours() >= 12,
+    };
+}
+
+function renderWeeklyReport() {
+    resetStateForMode();
+    gameState.mode = "weekly";
+    showCoreUI(); updateStats();
+    const data = Storage.load();
+    const w = computeWeeklyReport(Date.now(), data);
+    // 모드별 분포
+    const modeCount = {};
+    (data.history || []).filter(h => h && (Date.now() - h.at) <= 7 * 24 * 60 * 60 * 1000).forEach(h => {
+        modeCount[h.mode] = (modeCount[h.mode] || 0) + 1;
+    });
+    const modeLines = Object.entries(modeCount).map(([m, n]) => `<li><strong>${escapeHtml(m)}</strong> · ${n}회</li>`).join("");
+    UI.gameArea.innerHTML = `
+      <div class="scene-card card">
+        <h2 class="scene-title">🗓 위클리 리포트</h2>
+        <p class="scene-desc">최근 7일 학습 요약</p>
+        <div class="dashboard-row" role="group" aria-label="주간 통계">
+          <div class="dash-stat"><div class="ds-num">${w.totalSolved}</div><div class="ds-label">총 풀이</div></div>
+          <div class="dash-stat"><div class="ds-num">${w.accuracy}%</div><div class="ds-label">정답률</div></div>
+          <div class="dash-stat"><div class="ds-num">${w.daysActive}</div><div class="ds-label">학습 일수</div></div>
+          <div class="dash-stat"><div class="ds-num">${w.modesPlayed}</div><div class="ds-label">모드 완료</div></div>
+        </div>
+        ${modeLines ? `<h3 class="modal-section-title">모드별</h3><ul class="weekly-mode-list">${modeLines}</ul>` : ''}
+        <div class="choice-list">
+          <button class="choice-btn primary" data-action="shareResultCard" data-mode="weekly" data-title="이번 주 ${w.totalSolved}문제 풀이" data-lines="정답률 ${w.accuracy}%|학습 일수 ${w.daysActive}일|모드 완료 ${w.modesPlayed}회">결과 카드 다운로드</button>
+          <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
+        </div>
+      </div>`;
+}
+
+// =========================================================================
+// 북마크 (즐겨찾기)
+// =========================================================================
+function toggleSceneBookmark(target) {
+    const bmId = target.dataset.bmId;
+    if (!bmId) return;
+    const ev = gameState._currentEv;
+    const nowOn = Storage.toggleBookmark(bmId, ev);
+    target.classList.toggle("on", nowOn);
+    target.setAttribute("aria-pressed", String(nowOn));
+    target.setAttribute("aria-label", nowOn ? "북마크 해제" : "북마크 추가");
+    const svg = target.querySelector("svg");
+    if (svg) svg.setAttribute("fill", nowOn ? "currentColor" : "none");
+}
+
+function renderBookmarks() {
+    resetStateForMode();
+    gameState.mode = "bookmarks";
+    showCoreUI(); updateStats();
+    const bm = Storage.getBookmarks();
+    const ids = Object.keys(bm).sort((a, b) => (bm[b].ts || 0) - (bm[a].ts || 0));
+    if (ids.length === 0) {
+        UI.gameArea.innerHTML = renderEmptyState({
+            illust: "wrongDone",
+            title: "북마크가 비었습니다",
+            desc: "문제 카드 우측 상단 ⭐ 버튼으로 즐겨찾기 추가할 수 있어요.",
+            primaryAction: "returnToMenu", primaryLabel: "메인 메뉴",
+        });
+        return;
+    }
+    const items = ids.map(id => {
+        const e = bm[id];
+        const cat = escapeHtml(e.category || "");
+        const title = escapeHtml(e.title || "(저장된 카드)");
+        return `
+          <div class="bookmark-item">
+            <button class="bookmark-open" data-action="openBookmark" data-bm-id="${escapeHtml(id)}">
+              <div class="bm-cat">${cat}</div>
+              <div class="bm-title">${title}</div>
+            </button>
+            <button class="bookmark-remove icon-btn" data-action="removeBookmark" data-bm-id="${escapeHtml(id)}" aria-label="북마크 해제">✕</button>
+          </div>`;
+    }).join("");
+    UI.gameArea.innerHTML = `
+      <div class="scene-card card">
+        <h2 class="scene-title">⭐ 북마크 (${ids.length})</h2>
+        <div class="bookmark-list" role="list">${items}</div>
+        <div class="choice-list">
+          <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
+        </div>
+      </div>`;
+}
+function openBookmark(target) {
+    const bmId = target.dataset.bmId;
+    const bm = Storage.getBookmarks();
+    const e = bm[bmId];
+    if (!e || !e.choices) {
+        renderBookmarks();
+        return;
+    }
+    resetStateForMode();
+    gameState.mode = "bookmark_review";
+    gameState._activeBookmarkId = bmId;
+    showCoreUI(); updateStats();
+    const ev = {
+        baseId: e.baseId || "bookmark",
+        category: e.category, part: e.part,
+        emoji: "⭐", title: e.title, desc: e.desc,
+        choices: e.choices.map(c => ({ text: c.text, correct: !!c.correct, log: c.log })),
+    };
+    renderSceneCard(ev, { mode: "quiz", meta: ["북마크", e.category || ""].filter(Boolean) });
+}
+
+// =========================================================================
+// 공유 (결과 카드 Canvas 렌더 → blob 다운로드)
+// =========================================================================
+function shareResultCard(target) {
+    const mode = target.dataset.mode || gameState.mode || "result";
+    const title = target.dataset.title || "간호사 시뮬레이터 결과";
+    const lines = (target.dataset.lines || "").split("|").filter(Boolean);
+    try {
+        const canvas = document.createElement("canvas");
+        const W = 720, H = 1024;
+        canvas.width = W; canvas.height = H;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) throw new Error("canvas unsupported");
+        // 배경 — 세이지 톤
+        ctx.fillStyle = "#eef2f5"; ctx.fillRect(0, 0, W, H);
+        // 카드
+        const cx = 48, cy = 96, cw = W - 96, ch = H - 192;
+        ctx.fillStyle = "#ffffff";
+        roundRect(ctx, cx, cy, cw, ch, 28); ctx.fill();
+        // 헤더
+        ctx.fillStyle = "#7fa881";
+        ctx.font = "600 28px 'Pretendard', system-ui, sans-serif";
+        ctx.fillText("간호사 시뮬레이터", cx + 36, cy + 60);
+        // 제목
+        ctx.fillStyle = "#1e293b";
+        ctx.font = "700 44px 'Pretendard', system-ui, sans-serif";
+        wrapText(ctx, String(title), cx + 36, cy + 140, cw - 72, 56);
+        // 본문
+        ctx.fillStyle = "#1e293b";
+        ctx.font = "500 24px 'Pretendard', system-ui, sans-serif";
+        let yy = cy + 260;
+        for (const ln of lines) { wrapText(ctx, ln, cx + 36, yy, cw - 72, 36); yy += 60; }
+        // 푸터
+        ctx.fillStyle = "#64748b";
+        ctx.font = "500 18px 'Pretendard', system-ui, sans-serif";
+        ctx.fillText("교육 목적 · 임상 적용 금지", cx + 36, cy + ch - 36);
+        // 다운로드
+        canvas.toBlob((blob) => {
+            if (!blob) return;
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url; a.download = `nurse-sim-${mode}-${Date.now()}.png`;
+            document.body.appendChild(a); a.click();
+            setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 0);
+            addLog("결과 카드를 다운로드했어요.", "log-good");
+        }, "image/png");
+    } catch (err) {
+        addLog("브라우저가 캔버스 공유를 지원하지 않아요.", "log-bad");
+    }
+}
+function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+}
+function wrapText(ctx, text, x, y, maxW, lineH) {
+    const words = String(text).split(/(\s+)/);
+    let line = "", yy = y;
+    for (const w of words) {
+        const test = line + w;
+        if (ctx.measureText(test).width > maxW && line) {
+            ctx.fillText(line, x, yy); line = w.trim(); yy += lineH;
+        } else { line = test; }
+    }
+    if (line) ctx.fillText(line, x, yy);
+}
+
 // 인라인 onclick 핸들러를 모두 data-action 위임으로 대체 → CSP `script-src 'self'`만 허용 가능
 const DELEGATED_ACTIONS = {
     returnToMenu: () => returnToMenu(),
@@ -2854,6 +3230,18 @@ const DELEGATED_ACTIONS = {
     renderPrivacy: () => renderPrivacy(),
     exportData: () => exportData(),
     triggerImportData: () => triggerImportData(),
+    // 북마크
+    toggleSceneBookmark: (t) => toggleSceneBookmark(t),
+    renderBookmarks: () => renderBookmarks(),
+    openBookmark: (t) => openBookmark(t),
+    removeBookmark: (t) => {
+        Storage.removeBookmark(t.dataset.bmId);
+        renderBookmarks();
+    },
+    // 공유
+    shareResultCard: (t) => shareResultCard(t),
+    // 위클리 리포트
+    renderWeeklyReport: () => renderWeeklyReport(),
 };
 function handleDelegatedAction(e) {
     const target = e.target.closest("[data-action]");
