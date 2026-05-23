@@ -1192,6 +1192,210 @@
             ]) };
     }
 
+    // ── v1.2 다양성 라운드 (12 generator — 응급/노인/약물/검사/윤리/다문화) ──
+
+    function generateHospicePainQuestion() {
+        return { baseId: "hospice_pain", category: "성인간호학", part: "완화의료", emoji: "🕊️", title: "말기 환자 통증 조절",
+            desc: `폐암 4기 환자가 NRS 9 통증, 기존 oxycodone 표준 용량으로도 조절 안 됨. 가장 적절한 다음 단계는?`,
+            choices: shuffle([
+                { text: "WHO 3단계 사다리 따라 강한 마약성 진통제 (morphine) 적정 + 부작용 예방 (변비·진정)", correct: true, effect: { hp: -3, rep: 25 }, log: "정답. WHO Pain Ladder + 완화의료 표준." },
+                { text: "마약 중독 우려로 일반 진통제로 교체", effect: { hp: -32, rep: -28 }, log: "말기 통증 조절은 환자 권리. 중독 우려는 부적절." },
+                { text: "통증은 견디라며 위로만", effect: { hp: -38, rep: -32 }, log: "완화의료의 기본 원칙 위반." },
+                { text: "비스테로이드성 항염증제(NSAIDs)만 추가", effect: { hp: -25, rep: -20 }, log: "강한 통증에 NSAIDs 단독 부적절." }
+            ]) };
+    }
+
+    function generateDNRQuestion() {
+        return { baseId: "dnr", category: "간호관리학", part: "윤리·법", emoji: "📜", title: "DNR(소생술 거부) 의향서 — 가족 갈등",
+            desc: `의식 명료한 말기 환자가 DNR 작성을 원한다. 자녀가 "절대 안 됩니다" 라며 반대. 간호사의 적절한 대응은?`,
+            choices: shuffle([
+                { text: "환자 자기결정권 우선 + 가족 감정 인정 + 다학제 (의사·사회복지·윤리위) 협의 + 환자 의사 문서화", correct: true, effect: { hp: -2, rep: 28 }, log: "정답. 의식 명료한 환자의 사전돌봄계획(ACP)은 자기결정권이 우선." },
+                { text: "가족 동의 없으면 DNR 작성 불가", effect: { hp: -28, rep: -22 }, log: "연명의료결정법상 환자 의사가 우선입니다." },
+                { text: "환자 의사를 무시하고 가족 의견 따름", effect: { hp: -32, rep: -28 }, log: "환자 자기결정권 침해." },
+                { text: "본인이 직접 결정하라며 회피", effect: { hp: -20, rep: -15 }, log: "간호사의 옹호자 역할 회피." }
+            ]) };
+    }
+
+    function generateBeersCriteriaQuestion() {
+        const cases = [
+            { drug: "Diphenhydramine (1세대 항히스타민)", risk: "노인에서 항콜린성 부작용·낙상·섬망 위험 — 회피", wrong: ["1차 선택 약물 — 안전", "노인에서 신장 보호 효과", "혈압 강하 효과 좋음"] },
+            { drug: "벤조디아제핀 장기 사용", risk: "노인 낙상·인지 저하·의존 위험 — 신중 사용", wrong: ["노인에게 우선 권장", "심혈관 보호 효과", "항생제 작용"] },
+            { drug: "NSAIDs (장기 사용)", risk: "노인에서 GI 출혈·신부전·심혈관 위험 — 회피 또는 단기만", wrong: ["노인에게 무제한 안전", "심부전 1차 치료제", "당뇨 치료제"] },
+        ];
+        const c = pick(cases);
+        const wrongs = shuffle(c.wrong);
+        return { baseId: "beers", category: "성인간호학", part: "노인 약물 안전", emoji: "👴", title: "Beers Criteria — 노인 부적절 약물",
+            desc: `${c.drug} 의 노인 환자 사용 시 주의사항은?`,
+            choices: shuffle([
+                { text: c.risk, correct: true, effect: { hp: -2, rep: 22 }, log: `정답. AGS Beers Criteria (2023) 권고.` },
+                { text: wrongs[0], effect: { hp: -22, rep: -16 }, log: "노인 약물 안전 원칙에 어긋납니다." },
+                { text: wrongs[1], effect: { hp: -22, rep: -16 }, log: "노인 약물 안전 원칙에 어긋납니다." },
+                { text: wrongs[2], effect: { hp: -22, rep: -16 }, log: "노인 약물 안전 원칙에 어긋납니다." }
+            ]) };
+    }
+
+    function generateHypothermiaQuestion() {
+        return { baseId: "hypothermia", category: "성인간호학", part: "체온 응급", emoji: "🥶", title: "중증 저체온증 응급 처치",
+            desc: `등산객 의식 저하 + 떨림 없음 + 심부체온 28℃. 우선 중재는?`,
+            choices: shuffle([
+                { text: "조심스러운 이동(VFib 유발 방지) + 따뜻한 IV 수액 + 가온 담요 + 능동적 중심부 가온", correct: true, effect: { hp: -3, rep: 25 }, log: "정답. 중증 저체온증(<30℃)은 거친 이동 시 VFib 유발 위험." },
+                { text: "즉시 뜨거운 물 샤워", effect: { hp: -32, rep: -25 }, log: "급격한 가온은 afterdrop + 부정맥 유발." },
+                { text: "사지 마사지로 혈액순환 촉진", effect: { hp: -28, rep: -22 }, log: "사지 가온은 차가운 혈액을 중심부로 보내 위험." },
+                { text: "알코올 음료로 체온 상승 유도", effect: { hp: -32, rep: -28 }, log: "알코올은 혈관 확장 + 체온 손실 가속." }
+            ]) };
+    }
+
+    function generateHeatStrokeQuestion() {
+        return { baseId: "heat_stroke", category: "성인간호학", part: "체온 응급", emoji: "🥵", title: "열사병 응급 처치",
+            desc: `폭염 노동자 의식 저하 + 발한 없음 + 체온 41.5℃. 우선 중재는?`,
+            choices: shuffle([
+                { text: "즉시 시원한 환경 이동 + 능동적 냉각(찬물 + 얼음 마사지 + 강한 송풍) + IV 수액 + 심부체온 모니터", correct: true, effect: { hp: -3, rep: 25 }, log: "정답. 고전형 열사병은 능동적 냉각이 사망률을 좌우." },
+                { text: "해열제(acetaminophen) 즉시 투여", effect: { hp: -30, rep: -22 }, log: "외인성 고열이라 해열제 무효." },
+                { text: "환자 옷 덮어 체온 유지", effect: { hp: -38, rep: -32 }, log: "체온 상승 가속 — 절대 금기." },
+                { text: "수분 섭취만 권유", effect: { hp: -32, rep: -25 }, log: "의식 저하 환자에 경구 위험 + 냉각이 우선." }
+            ]) };
+    }
+
+    function generateAnaphylaxisDrugQuestion() {
+        return { baseId: "anaphylaxis_drug", category: "성인간호학", part: "응급 약물", emoji: "💉", title: "아나필락시스 — 1차 약물",
+            desc: `Penicillin 주입 5분 후 환자 호흡곤란 + 안면부종 + 두드러기 + BP 80/50. 1차 약물은?`,
+            choices: shuffle([
+                { text: "Epinephrine 0.3~0.5mg IM 외측 대퇴 — 즉시 (5~15분 간격 반복 가능)", correct: true, effect: { hp: -3, rep: 28 }, log: "정답. 아나필락시스 1차 약물은 IM epinephrine (WAO/AAAAI)." },
+                { text: "Diphenhydramine 25mg IV 만으로 처치", effect: { hp: -32, rep: -28 }, log: "항히스타민은 보조 — 1차 절대 아님." },
+                { text: "Methylprednisolone 125mg IV 만으로 처치", effect: { hp: -35, rep: -30 }, log: "스테로이드는 지연성 반응 예방 — 즉시 효과 없음." },
+                { text: "관찰 + 의사 콜만 진행", effect: { hp: -42, rep: -35 }, log: "아나필락시스는 분 단위로 사망 가능." }
+            ]) };
+    }
+
+    function generateNaloxoneQuestion() {
+        return { baseId: "naloxone", category: "성인간호학", part: "응급 약물", emoji: "💊", title: "마약성 진통제 과량 — Naloxone 사용",
+            desc: `Morphine PCA 환자 RR 6, SpO2 84%, 핀포인트 동공, GCS 8. 우선 중재는?`,
+            choices: shuffle([
+                { text: "산소 + bag-mask 환기 준비 + Naloxone 0.04~0.4mg IV 적정 (분할 반복 가능)", correct: true, effect: { hp: -3, rep: 25 }, log: "정답. 마약 과량 진단 + Naloxone 적정 투여." },
+                { text: "Flumazenil IV push", effect: { hp: -32, rep: -28 }, log: "Flumazenil 은 벤조 길항제 — 마약에 무효." },
+                { text: "Epinephrine IV push", effect: { hp: -32, rep: -28 }, log: "마약 호흡 억제는 Epi 적응증 아님." },
+                { text: "관찰만 진행 + 환자 깨우기 시도", effect: { hp: -38, rep: -32 }, log: "호흡 정지 위험. 즉시 약물." }
+            ]) };
+    }
+
+    function generateChemoExtravasationQuestion() {
+        return { baseId: "chemo_extra", category: "성인간호학", part: "종양 응급", emoji: "🧪", title: "항암제 외삼출 응급",
+            desc: `Doxorubicin 정맥 주입 중 환자가 \"주사 부위가 화끈해요\" 호소. 부위 부종·발적 확인. 우선 조치는?`,
+            choices: shuffle([
+                { text: "즉시 주입 중단 + 카테터로 잔여 약물 흡인 + 카테터 유지 후 의사 보고 + 차가운 찜질 (vesicant 특이 antidote 검토)", correct: true, effect: { hp: -3, rep: 28 }, log: "정답. 발포제(vesicant) 외삼출 표준 (ONS Guidelines)." },
+                { text: "주입 그대로 계속 + 진통제 추가", effect: { hp: -38, rep: -32 }, log: "조직 괴사로 영구 손상." },
+                { text: "주입 중단 + 카테터 즉시 제거", effect: { hp: -28, rep: -22 }, log: "카테터를 통해 잔여 약물 흡인 후 제거가 표준." },
+                { text: "따뜻한 찜질 적용", effect: { hp: -25, rep: -20 }, log: "Doxorubicin 은 차가운 찜질 (vinca alkaloid 는 따뜻한 찜질)." }
+            ]) };
+    }
+
+    function generateCBCInterpretationQuestion() {
+        const cases = [
+            { finding: "Hgb 6.8 / Hct 21 / RBC 2.5M / MCV 70", interp: "소구성 빈혈 — 철 결핍 가능", action: "원인 평가 (대변 잠혈·생리·내시경) + 철분 보충 + 식이 교육", wrong: ["응급 수혈 즉시", "EPO IV 즉시 시작", "단순 관찰"] },
+            { finding: "WBC 24,000 (호중구 90%) / 좌방이동", interp: "세균감염 또는 패혈증 의심", action: "혈배 + 광범위 항생제 + V/S 모니터 + 의사 보고", wrong: ["바이러스 감염으로 보고 관찰", "항히스타민 적용", "관찰만 진행"] },
+            { finding: "혈소판 12,000 / 점상출혈 + 자반", interp: "혈소판 감소증 — DIC/ITP/TTP 감별", action: "원인 검사 + 출혈 사정 + 혈소판 수혈 검토 + 의사 보고", wrong: ["아스피린 추가", "관찰 + 다음 검사", "헤파린 시작"] },
+        ];
+        const c = pick(cases);
+        const wrongs = shuffle(c.wrong);
+        return { baseId: "cbc", category: "성인간호학", part: "검사 판독", emoji: "🩸", title: "CBC 결과 해석",
+            desc: `${c.finding} — ${c.interp}. 우선 중재는?`,
+            choices: shuffle([
+                { text: c.action, correct: true, effect: { hp: -3, rep: 22 }, log: `정답. ${c.interp} 의 표준 중재입니다.` },
+                { text: wrongs[0], effect: { hp: -22, rep: -16 }, log: "검사 해석에 맞지 않는 중재입니다." },
+                { text: wrongs[1], effect: { hp: -22, rep: -16 }, log: "검사 해석에 맞지 않는 중재입니다." },
+                { text: wrongs[2], effect: { hp: -22, rep: -16 }, log: "검사 해석에 맞지 않는 중재입니다." }
+            ]) };
+    }
+
+    function generateDiabetesEducationQuestion() {
+        return { baseId: "dm_edu", category: "성인간호학", part: "환자 교육", emoji: "📚", title: "당뇨 환자 자기관리 교육",
+            desc: `새로 1형 당뇨 진단된 18세 환자의 퇴원 교육 시 가장 우선되는 내용은?`,
+            choices: shuffle([
+                { text: "혈당 모니터링 + 인슐린 자가주사 + 저혈당 인지·대처 + 응급실 방문 기준", correct: true, effect: { hp: -2, rep: 25 }, log: "정답. 1형 당뇨 신환의 핵심 자기관리 교육." },
+                { text: "운동만 강조 — 식이는 일반인과 동일", effect: { hp: -22, rep: -16 }, log: "운동·식이·약물 통합 교육 필요." },
+                { text: "약은 의사가 결정하므로 환자는 알 필요 없음", effect: { hp: -28, rep: -22 }, log: "자기관리는 환자 교육의 핵심." },
+                { text: "당뇨는 평생 약 없이 식이만으로 조절 가능", effect: { hp: -32, rep: -28 }, log: "1형 당뇨는 인슐린 평생 필수." }
+            ]) };
+    }
+
+    function generateStomaCareQuestion() {
+        return { baseId: "stoma", category: "기본간호학", part: "장루 관리", emoji: "🩹", title: "결장루(colostomy) 환자 관리",
+            desc: `결장루 수술 후 3일차 환자 장루 점막 색깔 검정으로 변화. 우선 조치는?`,
+            choices: shuffle([
+                { text: "장루 허혈/괴사 의심 — 즉시 의사 보고 + V/S + 사진 기록", correct: true, effect: { hp: -3, rep: 25 }, log: "정답. 검은색 변화는 허혈/괴사 신호 — 응급." },
+                { text: "정상 변이로 보고 일반 관리", effect: { hp: -38, rep: -32 }, log: "검정 변화는 절대 정상 아님." },
+                { text: "물로 직접 세척", effect: { hp: -28, rep: -22 }, log: "응급 보고가 우선." },
+                { text: "직접 절제 시도", effect: { hp: -45, rep: -38 }, log: "절대 금기. 외과 의사 영역." }
+            ]) };
+    }
+
+    function generateInformedConsentQuestion() {
+        return { baseId: "informed_consent", category: "간호관리학", part: "윤리·법", emoji: "✍️", title: "수술 동의서 — 환자 권리",
+            desc: `수술 전 동의서를 받는 도중 환자가 \"무슨 내용인지 잘 모르겠어요\" 라고 말한다. 간호사의 적절한 대응은?`,
+            choices: shuffle([
+                { text: "동의 절차 일시 중단 + 의사에게 추가 설명 요청 + 환자가 이해할 때까지 진행 보류", correct: true, effect: { hp: -2, rep: 28 }, log: "정답. Informed consent = 충분한 이해 + 자발적 동의." },
+                { text: "\"그냥 사인해주세요\" 라며 절차 진행", effect: { hp: -32, rep: -28 }, log: "법적 무효 + 의료법 위반." },
+                { text: "본인이 직접 추가 설명 후 사인 받음", effect: { hp: -22, rep: -16 }, log: "수술 설명은 시술 의사 의무." },
+                { text: "가족에게 대신 사인하도록 안내", effect: { hp: -28, rep: -22 }, log: "의식 명료 환자에게 대리 동의는 위반." }
+            ]) };
+    }
+
+    function generateMultiCulturalQuestion() {
+        return { baseId: "multicultural", category: "지역사회간호학", part: "다문화 간호", emoji: "🌏", title: "다문화 환자 의사소통",
+            desc: `한국어 미숙한 동남아 출신 환자가 통증 호소하나 정확한 양상 파악 어려움. 가장 적절한 접근은?`,
+            choices: shuffle([
+                { text: "공식 의료 통역 서비스 호출 (모바일/전화 통역도 가능) + 통증 그림 척도 활용 + 문화적 표현 차이 고려", correct: true, effect: { hp: -2, rep: 25 }, log: "정답. 다문화 의료에서 공식 통역 + 시각적 도구가 표준." },
+                { text: "가족이 통역하도록 요청 (가족만 신뢰)", effect: { hp: -22, rep: -16 }, log: "가족 통역은 개인정보·정확성 문제." },
+                { text: "한국어로만 진행 + 환자가 알아들으리라 가정", effect: { hp: -28, rep: -22 }, log: "환자 안전 위협." },
+                { text: "본인이 번역 앱으로 대화", effect: { hp: -18, rep: -10 }, log: "공식 통역이 의료 정확성 보장." }
+            ]) };
+    }
+
+    const allGenerators = [
+        generateDopamineQuestion, generateSepsisQuestion, generatePsychQuestion,
+        generateElectrolyteQuestion, generatePedsPriorityQuestion, generateOBQuestion,
+        generateManagementQuestion, generateRespQuestion, generateSafetyPriorityQuestion,
+        generateTransfusionQuestion, generateIICPQuestion, generateFHRQuestion,
+        generateLawQuestion, generateMIQuestion, generateABGAQuestion, generateTriageQuestion,
+        generatePositionQuestion, generateVaccineQuestion, generateNaegeleQuestion,
+        generateApgarQuestion, generateBurnQuestion, generateShockQuestion,
+        generateDiabeticQuestion, generateAsepticQuestion,
+        generateECGQuestion, generateLabValueQuestion, generateCPRQuestion,
+        generateInsulinQuestion, generatePainAssessmentQuestion,
+        // v1.1 (기본+모성+아동+정신+지역+관리+법규+성인)
+        generateOxygenTherapyQuestion, generateUrinaryCathQuestion, generateNGTubeQuestion,
+        generateWoundCareQuestion, generateRestraintQuestion,
+        generateLochiaQuestion, generatePreEclampsiaQuestion, generateBreastfeedingQuestion,
+        generateContractionQuestion,
+        generateGrowthQuestion, generateFebrileSeizureQuestion, generateDehydrationQuestion,
+        generatePedsDoseQuestion,
+        generateSuicideRiskQuestion, generateSchizophreniaQuestion, generateAntipsychoticQuestion,
+        generateBipolarQuestion, generateMSEQuestion,
+        generateInfectionDiseaseQuestion, generateImmunizationScheduleQuestion,
+        generateMaternalChildQuestion, generateOccupationalHealthQuestion, generateChronicDiseaseQuestion,
+        generateLeadershipQuestion, generateDelegationQuestion, generatePatientSafetyQuestion,
+        generateQIQuestion,
+        generateMedicalLawQuestion, generateNarcoticLawQuestion, generateMentalHealthLawQuestion,
+        generateBloodLawQuestion, generateInfectionLawGradeQuestion,
+        generateAnticoagulantQuestion, generateChestTubeQuestion, generateRenalFailureQuestion,
+        generateStrokeQuestion, generateThyroidQuestion,
+        // 비율 보정
+        generateConflictMgmtQuestion, generateNursingRecordQuestion, generateStaffingMixQuestion,
+        generateCBTechniqueQuestion, generateAddictionQuestion,
+        generateSchoolHealthQuestion, generateHomeCareQuestion,
+        generateFHRDecelQuestion, generatePedsRespQuestion,
+        // v1.2 이미지 기반
+        generateECGStripQuestion, generatePupilAssessQuestion,
+        generateGCSAssessQuestion, generateAEDPadQuestion, generateFundalHeightQuestion,
+        generateApgarVisualQuestion, generateAuscultationQuestion, generateKramerJaundiceQuestion,
+        // v1.2 다양성 라운드 (응급/노인/약물/검사/윤리/다문화 12종)
+        generateHospicePainQuestion, generateDNRQuestion, generateBeersCriteriaQuestion,
+        generateHypothermiaQuestion, generateHeatStrokeQuestion, generateAnaphylaxisDrugQuestion,
+        generateNaloxoneQuestion, generateChemoExtravasationQuestion, generateCBCInterpretationQuestion,
+        generateDiabetesEducationQuestion, generateStomaCareQuestion,
+        generateInformedConsentQuestion, generateMultiCulturalQuestion,
+    ];
+
     function generateECGStripQuestion() {
         const rhythms = [
             { key: "normal", name: "정상 동성리듬 (NSR)", wrongs: ["심방세동", "심실세동", "심실빈맥"] },
@@ -1252,52 +1456,6 @@
             ]) };
     }
 
-    const allGenerators = [
-        generateDopamineQuestion, generateSepsisQuestion, generatePsychQuestion,
-        generateElectrolyteQuestion, generatePedsPriorityQuestion, generateOBQuestion,
-        generateManagementQuestion, generateRespQuestion, generateSafetyPriorityQuestion,
-        generateTransfusionQuestion, generateIICPQuestion, generateFHRQuestion,
-        generateLawQuestion, generateMIQuestion, generateABGAQuestion, generateTriageQuestion,
-        generatePositionQuestion, generateVaccineQuestion, generateNaegeleQuestion,
-        generateApgarQuestion, generateBurnQuestion, generateShockQuestion,
-        generateDiabeticQuestion, generateAsepticQuestion,
-        generateECGQuestion, generateLabValueQuestion, generateCPRQuestion,
-        generateInsulinQuestion, generatePainAssessmentQuestion,
-        // 신규 (기본간호학 5)
-        generateOxygenTherapyQuestion, generateUrinaryCathQuestion, generateNGTubeQuestion,
-        generateWoundCareQuestion, generateRestraintQuestion,
-        // 신규 (모성간호학 4)
-        generateLochiaQuestion, generatePreEclampsiaQuestion, generateBreastfeedingQuestion,
-        generateContractionQuestion,
-        // 신규 (아동간호학 4)
-        generateGrowthQuestion, generateFebrileSeizureQuestion, generateDehydrationQuestion,
-        generatePedsDoseQuestion,
-        // 신규 (정신간호학 5)
-        generateSuicideRiskQuestion, generateSchizophreniaQuestion, generateAntipsychoticQuestion,
-        generateBipolarQuestion, generateMSEQuestion,
-        // 신규 (지역사회간호학 5)
-        generateInfectionDiseaseQuestion, generateImmunizationScheduleQuestion,
-        generateMaternalChildQuestion, generateOccupationalHealthQuestion, generateChronicDiseaseQuestion,
-        // 신규 (간호관리학 4)
-        generateLeadershipQuestion, generateDelegationQuestion, generatePatientSafetyQuestion,
-        generateQIQuestion,
-        // 신규 (보건의약관계법규 5)
-        generateMedicalLawQuestion, generateNarcoticLawQuestion, generateMentalHealthLawQuestion,
-        generateBloodLawQuestion, generateInfectionLawGradeQuestion,
-        // 신규 (성인간호학 5)
-        generateAnticoagulantQuestion, generateChestTubeQuestion, generateRenalFailureQuestion,
-        generateStrokeQuestion, generateThyroidQuestion,
-        // 비율 보정 (간호관리학 +3, 정신 +2, 지역 +2, 모성 +1, 아동 +1)
-        generateConflictMgmtQuestion, generateNursingRecordQuestion, generateStaffingMixQuestion,
-        generateCBTechniqueQuestion, generateAddictionQuestion,
-        generateSchoolHealthQuestion, generateHomeCareQuestion,
-        generateFHRDecelQuestion, generatePedsRespQuestion,
-        // v1.2 이미지 기반 (12종)
-        generateECGStripQuestion, generatePupilAssessQuestion,
-        generateGCSAssessQuestion, generateAEDPadQuestion, generateFundalHeightQuestion,
-        generateApgarVisualQuestion, generateAuscultationQuestion, generateKramerJaundiceQuestion,
-    ];
-
     return {
         allGenerators,
         generateABGAQuestion, generateTriageQuestion, generatePositionQuestion,
@@ -1334,5 +1492,10 @@
         generateECGStripQuestion, generatePupilAssessQuestion,
         generateGCSAssessQuestion, generateAEDPadQuestion, generateFundalHeightQuestion,
         generateApgarVisualQuestion, generateAuscultationQuestion, generateKramerJaundiceQuestion,
+        generateHospicePainQuestion, generateDNRQuestion, generateBeersCriteriaQuestion,
+        generateHypothermiaQuestion, generateHeatStrokeQuestion, generateAnaphylaxisDrugQuestion,
+        generateNaloxoneQuestion, generateChemoExtravasationQuestion, generateCBCInterpretationQuestion,
+        generateDiabetesEducationQuestion, generateStomaCareQuestion,
+        generateInformedConsentQuestion, generateMultiCulturalQuestion,
     };
 });
