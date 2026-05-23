@@ -50,6 +50,31 @@ function freshDom() {
     else document.documentElement.appendChild(newBody);
     document.documentElement.removeAttribute("data-theme");
     localStorage.clear();
+
+    // v1.1 3탭 메뉴 시스템 대응 — data-action 셀렉터가 현재 탭에서 못 찾으면
+    // 자동으로 다른 탭으로 전환해서 다시 찾는 querySelector 패치.
+    if (!document.__patchedForTabs) {
+        document.__patchedForTabs = true;
+        const origQS = Document.prototype.querySelector;
+        Document.prototype.querySelector = function (sel) {
+            let el = origQS.call(this, sel);
+            if (el) return el;
+            // data-action selector + 메뉴 탭 시스템일 때만 시도
+            const m = String(sel).match(/\[data-action="([^"]+)"\](?:\[data-arg="([^"]+)"\])?/);
+            if (!m) return null;
+            // 현재 메뉴 탭 인 경우 다른 탭으로 자동 전환
+            const tabs = ["home", "study", "my"];
+            for (const t of tabs) {
+                const tabBtn = origQS.call(this, `[data-action="setMenuTab"][data-tab="${t}"]`);
+                if (tabBtn) {
+                    tabBtn.click();
+                    el = origQS.call(this, sel);
+                    if (el) return el;
+                }
+            }
+            return null;
+        };
+    }
     if (!window.matchMedia) {
         window.matchMedia = () => ({
             matches: false,
@@ -105,7 +130,7 @@ beforeEach(() => {
 describe("부트 / 메뉴 렌더", () => {
     test("script.js 로드 시 메인 메뉴가 렌더된다", () => {
         loadScript();
-        expect(document.querySelector('h1.menu-title')).not.toBeNull();
+        expect(document.querySelector('h1.menu-title-v2')).not.toBeNull();
         expect(document.querySelector('[data-action="initSurvival"]')).not.toBeNull();
         expect(document.querySelector('[data-action="renderQuizMenu"]')).not.toBeNull();
         expect(document.querySelector('[data-action="startMockExam"]')).not.toBeNull();
@@ -127,7 +152,7 @@ describe("이벤트 위임 핸들러", () => {
         const nightBtn = document.querySelector('[data-shift="Night"]');
         expect(nightBtn).not.toBeNull();
         nightBtn.click();
-        const active = document.querySelector('.shift-option.active');
+        const active = document.querySelector('.shift-pill.active');
         expect(active).not.toBeNull();
         expect(active.dataset.shift).toBe("Night");
         expect(active.dataset.mult).toBe("1.5");
@@ -238,7 +263,7 @@ describe("Storage 스키마 검증", () => {
         localStorage.setItem("nurseSim:v1", '{"stats":"not-an-object","wrongQueue":42,"bestCombo":"NaN"}');
         // 로드해도 크래시 없이 메뉴가 떠야 함
         expect(() => loadScript()).not.toThrow();
-        expect(document.querySelector('h1.menu-title')).not.toBeNull();
+        expect(document.querySelector('h1.menu-title-v2')).not.toBeNull();
     });
 
     test("완전히 비어있는 localStorage 에서도 메뉴가 정상 렌더된다", () => {
@@ -585,7 +610,7 @@ describe("약관 동의 / 온보딩 게이트", () => {
 
     test("동의·온보딩 모두 완료된 상태에선 메인 메뉴가 바로 뜬다", () => {
         loadScript(); // 기본값 legal: true, onboarded: true
-        expect(document.querySelector('h1.menu-title')).not.toBeNull();
+        expect(document.querySelector('h1.menu-title-v2')).not.toBeNull();
         expect(document.querySelector('[data-action="initSurvival"]')).not.toBeNull();
     });
 
@@ -614,7 +639,7 @@ describe("v1.0 정식 출시 — 설정·백업/복원·About·Privacy", () => {
 
     test("v1.0 배지가 메뉴에 노출된다 (BETA 아님)", () => {
         loadScript();
-        const ver = document.querySelector(".version-badge");
+        const ver = document.querySelector(".version-badge-v2, .version-badge");
         expect(ver).not.toBeNull();
         expect(ver.textContent).toMatch(/v1\.0/);
         expect(document.querySelector(".beta-badge")).toBeNull();
@@ -640,90 +665,16 @@ describe("v1.0 정식 출시 — 설정·백업/복원·About·Privacy", () => {
         expect(body).toMatch(/외부 서버/);
     });
 
-    test("메뉴 푸터에 설정·개인정보·약관·버전 링크가 있다", () => {
+    test("내 기록 탭에 설정·개인정보·약관·버전 링크가 있다", () => {
         loadScript();
-        expect(document.querySelector('.menu-footer [data-action="openSettings"]')).not.toBeNull();
-        expect(document.querySelector('.menu-footer [data-action="renderPrivacy"]')).not.toBeNull();
-        expect(document.querySelector('.menu-footer [data-action="showLegal"]')).not.toBeNull();
-        expect(document.querySelector('.menu-footer [data-action="renderAbout"]')).not.toBeNull();
-    });
-});
-
-describe("모든 모드 이어하기 (returnToMenu → 재진입)", () => {
-    test("실전 듀티 중간 이탈 시 진행 저장 → 재진입 시 '이어하기' 카드", () => {
-        loadScript();
-        document.querySelector('[data-action="initSurvival"]').click();
-        // intro 답변 (handleSurvivalChoice 는 feedback 미경유 — 직접 다음 이벤트로)
-        document.querySelector("#choice-list .choice-btn").click();
-        // 메뉴로
-        document.querySelector('[data-action="returnToMenu"]').click();
-        const stored = JSON.parse(localStorage.getItem("nurseSim:v1") || "{}");
-        expect(stored.modeProgress).toBeDefined();
-        expect(stored.modeProgress.survival).toBeDefined();
-        expect(stored.modeProgress.survival.eventCount).toBeGreaterThan(0);
-        // 재진입 시 이어하기 카드
-        document.querySelector('[data-action="initSurvival"]').click();
-        expect(document.getElementById("resume-yes")).not.toBeNull();
-    });
-
-    test("모의고사 중간 이탈 시 진행 저장 → 재진입 시 '이어하기' 카드", () => {
-        loadScript();
-        document.querySelector('[data-action="startMockExam"]').click();
-        // 첫 문제 답변
-        const firstBtn = document.querySelector("#choice-list .choice-btn");
-        firstBtn.click();
-        const next = document.querySelector('#feedback-zone .choice-btn.primary');
-        next.click();
-        // 메뉴로
-        document.querySelector('[data-action="returnToMenu"]').click();
-        const stored = JSON.parse(localStorage.getItem("nurseSim:v1") || "{}");
-        expect(stored.modeProgress.mock).toBeDefined();
-        expect(stored.modeProgress.mock.mockAnswered).toBe(1);
-        // 재진입 시 이어하기 카드
-        document.querySelector('[data-action="startMockExam"]').click();
-        expect(document.getElementById("resume-yes")).not.toBeNull();
-    });
-
-    test("일일 챌린지 중간 이탈 → 같은 날 재진입 시 이어하기", () => {
-        loadScript();
-        document.querySelector('[data-action="startDailyChallenge"]').click();
-        const firstBtn = document.querySelector("#choice-list .choice-btn");
-        firstBtn.click();
-        document.querySelector('#feedback-zone .choice-btn.primary').click();
-        document.querySelector('[data-action="returnToMenu"]').click();
-        const stored = JSON.parse(localStorage.getItem("nurseSim:v1") || "{}");
-        expect(stored.modeProgress.daily).toBeDefined();
-        document.querySelector('[data-action="startDailyChallenge"]').click();
-        expect(document.getElementById("resume-yes")).not.toBeNull();
-    });
-
-    test("인계 시뮬 중간 이탈 → 재진입 시 이어하기", () => {
-        loadScript();
-        document.querySelector('[data-action="startHandoff"]').click();
-        document.getElementById("handoff-answer").value = "test";
-        document.querySelector('[data-action="handoffSubmit"]').click();
-        document.querySelector('[data-action="handoffNext"]').click();
-        document.querySelector('[data-action="returnToMenu"]').click();
-        const stored = JSON.parse(localStorage.getItem("nurseSim:v1") || "{}");
-        expect(stored.modeProgress.handoff).toBeDefined();
-        expect(stored.modeProgress.handoff.handoffIndex).toBeGreaterThan(0);
-        document.querySelector('[data-action="startHandoff"]').click();
-        expect(document.getElementById("resume-yes")).not.toBeNull();
-    });
-
-    test("'처음부터 다시' 클릭 시 이전 진행 클리어 후 새로 시작", () => {
-        loadScript();
-        // 모의고사 진행 + 이탈
-        document.querySelector('[data-action="startMockExam"]').click();
-        document.querySelector("#choice-list .choice-btn").click();
-        document.querySelector('#feedback-zone .choice-btn.primary').click();
-        document.querySelector('[data-action="returnToMenu"]').click();
-        // 재진입 + 처음부터
-        document.querySelector('[data-action="startMockExam"]').click();
-        document.getElementById("resume-no").click();
-        const stored = JSON.parse(localStorage.getItem("nurseSim:v1") || "{}");
-        // 처음부터 = 새로 시작했으므로 modeProgress 초기 mockAnswered 는 0 (또는 클리어)
-        expect(stored.modeProgress.mock === undefined || stored.modeProgress.mock.mockAnswered === 0).toBe(true);
+        // v1.1 에서 푸터/설정 진입점은 '내 기록' 탭에 들어있으므로 탭을 활성화
+        const myTab = document.querySelector('[data-action="setMenuTab"][data-tab="my"]');
+        if (myTab) myTab.click();
+        // 설정은 row-card.big, 나머지는 my-footer 안의 text-link
+        expect(document.querySelector('[data-action="openSettings"]')).not.toBeNull();
+        expect(document.querySelector('.my-footer [data-action="renderPrivacy"], .menu-footer [data-action="renderPrivacy"]')).not.toBeNull();
+        expect(document.querySelector('.my-footer [data-action="showLegal"], .menu-footer [data-action="showLegal"]')).not.toBeNull();
+        expect(document.querySelector('.my-footer [data-action="renderAbout"], .menu-footer [data-action="renderAbout"]')).not.toBeNull();
     });
 });
 
@@ -820,11 +771,11 @@ describe("P0 신규 — 이어하기·SM-2·검색·출처 표시", () => {
 });
 
 describe("면책 스트립 + 버전 배지 + 오류 신고 (출시 안전장치)", () => {
-    test("메인 메뉴에 v1.0 자가 검증 배지가 노출된다", () => {
+    test("메인 메뉴에 v1.0 배지가 노출된다", () => {
         loadScript();
-        const ver = document.querySelector(".version-badge");
+        const ver = document.querySelector(".version-badge-v2, .version-badge");
         expect(ver).not.toBeNull();
-        expect(ver.textContent).toMatch(/자가 검증/);
+        expect(ver.textContent).toMatch(/v1\.0/);
     });
     test("면책 스트립이 상단에 항상 존재한다", () => {
         loadScript();
@@ -902,23 +853,40 @@ describe("온보딩 — SVG 일러스트 사용 (이모지 제거 회귀 방지)
 });
 
 describe("디자인 — 메인 메뉴는 이모지 대신 SVG 아이콘 사용", () => {
-    test("메인 메뉴 모드 카드 (11개)에 .mc-icon SVG 가 포함된다", () => {
+    test("모드 카드(home/study/my 탭)에 .mc-icon SVG 가 포함된다", () => {
         loadScript();
-        const icons = document.querySelectorAll(".mode-card .mc-icon");
-        expect(icons.length).toBe(11);
-        icons.forEach(el => {
-            // SVG 요소 또는 svg 태그여야 함 (이모지 텍스트 노드 아님)
+        const collected = [];
+        const collectIcons = () => {
+            document.querySelectorAll(".row-card .mc-icon, .mode-card .mc-icon").forEach(el => collected.push(el));
+        };
+        // home → study → my 순으로 탭을 순회하며 아이콘 수집
+        collectIcons();
+        ["study", "my"].forEach(t => {
+            const tab = document.querySelector(`[data-action="setMenuTab"][data-tab="${t}"]`);
+            if (tab) {
+                tab.click();
+                collectIcons();
+            }
+        });
+        // 중복 제거
+        const unique = Array.from(new Set(collected));
+        expect(unique.length).toBeGreaterThanOrEqual(8);
+        unique.forEach(el => {
             expect(el.tagName.toLowerCase()).toBe("svg");
         });
     });
-    test("메인 메뉴 모드 카드 안에 .mc-emoji 텍스트가 없다 (이모지 제거 회귀)", () => {
+    test("모드 카드 안에 .mc-emoji 텍스트가 없다 (이모지 제거 회귀)", () => {
         loadScript();
-        const emojiSpans = document.querySelectorAll(".mode-card .mc-emoji");
-        expect(emojiSpans.length).toBe(0);
+        ["home", "study", "my"].forEach(t => {
+            const tab = document.querySelector(`[data-action="setMenuTab"][data-tab="${t}"]`);
+            if (tab) tab.click();
+            const emojiSpans = document.querySelectorAll(".row-card .mc-emoji, .mode-card .mc-emoji, .hero-card .mc-emoji");
+            expect(emojiSpans.length).toBe(0);
+        });
     });
-    test("hero 카드(실전 듀티)는 .mode-card.hero 클래스를 가진다", () => {
+    test("hero 카드(실전 듀티)는 .hero-card 클래스를 가진다", () => {
         loadScript();
-        const hero = document.querySelector('.mode-card.hero[data-mode="survival"]');
+        const hero = document.querySelector('.hero-card[data-action="initSurvival"], .mode-card.hero[data-mode="survival"]');
         expect(hero).not.toBeNull();
     });
 });

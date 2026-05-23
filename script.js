@@ -140,77 +140,6 @@ function lookupSource(text) {
     return null;
 }
 
-// 모드별 진행 캡처 — returnToMenu 시 호출
-function captureModeProgress() {
-    const m = gameState.mode;
-    if (m === "survival" && gameState.eventCount > 0 && gameState.eventCount < MAX_PROGRESS_EVENTS) {
-        Storage.setModeProgress("survival", {
-            hp: gameState.hp, rep: gameState.rep, eventCount: gameState.eventCount,
-            items: gameState.items.slice(), currentShift: gameState.currentShift,
-            difficulty: gameState.difficulty, combo: gameState.combo,
-            firedStoryBeats: gameState.firedStoryBeats.slice(),
-        });
-    } else if (m === "mock" && !gameState._mockEnded && gameState.mockAnswered > 0 && gameState.mockAnswered < gameState.mockTotal) {
-        const remainMs = Math.max(0, gameState.mockDeadlineTs - Date.now());
-        Storage.setModeProgress("mock", {
-            mockTotal: gameState.mockTotal, mockAnswered: gameState.mockAnswered,
-            mockCorrect: gameState.mockCorrect, remainMs, combo: gameState.combo,
-        });
-    } else if (m === "daily" && gameState.dailySolved > 0 && gameState.dailySolved < DAILY_CHALLENGE_TOTAL) {
-        Storage.setModeProgress("daily", {
-            dailySolved: gameState.dailySolved, dailyCorrect: gameState.dailyCorrect,
-            dailySeed: gameState.dailySeed,
-        });
-    } else if (m === "scenario" && gameState.scenarioId && gameState.scenarioStep > 0) {
-        const s = NC.SCENARIOS.find(x => x.id === gameState.scenarioId);
-        if (s && gameState.scenarioStep < s.steps.length) {
-            Storage.setModeProgress("scenario", {
-                scenarioId: gameState.scenarioId, scenarioStep: gameState.scenarioStep,
-                hp: gameState.hp, rep: gameState.rep,
-            });
-        }
-    } else if (m === "handoff" && gameState.handoffPool && gameState.handoffIndex > 0 && gameState.handoffIndex < gameState.handoffPool.length) {
-        Storage.setModeProgress("handoff", {
-            handoffPool: gameState.handoffPool.slice(),
-            handoffIndex: gameState.handoffIndex,
-            handoffCorrect: gameState.handoffCorrect,
-            handoffTotal: gameState.handoffTotal,
-        });
-    } else if (m === "triage" && gameState.triageIndex > 0 && gameState.triageIndex < NC.TRIAGE_CASES.length) {
-        Storage.setModeProgress("triage", {
-            triageIndex: gameState.triageIndex,
-            triageCorrect: gameState.triageCorrect,
-            triageTotal: gameState.triageTotal,
-        });
-    } else if (m === "quiz" && gameState.quizCategory && gameState.quizSolved > 0) {
-        Storage.setModeProgress("quiz", {
-            quizCategory: gameState.quizCategory,
-            quizSolved: gameState.quizSolved,
-            quizCorrect: gameState.quizCorrect,
-            quizWrong: gameState.quizWrong,
-        });
-    }
-}
-
-// 이어하기 카드 — 공통 UI
-function renderResumeChoice(mode, title, summary, onResume, onRestart) {
-    showCoreUI(); updateStats();
-    UI.gameArea.innerHTML = `
-      <div class="scene-card card">
-        <h2 class="scene-title">이어하기? — ${escapeHtml(title)}</h2>
-        <p class="scene-desc">${escapeHtml(summary)}</p>
-        <div class="choice-list">
-          <button class="choice-btn primary" id="resume-yes">이어하기</button>
-          <button class="choice-btn" id="resume-no">처음부터 다시</button>
-          <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
-        </div>
-      </div>`;
-    const yes = document.getElementById("resume-yes");
-    const no = document.getElementById("resume-no");
-    if (yes) yes.addEventListener("click", () => { onResume(); });
-    if (no) no.addEventListener("click", () => { Storage.clearModeProgress(mode); onRestart(); });
-}
-
 // 컨텐츠 검색 인덱스 — 모든 컨텐츠 type 한꺼번에 keyword 검색
 let _searchIndex = null;
 function buildSearchIndex() {
@@ -299,7 +228,7 @@ function openSearch() {
     showCoreUI(); updateStats();
     UI.gameArea.innerHTML = `
       <div class="card search-card">
-        <h2 class="scene-title">컨텐츠 검색</h2>
+        <h2 class="scene-title">🔍 컨텐츠 검색</h2>
         <input type="search" id="search-input" class="search-input" placeholder="에피소드·환자·시나리오·문제 키워드 (예: 자간증, 흡입화상, MgSO4)" autocomplete="off" aria-label="검색">
         <div id="search-results" class="search-results-list" aria-live="polite"></div>
         <div class="choice-list">
@@ -379,7 +308,6 @@ const Storage = {
             episodes: (raw.episodes && typeof raw.episodes === "object" && !Array.isArray(raw.episodes)) ? raw.episodes : {},
             errorReports: Array.isArray(raw.errorReports) ? raw.errorReports.filter(e => e && typeof e === "object") : [],
             episodeProgress: (raw.episodeProgress && typeof raw.episodeProgress === "object" && !Array.isArray(raw.episodeProgress)) ? raw.episodeProgress : {},
-            modeProgress: (raw.modeProgress && typeof raw.modeProgress === "object" && !Array.isArray(raw.modeProgress)) ? raw.modeProgress : {},
             daily: (raw.daily && typeof raw.daily === "object") ? raw.daily : {},
             history: Array.isArray(raw.history) ? raw.history : [],
         };
@@ -546,25 +474,6 @@ const Storage = {
         }
     },
 
-    // 모드별 통합 진행 저장 — survival·mock·daily·handoff·triage·scenario·quiz 공통
-    setModeProgress(mode, payload) {
-        const data = Storage.load();
-        if (!data.modeProgress || typeof data.modeProgress !== "object") data.modeProgress = {};
-        data.modeProgress[mode] = { ...payload, ts: Date.now() };
-        Storage.save(data);
-    },
-    getModeProgress(mode) {
-        const data = Storage.load();
-        return (data.modeProgress && data.modeProgress[mode]) || null;
-    },
-    clearModeProgress(mode) {
-        const data = Storage.load();
-        if (data.modeProgress && data.modeProgress[mode]) {
-            delete data.modeProgress[mode];
-            Storage.save(data);
-        }
-    },
-
     setEpisodeResult(id, ending, hp, rep) {
         const data = Storage.load();
         if (!data.episodes || typeof data.episodes !== "object") data.episodes = {};
@@ -642,7 +551,7 @@ function resolvedTheme(t) {
 function applyTheme(theme) {
     const r = resolvedTheme(theme);
     document.documentElement.setAttribute("data-theme", r);
-    if (UI.themeToggle) UI.themeToggle.dataset.theme = r;
+    if (UI.themeToggle) UI.themeToggle.textContent = r === "dark" ? "☀️" : "🌙";
 }
 function toggleTheme() {
     const cur = resolvedTheme(Storage.getSettings().theme);
@@ -653,7 +562,7 @@ function toggleTheme() {
 function toggleSound() {
     Sound.enabled = !Sound.enabled;
     Storage.setSettings({ sound: Sound.enabled });
-    if (UI.soundToggle) UI.soundToggle.dataset.sound = Sound.enabled ? "on" : "off";
+    if (UI.soundToggle) UI.soundToggle.textContent = Sound.enabled ? "🔊" : "🔇";
 }
 
 // =========================================================================
@@ -862,7 +771,7 @@ function resetCombo() { gameState.combo = 0; }
 function setShift(shift, mult, el) {
     gameState.currentShift = shift;
     gameState.difficulty = mult;
-    document.querySelectorAll(".shift-option").forEach(o => o.classList.remove("active"));
+    document.querySelectorAll(".shift-pill, .shift-option").forEach(o => o.classList.remove("active"));
     if (el) el.classList.add("active");
 }
 function resetStateForMode() {
@@ -886,35 +795,12 @@ function resetStateForMode() {
     gameState.firedStoryBeats = [];
 }
 function initSurvival() {
-    const prog = Storage.getModeProgress("survival");
-    if (prog && prog.eventCount > 0 && prog.eventCount < MAX_PROGRESS_EVENTS) {
-        return renderResumeChoice(
-            "survival",
-            "실전 듀티",
-            `이벤트 ${prog.eventCount}/${MAX_PROGRESS_EVENTS} · HP ${prog.hp} · 평판 ${prog.rep}`,
-            () => beginSurvival(prog),
-            () => beginSurvival(null),
-        );
-    }
-    beginSurvival(null);
-}
-function beginSurvival(prog) {
     resetStateForMode();
     gameState.mode = "survival"; gameState.quizCategory = null;
-    if (prog) {
-        gameState.hp = prog.hp; gameState.rep = prog.rep;
-        gameState.eventCount = prog.eventCount;
-        gameState.items = (prog.items || []).slice();
-        gameState.currentShift = prog.currentShift || gameState.currentShift;
-        gameState.difficulty = prog.difficulty || 1.0;
-        gameState.combo = prog.combo || 0;
-        gameState.firedStoryBeats = (prog.firedStoryBeats || []).slice();
-    } else {
-        gameState.firedStoryBeats = [];
-    }
+    gameState.firedStoryBeats = [];
     showCoreUI(); UI.logBar.innerHTML = "";
-    addLog(prog ? `듀티 이어가기 — 이벤트 ${prog.eventCount}부터.` : "듀티가 시작되었습니다. 첫 판단부터 중요합니다.", "log-important");
-    renderSurvivalEvent(prog ? "random_hub" : "intro");
+    addLog("듀티가 시작되었습니다. 첫 판단부터 중요합니다.", "log-important");
+    renderSurvivalEvent("intro");
 }
 function renderSurvivalEvent(eventId) {
     let ev;
@@ -1074,35 +960,12 @@ function handleQuizChoice(choice, ev) {
 // 모의고사 (시간제한 + 결과 채점표)
 // =========================================================================
 function startMockExam() {
-    const prog = Storage.getModeProgress("mock");
-    if (prog && prog.mockAnswered > 0 && prog.mockAnswered < prog.mockTotal && prog.remainMs > 30000) {
-        return renderResumeChoice(
-            "mock",
-            "모의고사",
-            `${prog.mockAnswered}/${prog.mockTotal} 문제 · 정답 ${prog.mockCorrect} · 남은 시간 ${Math.round(prog.remainMs / 60000)}분`,
-            () => beginMockExam(prog),
-            () => beginMockExam(null),
-        );
-    }
-    beginMockExam(null);
-}
-function beginMockExam(prog) {
     resetStateForMode();
     gameState.mode = "mock";
     gameState._mockEnded = false;
-    if (prog) {
-        gameState.mockTotal = prog.mockTotal;
-        gameState.mockAnswered = prog.mockAnswered;
-        gameState.mockCorrect = prog.mockCorrect;
-        gameState.combo = prog.combo || 0;
-        gameState.mockDeadlineTs = Date.now() + prog.remainMs;
-        gameState.mockWrong = [];
-    } else {
-        gameState.mockTotal = MOCK_EXAM_TOTAL;
-        gameState.mockAnswered = 0; gameState.mockCorrect = 0; gameState.mockWrong = [];
-        gameState.mockDeadlineTs = Date.now() + MOCK_EXAM_SECONDS * 1000;
-    }
-    Storage.clearModeProgress("mock"); // 시작 시 클리어 (도중 자동 저장 누적)
+    gameState.mockTotal = MOCK_EXAM_TOTAL;
+    gameState.mockAnswered = 0; gameState.mockCorrect = 0; gameState.mockWrong = [];
+    gameState.mockDeadlineTs = Date.now() + MOCK_EXAM_SECONDS * 1000;
     showCoreUI(); UI.logBar.innerHTML = "";
     addLog(`모의고사 시작 — ${MOCK_EXAM_TOTAL}문제 / ${MOCK_EXAM_SECONDS / 60}분`, "log-important");
     if (gameState.mockTimerId) clearInterval(gameState.mockTimerId);
@@ -1196,29 +1059,13 @@ function pickDailyGenerators(seed, count) {
     return out;
 }
 function startDailyChallenge() {
-    const prog = Storage.getModeProgress("daily");
-    const todaySeed = dailySeed(todayKey());
-    if (prog && prog.dailySolved > 0 && prog.dailySolved < DAILY_CHALLENGE_TOTAL && prog.dailySeed === todaySeed) {
-        return renderResumeChoice(
-            "daily",
-            "일일 챌린지",
-            `${prog.dailySolved}/${DAILY_CHALLENGE_TOTAL} 완료 · 정답 ${prog.dailyCorrect}`,
-            () => beginDailyChallenge(prog),
-            () => beginDailyChallenge(null),
-        );
-    }
-    beginDailyChallenge(null);
-}
-function beginDailyChallenge(prog) {
     resetStateForMode();
     gameState.mode = "daily";
+    gameState.dailySolved = 0; gameState.dailyCorrect = 0;
     gameState.dailySeed = dailySeed(todayKey());
     gameState.dailyQuestions = pickDailyGenerators(gameState.dailySeed, DAILY_CHALLENGE_TOTAL);
-    gameState.dailySolved = prog ? prog.dailySolved : 0;
-    gameState.dailyCorrect = prog ? prog.dailyCorrect : 0;
-    Storage.clearModeProgress("daily");
     showCoreUI(); UI.logBar.innerHTML = "";
-    addLog(prog ? `일일 챌린지 이어가기 — ${prog.dailySolved}/${DAILY_CHALLENGE_TOTAL}` : `오늘의 일일 챌린지 — ${DAILY_CHALLENGE_TOTAL}문제`, "log-important");
+    addLog(`오늘의 일일 챌린지 — ${DAILY_CHALLENGE_TOTAL}문제`, "log-important");
     renderNextDailyQuestion();
 }
 function renderNextDailyQuestion() {
@@ -1396,32 +1243,11 @@ function pickHandoffSession(n) {
 }
 
 function startHandoff() {
-    const prog = Storage.getModeProgress("handoff");
-    if (prog && prog.handoffPool && prog.handoffIndex > 0 && prog.handoffIndex < prog.handoffPool.length) {
-        return renderResumeChoice(
-            "handoff",
-            "인계 시뮬레이터",
-            `${prog.handoffIndex}/${prog.handoffPool.length} 환자 완료 · 정답 키워드 ${prog.handoffCorrect}/${prog.handoffTotal}`,
-            () => beginHandoff(prog),
-            () => beginHandoff(null),
-        );
-    }
-    beginHandoff(null);
-}
-function beginHandoff(prog) {
     resetStateForMode();
     gameState.mode = "handoff";
-    if (prog) {
-        gameState.handoffPool = prog.handoffPool.slice();
-        gameState.handoffIndex = prog.handoffIndex;
-        gameState.handoffCorrect = prog.handoffCorrect;
-        gameState.handoffTotal = prog.handoffTotal;
-    } else {
-        gameState.handoffPool = pickHandoffSession(HANDOFF_SESSION_SIZE);
-    }
-    Storage.clearModeProgress("handoff");
+    gameState.handoffPool = pickHandoffSession(HANDOFF_SESSION_SIZE);
     showCoreUI(); UI.logBar.innerHTML = "";
-    addLog(prog ? `인계 이어가기 — ${prog.handoffIndex}/${prog.handoffPool.length} 환자부터.` : `인계 시뮬레이터 — 100명 풀에서 ${HANDOFF_SESSION_SIZE}명 무작위 출제.`, "log-important");
+    addLog(`인계 시뮬레이터 — 100명 풀에서 ${HANDOFF_SESSION_SIZE}명 무작위 출제.`, "log-important");
     renderHandoffPatient();
 }
 
@@ -1532,29 +1358,10 @@ function endHandoff() {
 // 트리아지 (다중환자 우선순위)
 // =========================================================================
 function startTriage() {
-    const prog = Storage.getModeProgress("triage");
-    if (prog && prog.triageIndex > 0 && prog.triageIndex < NC.TRIAGE_CASES.length) {
-        return renderResumeChoice(
-            "triage",
-            "응급실 트리아지",
-            `${prog.triageIndex}/${NC.TRIAGE_CASES.length} 케이스 완료 · 정답 ${prog.triageCorrect}/${prog.triageTotal}`,
-            () => beginTriage(prog),
-            () => beginTriage(null),
-        );
-    }
-    beginTriage(null);
-}
-function beginTriage(prog) {
     resetStateForMode();
     gameState.mode = "triage";
-    if (prog) {
-        gameState.triageIndex = prog.triageIndex;
-        gameState.triageCorrect = prog.triageCorrect;
-        gameState.triageTotal = prog.triageTotal;
-    }
-    Storage.clearModeProgress("triage");
     showCoreUI(); UI.logBar.innerHTML = "";
-    addLog(prog ? `트리아지 이어가기 — ${prog.triageIndex}번째 케이스부터.` : "응급실 트리아지 — 5명 환자에게 1(최우선)~5(후순위)를 매기세요.", "log-important");
+    addLog("응급실 트리아지 — 5명 환자에게 1(최우선)~5(후순위)를 매기세요.", "log-important");
     renderTriageCase();
 }
 
@@ -1845,31 +1652,14 @@ function startScenario(target) {
     const id = target.dataset.arg;
     const s = NC.SCENARIOS.find(x => x.id === id);
     if (!s) return;
-    const prog = Storage.getModeProgress("scenario");
-    if (prog && prog.scenarioId === id && prog.scenarioStep > 0 && prog.scenarioStep < s.steps.length) {
-        return renderResumeChoice(
-            "scenario",
-            s.title,
-            `Step ${prog.scenarioStep + 1}/${s.steps.length} · HP ${prog.hp} · 평판 ${prog.rep}`,
-            () => beginScenario(id, prog),
-            () => beginScenario(id, null),
-        );
-    }
-    beginScenario(id, null);
-}
-function beginScenario(id, prog) {
-    const s = NC.SCENARIOS.find(x => x.id === id);
-    if (!s) return;
     resetStateForMode();
     gameState.mode = "scenario";
     gameState.scenarioId = id;
-    gameState.scenarioStep = prog ? prog.scenarioStep : 0;
-    gameState.hp = prog ? prog.hp : 100;
-    gameState.rep = prog ? prog.rep : 0;
-    Storage.clearModeProgress("scenario");
+    gameState.scenarioStep = 0;
+    gameState.hp = 100; gameState.rep = 0;
     showCoreUI(); UI.logBar.innerHTML = "";
-    addLog(prog ? `시나리오 이어가기: ${s.title} (Step ${prog.scenarioStep + 1})` : `시나리오 시작: ${s.title}`, "log-important");
-    if (!prog) addLog(s.intro);
+    addLog(`시나리오 시작: ${s.title}`, "log-important");
+    addLog(s.intro);
     renderScenarioStep();
 }
 
@@ -2077,7 +1867,7 @@ function openSettings() {
     const acc = totalSolved ? Math.round(totalCorrect / totalSolved * 100) : 0;
     UI.gameArea.innerHTML = `
       <div class="card settings-card">
-        <h2 class="scene-title">설정</h2>
+        <h2 class="scene-title">⚙️ 설정</h2>
 
         <h3 class="settings-section">일반</h3>
         <div class="settings-row">
@@ -2300,7 +2090,7 @@ function openErrorReport() {
     UI.topBar.classList.remove("hidden");
     UI.gameArea.innerHTML = `
       <div class="card report-card">
-        <h2 class="menu-title">컨텐츠 오류 신고</h2>
+        <h2 class="menu-title">🚩 컨텐츠 오류 신고</h2>
         <p class="menu-tagline">잘못된 답·해설·약물 정보·맞춤법 등 모든 오류를 신고해 주세요. 본인 학습과 다른 사용자 안전에 직접 도움됩니다.</p>
         <div class="report-context">
           <strong>신고 컨텍스트</strong><br>
@@ -2332,7 +2122,7 @@ function submitErrorReport() {
     Storage.addErrorReport({ ...ctx, text });
     UI.gameArea.innerHTML = `
       <div class="card report-card">
-        <h2 class="menu-title">신고 접수 완료</h2>
+        <h2 class="menu-title">✓ 신고 접수</h2>
         <p class="menu-tagline">로컬에 저장됐습니다 (${Storage.getErrorReports().length}건). 검토 후 다음 버전에 반영됩니다. 감사합니다.</p>
         <div class="choice-list">
           <button class="choice-btn primary" data-action="closeErrorReport">계속</button>
@@ -2547,11 +2337,14 @@ function onboardFinish() {
 // 메인 메뉴 (returnToMenu)
 // =========================================================================
 function returnToMenu() {
-    // 1단계: 모든 게임 모드 진행 저장 (이어하기 가능하게 — 모의고사 타이머 정지 전)
-    captureModeProgress();
-    // 2단계: 모의고사 타이머만 정리 (abort 로 처리하지 않음 — 사용자가 메뉴로 가는 건 일시정지)
-    if (gameState.mode === "mock" && gameState.mockTimerId) {
-        clearInterval(gameState.mockTimerId); gameState.mockTimerId = null;
+    // 진행 중인 모의고사 → abort 로 일관 처리 (endMockExam이 history/timer 정리)
+    if (gameState.mode === "mock" && !gameState._mockEnded) {
+        gameState._mockEnded = true;
+        if (gameState.mockTimerId) { clearInterval(gameState.mockTimerId); gameState.mockTimerId = null; }
+        const total = gameState.mockTotal, correct = gameState.mockCorrect, answered = gameState.mockAnswered;
+        const acc = answered > 0 ? Math.round((correct / answered) * 100) : 0;
+        Storage.setMockBest(correct);
+        Storage.addHistory({ mode: "mock", at: Date.now(), total, answered, correct, accuracy: acc, reason: "abort" });
     }
     // 에피소드 중간 이탈 시 진행 자동 저장
     if (gameState.mode === "episode" && gameState.episodeId) {
@@ -2583,89 +2376,173 @@ function returnToMenu() {
     const dailyDone = todayDaily?.completed;
     const wrongCount = data.wrongQueue.length;
 
-    UI.gameArea.innerHTML = `
-      <div class="card menu-container">
-        <h1 class="menu-title">간호사 시뮬레이터<span class="version-badge" aria-label="버전 1.0 자가 검증">v1.0 · 자가 검증</span></h1>
-        <div class="menu-shift-row" role="radiogroup" aria-label="시프트 난이도">
-          <button class="shift-option ${gameState.currentShift === 'Day' ? 'active' : ''}" data-action="setShift" data-shift="Day" data-mult="1.0">Day</button>
-          <button class="shift-option ${gameState.currentShift === 'Evening' ? 'active' : ''}" data-action="setShift" data-shift="Evening" data-mult="1.2">Evening</button>
-          <button class="shift-option ${gameState.currentShift === 'Night' ? 'active' : ''}" data-action="setShift" data-shift="Night" data-mult="1.5">Night</button>
+    UI.gameArea.innerHTML = renderMenuTabs(data, dailyDone, wrongCount);
+
+    // 메인 메뉴에서도 상단 헤더는 표시(테마/사운드 토글 위해)
+    UI.topBar.classList.remove("hidden");
+}
+
+// 3탭 메뉴 시스템
+function renderMenuTabs(data, dailyDone, wrongCount) {
+    if (!gameState.menuTab) gameState.menuTab = "home";
+    const tab = gameState.menuTab;
+    const todayDaily = data.daily[todayKey()];
+    const dailyCorrect = todayDaily?.correct || 0;
+
+    // 활성 에피소드(이어하기) 탐지
+    let resumeEp = null;
+    if (NC && NC.EPISODES) {
+        for (const ep of NC.EPISODES) {
+            const p = Storage.getEpisodeProgress(ep.id);
+            if (p && p.step > 0 && p.step < ep.steps.length) {
+                resumeEp = { ep, progress: p };
+                break;
+            }
+        }
+    }
+
+    const renderHome = () => `
+      <div class="tab-section">
+        ${resumeEp ? `
+          <button class="resume-card" data-action="startEpisode" data-arg="${escapeHtml(resumeEp.ep.id)}">
+            <div class="resume-label">이어하기</div>
+            <div class="resume-title">${escapeHtml(resumeEp.ep.title)}</div>
+            <div class="resume-sub">${resumeEp.progress.step} / ${resumeEp.ep.steps.length} 단계 · HP ${resumeEp.progress.hp} · REP ${resumeEp.progress.rep}</div>
+          </button>` : ''}
+
+        <button class="hero-card" data-action="initSurvival">
+          <div class="hero-label">오늘의 듀티</div>
+          <div class="hero-title">실전 듀티 시작</div>
+          <div class="hero-sub">${escapeHtml(gameState.currentShift)} 시프트 · 20 이벤트 · HP · 평판 · 스토리 비트</div>
+          <div class="shift-row-inline" role="radiogroup" aria-label="시프트 난이도">
+            <button class="shift-pill ${gameState.currentShift === 'Day' ? 'active' : ''}" data-action="setShift" data-shift="Day" data-mult="1.0">Day</button>
+            <button class="shift-pill ${gameState.currentShift === 'Evening' ? 'active' : ''}" data-action="setShift" data-shift="Evening" data-mult="1.2">Evening</button>
+            <button class="shift-pill ${gameState.currentShift === 'Night' ? 'active' : ''}" data-action="setShift" data-shift="Night" data-mult="1.5">Night</button>
+          </div>
+        </button>
+
+        <div class="home-row">
+          <button class="row-card ${dailyDone ? 'done' : ''}" data-action="startDailyChallenge">
+            <div class="row-icon">${ICONS.daily}</div>
+            <div class="row-body">
+              <div class="row-title">일일 챌린지 ${dailyDone ? '<span class="row-pill done">완료</span>' : ''}</div>
+              <div class="row-sub">${dailyDone ? `오늘 ${dailyCorrect}/${DAILY_CHALLENGE_TOTAL} 정답` : `매일 ${DAILY_CHALLENGE_TOTAL}문제 · 시드 고정`}</div>
+            </div>
+            <div class="row-chev">›</div>
+          </button>
+
+          ${wrongCount > 0 ? `
+          <button class="row-card" data-action="reviewWrongAnswers">
+            <div class="row-icon">${ICONS.wrong}</div>
+            <div class="row-body">
+              <div class="row-title">오답 복습 <span class="row-pill warn">${wrongCount}</span></div>
+              <div class="row-sub">틀렸던 문제 다시 풀기</div>
+            </div>
+            <div class="row-chev">›</div>
+          </button>` : ''}
         </div>
-        <div class="mode-grid" role="group" aria-label="게임 모드">
-          <button class="mode-card wide hero" data-mode="survival" data-action="initSurvival">
-            ${ICONS.survival}
-            <span class="mc-title">실전 듀티</span>
-            <span class="mc-sub">${escapeHtml(gameState.currentShift)} · 20 이벤트</span>
-          </button>
+      </div>`;
 
-          <div class="mode-section-label">학습</div>
-          <button class="mode-card" data-mode="training" data-action="renderQuizMenu">
-            ${ICONS.training}
-            <span class="mc-title">트레이닝</span>
-            <span class="mc-sub">8과목 무한</span>
+    const renderStudy = () => `
+      <div class="tab-section">
+        <div class="section-label">빠른 풀이</div>
+        <div class="home-row">
+          <button class="row-card" data-action="renderQuizMenu">
+            <div class="row-icon">${ICONS.training}</div>
+            <div class="row-body">
+              <div class="row-title">과목별 무한 풀이</div>
+              <div class="row-sub">국시 8과목 · 랜덤 출제</div>
+            </div>
+            <div class="row-chev">›</div>
           </button>
-          <button class="mode-card" data-mode="mock" data-action="startMockExam">
-            ${ICONS.mock}
-            <span class="mc-title">모의고사</span>
-            <span class="mc-sub">${MOCK_EXAM_TOTAL}문제 · ${MOCK_EXAM_SECONDS / 60}분</span>
-          </button>
-          <button class="mode-card" data-mode="daily" data-action="startDailyChallenge">
-            ${ICONS.daily}
-            <span class="mc-title">일일 챌린지</span>
-            <span class="mc-sub">오늘 ${DAILY_CHALLENGE_TOTAL}문제</span>
-            ${dailyDone ? '<span class="mc-badge done" aria-label="오늘 완료">✓</span>' : ''}
-          </button>
-          <button class="mode-card" data-mode="wrong" data-action="reviewWrongAnswers">
-            ${ICONS.wrong}
-            <span class="mc-title">오답노트</span>
-            <span class="mc-sub">${wrongCount}건</span>
-            ${wrongCount ? `<span class="mc-badge">${wrongCount}</span>` : ''}
-          </button>
-
-          <div class="mode-section-label">시뮬레이션</div>
-          <button class="mode-card wide" data-mode="scenario" data-action="renderEpisodeMenu">
-            ${ICONS.episode}
-            <span class="mc-title">에피소드</span>
-            <span class="mc-sub">26편 · 313단계</span>
-          </button>
-          <button class="mode-card wide" data-mode="scenario" data-action="renderScenarioMenu">
-            ${ICONS.scenario}
-            <span class="mc-title">임상 시나리오</span>
-            <span class="mc-sub">6 케이스 멀티스텝</span>
-          </button>
-          <button class="mode-card" data-mode="handoff" data-action="startHandoff">
-            ${ICONS.handoff}
-            <span class="mc-title">인계 시뮬</span>
-            <span class="mc-sub">TTS · 100명</span>
-          </button>
-          <button class="mode-card" data-mode="triage" data-action="startTriage">
-            ${ICONS.triage}
-            <span class="mc-title">트리아지</span>
-            <span class="mc-sub">응급실 · 7</span>
-          </button>
-
-          <div class="mode-section-label">도구</div>
-          <button class="mode-card" data-mode="dash" data-action="renderDashboard">
-            ${ICONS.dash}
-            <span class="mc-title">대시보드</span>
-            <span class="mc-sub">학습 통계</span>
-          </button>
-          <button class="mode-card" data-mode="training" data-action="openSearch">
-            <svg class="mc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-            <span class="mc-title">검색</span>
-            <span class="mc-sub">전체 컨텐츠</span>
+          <button class="row-card" data-action="startMockExam">
+            <div class="row-icon">${ICONS.mock}</div>
+            <div class="row-body">
+              <div class="row-title">모의고사</div>
+              <div class="row-sub">${MOCK_EXAM_TOTAL}문제 · ${MOCK_EXAM_SECONDS / 60}분 타이머</div>
+            </div>
+            <div class="row-chev">›</div>
           </button>
         </div>
-        <p class="menu-kbd-row">
-          <span class="kbd-hint">1-4</span> 보기 ·
-          <span class="kbd-hint">Space</span> 다음 ·
-          <span class="kbd-hint">T</span> 테마 ·
-          <span class="kbd-hint">M</span> 사운드
-        </p>
-        <div class="menu-footer">
-          <button class="text-link" data-action="openSettings">설정</button>
-          <span class="dot-sep" aria-hidden="true">·</span>
-          <button class="text-link" data-action="showOnboarding">튜토리얼</button>
+
+        <div class="section-label">임상 시나리오</div>
+        <div class="home-row">
+          <button class="row-card" data-action="renderEpisodeMenu">
+            <div class="row-icon">${ICONS.episode}</div>
+            <div class="row-body">
+              <div class="row-title">에피소드 (한 듀티 전체)</div>
+              <div class="row-sub">26개 · 12~15단계 연결 스토리</div>
+            </div>
+            <div class="row-chev">›</div>
+          </button>
+          <button class="row-card" data-action="renderScenarioMenu">
+            <div class="row-icon">${ICONS.scenario}</div>
+            <div class="row-body">
+              <div class="row-title">짧은 임상 시나리오</div>
+              <div class="row-sub">6 케이스 · 다단계 의사결정</div>
+            </div>
+            <div class="row-chev">›</div>
+          </button>
+        </div>
+
+        <div class="section-label">임상 술기</div>
+        <div class="home-row">
+          <button class="row-card" data-action="startHandoff">
+            <div class="row-icon">${ICONS.handoff}</div>
+            <div class="row-body">
+              <div class="row-title">인계 시뮬</div>
+              <div class="row-sub">TTS 음성 · 100명 풀 셔플</div>
+            </div>
+            <div class="row-chev">›</div>
+          </button>
+          <button class="row-card" data-action="startTriage">
+            <div class="row-icon">${ICONS.triage}</div>
+            <div class="row-body">
+              <div class="row-title">트리아지</div>
+              <div class="row-sub">응급실 다중환자 분류 · 7 케이스</div>
+            </div>
+            <div class="row-chev">›</div>
+          </button>
+        </div>
+      </div>`;
+
+    const renderMy = () => `
+      <div class="tab-section">
+        <button class="row-card big" data-action="renderDashboard">
+          <div class="row-icon big">${ICONS.dash}</div>
+          <div class="row-body">
+            <div class="row-title">대시보드</div>
+            <div class="row-sub">과목별 정답률 · 콤보 · 출제 경향 차트</div>
+          </div>
+          <div class="row-chev">›</div>
+        </button>
+        <button class="row-card big" data-action="reviewWrongAnswers">
+          <div class="row-icon big">${ICONS.wrong}</div>
+          <div class="row-body">
+            <div class="row-title">오답노트 ${wrongCount > 0 ? `<span class="row-pill warn">${wrongCount}</span>` : ''}</div>
+            <div class="row-sub">${wrongCount > 0 ? `복습 대기 ${wrongCount}건` : '오답 없음'}</div>
+          </div>
+          <div class="row-chev">›</div>
+        </button>
+        <button class="row-card big" data-action="openSearch">
+          <div class="row-icon big"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></div>
+          <div class="row-body">
+            <div class="row-title">컨텐츠 검색</div>
+            <div class="row-sub">에피소드 · 인계 · 시나리오 · 문제 전체</div>
+          </div>
+          <div class="row-chev">›</div>
+        </button>
+        <button class="row-card big" data-action="openSettings">
+          <div class="row-icon big"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+          <div class="row-body">
+            <div class="row-title">설정</div>
+            <div class="row-sub">테마 · 사운드 · 데이터 백업·초기화</div>
+          </div>
+          <div class="row-chev">›</div>
+        </button>
+
+        <div class="my-footer">
+          <button class="text-link" data-action="showOnboarding">튜토리얼 다시 보기</button>
           <span class="dot-sep" aria-hidden="true">·</span>
           <button class="text-link" data-action="renderPrivacy">개인정보</button>
           <span class="dot-sep" aria-hidden="true">·</span>
@@ -2675,8 +2552,32 @@ function returnToMenu() {
         </div>
       </div>`;
 
-    // 메인 메뉴에서도 상단 헤더는 표시(테마/사운드 토글 위해)
-    UI.topBar.classList.remove("hidden");
+    const tabContent = tab === "study" ? renderStudy() : tab === "my" ? renderMy() : renderHome();
+
+    return `
+      <div class="menu-shell">
+        <header class="menu-header">
+          <h1 class="menu-title-v2">간호사 시뮬레이터</h1>
+          <span class="version-badge-v2">v${APP_VERSION || '1.0'}</span>
+        </header>
+
+        <main class="menu-body">${tabContent}</main>
+
+        <nav class="tab-bar" role="tablist" aria-label="메인 탐색">
+          <button class="tab-btn ${tab === 'home' ? 'active' : ''}" data-action="setMenuTab" data-tab="home" role="tab" aria-selected="${tab === 'home'}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12 12 3l9 9"/><path d="M5 10v10h14V10"/></svg>
+            <span>홈</span>
+          </button>
+          <button class="tab-btn ${tab === 'study' ? 'active' : ''}" data-action="setMenuTab" data-tab="study" role="tab" aria-selected="${tab === 'study'}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            <span>학습</span>
+          </button>
+          <button class="tab-btn ${tab === 'my' ? 'active' : ''}" data-action="setMenuTab" data-tab="my" role="tab" aria-selected="${tab === 'my'}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <span>내 기록</span>
+          </button>
+        </nav>
+      </div>`;
 }
 
 // =========================================================================
@@ -2810,7 +2711,7 @@ function boot() {
     const settings = Storage.getSettings();
     applyTheme(settings.theme || "auto");
     Sound.enabled = settings.sound !== false;
-    if (UI.soundToggle) UI.soundToggle.dataset.sound = Sound.enabled ? "on" : "off";
+    if (UI.soundToggle) UI.soundToggle.textContent = Sound.enabled ? "🔊" : "🔇";
     const stored = Storage.load();
     gameState.bestCombo = stored.bestCombo || 0;
     if (UI.themeToggle) UI.themeToggle.addEventListener("click", toggleTheme);
@@ -2858,6 +2759,7 @@ const DELEGATED_ACTIONS = {
     renderDashboard: () => renderDashboard(),
     confirmClearStats: () => confirmClearStats(),
     setShift: (t) => setShift(t.dataset.shift, parseFloat(t.dataset.mult), t),
+    setMenuTab: (t) => { gameState.menuTab = t.dataset.tab; returnToMenu(); },
     // 신규 모드
     startHandoff: () => startHandoff(),
     handoffPlay: () => handoffPlay(),
