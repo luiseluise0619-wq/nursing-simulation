@@ -131,6 +131,37 @@ const KNOWN_SOURCES = [
     { pattern: /BEERS|노인.*약물/i,                            source: "AGS Beers Criteria 2023" },
     { pattern: /Just Culture|시스템.*개선/i,                  source: "AHRQ Just Culture Framework" },
     { pattern: /SBAR|인계.*표준/i,                            source: "IHI SBAR Communication" },
+    // v1.1 신규 (25건)
+    { pattern: /FiO2|비강캐뉼라.*4L|벤츄리|NRB/i,            source: "AARC Clinical Practice Guideline (산소요법)" },
+    { pattern: /CAUTI|도뇨주머니.*방광.*아래|유치도뇨/i,      source: "CDC Guidelines for CAUTI Prevention" },
+    { pattern: /비위관.*X-ray|NG tube.*위치 확인/i,           source: "ANA Best Practice: NG Tube Verification" },
+    { pattern: /욕창.*Stage|하이드로콜로이드|체위변경.*2시간/i, source: "NPUAP/EPUAP/PPPIA 욕창 가이드 (2019)" },
+    { pattern: /신체보호대|restraint.*2시간|이중 잠금/i,      source: "AHRQ Restraint Guidelines" },
+    { pattern: /Lochia|오로.*rubra|오로.*serosa|오로.*alba/i, source: "AWHONN Postpartum Assessment" },
+    { pattern: /deep latch|유륜.*깊게|모유수유.*자세/i,       source: "WHO/UNICEF 모유수유 가이드" },
+    { pattern: /Berg Balance|낙상.*고위험|보행기 동반/i,      source: "AGS/BGS Fall Prevention" },
+    { pattern: /발달이정표|영유아.*사회적 미소|옹알이/i,      source: "CDC Developmental Milestones" },
+    { pattern: /열성경련.*측위|febrile seizure.*기도 확보/i,  source: "AAP Febrile Seizure Clinical Practice" },
+    { pattern: /ORS.*경구수액|소아.*20ml\/kg.*bolus/i,        source: "AAP/WHO Pediatric Dehydration" },
+    { pattern: /자살.*직접.*질문|자살 사고 평가/i,            source: "AFSP/SPRC Suicide Risk Assessment" },
+    { pattern: /NMS|신경이완제.*악성증후군|dantrolene/i,      source: "APA/UpToDate NMS Management" },
+    { pattern: /진전섬망|Delirium Tremens|DT.*벤조|CIWA/i,    source: "SAMHSA TIP 45 / CIWA-Ar" },
+    { pattern: /1급 감염병.*즉시 신고|감염병.*신고기한/i,    source: "감염병의 예방 및 관리에 관한 법률" },
+    { pattern: /마약.*이중 잠금|마약.*분리 보관/i,           source: "마약류 관리에 관한 법률 시행규칙" },
+    { pattern: /정신건강복지법|보호의무자.*2인|행정입원/i,    source: "정신건강증진 및 정신질환자 복지서비스 지원에 관한 법률" },
+    { pattern: /헌혈.*8주|전혈.*채혈.*간격/i,                source: "혈액관리법 시행규칙" },
+    { pattern: /의료법.*30개.*병상|병원.*30 병상/i,          source: "의료법 시행규칙 (의료기관 종별)" },
+    { pattern: /Thomas-Kilmann|협력형|독재형|민주형|자유방임형/i, source: "Thomas-Kilmann Conflict Mode Instrument" },
+    { pattern: /위임.*5권리|right task|right person/i,        source: "NCSBN Delegation Five Rights" },
+    { pattern: /적신호 사건|sentinel event/i,                 source: "The Joint Commission Sentinel Event Policy" },
+    { pattern: /PDCA|Deming Cycle|Six Sigma|RCA/i,            source: "Deming / Joint Commission QI Methods" },
+    { pattern: /FAST.*Face.*Arm.*Speech|뇌졸중.*신속 사정/i,   source: "AHA/ASA Stroke Pre-hospital (FAST)" },
+    { pattern: /KDIGO|AKI 1단계|GFR.*15|CKD 단계/i,           source: "KDIGO Clinical Practice Guideline (AKI/CKD)" },
+    { pattern: /air leak|water seal.*거품|흉관 배액/i,        source: "AACN Critical Care: Chest Tube Management" },
+    { pattern: /croup|epiglottitis|bronchiolitis|RSV/i,        source: "AAP Pediatric Respiratory Emergencies" },
+    { pattern: /Leitner|박스.*승급|간격 반복 학습/i,         source: "Leitner (1972) Spaced Repetition System" },
+    { pattern: /Naloxone|마약.*해독|opioid.*반전/i,           source: "SAMHSA Opioid Overdose Reversal" },
+    { pattern: /VTE.*예방|TED.*스타킹|enoxaparin.*피하/i,     source: "ACCP CHEST VTE Prevention Guidelines" },
 ];
 function lookupSource(text) {
     if (!text) return null;
@@ -2111,6 +2142,7 @@ function handleImportFile(e) {
 function renderAbout() {
     gameState.mode = "about";
     showCoreUI(); updateStats();
+    const totalSteps = NC.EPISODES.reduce((a, e) => a + e.steps.length, 0);
     UI.gameArea.innerHTML = `
       <div class="card about-card">
         <h2 class="scene-title">앱 정보</h2>
@@ -2119,24 +2151,35 @@ function renderAbout() {
 
         <h3 class="settings-section">수록 컨텐츠</h3>
         <ul class="about-list">
-          <li>📖 에피소드 ${NC.EPISODES.length}개 (313 단계)</li>
+          <li>📖 에피소드 ${NC.EPISODES.length}개 (${totalSteps} 단계)</li>
           <li>🎙️ 인계 환자 ${NC.HANDOFF_PATIENTS.length}명 풀</li>
           <li>📋 임상 시나리오 ${NC.SCENARIOS.length}개</li>
           <li>🚑 트리아지 케이스 ${NC.TRIAGE_CASES.length}개</li>
-          <li>📚 4지선다 generator ${NQ.allGenerators.length}종 (8과목)</li>
-          <li>📚 검증된 의료 출처 ${KNOWN_SOURCES.length}건</li>
+          <li>📚 4지선다 generator ${NQ.allGenerators.length}종 (8과목 균형)</li>
+          <li>📚 자동 매칭 의료 출처 ${KNOWN_SOURCES.length}건</li>
         </ul>
 
+        <h3 class="settings-section">컨텐츠 출처</h3>
+        <p class="about-meta">본 시뮬레이터는 다음 표준 자료에 기반합니다:</p>
+        <ul class="about-list">
+          <li>한국 간호사 국가시험 출제기준 (국시원 2024)</li>
+          <li>AHA ACLS/BLS Provider Manual (2020)</li>
+          <li>ACOG · KDIGO · GOLD · GINA · ADA 가이드라인</li>
+          <li>한국 법령 (의료법·감염병관리법·마약류관리법 등 — 법제처)</li>
+          <li>표준 한국 간호학 교과서 8과목 (수문사·현문사)</li>
+          <li>대한심폐소생협회 KACPR · 대한간호협회 KNA</li>
+        </ul>
+        <p class="about-meta">전체 출처 목록: 저장소의 <code>SOURCES.md</code> 참고. 본 자료는 정식 RN/MD 감수 전 베타이며, 실제 임상 적용 시 최신 기관 가이드라인을 우선합니다.</p>
+
         <h3 class="settings-section">변경 이력</h3>
+        <p class="about-meta"><strong>v1.1</strong> — Sage neumorphic 디자인 · 3탭 메뉴 · Leitner SRS · 북마크 · 공유 · 위클리 · 부활 · 컨텐츠 +600 결정포인트.</p>
         <p class="about-meta"><strong>v1.0.0</strong> — 정식 출시. 설정 · 백업/복원 · About · Privacy in-app · v1.0 배지.</p>
-        <p class="about-meta"><strong>v0.9</strong> — 이어하기 · spaced repetition · 검색 · 출처 표시 (P0 4건).</p>
+        <p class="about-meta"><strong>v0.9</strong> — 이어하기 · spaced repetition · 검색 · 출처 표시.</p>
         <p class="about-meta"><strong>v0.8</strong> — 면책 스트립 · BETA 배지 · 오류 신고 · 동의 체크박스.</p>
-        <p class="about-meta"><strong>v0.7</strong> — 에피소드 26개 완비.</p>
-        <p class="about-meta"><strong>v0.6</strong> — 모바일 디자인 폴리시 · SVG 아이콘 · PNG 자동 생성.</p>
         <p class="about-meta">전체 이력: <code>CHANGELOG.md</code></p>
 
         <h3 class="settings-section">라이선스</h3>
-        <p class="about-meta">MIT License. 의료 면책 고지는 LICENSE 파일 참고.</p>
+        <p class="about-meta">MIT License. 의료 면책 고지는 <code>LICENSE</code> · <code>SOURCES.md</code> 참고.</p>
 
         <div class="choice-list">
           <button class="choice-btn primary" data-action="openSettings">설정으로</button>
