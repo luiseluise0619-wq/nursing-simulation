@@ -902,6 +902,8 @@ function resetStateForMode() {
     gameState.scenarioId = null; gameState.scenarioStep = 0;
     gameState.episodeId = null; gameState.episodeStep = 0;
     gameState.firedStoryBeats = [];
+    gameState.reviveCount = 0;
+    gameState._lastDeath = null;
 }
 function initSurvival() {
     resetStateForMode();
@@ -2738,6 +2740,52 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
 // =========================================================================
 // 게임오버 (Survival → 승급 심사 모달)
 // =========================================================================
+// =========================================================================
+// 부활 (보상형 광고 시청 시 HP 회복) — 게임 오버 시 마지막 기회
+// =========================================================================
+function renderReviveSlot() {
+    const slot = document.getElementById("revive-slot");
+    if (!slot) return;
+    // 부활 조건:
+    //   1) 부활 가능 모드 (survival — 듀티 시뮬레이션의 체력 고갈 시)
+    //   2) HP <= 0 으로 죽었을 때 (평판 실추는 부활 대상 아님)
+    //   3) 세션당 부활 한도 미초과
+    //   4) 보상형 광고 unit ID 가 세팅돼 있음 (없으면 광고 환경 자체 부재)
+    const eligible = gameState.mode === "survival"
+        && gameState.hp <= 0
+        && (gameState.reviveCount || 0) < REVIVE_CONFIG.maxPerSession
+        && !!ADS_UNITS.rewarded;
+    if (!eligible) { slot.classList.add("hidden"); slot.innerHTML = ""; return; }
+    slot.classList.remove("hidden");
+    slot.innerHTML = `
+      <button class="choice-btn primary revive-btn" data-action="reviveByAd" aria-label="광고 보고 부활하기">
+        <span class="revive-icon" aria-hidden="true">💚</span>
+        <span class="revive-text">광고 보고 부활하기 (HP ${REVIVE_CONFIG.hpRestore} 회복)</span>
+        <span class="revive-sub">남은 기회: ${REVIVE_CONFIG.maxPerSession - (gameState.reviveCount || 0)}회</span>
+      </button>`;
+}
+
+async function reviveByAd() {
+    const btn = document.querySelector(".revive-btn");
+    if (btn) { btn.disabled = true; btn.classList.add("loading"); }
+    const ok = await Ads.showRewarded(ADS_UNITS.rewarded);
+    if (!ok) {
+        if (btn) { btn.disabled = false; btn.classList.remove("loading"); }
+        addLog("광고 시청이 완료되지 않아 부활이 취소되었습니다.", "log-bad");
+        return;
+    }
+    gameState.reviveCount = (gameState.reviveCount || 0) + 1;
+    gameState.hp = clamp(REVIVE_CONFIG.hpRestore, 1, 100);
+    // 모달 닫고 게임 재개
+    UI.modal.classList.remove("active");
+    document.getElementById("revive-slot")?.classList.add("hidden");
+    updateStats();
+    addLog(`💚 광고 시청으로 부활! HP ${gameState.hp} 회복.`, "log-good");
+    if (gameState.mode === "survival") {
+        renderSurvivalEvent("random_hub");
+    }
+}
+
 function showGameOver(title, desc) {
     document.getElementById("modal-title").textContent = title;
     document.getElementById("modal-desc").textContent = desc;
@@ -2759,6 +2807,7 @@ function showGameOver(title, desc) {
         statsEl.appendChild(row);
     });
     UI.modal.classList.add("active");
+    renderReviveSlot();
 
     let score = 0, attempts = 0, currentQ = null;
     function gen() {
@@ -2959,12 +3008,33 @@ const Ads = {
         if (!p) return;
         try { p.hideBanner(); } catch { /* no-op */ }
     },
+    // 보상형 광고 — 시청 완료 시 true resolve, 미시청·미지원·실패 시 false.
+    // 게임 오버 → 광고 시청 → HP 회복 부활 시나리오에 사용.
+    async showRewarded(adUnitId) {
+        if (!adUnitId) return false;
+        const p = Ads.plugin;
+        if (!p) return false;
+        try {
+            await Ads.init();
+            await p.prepareRewardVideoAd({ adId: adUnitId });
+            const result = await p.showRewardVideoAd();
+            // Capacitor AdMob: 성공 시 result.amount 또는 result.type 이 존재.
+            return !!(result && (result.amount || result.type || result.rewarded));
+        } catch { return false; }
+    },
 };
 // AdMob unit IDs — 비어있으면 Ads.* 호출이 모두 no-op.
 // 출시 시 Capacitor 래핑 + AdMob 플러그인 설치 + 실 unit ID 입력 후 활성화.
 const ADS_UNITS = {
     interstitial: "", // 예: "ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX"
     banner: "",      // 예: "ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX"
+    rewarded: "",   // 부활용 보상형 광고 (예: 동일 형식)
+};
+
+// 부활(revive) 설정 — 게임 오버 시 보상형 광고로 HP 회복
+const REVIVE_CONFIG = {
+    hpRestore: 60,        // 부활 시 회복할 HP (0~100)
+    maxPerSession: 1,     // 한 세션(모드 1회)당 최대 부활 횟수 — 무한 부활 방지
 };
 
 // =========================================================================
@@ -3245,6 +3315,8 @@ const DELEGATED_ACTIONS = {
     shareResultCard: (t) => shareResultCard(t),
     // 위클리 리포트
     renderWeeklyReport: () => renderWeeklyReport(),
+    // 부활 (보상형 광고)
+    reviveByAd: () => reviveByAd(),
 };
 function handleDelegatedAction(e) {
     const target = e.target.closest("[data-action]");

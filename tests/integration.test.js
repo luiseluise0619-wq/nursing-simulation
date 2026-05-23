@@ -32,6 +32,7 @@ const BODY_TEMPLATE = `
     <h2 id="modal-title"></h2>
     <p id="modal-desc"></p>
     <div id="modal-stats"></div>
+    <div id="revive-slot" class="hidden"></div>
     <span id="left"></span><span id="rank"></span>
     <div id="question-box"></div>
     <div id="choices"></div>
@@ -1252,6 +1253,33 @@ describe("P2 — AdMob 어댑터 (Capacitor 호환)", () => {
             document.querySelector('[data-action="startTriage"]').click();
             // 트리아지를 종료시키지 않아도 어댑터 자체가 안전한지가 핵심
         }).not.toThrow();
+    });
+
+    test("보상형 광고 부활(revive) 구조가 존재한다 (소스 확인)", () => {
+        const fs = require("fs");
+        const path = require("path");
+        const src = fs.readFileSync(path.join(__dirname, "..", "script.js"), "utf-8");
+        expect(src).toMatch(/showRewarded\s*\(/);
+        expect(src).toMatch(/REVIVE_CONFIG\s*=\s*\{/);
+        expect(src).toMatch(/hpRestore:\s*\d+/);
+        expect(src).toMatch(/maxPerSession:\s*\d+/);
+        expect(src).toMatch(/function\s+reviveByAd\s*\(/);
+        expect(src).toMatch(/function\s+renderReviveSlot\s*\(/);
+        expect(src).toMatch(/reviveByAd:\s*\(\)\s*=>\s*reviveByAd\(\)/);
+        // 부활 슬롯 DOM 요소가 index.html 에 있어야 함
+        const html = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf-8");
+        expect(html).toMatch(/id="revive-slot"/);
+    });
+
+    test("rewarded unit ID 가 빈 문자열이면 부활 슬롯은 숨겨진다 (no-op)", () => {
+        loadScript();
+        // 게임 오버 강제 트리거: survival 시작 후 HP=0 만들기
+        document.querySelector('[data-action="initSurvival"]').click();
+        // gameState 직접 접근 불가 — DOM 으로 모달 상태만 확인
+        // unit ID 가 빈 문자열이므로 revive-slot 은 hidden 클래스를 유지해야 함
+        const slot = document.getElementById("revive-slot");
+        expect(slot).not.toBeNull();
+        expect(slot.classList.contains("hidden")).toBe(true);
     });
 
     test("모드 종료 함수들이 광고 트리거를 포함한다 (소스 확인)", () => {

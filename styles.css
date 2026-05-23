@@ -223,6 +223,36 @@ body {
     letter-spacing: -0.01em;
 }
 
+/* 부활 슬롯 — 게임 오버 모달에서 광고 시청 → HP 회복 */
+.revive-slot {
+    margin: 12px 0 6px;
+}
+.revive-slot.hidden { display: none; }
+.revive-btn {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 14px 16px;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    cursor: pointer;
+    min-height: 56px;
+    transition: transform 120ms ease, box-shadow 120ms ease;
+}
+.revive-btn:hover { transform: translateY(-1px); box-shadow: var(--shadow-lg); }
+.revive-btn:active { transform: translateY(0); box-shadow: var(--shadow-press); }
+.revive-btn:focus-visible { outline: 2px solid var(--primary-dark); outline-offset: 2px; }
+.revive-btn.loading { opacity: 0.7; cursor: progress; }
+.revive-btn:disabled { opacity: 0.7; cursor: not-allowed; }
+.revive-icon { font-size: 22px; }
+.revive-text { font-size: 15px; font-weight: 700; letter-spacing: -0.01em; }
+.revive-sub { font-size: 12px; opacity: 0.85; }
+
 /* 북마크 (즐겨찾기) — scene-card 우상단 ⭐ 토글 + 리스트 */
 .scene-card { position: relative; }
 .bookmark-toggle {
