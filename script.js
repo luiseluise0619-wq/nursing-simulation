@@ -2929,6 +2929,7 @@ const Ads = {
     },
     // 모드 종료 시 호출 — 직전 호출 후 최소 1.5초가 지나야 표시 (UX 가드)
     async showInterstitial(adUnitId) {
+        if (!adUnitId) return; // unit ID 미설정 시 광고 호출 자체 차단
         const now = Date.now();
         if (now - Ads._lastInterstitialAt < 1500) return;
         Ads._lastInterstitialAt = now;
@@ -2942,6 +2943,7 @@ const Ads = {
     },
     // 홈 탭 하단 배너 — 1회만 보이게
     async showBanner(adUnitId) {
+        if (!adUnitId) return; // unit ID 미설정 시 배너 호출 자체 차단
         if (Ads._bannerShown) return;
         const p = Ads.plugin;
         if (!p) return;
@@ -2958,10 +2960,11 @@ const Ads = {
         try { p.hideBanner(); } catch { /* no-op */ }
     },
 };
-// AdMob unit IDs — 출시 시 실 ID 로 교체 (테스트 ID 는 Google 공식)
+// AdMob unit IDs — 비어있으면 Ads.* 호출이 모두 no-op.
+// 출시 시 Capacitor 래핑 + AdMob 플러그인 설치 + 실 unit ID 입력 후 활성화.
 const ADS_UNITS = {
-    interstitial: "ca-app-pub-3940256099942544/1033173712", // Google test interstitial
-    banner: "ca-app-pub-3940256099942544/6300978111",      // Google test banner
+    interstitial: "", // 예: "ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX"
+    banner: "",      // 예: "ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX"
 };
 
 // =========================================================================

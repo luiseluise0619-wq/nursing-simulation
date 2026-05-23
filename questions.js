@@ -948,6 +948,128 @@
             ]) };
     }
 
+    // ── 비율 보정 라운드 (간호관리학 +3, 정신 +2, 지역 +2, 모성 +1, 아동 +1) ─
+
+    function generateConflictMgmtQuestion() {
+        return { baseId: "conflict_mgmt", category: "간호관리학", part: "갈등관리", emoji: "🤝", title: "Thomas-Kilmann 갈등관리 전략",
+            desc: `간호사와 의사가 처방 변경 시점을 두고 의견 충돌. 둘 다 양보 의지가 있고 시간이 충분한 상황에서 가장 적절한 전략은?`,
+            choices: shuffle([
+                { text: "협력형(collaborating) — 양측 의견을 통합해 win-win 해결책 모색", correct: true, effect: { hp: -2, rep: 22 }, log: "정답. 시간·신뢰 여건이 충족되면 협력형이 최선." },
+                { text: "회피형(avoiding) — 갈등을 무시", effect: { hp: -20, rep: -15 }, log: "근본 해결이 안 되고 환자 안전 위협." },
+                { text: "강요형(forcing) — 본인 입장 관철", effect: { hp: -22, rep: -18 }, log: "권력 사용은 관계 악화." },
+                { text: "타협형(compromising) — 일부씩 양보", effect: { hp: -10, rep: -3 }, log: "차선책이나 협력형이 더 우수합니다." }
+            ]) };
+    }
+
+    function generateNursingRecordQuestion() {
+        return { baseId: "nursing_record", category: "간호관리학", part: "간호기록", emoji: "📝", title: "간호기록의 법적 요건",
+            desc: `간호기록 작성 시 가장 적절한 방식은?`,
+            choices: shuffle([
+                { text: "발생 사실 + 객관적 사정 + 중재 + 환자 반응을 즉시·구체적으로 기록", correct: true, effect: { hp: -2, rep: 20 }, log: "정답. 법적 효력 있는 기록의 4요소입니다." },
+                { text: "주관적 인상과 본인 해석 중심으로 작성", effect: { hp: -22, rep: -16 }, log: "법적 분쟁 시 불리합니다." },
+                { text: "환자 비난·의료진 간 갈등 내용을 솔직히 기록", effect: { hp: -28, rep: -22 }, log: "감정적 표현은 법적 증거로 부적절." },
+                { text: "근무 종료 후 일괄 정리", effect: { hp: -25, rep: -18 }, log: "사후 기록은 신뢰성·법적 효력 저하." }
+            ]) };
+    }
+
+    function generateStaffingMixQuestion() {
+        const cases = [
+            { lvl: "Level 1 (안정)", who: "RN 1명 + NA 1명 / 8병상", wrong: ["RN 4명 / 2병상", "NA 단독 8병상", "무인 모니터링"] },
+            { lvl: "Level 3 (중환자)", who: "RN 1명 / 2병상 (1:2)", wrong: ["RN 1명 / 8병상", "NA 단독", "RN 1명 / 12병상"] },
+            { lvl: "Level 4 (인공호흡기)", who: "RN 1명 / 1병상 (1:1)", wrong: ["RN 1명 / 4병상", "NA 동반 가능", "RN 1명 / 2병상"] },
+        ];
+        const c = pick(cases);
+        const wrongs = shuffle(c.wrong);
+        return { baseId: "staff_mix", category: "간호관리학", part: "환자분류·인력배치", emoji: "👥", title: "환자 분류 체계별 적정 인력",
+            desc: `${c.lvl} 환자에게 권장되는 표준 인력 배치는?`,
+            choices: shuffle([
+                { text: c.who, correct: true, effect: { hp: -2, rep: 20 }, log: `정답. ${c.lvl} 의 표준 배치입니다.` },
+                { text: wrongs[0], effect: { hp: -18, rep: -12 }, log: "환자 안전 위협 또는 자원 낭비." },
+                { text: wrongs[1], effect: { hp: -18, rep: -12 }, log: "환자 안전 위협 또는 자원 낭비." },
+                { text: wrongs[2], effect: { hp: -18, rep: -12 }, log: "환자 안전 위협 또는 자원 낭비." }
+            ]) };
+    }
+
+    function generateCBTechniqueQuestion() {
+        return { baseId: "cbt_technique", category: "정신간호학", part: "치료적 의사소통", emoji: "💭", title: "치료적 의사소통 기법",
+            desc: `환자가 "제 인생은 망했어요" 라고 말한다. 가장 치료적인 반응은?`,
+            choices: shuffle([
+                { text: "\"인생이 망했다고 느끼시는군요. 무엇이 그렇게 느끼게 하나요?\" (반영 + 개방형 질문)", correct: true, effect: { hp: -2, rep: 22 }, log: "정답. 감정 인정 + 탐색은 치료적 의사소통의 핵심." },
+                { text: "\"그런 말 마세요, 살다보면 좋은 일도 있어요\" (잘못된 안심)", effect: { hp: -22, rep: -16 }, log: "감정을 부정하는 반응입니다." },
+                { text: "\"왜요? 무슨 일이 있었는데요?\" (탐문)", effect: { hp: -15, rep: -8 }, log: "탐문은 방어적 반응 유발 가능." },
+                { text: "\"이미 인생 망친 사람 많아요\" (일반화)", effect: { hp: -25, rep: -20 }, log: "환자 경험을 폄하합니다." }
+            ]) };
+    }
+
+    function generateAddictionQuestion() {
+        return { baseId: "addiction_withdrawal", category: "정신간호학", part: "물질 사용 장애", emoji: "🍷", title: "알코올 금단 증상",
+            desc: `알코올 의존 환자가 입원 48시간 후 진전·환시·BP 168/100·심한 발한·혼란 호소. 의심해야 할 것은?`,
+            choices: shuffle([
+                { text: "진전섬망(Delirium Tremens) — 즉시 보고·벤조디아제핀·티아민·수액", correct: true, effect: { hp: -5, rep: 28 }, log: "정답. DT 는 치명적. 즉시 다학제 처치 필요." },
+                { text: "단순 금연 금단 — 관찰만", effect: { hp: -32, rep: -25 }, log: "DT 는 사망률 5~25% 의 응급입니다." },
+                { text: "조현병 발병", effect: { hp: -25, rep: -18 }, log: "병력·시점·증상이 DT 에 부합합니다." },
+                { text: "수면 부족으로 인한 일시적 환각", effect: { hp: -28, rep: -22 }, log: "DT 인지 못하면 사망 위험." }
+            ]) };
+    }
+
+    function generateSchoolHealthQuestion() {
+        return { baseId: "school_health", category: "지역사회간호학", part: "학교보건", emoji: "🏫", title: "학교 보건실 응급 처치",
+            desc: `초등학교 운동장에서 4학년 학생이 아나필락시스로 추정되는 호흡곤란·두드러기를 호소. 보건교사로서 우선 조치는?`,
+            choices: shuffle([
+                { text: "119 호출 + 학교 보유 EpiPen 즉시 IM + 부모 연락 + 의식·호흡 관찰", correct: true, effect: { hp: -3, rep: 28 }, log: "정답. 학교 보건실 응급 처치의 표준." },
+                { text: "보건실로 옮기고 부모 도착 대기", effect: { hp: -32, rep: -25 }, log: "이송 + 지연은 치명적." },
+                { text: "물을 마시게 하고 누워서 안정", effect: { hp: -28, rep: -22 }, log: "흡인 위험 + EpiPen 필요." },
+                { text: "교장 결재 후 119 신고", effect: { hp: -30, rep: -25 }, log: "응급 신고는 즉시 — 결재 불필요." }
+            ]) };
+    }
+
+    function generateHomeCareQuestion() {
+        return { baseId: "home_care_indications", category: "지역사회간호학", part: "가정간호", emoji: "🏠", title: "가정간호 적응증",
+            desc: `다음 중 한국 가정간호 사업 대상자로 가장 적절한 경우는?`,
+            choices: shuffle([
+                { text: "장기 욕창 관리·정맥 항생제 투여가 필요한 거동 불편 환자", correct: true, effect: { hp: -2, rep: 20 }, log: "정답. 의료적 처치 + 거동 제한이 핵심 적응증." },
+                { text: "단순 감기로 외래 진료 어려운 학생", effect: { hp: -18, rep: -12 }, log: "외래 가능 환자는 적응증 아님." },
+                { text: "특별한 의료 필요 없는 노인 말동무 요청", effect: { hp: -20, rep: -15 }, log: "복지 영역. 가정간호 사업 아님." },
+                { text: "응급 처치가 필요한 외상 환자", effect: { hp: -22, rep: -16 }, log: "응급은 119 + 응급실." }
+            ]) };
+    }
+
+    function generateFHRDecelQuestion() {
+        const cases = [
+            { type: "조기 감속(Early deceleration)", cause: "태아 두부 압박 — 정상 변이, 관찰만", wrong: ["즉시 응급 제왕절개", "옥시토신 증량", "태아 사망 의심"] },
+            { type: "변이성 감속(Variable deceleration)", cause: "제대 압박 — 산모 체위 변경·산소·검사", wrong: ["관찰만 진행", "옥시토신 증량", "마그네슘 황산염 투여"] },
+            { type: "지연성 감속(Late deceleration)", cause: "태반 기능 부전 — 응급 — 좌측위·산소·옥시토신 중단·의사 보고", wrong: ["정상 변이 — 관찰", "옥시토신 증량", "환자에게 식사 권유"] },
+        ];
+        const c = pick(cases);
+        const wrongs = shuffle(c.wrong);
+        return { baseId: "fhr_decel", category: "모성간호학", part: "태아심음 모니터링", emoji: "📈", title: "태아심박수 감속 분류",
+            desc: `분만 모니터링 중 ${c.type} 가 관찰된다. 적절한 간호 중재는?`,
+            choices: shuffle([
+                { text: c.cause, correct: true, effect: { hp: -3, rep: 22 }, log: `정답. ${c.type} 의 표준 중재입니다.` },
+                { text: wrongs[0], effect: { hp: -22, rep: -16 }, log: "적절하지 않은 중재입니다." },
+                { text: wrongs[1], effect: { hp: -22, rep: -16 }, log: "적절하지 않은 중재입니다." },
+                { text: wrongs[2], effect: { hp: -22, rep: -16 }, log: "적절하지 않은 중재입니다." }
+            ]) };
+    }
+
+    function generatePedsRespQuestion() {
+        const cases = [
+            { dz: "급성 후두기관기관지염(Croup)", finding: "쉰 목소리·견구지통(barking cough)·흡기성 천명", action: "찬 안개·습한 공기·dexamethasone·필요시 nebulized epinephrine" },
+            { dz: "급성 후두개염(Epiglottitis)", finding: "고열·침흘림·tripod 자세·증상 급격", action: "환아 자극 최소화·즉시 기도 확보팀 호출·검진 자제" },
+            { dz: "모세기관지염(Bronchiolitis)", finding: "RSV·천명음·무호흡·1세 미만", action: "산소·수액·체위·지지적 — 항생제·기관지확장제 일반 권고 아님" },
+        ];
+        const c = pick(cases);
+        const wrongs = shuffle(cases.filter(x => x.dz !== c.dz).map(x => x.action));
+        return { baseId: "peds_resp", category: "아동간호학", part: "호흡기 응급", emoji: "👶", title: "소아 호흡기 응급 감별",
+            desc: `${c.finding} 양상의 ${c.dz} 환아에게 가장 적절한 중재는?`,
+            choices: shuffle([
+                { text: c.action, correct: true, effect: { hp: -3, rep: 22 }, log: `정답. ${c.dz} 의 표준 중재입니다.` },
+                { text: wrongs[0], effect: { hp: -22, rep: -16 }, log: "다른 질환의 중재입니다." },
+                { text: wrongs[1], effect: { hp: -22, rep: -16 }, log: "다른 질환의 중재입니다." },
+                { text: "항생제 광범위 + 즉시 퇴원", effect: { hp: -25, rep: -18 }, log: "원인 진단 없이 부적절." }
+            ]) };
+    }
+
     const allGenerators = [
         generateDopamineQuestion, generateSepsisQuestion, generatePsychQuestion,
         generateElectrolyteQuestion, generatePedsPriorityQuestion, generateOBQuestion,
@@ -983,6 +1105,11 @@
         // 신규 (성인간호학 5)
         generateAnticoagulantQuestion, generateChestTubeQuestion, generateRenalFailureQuestion,
         generateStrokeQuestion, generateThyroidQuestion,
+        // 비율 보정 (간호관리학 +3, 정신 +2, 지역 +2, 모성 +1, 아동 +1)
+        generateConflictMgmtQuestion, generateNursingRecordQuestion, generateStaffingMixQuestion,
+        generateCBTechniqueQuestion, generateAddictionQuestion,
+        generateSchoolHealthQuestion, generateHomeCareQuestion,
+        generateFHRDecelQuestion, generatePedsRespQuestion,
     ];
 
     return {
@@ -1014,5 +1141,9 @@
         generateBloodLawQuestion, generateInfectionLawGradeQuestion,
         generateAnticoagulantQuestion, generateChestTubeQuestion, generateRenalFailureQuestion,
         generateStrokeQuestion, generateThyroidQuestion,
+        generateConflictMgmtQuestion, generateNursingRecordQuestion, generateStaffingMixQuestion,
+        generateCBTechniqueQuestion, generateAddictionQuestion,
+        generateSchoolHealthQuestion, generateHomeCareQuestion,
+        generateFHRDecelQuestion, generatePedsRespQuestion,
     };
 });
