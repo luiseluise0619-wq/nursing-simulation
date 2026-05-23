@@ -1351,6 +1351,241 @@
             ]) };
     }
 
+    // ── v1.2 균형 보정 라운드 (모성·아동·정신·지역·관리·법규 20종) ─────
+
+    // 모성간호학 +4
+    function generateGestationalDMQuestion() {
+        return { baseId: "gdm", category: "모성간호학", part: "임신성 당뇨", emoji: "🤰", title: "임신성 당뇨 관리",
+            desc: `임신 28주 산모 75g 경구당부하검사: 공복 95 / 1h 195 / 2h 165 mg/dL. 진단 및 우선 중재는?`,
+            choices: shuffle([
+                { text: "GDM 진단 (1h ≥180) — 식이·운동 교육 + 자가 혈당 측정 + 산과·내과 협진", correct: true, effect: { hp: -2, rep: 22 }, log: "정답. ADA/대한당뇨병학회 GDM 진단 기준." },
+                { text: "정상 — 추가 검사 불필요", effect: { hp: -22, rep: -16 }, log: "1h 결과가 진단 기준 초과." },
+                { text: "즉시 인슐린 처방 의뢰", effect: { hp: -18, rep: -12 }, log: "식이·운동이 1차. 효과 부족 시 인슐린." },
+                { text: "단순 일시적 상승으로 관찰", effect: { hp: -22, rep: -16 }, log: "GDM 진단 누락 = 태아 거대아·합병증 위험." }
+            ]) };
+    }
+
+    function generatePostpartumDepressionQuestion() {
+        return { baseId: "ppd", category: "모성간호학", part: "산후 정신건강", emoji: "🤱", title: "산후 우울 사정",
+            desc: `분만 3주 후 산모 \"아기 보기 싫어요, 죽고 싶어요\" 호소. Edinburgh 점수 19점.`,
+            choices: shuffle([
+                { text: "자살 위험 즉시 평가 + 정신과 응급 협진 + 안전한 환경 + 가족 지원 + 모유수유 약물 호환 검토", correct: true, effect: { hp: -3, rep: 28 }, log: "정답. 산후 우울 + 자살 사고는 응급 (Edinburgh ≥13 우울)." },
+                { text: "단순 산후 우울감(baby blues) 으로 관찰", effect: { hp: -38, rep: -32 }, log: "Baby blues 는 2주 이내 호전. 3주 + 자살 사고는 PPD/PPP." },
+                { text: "약물 부담으로 정신과 협진 보류", effect: { hp: -32, rep: -28 }, log: "수유 호환 약물 다수 존재. 협진 우선." },
+                { text: "남편에게만 알리고 환자는 안정", effect: { hp: -28, rep: -22 }, log: "환자 단독 평가 + 전문가 협진 필요." }
+            ]) };
+    }
+
+    function generateRhIncompatibilityQuestion() {
+        return { baseId: "rh_incompatibility", category: "모성간호학", part: "면역", emoji: "🩸", title: "Rh 부적합 — RhoGAM 투여",
+            desc: `Rh(-) 산모 임신 28주 정기 진찰. 항-D 항체 음성. 우선 중재는?`,
+            choices: shuffle([
+                { text: "RhoGAM (anti-D 면역글로불린) 300μg IM — 임신 28주 + 분만 후 72시간 내 표준", correct: true, effect: { hp: -2, rep: 22 }, log: "정답. ACOG 표준 — Rh(-) 산모 28주 + 분만 후 72시간." },
+                { text: "분만 후에만 1회 투여", effect: { hp: -22, rep: -16 }, log: "28주 + 분만 후 2회 투여가 표준." },
+                { text: "항체 양성이어야 RhoGAM 투여", effect: { hp: -25, rep: -20 }, log: "음성에서 예방적 투여가 RhoGAM 역할." },
+                { text: "Rh(+) 산모에게만 투여", effect: { hp: -28, rep: -22 }, log: "RhoGAM 은 Rh(-) 산모용." }
+            ]) };
+    }
+
+    function generateNeonatalResuscitationQuestion() {
+        return { baseId: "nrp", category: "모성간호학", part: "신생아 소생", emoji: "🍼", title: "분만실 신생아 소생술",
+            desc: `분만 직후 신생아 청색·근긴장 저하·호흡 미약. Apgar 1분 3점. 우선 중재는?`,
+            choices: shuffle([
+                { text: "Warmer 이동 + 흡인 + 자극 (30초 평가) → 호흡·HR 평가 후 양압환기 (PPV) 시작", correct: true, effect: { hp: -3, rep: 25 }, log: "정답. NRP (Neonatal Resuscitation Program) 표준 알고리듬." },
+                { text: "즉시 흉부압박 시작", effect: { hp: -28, rep: -22 }, log: "흉부압박은 PPV 후 HR <60 일 때." },
+                { text: "epinephrine 즉시 IV", effect: { hp: -32, rep: -28 }, log: "약물은 NRP 마지막 단계." },
+                { text: "산모에게 안기게 한 후 관찰", effect: { hp: -38, rep: -32 }, log: "Apgar 3점은 적극 소생." }
+            ]) };
+    }
+
+    // 아동간호학 +4
+    function generateKawasakiQuestion() {
+        return { baseId: "kawasaki", category: "아동간호학", part: "감염·면역", emoji: "👶", title: "가와사키병 진단·치료",
+            desc: `4세 아동 5일째 고열, 결막충혈, 입술 균열, 손발 부종, 림프절 비대, 발진. 우선 치료는?`,
+            choices: shuffle([
+                { text: "IVIG (2g/kg) + 고용량 aspirin — 발열 시작 10일 내 시작 (관상동맥류 예방)", correct: true, effect: { hp: -3, rep: 25 }, log: "정답. 가와사키병 표준 치료 (AAP/AHA)." },
+                { text: "광범위 항생제만 시작", effect: { hp: -28, rep: -22 }, log: "세균감염 아님. 면역 매개." },
+                { text: "스테로이드 IV 단독 시작", effect: { hp: -22, rep: -16 }, log: "1차는 IVIG. 스테로이드는 IVIG 저항 시." },
+                { text: "관찰 + 해열제만", effect: { hp: -32, rep: -28 }, log: "10일 내 치료 안 하면 관상동맥류 위험." }
+            ]) };
+    }
+
+    function generateChildAsthmaQuestion() {
+        return { baseId: "peds_asthma", category: "아동간호학", part: "호흡기", emoji: "👦", title: "소아 천식 발작",
+            desc: `8세 아동 천명음 + SpO2 89% + 호흡곤란 + 말 짧게 끊김. 1차 치료는?`,
+            choices: shuffle([
+                { text: "산소 + SABA(salbutamol) nebulizer 5mg + 전신 스테로이드 + 의사 콜", correct: true, effect: { hp: -3, rep: 25 }, log: "정답. GINA 가이드 소아 급성 천식 1차 치료." },
+                { text: "베타차단제 IV", effect: { hp: -38, rep: -32 }, log: "베타차단제는 기관지수축. 절대 금기." },
+                { text: "이뇨제 IV", effect: { hp: -28, rep: -22 }, log: "천식과 무관." },
+                { text: "심리적 안정만 진행", effect: { hp: -32, rep: -25 }, log: "약물 치료가 필수." }
+            ]) };
+    }
+
+    function generateChildAbuseQuestion() {
+        return { baseId: "child_abuse", category: "아동간호학", part: "아동학대", emoji: "🚨", title: "아동학대 의심 평가",
+            desc: `3세 아동 응급실 도착, 다단계 멍 + 화상 자국 + 부모 진술 모순. 의료인의 의무는?`,
+            choices: shuffle([
+                { text: "아동학대 신고 의무 — 112 또는 아동보호전문기관 즉시 신고 + 사진 기록 + 단독 평가 + 보호조치", correct: true, effect: { hp: -3, rep: 28 }, log: "정답. 아동복지법 의료인 신고 의무." },
+                { text: "부모 진술 그대로 수용", effect: { hp: -38, rep: -32 }, log: "신고 의무 위반 + 환아 위험." },
+                { text: "사회복지에만 알리고 신고는 보류", effect: { hp: -32, rep: -28 }, log: "법적 신고 의무 — 즉시." },
+                { text: "본인이 직접 부모 추궁", effect: { hp: -25, rep: -20 }, log: "환아 위험 + 증거 보존 위협." }
+            ]) };
+    }
+
+    function generateChildDevelopmentQuestion() {
+        const cases = [
+            { age: "18개월", expected: "혼자 걷기 + 단어 5~10개 사용 + 컵으로 마시기", concern: "걷지 못하거나 단어 0개 사용", wrong: ["문장 형성", "계단 오르내리기 가능"] },
+            { age: "3세", expected: "두세 단어 문장 + 세발자전거 + 본인 이름 알기", concern: "단어 단독만 사용 + 이름 모름", wrong: ["글자 읽기", "단추 채우기"] },
+            { age: "5세", expected: "복잡한 문장 + 옷 입기 + 한 발 뛰기 + 색 구분", concern: "단어 짧은 문장 + 색 구분 못 함", wrong: ["글쓰기 능숙", "독립적 식사 준비"] },
+        ];
+        const c = pick(cases);
+        const wrongs = shuffle([c.concern, ...c.wrong]);
+        return { baseId: "child_dev", category: "아동간호학", part: "발달 사정", emoji: "🧒", title: "아동 발달 지연 의심",
+            desc: `${c.age} 아동의 정상 발달 이정표는?`,
+            choices: shuffle([
+                { text: c.expected, correct: true, effect: { hp: -2, rep: 22 }, log: `정답. ${c.age} 의 표준 발달 (CDC/AAP).` },
+                { text: wrongs[0], effect: { hp: -18, rep: -12 }, log: "발달 지연 의심 신호 또는 다른 연령." },
+                { text: wrongs[1], effect: { hp: -18, rep: -12 }, log: "발달 지연 의심 신호 또는 다른 연령." },
+                { text: wrongs[2], effect: { hp: -18, rep: -12 }, log: "발달 지연 의심 신호 또는 다른 연령." }
+            ]) };
+    }
+
+    // 정신간호학 +4
+    function generateAnxietyDisorderQuestion() {
+        return { baseId: "anxiety", category: "정신간호학", part: "불안장애", emoji: "😰", title: "공황발작 환자 케어",
+            desc: `갑자기 가슴이 답답하고 죽을 것 같다며 응급실 도착. ECG 정상, V/S 정상. 공황발작 진단.`,
+            choices: shuffle([
+                { text: "조용한 환경 + 천천히 호흡 코칭 + 환자 옆 동행 + 안심 + 정신과 외래 연계", correct: true, effect: { hp: -2, rep: 25 }, log: "정답. 공황발작은 비약물 + 정서 지지가 1차." },
+                { text: "즉시 lorazepam IV push", effect: { hp: -22, rep: -16 }, log: "처방 없는 임의 투여 + 의존 위험." },
+                { text: "단순 불안이라며 일축", effect: { hp: -28, rep: -22 }, log: "환자 고통 무시." },
+                { text: "흥분 위해 카페인 음료 제공", effect: { hp: -32, rep: -28 }, log: "각성제는 절대 금기." }
+            ]) };
+    }
+
+    function generatePTSDQuestion() {
+        return { baseId: "ptsd", category: "정신간호학", part: "외상후 스트레스", emoji: "😔", title: "PTSD 환자 의사소통",
+            desc: `교통사고 6개월 후 환자가 \"운전대만 봐도 손이 떨려요, 잠도 못 자요\" 호소. PTSD 의심.`,
+            choices: shuffle([
+                { text: "증상 정상화 (PTSD 는 흔함) + 외상 사건 강요 X + 정신과·트라우마 전문가 연계 + 자조모임 안내", correct: true, effect: { hp: -2, rep: 25 }, log: "정답. PTSD 는 정상화 + 전문가 연계가 표준." },
+                { text: "사건 자세히 다시 말하라며 노출치료", effect: { hp: -25, rep: -20 }, log: "비전문가 노출은 재외상화 위험." },
+                { text: "\"잊으세요\" 라며 위로", effect: { hp: -22, rep: -16 }, log: "PTSD 는 의지로 잊는 게 아님." },
+                { text: "수면제만 처방 요청", effect: { hp: -20, rep: -15 }, log: "수면제만으로는 PTSD 치료 부족." }
+            ]) };
+    }
+
+    function generateEatingDisorderQuestion() {
+        return { baseId: "eating_disorder", category: "정신간호학", part: "섭식장애", emoji: "🍽️", title: "신경성 식욕부진증 응급",
+            desc: `17세 여자 BMI 13.5, K+ 2.8, BP 80/50, HR 38, 의식 명료. 우선 중재는?`,
+            choices: shuffle([
+                { text: "재영양 증후군 위험 — 천천히 재급식 (10~20kcal/kg/d 시작) + 인산·K·Mg 모니터 + 다학제 협진", correct: true, effect: { hp: -3, rep: 28 }, log: "정답. 신경성 식욕부진증 재영양은 refeeding syndrome 예방이 핵심." },
+                { text: "정상 식이 즉시 시작 (1500kcal/d)", effect: { hp: -32, rep: -28 }, log: "Refeeding syndrome — 인산저하·심부전 위험." },
+                { text: "TPN 즉시 시작", effect: { hp: -28, rep: -22 }, log: "경구·경관 영양 우선." },
+                { text: "환자에게 빨리 먹으라 압박", effect: { hp: -32, rep: -28 }, log: "정신적 + 신체적 위해." }
+            ]) };
+    }
+
+    function generateDementiaBehaviorQuestion() {
+        return { baseId: "dementia_bpsd", category: "정신간호학", part: "치매 행동심리증상(BPSD)", emoji: "👴", title: "치매 환자 초조 행동",
+            desc: `요양병원 치매 환자 야간 \"집에 가겠다\" 라며 배회·고함. 우선 중재는?`,
+            choices: shuffle([
+                { text: "유발 요인 평가(통증·요의·환경 자극) + 비약물 (안심·환경 조정·익숙한 물품) + 약물은 마지막", correct: true, effect: { hp: -2, rep: 25 }, log: "정답. BPSD 1차는 비약물 (CMS/대한치매학회)." },
+                { text: "즉시 haloperidol IM 주사", effect: { hp: -28, rep: -22 }, log: "노인에 항정신병약 1차는 부적절 (Beers Criteria)." },
+                { text: "신체보호대 강제 적용", effect: { hp: -25, rep: -20 }, log: "마지막 수단 + 윤리적 절차." },
+                { text: "환자 무시하고 다른 환자만 케어", effect: { hp: -28, rep: -22 }, log: "낙상·실종 위험." }
+            ]) };
+    }
+
+    // 지역사회간호학 +3
+    function generateCovidIsolationQuestion() {
+        return { baseId: "covid_isolation", category: "지역사회간호학", part: "신종감염병", emoji: "🦠", title: "신종감염병 자가격리 교육",
+            desc: `코로나19 확진 환자 가정 자가격리 교육 시 가장 강조해야 할 내용은?`,
+            choices: shuffle([
+                { text: "독립된 공간·전용 화장실 + 마스크 착용 + 환기 + 손위생 + 동거인 감염 모니터 + 응급 증상 시 1339/119", correct: true, effect: { hp: -2, rep: 22 }, log: "정답. KDCA 자가격리 교육 표준." },
+                { text: "외출 가능하되 마스크만 잘 착용", effect: { hp: -28, rep: -22 }, log: "격리 위반." },
+                { text: "동거인과 동선 분리는 불필요", effect: { hp: -25, rep: -20 }, log: "가정 내 전파 위험." },
+                { text: "본인 감각으로 격리 종료 결정", effect: { hp: -22, rep: -18 }, log: "공식 격리 기간 + 검사 기준." }
+            ]) };
+    }
+
+    function generateOlderAdultScreeningQuestion() {
+        return { baseId: "older_screen", category: "지역사회간호학", part: "노인 건강검진", emoji: "👵", title: "노인 통합 건강 사정",
+            desc: `보건소 노인 통합 건강 사정에서 65세 이상에게 시행하는 표준 평가는?`,
+            choices: shuffle([
+                { text: "노쇠 (Frailty) + 낙상 위험 + 인지 (MMSE) + 우울 (GDS) + 일상생활 활동 (ADL/IADL) + 약물 평가", correct: true, effect: { hp: -2, rep: 22 }, log: "정답. CGA (Comprehensive Geriatric Assessment) 표준." },
+                { text: "키·몸무게·BP 만 측정", effect: { hp: -22, rep: -16 }, log: "노인 평가의 핵심 누락." },
+                { text: "외과적 질환만 평가", effect: { hp: -25, rep: -20 }, log: "통합 평가가 노인 핵심." },
+                { text: "본인 호소 증상만 평가", effect: { hp: -22, rep: -16 }, log: "노인은 비특이적 호소가 흔함." }
+            ]) };
+    }
+
+    function generateMaternalHealthCenterQuestion() {
+        return { baseId: "mch_center", category: "지역사회간호학", part: "모자보건사업", emoji: "🤱", title: "산후도우미 + 영아 건강검진",
+            desc: `보건소 영유아 정기 건강검진 시기로 옳은 것은? (영유아 건강검진 표준일정)`,
+            choices: shuffle([
+                { text: "생후 4, 9, 18, 30, 42, 54, 66개월 — 총 7회 (영유아건강검진사업)", correct: true, effect: { hp: -2, rep: 22 }, log: "정답. 영유아건강검진사업 표준 일정." },
+                { text: "출생 후 1회만", effect: { hp: -22, rep: -16 }, log: "정기 검진은 7회 표준." },
+                { text: "필요시에만 시행", effect: { hp: -25, rep: -20 }, log: "정기 검진은 무료 사업." },
+                { text: "어린이집에서 모두 처리", effect: { hp: -22, rep: -16 }, log: "보건소 사업이 표준." }
+            ]) };
+    }
+
+    // 간호관리학 +3
+    function generateTimemanagementQuestion() {
+        return { baseId: "time_mgmt", category: "간호관리학", part: "업무 우선순위", emoji: "⏱️", title: "다중 업무 우선순위",
+            desc: `오전 라운드 시작 — 동시 업무: A) PCA 환자 통증 NRS 9, B) 신환 입원 받기, C) 처방 약 30분 지연, D) 보호자 면담 약속. 우선순위는?`,
+            choices: shuffle([
+                { text: "A(통증 NRS 9 — 즉시) → C(약 시간 — Maslow 생리) → B(신환 — 안정화) → D(면담 — 일정 조정)", correct: true, effect: { hp: -2, rep: 22 }, log: "정답. Maslow + 환자 안전 우선." },
+                { text: "선착순으로 처리", effect: { hp: -22, rep: -16 }, log: "우선순위 평가 누락." },
+                { text: "보호자 면담부터 끝내고 다른 업무", effect: { hp: -25, rep: -20 }, log: "환자 안전이 우선." },
+                { text: "본인이 모든 일을 동시에 시도", effect: { hp: -22, rep: -16 }, log: "안전한 위임 + 우선순위 필요." }
+            ]) };
+    }
+
+    function generateNurseHandoffQuestion() {
+        return { baseId: "nurse_handoff", category: "간호관리학", part: "인계 표준", emoji: "📋", title: "SBAR 인계 표준",
+            desc: `SBAR 인계 시 'Recommendation' 에 해당하는 내용은?`,
+            choices: shuffle([
+                { text: "다음 듀티에 필요한 처치·평가 제안 (예: 통증 PRN 처방 확인 부탁)", correct: true, effect: { hp: -2, rep: 22 }, log: "정답. SBAR 의 R = Recommendation (제안·요청)." },
+                { text: "환자 진단명 (Background 에 해당)", effect: { hp: -15, rep: -8 }, log: "Background." },
+                { text: "현재 V/S (Assessment 에 해당)", effect: { hp: -15, rep: -8 }, log: "Assessment." },
+                { text: "환자 호소 (Situation 에 해당)", effect: { hp: -15, rep: -8 }, log: "Situation." }
+            ]) };
+    }
+
+    function generateCostEffectivenessQuestion() {
+        return { baseId: "cost_effective", category: "간호관리학", part: "자원 관리", emoji: "💰", title: "간호 자원 효율 관리",
+            desc: `드레싱 비용 절감 방안 — 가장 적절한 접근은?`,
+            choices: shuffle([
+                { text: "환자별 상처 사정 + 적절 드레싱 선택 + 교환 빈도 표준화 + 재고 관리", correct: true, effect: { hp: -2, rep: 22 }, log: "정답. 환자 중심 + 표준화 + 자원 최적화." },
+                { text: "모든 환자에게 가장 저렴한 드레싱 일괄", effect: { hp: -22, rep: -16 }, log: "환자 결과 악화 + 비용 가속." },
+                { text: "드레싱 교환 빈도를 절반으로 강제 감소", effect: { hp: -25, rep: -20 }, log: "환자 안전 위협." },
+                { text: "고가 드레싱만 사용", effect: { hp: -18, rep: -10 }, log: "근거 없는 비용 가속." }
+            ]) };
+    }
+
+    // 보건의약관계법규 +2
+    function generateConfidentialityLawQuestion() {
+        return { baseId: "confidentiality", category: "보건의약관계법규", part: "환자 비밀유지", emoji: "🔒", title: "환자 비밀유지 의무",
+            desc: `환자 가족이 \"우리 엄마가 무슨 병인지 알려주세요\" 라고 묻는다. 의료법상 적절한 대응은?`,
+            choices: shuffle([
+                { text: "환자 동의 확인 후 알림 (의식 명료 환자) — 동의 없으면 비밀유지 의무", correct: true, effect: { hp: -2, rep: 22 }, log: "정답. 의료법 제19조 비밀유지 의무." },
+                { text: "가족이니 당연히 알린다", effect: { hp: -25, rep: -20 }, log: "의료법 위반." },
+                { text: "의사에게만 답변 가능하다며 회피", effect: { hp: -18, rep: -10 }, log: "간호사도 비밀유지 의무." },
+                { text: "환자에게 묻지 않고 진료 기록만 보여줌", effect: { hp: -28, rep: -22 }, log: "환자 동의 없이 정보 공개." }
+            ]) };
+    }
+
+    function generateAdvancedDirectiveLawQuestion() {
+        return { baseId: "advance_directive", category: "보건의약관계법규", part: "연명의료결정법", emoji: "📜", title: "사전연명의료의향서",
+            desc: `19세 이상 성인이 사전연명의료의향서 작성 시 효력은?`,
+            choices: shuffle([
+                { text: "본인 의사 능력 있을 때 작성 — 임종기·말기 시 적용 + 사전 등록기관 등록 + 본인 의사로 철회 가능", correct: true, effect: { hp: -2, rep: 22 }, log: "정답. 연명의료결정법 표준." },
+                { text: "가족 동의 없이는 효력 없음", effect: { hp: -22, rep: -16 }, log: "본인 결정 우선." },
+                { text: "한 번 작성하면 철회 불가", effect: { hp: -22, rep: -16 }, log: "본인 의사로 철회 가능." },
+                { text: "65세 이상에게만 권장", effect: { hp: -18, rep: -10 }, log: "19세 이상이면 작성 가능." }
+            ]) };
+    }
+
     const allGenerators = [
         generateDopamineQuestion, generateSepsisQuestion, generatePsychQuestion,
         generateElectrolyteQuestion, generatePedsPriorityQuestion, generateOBQuestion,
@@ -1394,6 +1629,18 @@
         generateNaloxoneQuestion, generateChemoExtravasationQuestion, generateCBCInterpretationQuestion,
         generateDiabetesEducationQuestion, generateStomaCareQuestion,
         generateInformedConsentQuestion, generateMultiCulturalQuestion,
+        // v1.2 균형 보정 라운드 (모성+4 / 아동+4 / 정신+4 / 지역+3 / 관리+3 / 법규+2)
+        generateGestationalDMQuestion, generatePostpartumDepressionQuestion,
+        generateRhIncompatibilityQuestion, generateNeonatalResuscitationQuestion,
+        generateKawasakiQuestion, generateChildAsthmaQuestion,
+        generateChildAbuseQuestion, generateChildDevelopmentQuestion,
+        generateAnxietyDisorderQuestion, generatePTSDQuestion,
+        generateEatingDisorderQuestion, generateDementiaBehaviorQuestion,
+        generateCovidIsolationQuestion, generateOlderAdultScreeningQuestion,
+        generateMaternalHealthCenterQuestion,
+        generateTimemanagementQuestion, generateNurseHandoffQuestion,
+        generateCostEffectivenessQuestion,
+        generateConfidentialityLawQuestion, generateAdvancedDirectiveLawQuestion,
     ];
 
     function generateECGStripQuestion() {
@@ -1497,5 +1744,17 @@
         generateNaloxoneQuestion, generateChemoExtravasationQuestion, generateCBCInterpretationQuestion,
         generateDiabetesEducationQuestion, generateStomaCareQuestion,
         generateInformedConsentQuestion, generateMultiCulturalQuestion,
+        // v1.2 균형 보정 (모성+4 / 아동+4 / 정신+4 / 지역+3 / 관리+3 / 법규+2)
+        generateGestationalDMQuestion, generatePostpartumDepressionQuestion,
+        generateRhIncompatibilityQuestion, generateNeonatalResuscitationQuestion,
+        generateKawasakiQuestion, generateChildAsthmaQuestion,
+        generateChildAbuseQuestion, generateChildDevelopmentQuestion,
+        generateAnxietyDisorderQuestion, generatePTSDQuestion,
+        generateEatingDisorderQuestion, generateDementiaBehaviorQuestion,
+        generateCovidIsolationQuestion, generateOlderAdultScreeningQuestion,
+        generateMaternalHealthCenterQuestion,
+        generateTimemanagementQuestion, generateNurseHandoffQuestion,
+        generateCostEffectivenessQuestion,
+        generateConfidentialityLawQuestion, generateAdvancedDirectiveLawQuestion,
     };
 });
