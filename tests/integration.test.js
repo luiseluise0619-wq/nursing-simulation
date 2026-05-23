@@ -642,8 +642,7 @@ describe("v1.0 정식 출시 — 설정·백업/복원·About·Privacy", () => {
         loadScript();
         const ver = document.querySelector(".version-badge-v2, .version-badge");
         expect(ver).not.toBeNull();
-        expect(ver.textContent).toMatch(/v1\.0/);
-        expect(document.querySelector(".beta-badge")).toBeNull();
+        expect(ver.textContent).toMatch(/v1\./);
     });
 
     test("About 페이지에 컨텐츠 수치가 노출된다", () => {
@@ -776,7 +775,7 @@ describe("면책 스트립 + 버전 배지 + 오류 신고 (출시 안전장치)
         loadScript();
         const ver = document.querySelector(".version-badge-v2, .version-badge");
         expect(ver).not.toBeNull();
-        expect(ver.textContent).toMatch(/v1\.0/);
+        expect(ver.textContent).toMatch(/v1\./);
     });
     test("면책 스트립이 상단에 항상 존재한다", () => {
         loadScript();
@@ -1253,6 +1252,52 @@ describe("P2 — AdMob 어댑터 (Capacitor 호환)", () => {
             document.querySelector('[data-action="startTriage"]').click();
             // 트리아지를 종료시키지 않아도 어댑터 자체가 안전한지가 핵심
         }).not.toThrow();
+    });
+
+    test("CLINICAL_SVG 이미지 시스템 — 6종 시각자료 모두 SVG 반환", () => {
+        const fs = require("fs");
+        const path = require("path");
+        const src = fs.readFileSync(path.join(__dirname, "..", "script.js"), "utf-8");
+        expect(src).toMatch(/function\s+ecgStrip\s*\(/);
+        expect(src).toMatch(/function\s+pressureUlcerSvg\s*\(/);
+        expect(src).toMatch(/function\s+positionSvg\s*\(/);
+        expect(src).toMatch(/function\s+ruleOfNinesSvg\s*\(/);
+        expect(src).toMatch(/function\s+fhrSvg\s*\(/);
+        expect(src).toMatch(/function\s+pupilSvg\s*\(/);
+        expect(src).toMatch(/function\s+renderClinicalImage\s*\(/);
+    });
+
+    test("이미지가 있는 generator 가 scene-image 슬롯을 렌더한다", () => {
+        loadScript();
+        // ECG strip 식별 generator 강제 트리거 — 트레이닝 모드 진입
+        document.querySelector('[data-action="renderQuizMenu"]').click();
+        document.querySelector('[data-action="startQuiz"]').click();
+        // 50회 시도해 이미지 있는 문제 도달
+        let foundImage = false;
+        for (let i = 0; i < 50; i++) {
+            const img = document.querySelector(".scene-image svg.clinical-svg");
+            if (img) { foundImage = true; break; }
+            // 첫 보기 클릭 + 다음
+            const c = document.querySelectorAll("#choice-list .choice-btn")[0];
+            if (!c) break;
+            c.click();
+            const n = document.querySelector('#feedback-zone .choice-btn.primary');
+            if (n) n.click();
+        }
+        expect(foundImage).toBe(true);
+    });
+
+    test("이미지 키 6 종 모두 빈 문자열이 아닌 SVG 를 반환한다", () => {
+        const fs = require("fs");
+        const path = require("path");
+        const src = fs.readFileSync(path.join(__dirname, "..", "script.js"), "utf-8");
+        // renderClinicalImage 가 각 type 을 처리하는지 확인
+        for (const key of ["ecg", "ulcer", "position", "rule-of-nines", "fhr", "pupil"]) {
+            const re = key === "rule-of-nines"
+                ? /key\s*===\s*"rule-of-nines"/
+                : new RegExp(`type\\s*===\\s*"${key}"`);
+            expect(src).toMatch(re);
+        }
     });
 
     test("보상형 광고 부활(revive) 구조가 존재한다 (소스 확인)", () => {

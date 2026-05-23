@@ -1,7 +1,8 @@
 {
-  "name": "간호사 시뮬레이터",
+  "name": "간호사 시뮬레이터 (BETA)",
   "short_name": "간호 시뮬",
-  "description": "국시 8과목 + 임상 시뮬레이션 + 인계/트리아지/시나리오",
+  "description": "한국 간호사 국시 8과목 + 임상 시뮬레이션 + 인계/트리아지/시나리오. RN 감수 진행 중 베타. 교육 목적이며 실제 임상 적용은 최신 가이드라인 우선.",
+  "categories": ["education", "medical"],
   "lang": "ko",
   "start_url": "./index.html",
   "scope": "./",

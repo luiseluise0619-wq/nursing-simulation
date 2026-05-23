@@ -223,6 +223,32 @@ body {
     letter-spacing: -0.01em;
 }
 
+/* 임상 시각자료 — ECG strip / 욕창 / 체위 / 9의 법칙 등 */
+.scene-image {
+    margin: 12px 0 16px;
+    padding: 10px;
+    background: var(--bg);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-in);
+    overflow-x: auto;
+}
+.scene-image .clinical-svg {
+    display: block;
+    width: 100%;
+    max-width: 600px;
+    height: auto;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: var(--radius-sm);
+}
+.scene-image .clinical-svg.ecg-svg { aspect-ratio: 600 / 110; }
+.scene-image .clinical-svg.fhr-svg { aspect-ratio: 600 / 180; }
+.scene-image .clinical-svg.ulcer-svg { aspect-ratio: 320 / 200; max-width: 360px; }
+.scene-image .clinical-svg.pos-svg { aspect-ratio: 320 / 180; max-width: 360px; }
+.scene-image .clinical-svg.burn-svg { aspect-ratio: 320 / 280; max-width: 340px; }
+.scene-image .clinical-svg.pupil-svg { aspect-ratio: 280 / 130; max-width: 340px; }
+[data-theme="dark"] .scene-image .clinical-svg { background: #ebeef0; }
+
 /* 부활 슬롯 — 게임 오버 모달에서 광고 시청 → HP 회복 */
 .revive-slot {
     margin: 12px 0 6px;

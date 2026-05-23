@@ -52,13 +52,30 @@
     }
 
     function generatePositionQuestion() {
+        const cases = [
+            { goal: "관장(Enema) 시 용액 주입", correct: "좌측 심스위(Sims')", image: "position:sims",
+              wrongs: [{t:"파울러씨위",l:"호흡곤란 시 취하는 체위입니다."},{t:"트렌델렌버그위",l:"쇼크 시 다리 거상 체위입니다."},{t:"배횡와위",l:"여성 인공도뇨 시 취하는 체위입니다."}],
+              logCorrect: "정답. 구불결장으로 용액이 잘 흘러갑니다." },
+            { goal: "쇼크 환자 정맥 환류 증진", correct: "트렌델렌버그위 (Trendelenburg)", image: "position:trendelenburg",
+              wrongs: [{t:"파울러씨위",l:"머리를 올리면 정맥 환류가 감소합니다."},{t:"좌측 심스위",l:"관장 시 체위입니다."},{t:"배횡와위",l:"산부인과 검진 체위입니다."}],
+              logCorrect: "정답. 머리를 낮춰 정맥 환류를 늘립니다." },
+            { goal: "호흡곤란 환자 호흡 보조", correct: "Fowler's (반좌위 45~60°)", image: "position:fowler",
+              wrongs: [{t:"앙와위",l:"호흡곤란을 악화시킵니다."},{t:"트렌델렌버그",l:"호흡 부담을 늘립니다."},{t:"심스위",l:"관장 체위입니다."}],
+              logCorrect: "정답. 횡격막 압박이 줄어 호흡이 편해집니다." },
+            { goal: "ARDS 환자 산소화 개선", correct: "Prone (복와위)", image: "position:prone",
+              wrongs: [{t:"앙와위",l:"ARDS 산소화에 불리합니다."},{t:"Fowler's",l:"폐 후방 환기 개선에 부족."},{t:"심스위",l:"관장 체위입니다."}],
+              logCorrect: "정답. 복와위는 ARDS 의 표준 자세입니다." },
+        ];
+        const c = pick(cases);
+        const wrongs = shuffle(c.wrongs);
         return { baseId: "position", category: "기본간호학", part: "체위", emoji: "🛏️", title: "목적에 맞는 체위",
-            desc: `관장(Enema) 시 용액이 잘 들어가도록 가장 적절히 취해줄 체위는?`,
+            image: c.image,
+            desc: `${c.goal} 을 위해 가장 적절한 체위는?`,
             choices: shuffle([
-                { text: "좌측 심스위(Sims')", correct: true, effect: { hp: -2, rep: 15 }, log: "정답. 구불결장으로 용액이 잘 흘러갑니다." },
-                { text: "파울러씨위", effect: { hp: -15, rep: -10 }, log: "호흡곤란 시 취하는 체위입니다." },
-                { text: "트렌델렌버그위", effect: { hp: -20, rep: -15 }, log: "쇼크 시 다리 거상 체위입니다." },
-                { text: "배횡와위", effect: { hp: -15, rep: -10 }, log: "여성 인공도뇨 시 취하는 체위입니다." }
+                { text: c.correct, correct: true, effect: { hp: -2, rep: 18 }, log: c.logCorrect },
+                { text: wrongs[0].t, effect: { hp: -15, rep: -10 }, log: wrongs[0].l },
+                { text: wrongs[1].t, effect: { hp: -15, rep: -10 }, log: wrongs[1].l },
+                { text: wrongs[2].t, effect: { hp: -15, rep: -10 }, log: wrongs[2].l }
             ]) };
     }
 
@@ -285,6 +302,7 @@
         const candidates = [9, 18, 19, 27, 28, 36, 37, 45, 46, 54].filter(n => n !== total);
         const wrongs = shuffle(candidates).slice(0, 3).map(n => `${n}%`);
         return { baseId: "burn", category: "성인간호학", part: "화상", emoji: "🔥", title: "9의 법칙 화상 면적",
+            image: "rule-of-nines",
             desc: `다음 부위에 화상을 입었다:\n${selected.map(p => `· ${p.name} (${p.value}%)`).join("\n")}\n\n총 체표면적(BSA)은?`,
             choices: shuffle([
                 { text: `${total}%`, correct: true, effect: { hp: -2, rep: 20 }, log: `정답. ${selected.map(p => p.value).join(" + ")} = ${total}%` },
@@ -330,10 +348,10 @@
     // === 신규 문항 ===
     function generateECGQuestion() {
         const rhythms = [
-            { name: "심실세동(VFib)", correct: "즉시 제세동(defibrillation)을 시행한다", log: "정답. VFib은 충격을 줘야 하는 리듬입니다." },
-            { name: "무수축(Asystole)", correct: "CPR을 시작하고 에피네프린을 투여한다", log: "정답. Asystole은 제세동 금기, CPR과 약물이 핵심입니다." },
-            { name: "심실빈맥(맥박 없음)", correct: "즉시 제세동(defibrillation)을 시행한다", log: "정답. 무맥성 VT는 VFib과 같이 처치합니다." },
-            { name: "심방세동(AFib, 안정형)", correct: "심박수 조절과 항응고요법을 준비한다", log: "정답. 혈전 예방과 심박수 조절이 핵심입니다." },
+            { name: "심실세동(VFib)", image: "ecg:vfib", correct: "즉시 제세동(defibrillation)을 시행한다", log: "정답. VFib은 충격을 줘야 하는 리듬입니다." },
+            { name: "무수축(Asystole)", image: "ecg:asystole", correct: "CPR을 시작하고 에피네프린을 투여한다", log: "정답. Asystole은 제세동 금기, CPR과 약물이 핵심입니다." },
+            { name: "심실빈맥(맥박 없음)", image: "ecg:vtach", correct: "즉시 제세동(defibrillation)을 시행한다", log: "정답. 무맥성 VT는 VFib과 같이 처치합니다." },
+            { name: "심방세동(AFib, 안정형)", image: "ecg:afib", correct: "심박수 조절과 항응고요법을 준비한다", log: "정답. 혈전 예방과 심박수 조절이 핵심입니다." },
         ];
         const r = pick(rhythms);
         const distractors = [
@@ -345,6 +363,7 @@
         ].filter(t => t !== r.correct);
         const wrongs = shuffle(distractors).slice(0, 3);
         return { baseId: "ecg", category: "성인간호학", part: "심전도", emoji: "💗", title: "리듬 인식 및 중재",
+            image: r.image,
             desc: `모니터에서 ${r.name} 이 확인되었다. 가장 적절한 중재는?`,
             choices: shuffle([
                 { text: r.correct, correct: true, effect: { hp: -3, rep: 22 }, log: r.log },
@@ -476,13 +495,15 @@
 
     function generateWoundCareQuestion() {
         const cases = [
-            { stage: "1단계 (Stage I) 욕창", action: "체위변경 강화 + 압력 분산 매트리스", wrong: ["습윤 드레싱만 적용", "데브리망(절제)", "항생제 정맥주입"] },
-            { stage: "건강한 육아조직이 있는 2단계 욕창", action: "하이드로콜로이드 또는 폼 드레싱", wrong: ["거즈로 압박", "건조 상태 유지", "삼출물 무관 거즈 매일 교환"] },
-            { stage: "감염 징후가 있는 깊은 욕창", action: "상처 배양 + 의사 보고 + 적절한 항생제", wrong: ["폐쇄성 드레싱 적용", "그대로 관찰", "심부 마사지"] },
+            { stageDigit: 1, stage: "1단계 (Stage I) 욕창", action: "체위변경 강화 + 압력 분산 매트리스", wrong: ["습윤 드레싱만 적용", "데브리망(절제)", "항생제 정맥주입"] },
+            { stageDigit: 2, stage: "2단계 (Stage II) 욕창", action: "하이드로콜로이드 또는 폼 드레싱", wrong: ["거즈로 압박", "건조 상태 유지", "삼출물 무관 거즈 매일 교환"] },
+            { stageDigit: 3, stage: "3단계 (Stage III) 욕창", action: "습윤 드레싱 + 정기 세척 + 영양 평가", wrong: ["건조 거즈 유지", "냉찜질", "심부 마사지"] },
+            { stageDigit: 4, stage: "4단계 (Stage IV) 감염 의심 욕창", action: "상처 배양 + 의사 보고 + 적절한 항생제 + 외과 협진 고려", wrong: ["폐쇄성 드레싱 적용", "그대로 관찰", "심부 마사지"] },
         ];
         const c = pick(cases);
         const wrongs = shuffle(c.wrong);
         return { baseId: "wound", category: "기본간호학", part: "상처 간호", emoji: "🩹", title: "욕창 단계별 중재",
+            image: `ulcer:${c.stageDigit}`,
             desc: `${c.stage} 환자에게 가장 적절한 중재는?`,
             choices: shuffle([
                 { text: c.action, correct: true, effect: { hp: -2, rep: 20 }, log: `정답. ${c.stage} 의 표준 중재입니다.` },
@@ -1036,19 +1057,63 @@
 
     function generateFHRDecelQuestion() {
         const cases = [
-            { type: "조기 감속(Early deceleration)", cause: "태아 두부 압박 — 정상 변이, 관찰만", wrong: ["즉시 응급 제왕절개", "옥시토신 증량", "태아 사망 의심"] },
-            { type: "변이성 감속(Variable deceleration)", cause: "제대 압박 — 산모 체위 변경·산소·검사", wrong: ["관찰만 진행", "옥시토신 증량", "마그네슘 황산염 투여"] },
-            { type: "지연성 감속(Late deceleration)", cause: "태반 기능 부전 — 응급 — 좌측위·산소·옥시토신 중단·의사 보고", wrong: ["정상 변이 — 관찰", "옥시토신 증량", "환자에게 식사 권유"] },
+            { key: "early", type: "조기 감속(Early deceleration)", cause: "태아 두부 압박 — 정상 변이, 관찰만", wrong: ["즉시 응급 제왕절개", "옥시토신 증량", "태아 사망 의심"] },
+            { key: "variable", type: "변이성 감속(Variable deceleration)", cause: "제대 압박 — 산모 체위 변경·산소·검사", wrong: ["관찰만 진행", "옥시토신 증량", "마그네슘 황산염 투여"] },
+            { key: "late", type: "지연성 감속(Late deceleration)", cause: "태반 기능 부전 — 응급 — 좌측위·산소·옥시토신 중단·의사 보고", wrong: ["정상 변이 — 관찰", "옥시토신 증량", "환자에게 식사 권유"] },
         ];
         const c = pick(cases);
         const wrongs = shuffle(c.wrong);
         return { baseId: "fhr_decel", category: "모성간호학", part: "태아심음 모니터링", emoji: "📈", title: "태아심박수 감속 분류",
+            image: `fhr:${c.key}`,
             desc: `분만 모니터링 중 ${c.type} 가 관찰된다. 적절한 간호 중재는?`,
             choices: shuffle([
                 { text: c.cause, correct: true, effect: { hp: -3, rep: 22 }, log: `정답. ${c.type} 의 표준 중재입니다.` },
                 { text: wrongs[0], effect: { hp: -22, rep: -16 }, log: "적절하지 않은 중재입니다." },
                 { text: wrongs[1], effect: { hp: -22, rep: -16 }, log: "적절하지 않은 중재입니다." },
                 { text: wrongs[2], effect: { hp: -22, rep: -16 }, log: "적절하지 않은 중재입니다." }
+            ]) };
+    }
+
+    // ── 이미지 기반 식별 문제 (v1.2 — SVG 시각자료 학습) ────────────────
+    function generateECGStripQuestion() {
+        const rhythms = [
+            { key: "normal", name: "정상 동성리듬 (NSR)", wrongs: ["심방세동", "심실세동", "심실빈맥"] },
+            { key: "vfib", name: "심실세동 (VFib)", wrongs: ["정상 동성리듬", "심방세동", "1차 방실차단"] },
+            { key: "vtach", name: "심실빈맥 (VTach)", wrongs: ["심방세동", "정상 동성리듬", "무수축"] },
+            { key: "afib", name: "심방세동 (AFib)", wrongs: ["정상 동성리듬", "심실세동", "심실빈맥"] },
+            { key: "asystole", name: "무수축 (Asystole)", wrongs: ["심실세동", "정상 동성리듬", "심방세동"] },
+            { key: "stemi", name: "ST 분절 상승 (STEMI)", wrongs: ["정상 동성리듬", "심실세동", "심방세동"] },
+        ];
+        const r = pick(rhythms);
+        const wrongs = shuffle(r.wrongs);
+        return { baseId: "ecg_id", category: "성인간호학", part: "심전도 판독", emoji: "💗", title: "ECG strip 식별",
+            image: `ecg:${r.key}`,
+            desc: `위 심전도 strip 의 리듬은?`,
+            choices: shuffle([
+                { text: r.name, correct: true, effect: { hp: -2, rep: 22 }, log: `정답. ${r.name} 의 특징적 strip 입니다.` },
+                { text: wrongs[0], effect: { hp: -22, rep: -16 }, log: "리듬 식별 오류입니다." },
+                { text: wrongs[1], effect: { hp: -22, rep: -16 }, log: "리듬 식별 오류입니다." },
+                { text: wrongs[2], effect: { hp: -22, rep: -16 }, log: "리듬 식별 오류입니다." }
+            ]) };
+    }
+
+    function generatePupilAssessQuestion() {
+        const cases = [
+            { L: 3, R: 3, finding: "정상 동공 (양측 3mm, 등크기)", action: "정상 — 추가 평가 불필요", wrong: ["즉시 신경외과 호출", "Mannitol IV bolus", "Atropine 점안"] },
+            { L: 5, R: 3, finding: "동공 부등 — 좌 5mm, 우 3mm", action: "두개내 출혈/탈출 의심 — 즉시 신경외과 호출 + CT", wrong: ["정상 변이 — 관찰", "안약 점안", "수면제 투여"] },
+            { L: 7, R: 7, finding: "양측 산대 고정 (각 7mm)", action: "심한 뇌손상 또는 사망 임박 — ACLS + 응급 의사 호출", wrong: ["관찰만 진행", "수액 부하만 시행", "정상 변이로 판단"] },
+            { L: 1, R: 1, finding: "양측 축동 (각 1mm)", action: "마약성 진통제 과량 또는 뇌교 손상 — naloxone 고려 + 의사 보고", wrong: ["밝은 조명 노출", "epinephrine 점안", "단순 수면 상태로 관찰"] },
+        ];
+        const c = pick(cases);
+        const wrongs = shuffle(c.wrong);
+        return { baseId: "pupil", category: "성인간호학", part: "신경학적 사정", emoji: "👁️", title: "동공 사정 결과 해석",
+            image: `pupil:${c.L},${c.R}`,
+            desc: `${c.finding} 의 환자에 대한 우선 중재는?`,
+            choices: shuffle([
+                { text: c.action, correct: true, effect: { hp: -3, rep: 22 }, log: `정답. ${c.finding} 에 대한 표준 중재입니다.` },
+                { text: wrongs[0], effect: { hp: -25, rep: -18 }, log: "동공 사정 해석 오류입니다." },
+                { text: wrongs[1], effect: { hp: -25, rep: -18 }, log: "동공 사정 해석 오류입니다." },
+                { text: wrongs[2], effect: { hp: -25, rep: -18 }, log: "동공 사정 해석 오류입니다." }
             ]) };
     }
 
@@ -1110,6 +1175,8 @@
         generateCBTechniqueQuestion, generateAddictionQuestion,
         generateSchoolHealthQuestion, generateHomeCareQuestion,
         generateFHRDecelQuestion, generatePedsRespQuestion,
+        // v1.2 이미지 기반 식별 (ECG strip / 동공 사정)
+        generateECGStripQuestion, generatePupilAssessQuestion,
     ];
 
     return {
@@ -1145,5 +1212,6 @@
         generateCBTechniqueQuestion, generateAddictionQuestion,
         generateSchoolHealthQuestion, generateHomeCareQuestion,
         generateFHRDecelQuestion, generatePedsRespQuestion,
+        generateECGStripQuestion, generatePupilAssessQuestion,
     };
 });

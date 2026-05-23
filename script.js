@@ -10,7 +10,7 @@ const MOCK_EXAM_TOTAL = 30;
 const MOCK_EXAM_SECONDS = 30 * 60;
 const DAILY_CHALLENGE_TOTAL = 10;
 const STORAGE_KEY = "nurseSim:v1";
-const APP_VERSION = "1.0.0";
+const APP_VERSION = "1.1.0-beta";
 
 const CATEGORIES = [
     "기본간호학", "성인간호학", "모성간호학", "아동간호학",
@@ -289,6 +289,236 @@ const ICONS = {
     wrong:      '<svg class="mc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3 h12 v18 l-6 -3 l-6 3 z"/></svg>',
     dash:       '<svg class="mc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20 V10 M10 20 V4 M16 20 V14"/><path d="M3 20 h18"/></svg>',
 };
+
+// =========================================================================
+// 임상 시각 자료 (CLINICAL_SVG) — 외부 자원 0, 모두 자체 제작 SVG
+// 텍스트만으로 학습 어려운 영역: ECG / 욕창 / 체위 / 화상 / 태아심음 / 동공
+// =========================================================================
+function ecgStrip(pattern) {
+    const W = 600, H = 110, cy = 55;
+    // 의료용 핑크 그리드 (large=100, small=20)
+    let grids = `<rect width="${W}" height="${H}" fill="#fff8f8"/>`;
+    for (let x = 0; x <= W; x += 20) grids += `<line x1="${x}" y1="0" x2="${x}" y2="${H}" stroke="${x%100===0?'#f4a8a8':'#fbdada'}" stroke-width="${x%100===0?0.7:0.35}"/>`;
+    for (let y = 0; y <= H; y += 20) grids += `<line x1="0" y1="${y}" x2="${W}" y2="${y}" stroke="${y%100===0?'#f4a8a8':'#fbdada'}" stroke-width="${y%100===0?0.7:0.35}"/>`;
+    let d = `M 0 ${cy}`;
+    if (pattern === "normal") {
+        for (let i = 0; i < 4; i++) {
+            const ox = 20 + i * 145;
+            d += ` L ${ox} ${cy} L ${ox+8} ${cy-5} L ${ox+16} ${cy-7} L ${ox+24} ${cy-5} L ${ox+32} ${cy} L ${ox+50} ${cy} L ${ox+54} ${cy+4} L ${ox+57} ${cy-32} L ${ox+60} ${cy+12} L ${ox+64} ${cy} L ${ox+90} ${cy} L ${ox+105} ${cy-8} L ${ox+125} ${cy-9} L ${ox+140} ${cy}`;
+        }
+    } else if (pattern === "stemi") {
+        for (let i = 0; i < 4; i++) {
+            const ox = 20 + i * 145;
+            d += ` L ${ox} ${cy} L ${ox+8} ${cy-4} L ${ox+16} ${cy-6} L ${ox+24} ${cy-4} L ${ox+32} ${cy} L ${ox+50} ${cy} L ${ox+54} ${cy+3} L ${ox+57} ${cy-30} L ${ox+60} ${cy+10} L ${ox+64} ${cy-10} L ${ox+85} ${cy-15} L ${ox+115} ${cy-15} L ${ox+125} ${cy-6} L ${ox+140} ${cy}`;
+        }
+    } else if (pattern === "vfib") {
+        for (let x = 0; x <= W; x += 4) {
+            const n = (Math.sin(x*0.45) + Math.sin(x*0.17) + Math.sin(x*0.33))*14;
+            d += ` L ${x} ${cy+n}`;
+        }
+    } else if (pattern === "vtach") {
+        for (let i = 0; i < 7; i++) {
+            const ox = i * 90;
+            d += ` L ${ox} ${cy} L ${ox+15} ${cy-32} L ${ox+32} ${cy+18} L ${ox+50} ${cy-6} L ${ox+90} ${cy}`;
+        }
+    } else if (pattern === "afib") {
+        const peaks = [70, 175, 240, 360, 450, 565];
+        let prev = 0;
+        for (const px of peaks) {
+            for (let x = prev; x < px - 10; x += 4) {
+                const wob = Math.sin(x*0.32)*2 + Math.sin(x*0.71)*1.4;
+                d += ` L ${x} ${cy+wob}`;
+            }
+            d += ` L ${px-4} ${cy+4} L ${px} ${cy-26} L ${px+4} ${cy+10} L ${px+8} ${cy}`;
+            prev = px + 8;
+        }
+    } else if (pattern === "asystole") {
+        d += ` L ${W} ${cy}`;
+    } else if (pattern === "svt") {
+        for (let i = 0; i < 10; i++) {
+            const ox = i * 60;
+            d += ` L ${ox} ${cy} L ${ox+8} ${cy-3} L ${ox+16} ${cy} L ${ox+22} ${cy+3} L ${ox+25} ${cy-28} L ${ox+28} ${cy+8} L ${ox+60} ${cy}`;
+        }
+    }
+    return `<svg viewBox="0 0 ${W} ${H}" class="clinical-svg ecg-svg" role="img" aria-label="심전도 리듬 strip"><g>${grids}</g><path d="${d}" stroke="#1e293b" stroke-width="1.6" fill="none" stroke-linejoin="round"/></svg>`;
+}
+
+function pressureUlcerSvg(stage) {
+    // 욕창 단면도 — stage 1~4
+    const W = 320, H = 200;
+    const skinY = 60;
+    const layers = `
+      <rect x="20" y="${skinY}" width="280" height="20" fill="#fce7d4" stroke="#cd9b7a" stroke-width="1"/>
+      <rect x="20" y="${skinY+20}" width="280" height="30" fill="#f4d2b4" stroke="#cd9b7a" stroke-width="0.5"/>
+      <rect x="20" y="${skinY+50}" width="280" height="40" fill="#f7e1c8" stroke="#cd9b7a" stroke-width="0.5"/>
+      <rect x="20" y="${skinY+90}" width="280" height="20" fill="#e8d5b0" stroke="#a18063" stroke-width="0.5"/>
+      <text x="6" y="${skinY+12}" font-size="9" fill="#64748b">표피</text>
+      <text x="6" y="${skinY+38}" font-size="9" fill="#64748b">진피</text>
+      <text x="6" y="${skinY+72}" font-size="9" fill="#64748b">피하</text>
+      <text x="6" y="${skinY+102}" font-size="9" fill="#64748b">근막/뼈</text>
+    `;
+    let lesion = "";
+    if (stage === 1) {
+        lesion = `<ellipse cx="160" cy="${skinY+8}" rx="50" ry="6" fill="#e36b6b" opacity="0.7"/><text x="120" y="40" font-size="13" font-weight="700" fill="#c43030">Stage I — 비창백 발적</text>`;
+    } else if (stage === 2) {
+        lesion = `<path d="M 110 ${skinY} L 130 ${skinY+25} L 190 ${skinY+25} L 210 ${skinY} Z" fill="#f7c4c4" stroke="#c43030" stroke-width="1.2"/><text x="105" y="40" font-size="13" font-weight="700" fill="#c43030">Stage II — 부분층 손상</text>`;
+    } else if (stage === 3) {
+        lesion = `<path d="M 105 ${skinY} L 115 ${skinY+60} L 205 ${skinY+60} L 215 ${skinY} Z" fill="#9d3838" stroke="#5a1a1a" stroke-width="1.2"/><text x="95" y="40" font-size="13" font-weight="700" fill="#5a1a1a">Stage III — 전층 손상 (피하 노출)</text>`;
+    } else if (stage === 4) {
+        lesion = `<path d="M 100 ${skinY} L 110 ${skinY+105} L 210 ${skinY+105} L 220 ${skinY} Z" fill="#5a1a1a" stroke="#000" stroke-width="1.2"/><text x="90" y="40" font-size="13" font-weight="700" fill="#000">Stage IV — 근막·뼈·근육 노출</text>`;
+    }
+    return `<svg viewBox="0 0 ${W} ${H}" class="clinical-svg ulcer-svg" role="img" aria-label="욕창 ${stage}단계"><rect width="${W}" height="${H}" fill="#fefcfa"/>${layers}${lesion}</svg>`;
+}
+
+function positionSvg(name) {
+    // 체위 — 인체 실루엣 + 자세
+    const W = 320, H = 180;
+    const bed = `<rect x="10" y="120" width="300" height="50" rx="6" fill="#e8efe9" stroke="#7fa881" stroke-width="1.2"/>`;
+    let body = "", label = "";
+    if (name === "fowler") {
+        // 반좌위 45도
+        body = `<path d="M 50 130 L 120 130 L 170 60 L 195 60 L 195 75 L 175 80 L 130 140 L 50 140 Z" fill="#a3c4a5" stroke="#5a7a5c"/><circle cx="200" cy="55" r="14" fill="#a3c4a5" stroke="#5a7a5c"/>`;
+        label = `<text x="160" y="20" font-size="13" font-weight="700" text-anchor="middle" fill="#1e293b">Fowler's (반좌위 45~60°)</text>`;
+    } else if (name === "sims") {
+        // 좌측 심스위
+        body = `<ellipse cx="80" cy="75" rx="16" ry="14" fill="#a3c4a5" stroke="#5a7a5c"/><path d="M 95 70 Q 170 65 230 95 Q 260 105 270 130 L 90 130 Q 90 110 95 70 Z" fill="#a3c4a5" stroke="#5a7a5c"/><path d="M 175 95 Q 200 60 230 75" fill="none" stroke="#5a7a5c" stroke-width="1.5"/>`;
+        label = `<text x="160" y="20" font-size="13" font-weight="700" text-anchor="middle" fill="#1e293b">Sims' (좌측 심스위 — 관장 시)</text>`;
+    } else if (name === "trendelenburg") {
+        // 트렌델렌버그 — 머리 낮춤
+        body = `<path d="M 50 130 L 50 110 L 270 80 L 270 95 L 50 130 Z" fill="#a3c4a5" stroke="#5a7a5c"/><circle cx="55" cy="125" r="14" fill="#a3c4a5" stroke="#5a7a5c"/>`;
+        label = `<text x="160" y="20" font-size="13" font-weight="700" text-anchor="middle" fill="#1e293b">Trendelenburg (머리 낮춤 — 쇼크)</text>`;
+    } else if (name === "lithotomy") {
+        // 배횡와위
+        body = `<ellipse cx="180" cy="125" rx="60" ry="14" fill="#a3c4a5" stroke="#5a7a5c"/><circle cx="120" cy="120" r="13" fill="#a3c4a5" stroke="#5a7a5c"/><path d="M 230 125 L 250 80 L 270 75" fill="none" stroke="#5a7a5c" stroke-width="6" stroke-linecap="round"/><path d="M 235 130 L 260 95 L 280 95" fill="none" stroke="#5a7a5c" stroke-width="6" stroke-linecap="round"/>`;
+        label = `<text x="160" y="20" font-size="13" font-weight="700" text-anchor="middle" fill="#1e293b">Lithotomy (배횡와위 — 분만·도뇨)</text>`;
+    } else if (name === "prone") {
+        body = `<path d="M 50 110 L 270 110 L 270 130 L 50 130 Z" fill="#a3c4a5" stroke="#5a7a5c"/><circle cx="55" cy="120" r="13" fill="#a3c4a5" stroke="#5a7a5c"/><text x="160" y="100" font-size="9" fill="#5a7a5c" text-anchor="middle">엎드린 자세</text>`;
+        label = `<text x="160" y="20" font-size="13" font-weight="700" text-anchor="middle" fill="#1e293b">Prone (복와위 — ARDS 산소화)</text>`;
+    }
+    return `<svg viewBox="0 0 ${W} ${H}" class="clinical-svg pos-svg" role="img" aria-label="체위 ${name}"><rect width="${W}" height="${H}" fill="#fafdfb"/>${label}${bed}${body}</svg>`;
+}
+
+function ruleOfNinesSvg() {
+    // 성인 9의 법칙 — 인체 정면도 + 라벨
+    const W = 320, H = 280;
+    return `<svg viewBox="0 0 ${W} ${H}" class="clinical-svg burn-svg" role="img" aria-label="9의 법칙">
+      <rect width="${W}" height="${H}" fill="#fefcf8"/>
+      <text x="${W/2}" y="18" text-anchor="middle" font-size="14" font-weight="700" fill="#1e293b">성인 9의 법칙 (Rule of Nines)</text>
+      <!-- 머리 9% -->
+      <circle cx="160" cy="50" r="22" fill="#fcd9c1" stroke="#c97070"/>
+      <text x="160" y="54" text-anchor="middle" font-size="11" font-weight="700">9%</text>
+      <text x="160" y="38" text-anchor="middle" font-size="9" fill="#64748b">머리/목</text>
+      <!-- 몸통 앞 18% -->
+      <rect x="125" y="80" width="70" height="100" rx="6" fill="#fce6cc" stroke="#c97070"/>
+      <text x="160" y="135" text-anchor="middle" font-size="11" font-weight="700">18%</text>
+      <text x="160" y="148" text-anchor="middle" font-size="9" fill="#64748b">몸통 앞</text>
+      <!-- 양팔 각 9% -->
+      <rect x="80" y="80" width="35" height="100" rx="6" fill="#fcdcc1" stroke="#c97070"/>
+      <text x="97" y="135" text-anchor="middle" font-size="10" font-weight="700">9%</text>
+      <text x="97" y="148" text-anchor="middle" font-size="8" fill="#64748b">좌측 팔</text>
+      <rect x="205" y="80" width="35" height="100" rx="6" fill="#fcdcc1" stroke="#c97070"/>
+      <text x="222" y="135" text-anchor="middle" font-size="10" font-weight="700">9%</text>
+      <text x="222" y="148" text-anchor="middle" font-size="8" fill="#64748b">우측 팔</text>
+      <!-- 양다리 각 18% -->
+      <rect x="125" y="185" width="32" height="80" rx="6" fill="#fce6cc" stroke="#c97070"/>
+      <text x="141" y="225" text-anchor="middle" font-size="10" font-weight="700">18%</text>
+      <text x="141" y="240" text-anchor="middle" font-size="8" fill="#64748b">좌측 다리</text>
+      <rect x="163" y="185" width="32" height="80" rx="6" fill="#fce6cc" stroke="#c97070"/>
+      <text x="179" y="225" text-anchor="middle" font-size="10" font-weight="700">18%</text>
+      <text x="179" y="240" text-anchor="middle" font-size="8" fill="#64748b">우측 다리</text>
+      <!-- 회음부 1% -->
+      <rect x="155" y="180" width="10" height="8" fill="#c97070"/>
+      <text x="240" y="200" font-size="9" fill="#64748b">회음부 1%</text>
+    </svg>`;
+}
+
+function fhrSvg(pattern) {
+    // 태아심음 + 자궁수축 — 두 줄 그래프
+    const W = 600, H = 180, fhrY = 50, ucY = 140;
+    let grid = `<rect width="${W}" height="${H}" fill="#fff8f8"/>`;
+    for (let x = 0; x <= W; x += 30) grid += `<line x1="${x}" y1="0" x2="${x}" y2="${H}" stroke="#fbdada" stroke-width="0.4"/>`;
+    grid += `<text x="6" y="${fhrY-30}" font-size="9" fill="#64748b">FHR 240</text><text x="6" y="${fhrY+30}" font-size="9" fill="#64748b">100</text>`;
+    grid += `<text x="6" y="${ucY-20}" font-size="9" fill="#64748b">UC</text>`;
+    grid += `<line x1="0" y1="${fhrY}" x2="${W}" y2="${fhrY}" stroke="#94a3b8" stroke-width="0.4" stroke-dasharray="4 3"/>`;
+    grid += `<line x1="0" y1="${ucY}" x2="${W}" y2="${ucY}" stroke="#94a3b8" stroke-width="0.4"/>`;
+    let fhr = `M 0 ${fhrY}`;
+    let uc = `M 0 ${ucY}`;
+    const contractionPeaks = [120, 320, 520];
+    for (let x = 0; x <= W; x += 6) {
+        // 자궁수축 (3회)
+        let uVal = 0;
+        for (const p of contractionPeaks) uVal += Math.max(0, 28 - Math.abs(x-p)*0.5);
+        uc += ` L ${x} ${ucY - Math.min(uVal, 40)}`;
+        // FHR — pattern 별
+        let fVal = 0;
+        if (pattern === "early") {
+            // 자궁수축과 동시 감속 — 거울상
+            for (const p of contractionPeaks) fVal += Math.max(0, 22 - Math.abs(x-p)*0.45);
+        } else if (pattern === "late") {
+            // 자궁수축 정점 이후 감속 (15~30초 시차)
+            for (const p of contractionPeaks) fVal += Math.max(0, 25 - Math.abs(x-(p+40))*0.45);
+        } else if (pattern === "variable") {
+            // V자형, 시점 불규칙
+            const varPeaks = [100, 230, 410, 540];
+            for (const p of varPeaks) fVal += Math.max(0, 35 - Math.abs(x-p)*0.7);
+        } else {
+            // normal — 부드러운 변동
+            fVal = -3 + Math.sin(x*0.06)*4 + Math.sin(x*0.12)*2;
+        }
+        fhr += ` L ${x} ${fhrY + fVal + Math.sin(x*0.4)*0.8}`;
+    }
+    return `<svg viewBox="0 0 ${W} ${H}" class="clinical-svg fhr-svg" role="img" aria-label="태아심음·자궁수축 strip">${grid}<path d="${fhr}" stroke="#1e293b" stroke-width="1.5" fill="none"/><path d="${uc}" stroke="#5a7a5c" stroke-width="1.5" fill="none"/></svg>`;
+}
+
+function pupilSvg(left, right) {
+    // 동공 비교 — left/right 직경(mm) + 반응 가능 시 광 반사
+    const W = 280, H = 130;
+    const scale = 4; // 1mm = 4px
+    return `<svg viewBox="0 0 ${W} ${H}" class="clinical-svg pupil-svg" role="img" aria-label="동공 사정"><rect width="${W}" height="${H}" fill="#fafdfb"/>
+      <text x="${W/2}" y="20" text-anchor="middle" font-size="13" font-weight="700" fill="#1e293b">동공 사정</text>
+      <g transform="translate(75,75)">
+        <text x="0" y="-35" text-anchor="middle" font-size="11" fill="#64748b">좌안</text>
+        <circle r="28" fill="#fef9f3" stroke="#94a3b8" stroke-width="1.2"/>
+        <circle r="22" fill="#fff" stroke="#94a3b8" stroke-width="0.6"/>
+        <circle r="${left*scale}" fill="#000"/>
+        <text x="0" y="48" text-anchor="middle" font-size="12" font-weight="700">${left}mm</text>
+      </g>
+      <g transform="translate(205,75)">
+        <text x="0" y="-35" text-anchor="middle" font-size="11" fill="#64748b">우안</text>
+        <circle r="28" fill="#fef9f3" stroke="#94a3b8" stroke-width="1.2"/>
+        <circle r="22" fill="#fff" stroke="#94a3b8" stroke-width="0.6"/>
+        <circle r="${right*scale}" fill="#000"/>
+        <text x="0" y="48" text-anchor="middle" font-size="12" font-weight="700">${right}mm</text>
+      </g>
+    </svg>`;
+}
+
+const CLINICAL_SVG = {
+    ecg: ecgStrip,
+    pressureUlcer: pressureUlcerSvg,
+    position: positionSvg,
+    ruleOfNines: ruleOfNinesSvg,
+    fhr: fhrSvg,
+    pupil: pupilSvg,
+};
+
+// 이미지 키 → SVG 변환 (generator/episode 에서 사용)
+// 형식: "ecg:vfib", "ulcer:2", "position:sims", "rule-of-nines",
+//       "fhr:late", "pupil:3,5"
+function renderClinicalImage(key) {
+    if (!key) return "";
+    if (key === "rule-of-nines") return CLINICAL_SVG.ruleOfNines();
+    const [type, arg] = key.split(":");
+    if (type === "ecg") return CLINICAL_SVG.ecg(arg);
+    if (type === "ulcer") return CLINICAL_SVG.pressureUlcer(Number(arg));
+    if (type === "position") return CLINICAL_SVG.position(arg);
+    if (type === "fhr") return CLINICAL_SVG.fhr(arg);
+    if (type === "pupil") {
+        const [L, R] = arg.split(",").map(Number);
+        return CLINICAL_SVG.pupil(L, R);
+    }
+    return "";
+}
 
 // 빈 상태 일러스트 — 세이지 톤 단색 SVG (외부 자원 0)
 const EMPTY_ILLUST = {
@@ -842,6 +1072,9 @@ function renderSceneCard(ev, options = {}) {
         </button>`;
     }
 
+    // 임상 시각자료 — ev.image 키가 있으면 자체 제작 SVG 렌더
+    const imageHtml = ev.image ? `<div class="scene-image">${renderClinicalImage(ev.image)}</div>` : "";
+
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
         ${bookmarkBtnHtml}
@@ -849,6 +1082,7 @@ function renderSceneCard(ev, options = {}) {
         ${stepProgressHtml}
         <span class="scene-emoji" aria-hidden="true">${ev.emoji || "🩺"}</span>
         <h2 class="scene-title">${questionIndex !== null ? `[Q${questionIndex}] ` : ""}${escapeHtml(ev.title)}</h2>
+        ${imageHtml}
         <p class="scene-desc">${escapeHtml(ev.desc)}</p>
         <div class="choice-list" id="choice-list" role="list"></div>
         <div id="feedback-zone" aria-live="polite" aria-atomic="true"></div>
@@ -2758,7 +2992,7 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
       <div class="menu-shell">
         <header class="menu-header">
           <h1 class="menu-title-v2">간호사 시뮬레이터</h1>
-          <span class="version-badge-v2">v${APP_VERSION || '1.0'}</span>
+          <span class="version-badge-v2" title="RN 감수 진행 중 베타">v${APP_VERSION || '1.0'} · BETA</span>
         </header>
 
         <main class="menu-body">${tabContent}</main>
