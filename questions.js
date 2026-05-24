@@ -1776,6 +1776,148 @@
             ]) };
     }
 
+    // ── v1.2 특수 영역 라운드 (12 — 종양·면역·약물·기기·법규) ──────────────
+
+    function generateTLSQuestion() {
+        return { baseId: "tls", category: "성인간호학", part: "종양 응급", emoji: "🧪", title: "종양 용해 증후군(TLS)",
+            desc: `급성 백혈병 환자 항암 후 24시간 — K+ 6.8 / 인산 8 / Ca 7.0 / 요산 12 / Cr 2.5. 우선 중재는?`,
+            choices: shuffle([
+                { text: "TLS 진단 — IV 수액 (3L/d) + Rasburicase/Allopurinol + 전해질 교정 + 신장내과·종양내과 협진", correct: true, effect: { hp: -3, rep: 28 }, log: "정답. TLS 표준 (Cairo-Bishop 기준)." },
+                { text: "단순 신부전으로 보고 수액 제한", effect: { hp: -32, rep: -28 }, log: "수액 부하가 표준." },
+                { text: "K+ 만 즉시 calcium gluconate", effect: { hp: -22, rep: -16 }, log: "통합 대사 위기 관리." },
+                { text: "관찰 + 다음 검사", effect: { hp: -38, rep: -32 }, log: "TLS 는 응급 — 사망률 높음." }
+            ]) };
+    }
+
+    function generateSJSQuestion() {
+        return { baseId: "sjs", category: "성인간호학", part: "약물 알레르기", emoji: "🚨", title: "스티븐스-존슨 증후군(SJS)",
+            desc: `Lamotrigine 시작 2주 후 환자 — 입술 점막 궤양 + 광범위 발진 + 결막 충혈 + 발열. 의심 진단·우선 처치는?`,
+            choices: shuffle([
+                { text: "SJS 의심 — 즉시 원인 약물 중단 + 화상 병동 수준 케어 + 안과·피부과 협진 + 수액·통증·감염 관리", correct: true, effect: { hp: -5, rep: 30 }, log: "정답. SJS 는 사망률 5~15% — 즉시 약물 중단 + 다학제." },
+                { text: "단순 약물 발진으로 보고 항히스타민만", effect: { hp: -38, rep: -32 }, log: "SJS 진단 누락 = 사망." },
+                { text: "약물 그대로 + 발진 관찰", effect: { hp: -45, rep: -42 }, log: "범위 확장 = TEN(독성표피괴사) 진행." },
+                { text: "스테로이드 IV 만 단독", effect: { hp: -28, rep: -22 }, log: "다학제 화상 수준 케어가 표준." }
+            ]) };
+    }
+
+    function generateUTIElderlyQuestion() {
+        return { baseId: "uti_elderly", category: "성인간호학", part: "비뇨기", emoji: "🚽", title: "노인 요로감염 — 비특이적 증상",
+            desc: `82세 여성 갑작스러운 의식 혼란 + 발열 없음 + 식욕 감소. 가족 \"갑자기 이상해요\". 의심 진단은?`,
+            choices: shuffle([
+                { text: "노인 UTI 의심 — 소변 검사 + 배양 + 항생제 처방 검토 + 수액 + 가역적 섬망 원인 평가", correct: true, effect: { hp: -3, rep: 25 }, log: "정답. 노인은 발열 없이 의식 변화로 UTI 발현 흔함." },
+                { text: "치매 진행으로 단정", effect: { hp: -32, rep: -28 }, log: "가역적 원인 평가 누락." },
+                { text: "수면제 처방으로 진정", effect: { hp: -28, rep: -22 }, log: "원인 평가 + 약물 부작용 위험." },
+                { text: "단순 노화로 무시", effect: { hp: -25, rep: -20 }, log: "비특이적 증상 = 평가 필수." }
+            ]) };
+    }
+
+    function generateLupusFlareQuestion() {
+        return { baseId: "sle_flare", category: "성인간호학", part: "자가면역", emoji: "🦋", title: "전신홍반루푸스(SLE) 악화",
+            desc: `SLE 환자 — 발열·관절통·뺨 발진·단백뇨 3+ + Cr 1.8 (이전 0.9). 의심·우선 중재는?`,
+            choices: shuffle([
+                { text: "SLE 신장 침범(lupus nephritis) 의심 — 류마티스·신장 협진 + 고용량 스테로이드 + 면역억제 검토", correct: true, effect: { hp: -3, rep: 28 }, log: "정답. SLE 신염은 응급 — 신부전 진행 예방." },
+                { text: "단순 감기로 해열제만", effect: { hp: -32, rep: -28 }, log: "악화 신호 무시." },
+                { text: "관찰 + 다음 외래", effect: { hp: -28, rep: -22 }, log: "신장 침범 = 응급." },
+                { text: "NSAIDs 처방 추가", effect: { hp: -25, rep: -20 }, log: "신장 부담 가속." }
+            ]) };
+    }
+
+    function generateNeonatalHypoglycemiaQuestion() {
+        return { baseId: "neonatal_hypo", category: "모성간호학", part: "신생아", emoji: "🍼", title: "신생아 저혈당 응급",
+            desc: `GDM 산모 신생아 출생 1시간 — 떨림 + 처짐 + 혈당 30 mg/dL. 우선 중재는?`,
+            choices: shuffle([
+                { text: "조기 모유수유/분유 + 재측정 + 혈당 <40 지속 시 D10W IV bolus + NICU 협진", correct: true, effect: { hp: -3, rep: 25 }, log: "정답. 신생아 저혈당 단계적 알고리듬." },
+                { text: "정상 신생아 변동으로 관찰", effect: { hp: -38, rep: -32 }, log: "신경 손상 위험." },
+                { text: "포도당 사탕을 입에 넣기", effect: { hp: -32, rep: -28 }, log: "흡인 + 절대 금기." },
+                { text: "체온 보온만 강화", effect: { hp: -28, rep: -22 }, log: "체온은 동반 평가 — 혈당이 우선." }
+            ]) };
+    }
+
+    function generateBreastfeedingDrugQuestion() {
+        const cases = [
+            { drug: "Acetaminophen", compat: "수유 호환 (안전)", wrong: ["수유 절대 금기", "수유 24시간 중단 후 가능", "용량 절반만 사용"] },
+            { drug: "Warfarin", compat: "수유 호환 (분비 극소량)", wrong: ["수유 절대 금기", "수유 1주 중단 후 가능", "신생아 출혈 위험으로 절대 금기"] },
+            { drug: "Lithium", compat: "주의 — 신생아 추적 + 의사 상담 후 결정", wrong: ["수유 완전 호환", "단순 부작용 없음", "수유 전 약 끊기만"] },
+            { drug: "Codeine", compat: "회피 (CYP2D6 빠른 대사자 시 신생아 호흡억제)", wrong: ["수유 완전 호환", "산모 표준 용량 안전", "신생아 진통 효과 있어 권장"] },
+        ];
+        const c = pick(cases);
+        const wrongs = shuffle(c.wrong);
+        return { baseId: "bf_drug", category: "모성간호학", part: "모유수유 약물", emoji: "💊", title: "모유수유 중 약물 안전성",
+            desc: `${c.drug} 의 모유수유 호환성은?`,
+            choices: shuffle([
+                { text: c.compat, correct: true, effect: { hp: -2, rep: 22 }, log: `정답. LactMed/AAP 기준.` },
+                { text: wrongs[0], effect: { hp: -22, rep: -16 }, log: "약물 호환성 판단 오류." },
+                { text: wrongs[1], effect: { hp: -22, rep: -16 }, log: "약물 호환성 판단 오류." },
+                { text: wrongs[2], effect: { hp: -22, rep: -16 }, log: "약물 호환성 판단 오류." }
+            ]) };
+    }
+
+    function generateADHDQuestion() {
+        return { baseId: "adhd", category: "아동간호학", part: "정신·행동", emoji: "🧒", title: "ADHD 아동 학교생활 적응",
+            desc: `초등 3년 ADHD 진단 아동 — 학교 집중 어려움 + 친구 갈등. 부모 \"약 안 먹이면 안 될까요?\" 호소.`,
+            choices: shuffle([
+                { text: "약물 + 행동 치료 + 학교 협력 (교실 조정·또래 멘토) + 가족 교육 통합 — 다층 접근", correct: true, effect: { hp: -2, rep: 25 }, log: "정답. ADHD 는 약물 단독보다 다층 접근이 효과적." },
+                { text: "약물 무조건 강력 권유", effect: { hp: -22, rep: -16 }, log: "환자/가족 자율성 침해." },
+                { text: "약물 없이 자연 회복 권유", effect: { hp: -25, rep: -20 }, log: "중증도에 따른 결정." },
+                { text: "강제 학교 변경 요구", effect: { hp: -22, rep: -16 }, log: "환경 + 치료 통합 우선." }
+            ]) };
+    }
+
+    function generatePedsLeukemiaQuestion() {
+        return { baseId: "peds_leukemia", category: "아동간호학", part: "혈액종양", emoji: "🩸", title: "소아 백혈병 항암 — 감염 예방",
+            desc: `ALL 항암 중 5세 아동 ANC 200 (중증 호중구 감소). 가족 \"외출 가능해요?\" 라며 질문.`,
+            choices: shuffle([
+                { text: "엄격한 감염 예방 — 외출 자제 + 마스크 + 손위생 + 발열 즉시 응급실 + 무균 식이 + 가족 교육", correct: true, effect: { hp: -3, rep: 25 }, log: "정답. 소아 항암 중 ANC <500 은 중증 호중구 감소." },
+                { text: "일반 외출 가능 안내", effect: { hp: -35, rep: -30 }, log: "감염 = 사망 위험." },
+                { text: "약물만 강조하고 환경은 무관", effect: { hp: -22, rep: -16 }, log: "환경 + 약물 통합." },
+                { text: "예방접종 즉시 시행", effect: { hp: -25, rep: -20 }, log: "호중구 감소 시 생백신 금기." }
+            ]) };
+    }
+
+    function generateOCDQuestion() {
+        return { baseId: "ocd", category: "정신간호학", part: "강박장애", emoji: "🔁", title: "강박장애(OCD) 환자 케어",
+            desc: `OCD 환자 손씻기 강박 (1시간 손씻기) 입원. \"안 씻으면 더러워서 죽을 거 같아요\" 호소.`,
+            choices: shuffle([
+                { text: "비판단 + 정서 지지 + 노출·반응 방지(ERP) 치료 + SSRI + 인지행동치료(CBT) 다학제", correct: true, effect: { hp: -2, rep: 28 }, log: "정답. OCD 는 ERP + CBT + 약물 표준 (APA)." },
+                { text: "손씻기 강제 금지 + 격리", effect: { hp: -32, rep: -28 }, log: "강제는 불안 + 신뢰 손상." },
+                { text: "환자 요구대로 손씻기 무제한 허용", effect: { hp: -22, rep: -16 }, log: "강박 행동 강화." },
+                { text: "단순 잠시 휴식 권유", effect: { hp: -22, rep: -16 }, log: "전문 치료 필요." }
+            ]) };
+    }
+
+    function generateForeignerCareQuestion() {
+        return { baseId: "foreigner_care", category: "지역사회간호학", part: "외국인 의료", emoji: "🌐", title: "외국인 환자 의료 접근성",
+            desc: `미등록 외국인 노동자 응급실 도착 — 충수염 의심. \"비용이 무서워서 가지 않으려 했어요\" 호소.`,
+            choices: shuffle([
+                { text: "의료 처치 우선 + 사회복지·외국인노동자센터·소외계층 의료 지원 자원 연계 + 통역 + 환자 안심", correct: true, effect: { hp: -3, rep: 28 }, log: "정답. 응급의료법 + 외국인 권리 보장." },
+                { text: "비용 동의 없으면 진료 거부", effect: { hp: -42, rep: -38 }, log: "응급의료법 위반." },
+                { text: "출입국 신고 후 진료", effect: { hp: -38, rep: -32 }, log: "의료-법 분리. 의료 우선." },
+                { text: "환자 자율 결정에 맡김", effect: { hp: -32, rep: -28 }, log: "응급 상황 + 정보 제공 의무." }
+            ]) };
+    }
+
+    function generateMedicalDeviceQuestion() {
+        return { baseId: "medical_device", category: "간호관리학", part: "의료기기 관리", emoji: "🔧", title: "의료기기 안전 사고 대응",
+            desc: `Infusion pump 알람 후 환자 부작용 의심. 기기 오류 가능. 우선 조치는?`,
+            choices: shuffle([
+                { text: "기기 즉시 분리 + 환자 안전 평가 + 기기 보존 (조사용) + 의사 보고 + 의료기기 사고 보고", correct: true, effect: { hp: -3, rep: 25 }, log: "정답. 의료기기 사고 대응 표준 — 식약처 보고 의무." },
+                { text: "단순 알람으로 무시", effect: { hp: -32, rep: -28 }, log: "환자 안전 위협." },
+                { text: "기기 분리 후 폐기", effect: { hp: -28, rep: -22 }, log: "보존 + 조사 필요." },
+                { text: "환자에게 책임 운운", effect: { hp: -32, rep: -28 }, log: "이차 피해." }
+            ]) };
+    }
+
+    function generateHospiceLawQuestion() {
+        return { baseId: "hospice_law", category: "보건의약관계법규", part: "호스피스법", emoji: "🕊️", title: "호스피스·완화의료법 적용",
+            desc: `호스피스·완화의료에 관한 법률상 대상자 범위는?`,
+            choices: shuffle([
+                { text: "말기 + 임종기 환자 (암·AIDS·만성폐쇄성폐질환·만성간경화 등) + 환자/대리인 동의", correct: true, effect: { hp: -2, rep: 22 }, log: "정답. 호스피스법 적용 범위." },
+                { text: "암 환자만 가능", effect: { hp: -22, rep: -16 }, log: "대상 질환 확장됨." },
+                { text: "환자 동의 없이 가족 결정", effect: { hp: -28, rep: -22 }, log: "본인 의사 우선." },
+                { text: "65세 이상에게만 적용", effect: { hp: -22, rep: -16 }, log: "연령 제한 없음." }
+            ]) };
+    }
+
     const allGenerators = [
         generateDopamineQuestion, generateSepsisQuestion, generatePsychQuestion,
         generateElectrolyteQuestion, generatePedsPriorityQuestion, generateOBQuestion,
@@ -1837,6 +1979,12 @@
         generateDrugScheduleQuestion, generateVentilatorSettingQuestion, generateNeonatalVitalsQuestion,
         generateIVExtravasationQuestion, generateGastricLavageQuestion, generateVTEPreventionQuestion,
         generateSterileGownQuestion, generateNutritionalAssessmentQuestion, generateMoCAQuestion,
+        // v1.2 특수 영역 (12)
+        generateTLSQuestion, generateSJSQuestion, generateUTIElderlyQuestion, generateLupusFlareQuestion,
+        generateNeonatalHypoglycemiaQuestion, generateBreastfeedingDrugQuestion,
+        generateADHDQuestion, generatePedsLeukemiaQuestion,
+        generateOCDQuestion, generateForeignerCareQuestion,
+        generateMedicalDeviceQuestion, generateHospiceLawQuestion,
     ];
 
     function generateECGStripQuestion() {
@@ -1957,5 +2105,10 @@
         generateDrugScheduleQuestion, generateVentilatorSettingQuestion, generateNeonatalVitalsQuestion,
         generateIVExtravasationQuestion, generateGastricLavageQuestion, generateVTEPreventionQuestion,
         generateSterileGownQuestion, generateNutritionalAssessmentQuestion, generateMoCAQuestion,
+        generateTLSQuestion, generateSJSQuestion, generateUTIElderlyQuestion, generateLupusFlareQuestion,
+        generateNeonatalHypoglycemiaQuestion, generateBreastfeedingDrugQuestion,
+        generateADHDQuestion, generatePedsLeukemiaQuestion,
+        generateOCDQuestion, generateForeignerCareQuestion,
+        generateMedicalDeviceQuestion, generateHospiceLawQuestion,
     };
 });
