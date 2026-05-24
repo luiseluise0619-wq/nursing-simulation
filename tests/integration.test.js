@@ -1270,6 +1270,41 @@ describe("P2 — AdMob 어댑터 (Capacitor 호환)", () => {
         expect(scMatch[1]).not.toMatch(/generateClinicalEventByCategory|NQ\.allGenerators|pickDailyGenerators/);
     });
 
+    test("듀티 시뮬레이션(initSurvival)은 에피소드 모드로 진입한다 — 일반 문제 generator 0건", () => {
+        loadScript();
+        // 듀티 시뮬레이션 클릭 → 에피소드 step 화면이 나와야 함
+        document.querySelector('[data-action="initSurvival"]').click();
+        const card = document.querySelector(".scene-card");
+        expect(card).not.toBeNull();
+        // 에피소드 카테고리 태그 (NC.EPISODES.title) 가 노출되어야 함
+        const tag = card.querySelector(".category-tag");
+        expect(tag).not.toBeNull();
+        // 카테고리는 8과목 generator 카테고리가 아니라 에피소드 제목
+        const C = require("../content.js");
+        const epTitles = (C.EPISODES || []).map(e => e.title);
+        const generatorCats = ["성인간호학", "모성간호학", "아동간호학", "정신간호학",
+            "지역사회간호학", "간호관리학", "기본간호학", "보건의약관계법규"];
+        const tagText = tag.textContent || "";
+        // 에피소드 제목 중 하나가 카테고리에 들어있어야 함
+        const matchedEp = epTitles.some(t => tagText.includes(t));
+        expect(matchedEp).toBe(true);
+        // 일반 generator 카테고리는 들어있으면 안 됨
+        const hasGenCat = generatorCats.some(c => tagText.includes(`[${c}]`));
+        expect(hasGenCat).toBe(false);
+    });
+
+    test("initSurvival 함수 본문에 generator 호출이 없다 (정적 검증)", () => {
+        const fs = require("fs");
+        const path = require("path");
+        const src = fs.readFileSync(path.join(__dirname, "..", "script.js"), "utf-8");
+        const m = src.match(/function\s+initSurvival\s*\([^)]*\)\s*\{([\s\S]*?)\n\}\n/);
+        expect(m).not.toBeNull();
+        // initSurvival 은 더 이상 일반 문제 generator 를 호출하지 않음
+        expect(m[1]).not.toMatch(/generateClinicalEventByCategory|NQ\.allGenerators/);
+        // 에피소드 진입 호출이 있어야 함
+        expect(m[1]).toMatch(/beginEpisode|renderEpisodeResumeChoice/);
+    });
+
     test("CLINICAL_SVG 이미지 시스템 — 6종 시각자료 모두 SVG 반환", () => {
         const fs = require("fs");
         const path = require("path");

@@ -1403,12 +1403,30 @@ function resetStateForMode() {
     gameState._lastDeath = null;
 }
 function initSurvival() {
+    // v1.2: 듀티 시뮬레이션 = 랜덤 에피소드 자동 진입.
+    // 일반 문제 generator 절대 호출 X. 에피소드 step 만 이어서 진행 + 엔딩.
     resetStateForMode();
-    gameState.mode = "survival"; gameState.quizCategory = null;
-    gameState.firedStoryBeats = [];
-    showCoreUI(); UI.logBar.innerHTML = "";
-    addLog("듀티가 시작되었습니다. 첫 판단부터 중요합니다.", "log-important");
-    renderSurvivalEvent("intro");
+    const episodes = NC.EPISODES || [];
+    if (episodes.length === 0) {
+        // 컨텐츠 부재 시 안전한 메뉴 복귀
+        addLog("에피소드 컨텐츠가 없습니다.", "log-bad");
+        returnToMenu();
+        return;
+    }
+    // 진행 중인 에피소드가 있으면 그것부터 이어가기 제안
+    const inProgress = episodes
+        .map(ep => ({ ep, progress: Storage.getEpisodeProgress(ep.id) }))
+        .filter(x => x.progress && x.progress.step > 0 && x.progress.step < x.ep.steps.length);
+    if (inProgress.length > 0) {
+        return renderEpisodeResumeChoice(inProgress[0].ep, inProgress[0].progress);
+    }
+    // 미완료(또는 모두 완료된 상태에서) 랜덤 에피소드 선택
+    const data = Storage.load();
+    const done = data.episodes || {};
+    const pool = episodes.filter(ep => !done[ep.id] || !done[ep.id].completed);
+    const target = (pool.length > 0 ? pool : episodes)[Math.floor(Math.random() * (pool.length > 0 ? pool.length : episodes.length))];
+    addLog(`🎲 듀티 시뮬레이션 — 오늘의 에피소드: ${target.title}`, "log-important");
+    beginEpisode(target.id, 0, 100, 0);
 }
 function renderSurvivalEvent(eventId) {
     let ev;
@@ -3070,8 +3088,8 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
 
         <button class="hero-card" data-action="initSurvival">
           <div class="hero-label">오늘의 듀티</div>
-          <div class="hero-title">실전 듀티 시작</div>
-          <div class="hero-sub">${escapeHtml(gameState.currentShift)} 시프트 · 20 이벤트 · HP · 평판 · 스토리 비트</div>
+          <div class="hero-title">듀티 시뮬레이션 시작</div>
+          <div class="hero-sub">${escapeHtml(gameState.currentShift)} 시프트 · 랜덤 에피소드 자동 진행 · HP · 평판 · 엔딩</div>
           <div class="shift-row-inline" role="radiogroup" aria-label="시프트 난이도">
             <button class="shift-pill ${gameState.currentShift === 'Day' ? 'active' : ''}" data-action="setShift" data-shift="Day" data-mult="1.0">Day</button>
             <button class="shift-pill ${gameState.currentShift === 'Evening' ? 'active' : ''}" data-action="setShift" data-shift="Evening" data-mult="1.2">Evening</button>
