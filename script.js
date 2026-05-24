@@ -2243,6 +2243,61 @@ function handleEpisodeChoice(choice, ev) {
     });
 }
 
+// 커리어 결과 — 듀티 누적 + 평판 + 누적 에피소드로 간호사 일대기 스토리
+function generateCareerOutcome(hp, rep, _completedEpisodes) {
+    // 누적 평판 (전체 에피소드 history 기반) + 현재 듀티 결과
+    const data = Storage.load();
+    const epHist = (data.history || []).filter(h => h && h.mode === "episode");
+    const bestStreak = epHist.length >= 3 && epHist.slice(0, 3).every(h => h.ending === "good");
+    const recentBad = epHist.length >= 2 && epHist.slice(0, 2).every(h => h.ending === "bad");
+
+    // 본 듀티 점수
+    const score = hp + rep;
+    let tier;
+    if (score >= 150 && bestStreak) tier = "promotion";
+    else if (score >= 130) tier = "honored";
+    else if (score >= 90) tier = "stable";
+    else if (score >= 40) tier = "transfer";
+    else if (recentBad) tier = "burnout";
+    else tier = "rough";
+
+    const stories = {
+        promotion: [
+            { title: "🏆 수간호사 승진 — 다음 분기 정식 발령", body: "최근 3차례 듀티 모두 우수. 동료들이 추천 + 수간호사 결정. 다음 분기 정식 승진 통보.\n\"좋은 케이스마다 본인이 있었어요\" — 부장님 코멘트." },
+            { title: "🎓 전문간호사 펠로우십 합격", body: "본인 듀티 기록·동료 추천서로 전문간호사 펠로우십 합격. 6개월 파견 교육 시작. 미래 커리어 한 단계." },
+            { title: "🌟 우수 간호사상 수상 — 사내 시상식", body: "병원 우수 간호사상 후보 → 수상. 부장님 \"환자 안전 + 다학제 협력의 모범\". 사내 인터뷰 진행." },
+        ],
+        honored: [
+            { title: "📈 분기 우수 직원 — 인정", body: "분기 우수 직원으로 본인 이름이 올라갑니다. 상금 + 휴가 보상. 동료들의 신뢰가 두터워집니다." },
+            { title: "👏 부서 인계 표창 — 모범", body: "안전한 인계와 환자 케어로 부서 표창. 다른 부서에서 견학 요청도 들어옵니다." },
+            { title: "💼 멘토 지정 — 신규 간호사 교육 담당", body: "신규 간호사 교육 멘토로 지정. \"본인 같은 간호사를 키우고 싶어요\" — 부장님." },
+        ],
+        stable: [
+            { title: "🌿 안정적 근무 — 흐름 유지", body: "특별한 사건 없이 안정 근무. 환자·동료와의 관계도 무난. 연간 평가 \"기대 충족\"." },
+            { title: "📚 학회 참석 기회 — 자기계발", body: "병원 지원 학회 참석 기회. 새 임상 지식·네트워크 + 다음 듀티 준비." },
+            { title: "🔄 부서 이동 검토 — 새 도전", body: "본인 의향으로 다른 부서 (외래·검진센터) 이동 검토. 새 경험을 위해 인사팀과 면담." },
+        ],
+        transfer: [
+            { title: "🔁 부서 이동 권유 — 적성 평가", body: "본인 + 관리자 면담 후 다른 부서 이동 권유. 적성과 강점을 살릴 영역을 찾는 중. 휴직보단 적성 일치." },
+            { title: "📖 추가 교육 권유 — 역량 보강", body: "직무 역량 평가 후 추가 교육 권유 (CPR·약물 안전·인계 표준). 6개월 교육 후 재평가." },
+            { title: "👥 동료 멘토링 시작 — 학습 동맹", body: "선임 멘토 1:1 배정. 6개월 동안 함께 듀티하며 케어 표준 다시 익힘." },
+        ],
+        burnout: [
+            { title: "💔 번아웃 휴직 권고 — 회복 우선", body: "연속 어려운 듀티 후 정신과·산업의학 평가 → 휴직 권고. 본인 회복 + 가족 시간 + 직장 복귀 계획.\nEAP·자조모임 자원 안내됨." },
+            { title: "🌧 이직 결정 — 다른 환경 모색", body: "이번 듀티 결과 + 누적 번아웃으로 이직 결정. 작은 병원/외래 등 다른 환경 모색. 본인 회복이 우선." },
+            { title: "🏥 산재 신청 + 휴직 — 재충전", body: "직장 내 사건으로 산재 신청 + 6개월 휴직. 본인 회복 + 시스템 평가. 복귀 후 다른 부서 배정 예정." },
+        ],
+        rough: [
+            { title: "🌫 마음 무거운 듀티 — 디브리핑", body: "환자 위해 없이 듀티 마쳤지만 본인 정서 무거움. 팀 디브리핑 + EAP + 다음 듀티 회복 시간 확보." },
+            { title: "📋 개선 계획 수립 — 다음 듀티 준비", body: "관리자 면담 후 개선 계획 수립 (시간 관리·인계·환자 사정). 다음 듀티에서 적용 예정." },
+            { title: "🤝 동료 지원 강화 — 1:1 슈퍼비전", body: "동료 슈퍼비전 + 정기 디브리핑 강화. 본인 회복 + 케어 표준 점검." },
+        ],
+    };
+    const pool = stories[tier];
+    const pick = pool[Math.floor(Math.random() * pool.length)];
+    return { tier, ...pick };
+}
+
 function endEpisode() {
     Ads.showInterstitial(ADS_UNITS.interstitial);
     const ep = NC.EPISODES.find(x => x.id === gameState.episodeId);
@@ -2257,14 +2312,23 @@ function endEpisode() {
     Storage.addHistory({ mode: "episode", at: Date.now(), id: gameState.episodeId, hp: gameState.hp, rep: gameState.rep, ending: endingKey });
     Storage.setEpisodeResult(gameState.episodeId, endingKey, gameState.hp, gameState.rep);
     Storage.clearEpisodeProgress(gameState.episodeId); // 완수 시 진행 클리어
+
+    // 커리어 결과 (간호사 일대기 스토리텔링)
+    const career = generateCareerOutcome(gameState.hp, gameState.rep, gameState.episodeStep);
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
         <h2 class="scene-title">${escapeHtml(ending.title)}</h2>
         <p class="scene-desc">${escapeHtml(ending.body)}</p>
         <hr class="dashboard-divider">
+        <h3 class="modal-section-title">📖 커리어 결과</h3>
+        <p class="scene-desc"><strong>${escapeHtml(career.title)}</strong></p>
+        <p class="scene-desc">${escapeHtml(career.body)}</p>
+        <hr class="dashboard-divider">
         <p class="scene-desc">최종 HP <strong>${gameState.hp}</strong> · 평판 <strong>${gameState.rep}</strong> · 듀티 종료.</p>
         <div class="choice-list">
-          <button class="choice-btn primary" data-action="renderEpisodeMenu">에피소드 목록</button>
+          <button class="choice-btn primary" data-action="initSurvival">다음 듀티 (랜덤 에피소드)</button>
+          <button class="choice-btn" data-action="renderEpisodeMenu">에피소드 목록</button>
+          <button class="choice-btn" data-action="shareResultCard" data-mode="career" data-title="${escapeHtml(career.title)}" data-lines="HP ${gameState.hp}|평판 ${gameState.rep}|${escapeHtml(ep.title)}">결과 카드 다운로드</button>
           <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
         </div>
       </div>`;

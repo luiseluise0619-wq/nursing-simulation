@@ -1305,6 +1305,23 @@ describe("P2 — AdMob 어댑터 (Capacitor 호환)", () => {
         expect(m[1]).toMatch(/beginEpisode|renderEpisodeResumeChoice/);
     });
 
+    test("커리어 엔딩 시스템 (generateCareerOutcome) 이 존재한다", () => {
+        const fs = require("fs");
+        const path = require("path");
+        const src = fs.readFileSync(path.join(__dirname, "..", "script.js"), "utf-8");
+        // 함수 존재
+        expect(src).toMatch(/function\s+generateCareerOutcome\s*\(/);
+        // 6 tier 모두 포함
+        for (const tier of ["promotion", "honored", "stable", "transfer", "burnout", "rough"]) {
+            expect(src).toMatch(new RegExp(`${tier}:\\s*\\[`));
+        }
+        // 승진·이직·번아웃·승급 키워드 포함
+        expect(src).toMatch(/승진|승급/);
+        expect(src).toMatch(/이직|사직|휴직/);
+        expect(src).toMatch(/번아웃/);
+        expect(src).toMatch(/우수 간호사상|펠로우십/);
+    });
+
     test("CLINICAL_SVG 이미지 시스템 — 6종 시각자료 모두 SVG 반환", () => {
         const fs = require("fs");
         const path = require("path");
