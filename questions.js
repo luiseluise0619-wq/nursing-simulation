@@ -1586,6 +1586,196 @@
             ]) };
     }
 
+    // ── v1.2 평가 도구·임상 표준 라운드 (15 generator) ─────────────────────
+
+    function generateKTASQuestion() {
+        const cases = [
+            { sit: "흉통 + 식은땀 + V/S 위험", lvl: "KTAS 1 (소생)", wrong: ["KTAS 3 (긴급)", "KTAS 4 (준응급)", "KTAS 5 (비응급)"] },
+            { sit: "호흡곤란 SpO2 92% + 의식 명료", lvl: "KTAS 2 (응급)", wrong: ["KTAS 5 (비응급)", "KTAS 4 (준응급)", "KTAS 1 (소생)"] },
+            { sit: "복통 NRS 7 + V/S 안정", lvl: "KTAS 3 (긴급)", wrong: ["KTAS 1 (소생)", "KTAS 5 (비응급)", "KTAS 4 (준응급)"] },
+            { sit: "감기 기침 + 미열 38.0℃", lvl: "KTAS 4 (준응급)", wrong: ["KTAS 1 (소생)", "KTAS 2 (응급)", "KTAS 3 (긴급)"] },
+            { sit: "처방전 재발급 요청", lvl: "KTAS 5 (비응급)", wrong: ["KTAS 1 (소생)", "KTAS 2 (응급)", "KTAS 3 (긴급)"] },
+        ];
+        const c = pick(cases);
+        const wrongs = shuffle(c.wrong);
+        return { baseId: "ktas", category: "지역사회간호학", part: "응급실 분류", emoji: "🚑", title: "KTAS 응급실 5단계 분류",
+            desc: `다음 상황의 KTAS 분류는?\n"${c.sit}"`,
+            choices: shuffle([
+                { text: c.lvl, correct: true, effect: { hp: -2, rep: 22 }, log: `정답. ${c.lvl} 의 표준 기준입니다.` },
+                { text: wrongs[0], effect: { hp: -18, rep: -12 }, log: "KTAS 기준에 맞지 않습니다." },
+                { text: wrongs[1], effect: { hp: -18, rep: -12 }, log: "KTAS 기준에 맞지 않습니다." },
+                { text: wrongs[2], effect: { hp: -18, rep: -12 }, log: "KTAS 기준에 맞지 않습니다." }
+            ]) };
+    }
+
+    function generateAldreteScoreQuestion() {
+        return { baseId: "aldrete", category: "성인간호학", part: "회복실 (PACU)", emoji: "🛌", title: "Aldrete 점수 — 회복실 퇴실 기준",
+            desc: `Aldrete 점수 9점 (활동 2/호흡 2/순환 2/의식 2/색 1) 환자의 적절한 다음 단계는?`,
+            choices: shuffle([
+                { text: "병동 이송 가능 (Aldrete ≥9 + 안정 활력) — 인계 SBAR + 가족 안내", correct: true, effect: { hp: -2, rep: 22 }, log: "정답. Aldrete 9점은 일반병동 이송 기준." },
+                { text: "ICU 즉시 이송 필요", effect: { hp: -22, rep: -16 }, log: "9점은 안정 상태." },
+                { text: "회복실에서 6시간 더 관찰", effect: { hp: -18, rep: -10 }, log: "기준 충족 시 이송." },
+                { text: "퇴원 가능", effect: { hp: -28, rep: -22 }, log: "병동 이송이 표준." }
+            ]) };
+    }
+
+    function generateMorseFallScaleQuestion() {
+        return { baseId: "morse_fall", category: "간호관리학", part: "낙상 위험 평가", emoji: "🚶", title: "Morse Fall Scale 해석",
+            desc: `노인 환자 Morse 점수 65점 (낙상 과거력·다발 진단·IV 보유·정맥주사 카테터·보행 보조기). 적절한 중재는?`,
+            choices: shuffle([
+                { text: "고위험 (≥45) — 침대 알람 + 낙상 표지 + 1m 이내 동행 + 환경 정리 + 화장실 동행 + 가족 교육", correct: true, effect: { hp: -3, rep: 25 }, log: "정답. Morse ≥45 고위험군 표준 중재." },
+                { text: "저위험 — 일반 케어", effect: { hp: -28, rep: -22 }, log: "고위험군 식별 누락." },
+                { text: "신체보호대 즉시 적용", effect: { hp: -25, rep: -20 }, log: "마지막 수단 + 윤리 절차." },
+                { text: "환자 침대에서 못 나오게 강제", effect: { hp: -22, rep: -18 }, log: "이동권 침해." }
+            ]) };
+    }
+
+    function generateBradenScaleQuestion() {
+        return { baseId: "braden", category: "기본간호학", part: "욕창 위험 평가", emoji: "🛏️", title: "Braden Scale 해석",
+            desc: `의식 저하 환자 Braden 12점 (감각·습기·활동·이동·영양·마찰). 우선 중재는?`,
+            choices: shuffle([
+                { text: "고위험 (≤12) — 2시간마다 체위변경 + 압력 분산 매트리스 + 피부 보호 + 영양 평가 + 매일 평가", correct: true, effect: { hp: -3, rep: 25 }, log: "정답. Braden ≤12 고위험 표준 중재." },
+                { text: "저위험 — 일반 케어", effect: { hp: -32, rep: -28 }, log: "고위험군 누락 = 욕창 진행." },
+                { text: "체위변경 4시간마다", effect: { hp: -22, rep: -16 }, log: "고위험은 2시간." },
+                { text: "환자에게 본인이 움직이라 권유", effect: { hp: -28, rep: -22 }, log: "의식 저하 환자에 부적절." }
+            ]) };
+    }
+
+    function generateSilvermanScoreQuestion() {
+        return { baseId: "silverman", category: "아동간호학", part: "신생아 호흡곤란", emoji: "🍼", title: "Silverman-Anderson 점수",
+            desc: `미숙아 Silverman 점수 7점 (상흉부 함몰·하흉부 함몰·검상돌기 함몰·비익호흡·신음). 우선 중재는?`,
+            choices: shuffle([
+                { text: "중증 호흡곤란 (≥7) — 산소 + 양압환기 (CPAP/PPV) 준비 + NICU 즉시 협진 + 표면활성제 검토", correct: true, effect: { hp: -3, rep: 28 }, log: "정답. Silverman ≥7 은 중증 — 즉시 호흡 보조." },
+                { text: "경증으로 보고 관찰", effect: { hp: -38, rep: -32 }, log: "사망 위험 가속." },
+                { text: "보온만 강화", effect: { hp: -32, rep: -28 }, log: "원인 평가 + 호흡 보조 필수." },
+                { text: "엄마 가슴에 안기게 함", effect: { hp: -28, rep: -22 }, log: "중증 호흡곤란은 NICU." }
+            ]) };
+    }
+
+    function generateBloodTypeQuestion() {
+        const cases = [
+            { donor: "O(-) 적혈구", recipient: "AB(+) 환자", compat: "호환 (universal donor)", wrong: ["호환 불가 — 즉시 중단", "조건부 호환 (검사 후)", "B 형 환자만 호환"] },
+            { donor: "AB(+) 혈장 (FFP)", recipient: "O(+) 환자", compat: "호환 (혈장 universal donor)", wrong: ["호환 불가", "O 형 환자만 호환", "AB 형 환자만 호환"] },
+            { donor: "A(+) 적혈구", recipient: "O(+) 환자", compat: "호환 불가 — 즉시 중단·교차시험 재확인", wrong: ["호환 — 진행", "응급 시 가능", "단순 알레르기 반응 위험만"] },
+        ];
+        const c = pick(cases);
+        const wrongs = shuffle(c.wrong);
+        return { baseId: "blood_type", category: "성인간호학", part: "수혈 호환성", emoji: "🩸", title: "ABO·Rh 호환성",
+            desc: `${c.donor} → ${c.recipient} 의 호환성은?`,
+            choices: shuffle([
+                { text: c.compat, correct: true, effect: { hp: -3, rep: 25 }, log: `정답. ABO 호환성의 표준 기준입니다.` },
+                { text: wrongs[0], effect: { hp: -32, rep: -28 }, log: "호환성 판단 오류." },
+                { text: wrongs[1], effect: { hp: -22, rep: -16 }, log: "호환성 판단 오류." },
+                { text: wrongs[2], effect: { hp: -22, rep: -16 }, log: "호환성 판단 오류." }
+            ]) };
+    }
+
+    function generateDrugScheduleQuestion() {
+        const cases = [
+            { drug: "Morphine (모르핀)", cat: "마약 (마약류관리법)", wrong: ["향정신성의약품", "일반 의약품", "전문 의약품 (마약 제외)"] },
+            { drug: "Lorazepam (벤조디아제핀)", cat: "향정신성의약품 4군", wrong: ["마약", "일반 의약품", "한약"] },
+            { drug: "Methylphenidate (ADHD 약)", cat: "향정신성의약품 2군", wrong: ["마약", "일반 의약품", "한약"] },
+        ];
+        const c = pick(cases);
+        const wrongs = shuffle(c.wrong);
+        return { baseId: "drug_schedule", category: "보건의약관계법규", part: "마약류관리법", emoji: "💊", title: "약물 분류",
+            desc: `${c.drug} 의 법적 분류는?`,
+            choices: shuffle([
+                { text: c.cat, correct: true, effect: { hp: -2, rep: 22 }, log: `정답. 마약류관리법 분류.` },
+                { text: wrongs[0], effect: { hp: -18, rep: -12 }, log: "분류가 다릅니다." },
+                { text: wrongs[1], effect: { hp: -18, rep: -12 }, log: "분류가 다릅니다." },
+                { text: wrongs[2], effect: { hp: -18, rep: -12 }, log: "분류가 다릅니다." }
+            ]) };
+    }
+
+    function generateVentilatorSettingQuestion() {
+        return { baseId: "ventilator", category: "성인간호학", part: "기계환기", emoji: "🫁", title: "Ventilator 알람 — high pressure",
+            desc: `Ventilator 환자 갑작스러운 high pressure 알람 + SpO2 88%. 우선 평가는?`,
+            choices: shuffle([
+                { text: "DOPE 평가 — Displacement(튜브)·Obstruction(분비물·꺾임)·Pneumothorax·Equipment 점검 후 의사 콜", correct: true, effect: { hp: -3, rep: 25 }, log: "정답. Ventilator 응급 평가 표준 (DOPE)." },
+                { text: "알람 음소거 + 관찰", effect: { hp: -38, rep: -32 }, log: "알람 무시 = 환자 위해." },
+                { text: "Ventilator setting 즉시 변경", effect: { hp: -28, rep: -22 }, log: "원인 평가 후 setting 조정." },
+                { text: "흡인 강하게 반복", effect: { hp: -22, rep: -16 }, log: "원인 평가 후 단계적 조치." }
+            ]) };
+    }
+
+    function generateNeonatalVitalsQuestion() {
+        return { baseId: "neonatal_vitals", category: "아동간호학", part: "신생아 활력징후", emoji: "👶", title: "신생아 정상 활력징후",
+            desc: `생후 1일 신생아의 정상 활력징후 범위는?`,
+            choices: shuffle([
+                { text: "HR 110~160 / RR 30~60 / BP 70/40 / 체온 36.5~37.5℃", correct: true, effect: { hp: -2, rep: 22 }, log: "정답. 신생아 정상 활력 표준." },
+                { text: "HR 60~100 / RR 12~20 / BP 120/80 (성인 기준)", effect: { hp: -22, rep: -16 }, log: "성인 기준." },
+                { text: "HR 200~250 / RR 80~100 / BP 50/30", effect: { hp: -22, rep: -16 }, log: "비정상 범위." },
+                { text: "HR 80~120 / RR 20~30 (학령기 기준)", effect: { hp: -18, rep: -12 }, log: "학령기 기준." }
+            ]) };
+    }
+
+    function generateIVExtravasationQuestion() {
+        return { baseId: "iv_extra", category: "기본간호학", part: "정맥주사", emoji: "💉", title: "정맥주사 외삼출 (비-발포제)",
+            desc: `일반 항생제 IV 도중 환자가 \"주사 부위 부어요\" 호소. 부위 부종 + 발적. 우선 조치는?`,
+            choices: shuffle([
+                { text: "즉시 주입 중단 + 카테터 제거 + 거상 + 차가운 찜질 + 의사 보고 + 사정·기록", correct: true, effect: { hp: -2, rep: 22 }, log: "정답. 비-발포제 외삼출 표준 (발포제는 다름)." },
+                { text: "주입 그대로 계속", effect: { hp: -32, rep: -28 }, log: "조직 손상 가속." },
+                { text: "마사지로 분산 시도", effect: { hp: -28, rep: -22 }, log: "조직 손상 가속." },
+                { text: "따뜻한 찜질 적용", effect: { hp: -22, rep: -16 }, log: "비-발포제는 차가운 찜질." }
+            ]) };
+    }
+
+    function generateGastricLavageQuestion() {
+        return { baseId: "gastric_lavage", category: "성인간호학", part: "중독 응급", emoji: "🚰", title: "위세척 vs 활성탄 적응증",
+            desc: `Acetaminophen 50정 복용 후 1시간 도착 환자 (의식 명료). 우선 처치는?`,
+            choices: shuffle([
+                { text: "활성탄 1g/kg 경구 (복용 후 1시간 이내) + NAC 준비 + 정신과 협진", correct: true, effect: { hp: -3, rep: 25 }, log: "정답. 활성탄은 1시간 이내 효과적. 위세척은 제한적 적응증." },
+                { text: "위세척 즉시 시행", effect: { hp: -25, rep: -20 }, log: "위세척은 합병증 위험. 활성탄이 1차." },
+                { text: "구토 유발 (ipecac)", effect: { hp: -32, rep: -28 }, log: "Ipecac 은 더 이상 권장되지 않음." },
+                { text: "관찰만 진행", effect: { hp: -38, rep: -32 }, log: "치료 지연 = 간독성." }
+            ]) };
+    }
+
+    function generateVTEPreventionQuestion() {
+        return { baseId: "vte_prevention", category: "성인간호학", part: "VTE 예방", emoji: "🦵", title: "수술 후 VTE 예방",
+            desc: `고관절 치환술 후 환자의 VTE 예방으로 가장 적절한 것은?`,
+            choices: shuffle([
+                { text: "조기 보행 + TED 스타킹/공기 압박 (IPC) + 저분자량 헤파린 (LMWH) 피하 주사 + 수액 관리", correct: true, effect: { hp: -2, rep: 25 }, log: "정답. ACCP CHEST 가이드 VTE 예방 표준." },
+                { text: "절대 침상 안정", effect: { hp: -32, rep: -28 }, log: "VTE 위험 가속." },
+                { text: "Aspirin 만 단독", effect: { hp: -22, rep: -16 }, log: "고위험 수술은 LMWH 권장." },
+                { text: "수술 후 VTE 예방 불필요", effect: { hp: -38, rep: -32 }, log: "고관절은 VTE 고위험군." }
+            ]) };
+    }
+
+    function generateSterileGownQuestion() {
+        return { baseId: "sterile_gown", category: "기본간호학", part: "무균술", emoji: "🥼", title: "무균 가운 착용 순서",
+            desc: `수술실 무균 가운 착용 시 올바른 순서는?`,
+            choices: shuffle([
+                { text: "외과적 손씻기 → 가운 착용 (안쪽만 만짐) → 손 가운 소매로 → 장갑 (closed gloving) → 어시스턴트가 뒤 끈 묶음", correct: true, effect: { hp: -2, rep: 25 }, log: "정답. AORN 무균 가운 표준 순서." },
+                { text: "장갑 → 가운 → 손씻기", effect: { hp: -32, rep: -28 }, log: "순서 위반 = 무균 파괴." },
+                { text: "본인이 모든 끈을 직접 묶음", effect: { hp: -28, rep: -22 }, log: "뒤 끈은 어시스턴트." },
+                { text: "가운 바깥쪽을 잡고 입음", effect: { hp: -28, rep: -22 }, log: "바깥쪽은 멸균 영역." }
+            ]) };
+    }
+
+    function generateNutritionalAssessmentQuestion() {
+        return { baseId: "nutrition_assess", category: "기본간호학", part: "영양 평가", emoji: "🍎", title: "영양 위험 사정 (MUST/NRS-2002)",
+            desc: `입원 시 환자 BMI 17 + 최근 3개월 체중 12% 감소 + 식사 거의 못 함. 영양 평가 결과는?`,
+            choices: shuffle([
+                { text: "고영양위험 — 영양 상담 협진 + 영양보충제 + 식이 평가 + 필요시 경관/TPN 검토", correct: true, effect: { hp: -3, rep: 25 }, log: "정답. MUST/NRS-2002 고영양위험 표준 중재." },
+                { text: "정상 — 관찰", effect: { hp: -32, rep: -28 }, log: "고위험군 누락." },
+                { text: "강제 식이만 권유", effect: { hp: -22, rep: -16 }, log: "원인 평가 + 다학제 필요." },
+                { text: "TPN 즉시 시작", effect: { hp: -25, rep: -20 }, log: "경구/경관 우선." }
+            ]) };
+    }
+
+    function generateMoCAQuestion() {
+        return { baseId: "moca", category: "정신간호학", part: "인지 평가", emoji: "🧠", title: "MoCA 점수 해석",
+            desc: `노인 환자 MoCA 22점 (정상 ≥26). 적절한 다음 단계는?`,
+            choices: shuffle([
+                { text: "경도 인지 장애 의심 — 신경과/정신과 협진 + 가역적 원인 평가 (약물·우울·갑상선) + 후속 추적", correct: true, effect: { hp: -3, rep: 25 }, log: "정답. MoCA <26 은 MCI/치매 의심. 가역적 원인 평가 우선." },
+                { text: "정상 — 추가 평가 불필요", effect: { hp: -25, rep: -20 }, log: "기준 미만." },
+                { text: "치매 확진 + 가족 통보", effect: { hp: -28, rep: -22 }, log: "MoCA 단독으로 진단 불가." },
+                { text: "약물 즉시 시작", effect: { hp: -25, rep: -20 }, log: "전문가 평가 + 진단 후 약물." }
+            ]) };
+    }
+
     const allGenerators = [
         generateDopamineQuestion, generateSepsisQuestion, generatePsychQuestion,
         generateElectrolyteQuestion, generatePedsPriorityQuestion, generateOBQuestion,
@@ -1641,6 +1831,12 @@
         generateTimemanagementQuestion, generateNurseHandoffQuestion,
         generateCostEffectivenessQuestion,
         generateConfidentialityLawQuestion, generateAdvancedDirectiveLawQuestion,
+        // v1.2 평가 도구·임상 표준 라운드 (15)
+        generateKTASQuestion, generateAldreteScoreQuestion, generateMorseFallScaleQuestion,
+        generateBradenScaleQuestion, generateSilvermanScoreQuestion, generateBloodTypeQuestion,
+        generateDrugScheduleQuestion, generateVentilatorSettingQuestion, generateNeonatalVitalsQuestion,
+        generateIVExtravasationQuestion, generateGastricLavageQuestion, generateVTEPreventionQuestion,
+        generateSterileGownQuestion, generateNutritionalAssessmentQuestion, generateMoCAQuestion,
     ];
 
     function generateECGStripQuestion() {
@@ -1756,5 +1952,10 @@
         generateTimemanagementQuestion, generateNurseHandoffQuestion,
         generateCostEffectivenessQuestion,
         generateConfidentialityLawQuestion, generateAdvancedDirectiveLawQuestion,
+        generateKTASQuestion, generateAldreteScoreQuestion, generateMorseFallScaleQuestion,
+        generateBradenScaleQuestion, generateSilvermanScoreQuestion, generateBloodTypeQuestion,
+        generateDrugScheduleQuestion, generateVentilatorSettingQuestion, generateNeonatalVitalsQuestion,
+        generateIVExtravasationQuestion, generateGastricLavageQuestion, generateVTEPreventionQuestion,
+        generateSterileGownQuestion, generateNutritionalAssessmentQuestion, generateMoCAQuestion,
     };
 });
