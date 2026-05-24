@@ -1425,7 +1425,13 @@ function initSurvival() {
     const done = data.episodes || {};
     const pool = episodes.filter(ep => !done[ep.id] || !done[ep.id].completed);
     const target = (pool.length > 0 ? pool : episodes)[Math.floor(Math.random() * (pool.length > 0 ? pool.length : episodes.length))];
-    addLog(`🎲 듀티 시뮬레이션 — 오늘의 에피소드: ${target.title}`, "log-important");
+    const sensitive = sensitiveLabelFor(target.id);
+    if (sensitive) {
+        addLog(`🎲 듀티 시뮬레이션 — 오늘의 에피소드: ${target.title}`, "log-important");
+        addLog(`⚠️ 민감 컨텐츠 포함 (${sensitive}). 어렵다면 메인 메뉴로 돌아가세요.`, "log-bad");
+    } else {
+        addLog(`🎲 듀티 시뮬레이션 — 오늘의 에피소드: ${target.title}`, "log-important");
+    }
     beginEpisode(target.id, 0, 100, 0);
 }
 function renderSurvivalEvent(eventId) {
@@ -2119,6 +2125,28 @@ function endTriage() {
 // =========================================================================
 // 에피소드 (장편 스토리 — 한 듀티 전체)
 // =========================================================================
+// 민감 컨텐츠 라벨 — 정서적·트라우마 사용자 보호 안내
+const SENSITIVE_EPISODES = {
+    "ep-psych-closed":       ["자해", "자살", "강박"],
+    "ep-ems-ambulance":      ["자해", "외상"],
+    "ep-ed-elder-abuse":     ["학대", "폭력"],
+    "ep-ed-code-black":      ["폭력", "가정폭력"],
+    "ep-peds-hospice":       ["소아 임종"],
+    "ep-adolescent-psych":   ["자해", "자살", "식이장애"],
+    "ep-psych-outpatient":   ["자살", "자해", "가정폭력"],
+    "ep-er-opioid-od":       ["약물 중독", "자해"],
+    "ep-ob-clinic-abortion": ["임신중절", "청소년 임신"],
+    "ep-hospice-inpatient":  ["임종"],
+    "ep-hiv-clinic":         ["HIV", "차별"],
+    "ep-ed-overdose":        ["자해", "자살", "약물"],
+    "ep-er-pesticide":       ["자해", "자살", "약물"],
+    "ep-trial-1-event":      ["응급 사건"],
+};
+function sensitiveLabelFor(episodeId) {
+    const tags = SENSITIVE_EPISODES[episodeId];
+    return tags ? tags.join("·") : "";
+}
+
 function renderEpisodeMenu() {
     resetStateForMode();
     gameState.mode = "episode_menu";
@@ -2128,13 +2156,16 @@ function renderEpisodeMenu() {
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
         <h2 class="scene-title">에피소드</h2>
-        <p class="scene-desc">한 듀티 12~15단계의 연결된 스토리. 같은 환자·동료·의사가 계속 등장하고, 각 결정이 HP·평판에 누적됩니다.\n\n결과는 마지막 점수에 따라 좋은/평범/힘든 듀티 엔딩으로 갈립니다.</p>
+        <p class="scene-desc">한 듀티 12~15단계의 연결된 스토리. 같은 환자·동료·의사가 계속 등장하고, 각 결정이 HP·평판에 누적됩니다.\n\n⚠️ 표시된 에피소드는 자해·약물·폭력 등 민감한 컨텐츠를 포함합니다. 본인 상태가 어렵다면 다른 에피소드를 권장합니다.</p>
         <div class="choice-list">
           ${NC.EPISODES.map(e => {
               const prog = Storage.getEpisodeProgress(e.id);
               const pill = prog && prog.step > 0 && prog.step < e.steps.length
                   ? ` <span class="mc-badge" style="position:static;background:var(--warning);">진행 중 ${prog.step}/${e.steps.length}</span>` : "";
-              return `<button class="choice-btn primary" data-action="startEpisode" data-arg="${escapeHtml(e.id)}">${escapeHtml(e.title)}${pill}</button>`;
+              const sensitiveTags = sensitiveLabelFor(e.id);
+              const sensitivePill = sensitiveTags
+                  ? ` <span class="mc-badge" style="position:static;background:var(--danger);" title="민감 컨텐츠">⚠️ ${escapeHtml(sensitiveTags)}</span>` : "";
+              return `<button class="choice-btn primary" data-action="startEpisode" data-arg="${escapeHtml(e.id)}">${escapeHtml(e.title)}${pill}${sensitivePill}</button>`;
           }).join("")}
           <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
         </div>
@@ -2726,14 +2757,35 @@ function renderAbout() {
         <p class="about-meta"><strong>v0.8</strong> — 면책 스트립 · BETA 배지 · 오류 신고 · 동의 체크박스.</p>
         <p class="about-meta">전체 이력: <code>CHANGELOG.md</code></p>
 
+        <h3 class="settings-section">피드백 · 오류 신고</h3>
+        <p class="about-meta">버그·잘못된 의학 정보·UX 불편·새 컨텐츠 제안 모두 환영합니다.</p>
+        <ul class="about-list">
+          <li>앱 내 "❗" 버튼 (오답 옆): 의학적 오류 즉시 신고</li>
+          <li>GitHub Issues: <code>github.com/luiseluise0619-wq/nursing-simulation/issues</code></li>
+          <li>피드백: 본 페이지 하단 "피드백 보내기" 버튼</li>
+        </ul>
+
         <h3 class="settings-section">라이선스</h3>
         <p class="about-meta">MIT License. 의료 면책 고지는 <code>LICENSE</code> · <code>SOURCES.md</code> 참고.</p>
 
         <div class="choice-list">
-          <button class="choice-btn primary" data-action="openSettings">설정으로</button>
+          <button class="choice-btn primary" data-action="openFeedback">📝 피드백 보내기</button>
+          <button class="choice-btn" data-action="openSettings">설정으로</button>
           <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
         </div>
       </div>`;
+}
+
+function openFeedback() {
+    // 출시 후 사용자가 1인 개발자에게 직접 피드백 전송할 수 있는 채널.
+    // GitHub Issues URL 은 정해진 저장소로 새 창. 모바일에선 새 탭으로 열림.
+    const url = "https://github.com/luiseluise0619-wq/nursing-simulation/issues/new";
+    try {
+        window.open(url, "_blank", "noopener,noreferrer");
+        addLog("📝 GitHub Issues 새 탭에서 열림 — 자유롭게 의견 작성하세요.", "log-good");
+    } catch {
+        addLog("브라우저가 새 창을 막았습니다. 직접 방문: github.com/luiseluise0619-wq/nursing-simulation/issues", "log-bad");
+    }
 }
 
 function renderPrivacy() {
@@ -3891,6 +3943,7 @@ const DELEGATED_ACTIONS = {
     // 출시 1.0 페이지들
     openSettings: () => openSettings(),
     renderAbout: () => renderAbout(),
+    openFeedback: () => openFeedback(),
     renderPrivacy: () => renderPrivacy(),
     exportData: () => exportData(),
     triggerImportData: () => triggerImportData(),

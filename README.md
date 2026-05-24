@@ -75,10 +75,35 @@ npm start          # → Electron 윈도우(450×800) 가 열립니다
 
 1. GitHub repo 의 **Settings → Pages**
 2. **Source**: `Deploy from a branch`
-3. **Branch**: `main` (또는 현재 브랜치), folder `/ (root)`
-4. **Save** → 약 1분 후 `https://<user>.github.io/<repo>/` 에서 PWA 접속 가능
+3. **Branch**: `claude/app-rating-branch-report-ESRfZ` (또는 `main` 으로 머지 후 main), folder `/ (root)`
+4. **Save** → 약 1분 후 `https://luiseluise0619-wq.github.io/nursing-simulation/` 에서 PWA 접속 가능
 
 호스팅 비용 0원 · HTTPS 자동 · CDN 자동.
+
+### 5. 베타 사용자 모집 — 첫 30명 (1시간)
+
+GitHub Pages 활성화 후 다음 채널에 베타 공개 게시:
+
+- **디시 간호학과 갤러리**: 베타 베타 안내 + 피드백 환영
+- **카카오 오픈채팅**: "간호 국시 시뮬레이터 베타" 채팅방 개설
+- **간호학과 학생회 / 동아리 SNS**: 학과 친구 추천
+- **인스타그램**: 해시태그 #간호국시 #간호학과 #국시준비
+- **트위터/X**: 간호 학생 커뮤니티
+- **유튜브**: 간호국시 강의 채널 댓글 (소개 게시 X, 추천 형식)
+- **Reddit r/Korea / r/koreanursing**: 영어/한국어 베타 안내
+
+### 6. 분석 통합 (선택, 15분)
+
+**Plausible** (가장 가벼움, GDPR/PIPA 자동 준수, 6,500원/월) 또는 **Posthog** (무료 1M 이벤트/월) 권장.
+
+`index.html` 의 `<head>` 안에 1줄 추가:
+
+```html
+<!-- Plausible 분석 (선택) -->
+<script defer data-domain="your-domain.com" src="https://plausible.io/js/script.js"></script>
+```
+
+CSP 메타 태그에 `script-src` 와 `connect-src` 에 `https://plausible.io` 추가 필요.
 
 ---
 

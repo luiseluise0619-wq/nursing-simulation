@@ -1322,6 +1322,34 @@ describe("P2 — AdMob 어댑터 (Capacitor 호환)", () => {
         expect(src).toMatch(/우수 간호사상|펠로우십/);
     });
 
+    test("민감 컨텐츠 라벨 시스템 — SENSITIVE_EPISODES 매핑 + 라벨 표시", () => {
+        const fs = require("fs");
+        const path = require("path");
+        const src = fs.readFileSync(path.join(__dirname, "..", "script.js"), "utf-8");
+        // 매핑 객체 존재
+        expect(src).toMatch(/SENSITIVE_EPISODES\s*=\s*\{/);
+        expect(src).toMatch(/sensitiveLabelFor/);
+        // 자해·자살·임신중절·학대 키워드 포함
+        for (const tag of ["자해", "자살", "임신중절", "학대", "약물"]) {
+            expect(src).toMatch(new RegExp(tag));
+        }
+        // 에피소드 메뉴에서 라벨 표시
+        loadScript();
+        document.querySelector('[data-action="renderEpisodeMenu"]').click();
+        const buttons = [...document.querySelectorAll('[data-action="startEpisode"]')];
+        const hasSensitiveLabel = buttons.some(b => b.innerHTML.includes("⚠️"));
+        expect(hasSensitiveLabel).toBe(true);
+    });
+
+    test("openFeedback 액션이 등록되어 있고 GitHub Issues URL 을 새 탭으로 연다", () => {
+        const fs = require("fs");
+        const path = require("path");
+        const src = fs.readFileSync(path.join(__dirname, "..", "script.js"), "utf-8");
+        expect(src).toMatch(/openFeedback:\s*\(\)\s*=>\s*openFeedback\(\)/);
+        expect(src).toMatch(/function\s+openFeedback\s*\(/);
+        expect(src).toMatch(/github\.com\/luiseluise0619-wq\/nursing-simulation\/issues/);
+    });
+
     test("CLINICAL_SVG 이미지 시스템 — 6종 시각자료 모두 SVG 반환", () => {
         const fs = require("fs");
         const path = require("path");
