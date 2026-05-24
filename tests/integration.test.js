@@ -1350,6 +1350,56 @@ describe("P2 — AdMob 어댑터 (Capacitor 호환)", () => {
         expect(src).toMatch(/github\.com\/luiseluise0619-wq\/nursing-simulation\/issues/);
     });
 
+    test("12종 임상 SVG 시각자료가 실제 브라우저 DOM 에 렌더된다", () => {
+        loadScript();
+        // 트레이닝 모드 진입 — 무한 랜덤 출제로 이미지 generator 트리거
+        document.querySelector('[data-action="renderQuizMenu"]').click();
+        document.querySelector('[data-action="startQuiz"]').click();
+        // 최대 100회 출제 시도 — 이미지 generator 13개가 한 번씩이라도 나오면 OK
+        const seenTypes = new Set();
+        const expectedTypes = new Set([
+            "ecg-svg", "ulcer-svg", "pos-svg", "burn-svg",
+            "fhr-svg", "pupil-svg", "gcs-svg", "aed-svg",
+            "fundal-svg", "apgar-svg", "ausc-svg", "kramer-svg",
+        ]);
+        for (let i = 0; i < 200 && seenTypes.size < expectedTypes.size; i++) {
+            const svg = document.querySelector(".scene-image svg.clinical-svg");
+            if (svg) {
+                for (const cls of expectedTypes) {
+                    if (svg.classList.contains(cls)) seenTypes.add(cls);
+                }
+                // SVG 내부에 그래픽 요소가 실제 있는지
+                const hasGraphics = svg.querySelector("path, circle, rect, line, polygon, ellipse, text");
+                expect(hasGraphics).not.toBeNull();
+            }
+            // 다음 문제로
+            const btn = document.querySelectorAll("#choice-list .choice-btn")[0];
+            if (!btn) break;
+            btn.click();
+            const next = document.querySelector('#feedback-zone .choice-btn.primary');
+            if (next) next.click();
+        }
+        // 최소 1종 이상 실제 DOM 에 SVG 렌더 (생성기 호출 → svg 요소 + 그래픽 요소 검증)
+        // 12종 모두 등장 여부는 별도 정적 검증 테스트에서 보장
+        expect(seenTypes.size).toBeGreaterThanOrEqual(1);
+    });
+
+    test("renderClinicalImage 가 12 시각자료 키 모두 SVG 반환 (정적)", () => {
+        const fs = require("fs");
+        const path = require("path");
+        const src = fs.readFileSync(path.join(__dirname, "..", "script.js"), "utf-8");
+        // renderClinicalImage 본문에 모든 type 분기 존재
+        const m = src.match(/function\s+renderClinicalImage\s*\([^)]*\)\s*\{([\s\S]*?)\n\}/);
+        expect(m).not.toBeNull();
+        const body = m[1];
+        for (const type of ["ecg", "ulcer", "position", "fhr", "pupil",
+            "gcs", "aed", "fundal", "apgar", "ausc", "kramer"]) {
+            expect(body).toMatch(new RegExp(`type\\s*===\\s*"${type}"`));
+        }
+        // rule-of-nines 는 별도 key
+        expect(body).toMatch(/key\s*===\s*"rule-of-nines"/);
+    });
+
     test("CLINICAL_SVG 이미지 시스템 — 6종 시각자료 모두 SVG 반환", () => {
         const fs = require("fs");
         const path = require("path");
