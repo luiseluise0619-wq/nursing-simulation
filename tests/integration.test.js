@@ -1327,6 +1327,48 @@ describe("P2 — AdMob 어댑터 (Capacitor 호환)", () => {
         expect(src).toMatch(/우수 간호사상|펠로우십/);
     });
 
+    test("분석(Plausible) 통합 — 미설정 시 no-op, track 안전", () => {
+        const fs = require("fs");
+        const path = require("path");
+        const src = fs.readFileSync(path.join(__dirname, "..", "script.js"), "utf-8");
+        // ANALYTICS_DOMAIN 설정 + 미설정 시 no-op 가드
+        expect(src).toMatch(/const\s+ANALYTICS_DOMAIN\s*=\s*""/);
+        expect(src).toMatch(/if\s*\(!ANALYTICS_DOMAIN\)\s*return/);
+        expect(src).toMatch(/function\s+initAnalytics\s*\(/);
+        expect(src).toMatch(/function\s+track\s*\(/);
+        // 주요 이벤트 추적 호출 존재
+        expect(src).toMatch(/track\("app_open"\)/);
+        expect(src).toMatch(/track\("daily_challenge_completed"/);
+        expect(src).toMatch(/track\("episode_completed"/);
+        // CSP 에 plausible.io 허용
+        const html = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf-8");
+        expect(html).toMatch(/script-src 'self' https:\/\/plausible\.io/);
+        expect(html).toMatch(/connect-src 'self' https:\/\/plausible\.io/);
+        // 미설정 상태에서 track 호출이 throw 하지 않음 (앱 로드 자체가 boot → track("app_open"))
+        expect(() => loadScript()).not.toThrow();
+    });
+
+    test("트레이닝 모드 — 10문제 세트 완료 시 세트 요약 카드가 뜬다", () => {
+        loadScript();
+        document.querySelector('[data-action="renderQuizMenu"]').click();
+        document.querySelector('[data-action="startQuiz"]').click();
+        // 10문제 풀이 (각 첫 보기 클릭 + 다음)
+        for (let i = 0; i < 10; i++) {
+            const c = document.querySelectorAll("#choice-list .choice-btn")[0];
+            expect(c).toBeTruthy();
+            c.click();
+            const next = document.querySelector('#feedback-zone .choice-btn.primary');
+            next.click();
+        }
+        // 세트 요약 카드 — "세트 1 완료" + 계속 버튼
+        const title = document.querySelector(".scene-title").textContent;
+        expect(title).toMatch(/세트 1 완료/);
+        expect(document.querySelector('[data-action="quizContinue"]')).not.toBeNull();
+        // 한 세트 더 → 다음 문제로 진행
+        document.querySelector('[data-action="quizContinue"]').click();
+        expect(document.querySelector("#choice-list .choice-btn")).not.toBeNull();
+    });
+
     test("에피소드 메뉴가 임상 영역 그룹으로 분류되고 모든 에피소드가 노출된다", () => {
         const C = require("../content.js");
         loadScript();

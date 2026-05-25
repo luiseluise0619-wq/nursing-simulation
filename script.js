@@ -12,6 +12,29 @@ const DAILY_CHALLENGE_TOTAL = 10;
 const STORAGE_KEY = "nurseSim:v1";
 const APP_VERSION = "1.1.0-beta";
 
+// 분석 (Plausible) — 익명·쿠키리스·GDPR/PIPA 준수.
+// 배포 도메인을 여기 1줄 입력하면 자동 활성화. 비워두면 완전 no-op (외부 호출 0).
+const ANALYTICS_DOMAIN = ""; // 예: "luiseluise0619-wq.github.io"
+function initAnalytics() {
+    if (!ANALYTICS_DOMAIN) return; // 미설정 시 외부 호출 0
+    try {
+        const s = document.createElement("script");
+        s.defer = true;
+        s.dataset.domain = ANALYTICS_DOMAIN;
+        s.src = "https://plausible.io/js/script.js";
+        document.head.appendChild(s);
+        window.plausible = window.plausible || function () { (window.plausible.q = window.plausible.q || []).push(arguments); };
+    } catch { /* 분석 실패는 앱 동작에 영향 없음 */ }
+}
+// 익명 이벤트 추적 — Plausible 미로드 시 안전 no-op
+function track(event, props) {
+    try {
+        if (typeof window !== "undefined" && typeof window.plausible === "function") {
+            window.plausible(event, props ? { props } : undefined);
+        }
+    } catch { /* no-op */ }
+}
+
 const CATEGORIES = [
     "기본간호학", "성인간호학", "모성간호학", "아동간호학",
     "지역사회간호학", "정신간호학", "간호관리학", "보건의약관계법규"
@@ -1384,6 +1407,7 @@ function resetStateForMode() {
     gameState.hp = 100; gameState.rep = 0; gameState.eventCount = 0;
     gameState.items = []; gameState.quizSolved = 0;
     gameState.quizCorrect = 0; gameState.quizWrong = 0;
+    gameState.quizSetStartCorrect = 0; gameState.quizSetStartSolved = 0;
     gameState.recentIds = []; gameState.combo = 0;
     gameState.mockTotal = 0; gameState.mockAnswered = 0; gameState.mockCorrect = 0;
     gameState.mockDeadlineTs = 0; gameState.mockWrong = [];
@@ -1512,17 +1536,59 @@ function renderQuizMenu() {
         </div>
       </div>`;
 }
+const QUIZ_SET_SIZE = 10; // 한 세트 = 10문제 (종결감 + 진행도)
 function startQuiz(category) {
     gameState.mode = "quiz"; gameState.quizCategory = category;
     gameState.quizSolved = 0; gameState.quizCorrect = 0; gameState.quizWrong = 0;
-    UI.logBar.innerHTML = ""; addLog(`${category} 풀이를 시작합니다.`, "log-important");
+    gameState.quizSetStartCorrect = 0; gameState.quizSetStartSolved = 0;
+    UI.logBar.innerHTML = ""; addLog(`${category} 풀이를 시작합니다. (한 세트 ${QUIZ_SET_SIZE}문제)`, "log-important");
     renderNextQuizQuestion();
 }
 function renderNextQuizQuestion() {
+    const inSet = (gameState.quizSolved % QUIZ_SET_SIZE) + 1; // 현재 세트 내 위치 (1~10)
     renderSceneCard(generateClinicalEventByCategory(gameState.quizCategory), {
         mode: "quiz", questionIndex: gameState.quizSolved + 1,
-        meta: [gameState.quizCategory, `해결: ${gameState.quizSolved}`, `정답 ${gameState.quizCorrect} / 오답 ${gameState.quizWrong}`]
+        totalSteps: QUIZ_SET_SIZE,
+        meta: [gameState.quizCategory, `세트 ${inSet}/${QUIZ_SET_SIZE}`, `총 ${gameState.quizSolved}문제 · 정답률 ${gameState.quizSolved > 0 ? Math.round(gameState.quizCorrect / gameState.quizSolved * 100) : 0}%`]
     });
+}
+// 한 세트(10문제) 완료 시 결과 요약 + 계속/종료 선택
+function renderQuizSetSummary() {
+    const setNum = Math.floor(gameState.quizSolved / QUIZ_SET_SIZE);
+    const setCorrect = gameState.quizCorrect - gameState.quizSetStartCorrect;
+    const acc = Math.round((setCorrect / QUIZ_SET_SIZE) * 100);
+    let msg, emoji;
+    if (acc >= 90) { emoji = "🏆"; msg = "완벽에 가까워요! 이 과목은 자신감 가져도 됩니다."; }
+    else if (acc >= 70) { emoji = "🌟"; msg = "안정적입니다. 틀린 문제는 오답노트에서 복습하세요."; }
+    else if (acc >= 50) { emoji = "📚"; msg = "절반은 맞췄어요. 오답노트 + 한 세트 더 권장."; }
+    else { emoji = "💪"; msg = "어려운 과목이네요. 오답노트 복습이 가장 빠른 길입니다."; }
+    // 다음 세트 기준점 갱신
+    gameState.quizSetStartCorrect = gameState.quizCorrect;
+    gameState.quizSetStartSolved = gameState.quizSolved;
+    Storage.addHistory({ mode: "quiz", at: Date.now(), category: gameState.quizCategory, total: QUIZ_SET_SIZE, correct: setCorrect, accuracy: acc, set: setNum });
+    UI.gameArea.innerHTML = `
+      <div class="scene-card card">
+        <span class="scene-emoji" aria-hidden="true">${emoji}</span>
+        <h2 class="scene-title">세트 ${setNum} 완료 — ${escapeHtml(gameState.quizCategory)}</h2>
+        <div class="dashboard-row" role="group" aria-label="세트 결과">
+          <div class="dash-stat"><div class="ds-num">${setCorrect}/${QUIZ_SET_SIZE}</div><div class="ds-label">이번 세트</div></div>
+          <div class="dash-stat"><div class="ds-num">${acc}%</div><div class="ds-label">세트 정답률</div></div>
+          <div class="dash-stat"><div class="ds-num">${gameState.quizSolved}</div><div class="ds-label">누적 풀이</div></div>
+          <div class="dash-stat"><div class="ds-num">${gameState.bestCombo}</div><div class="ds-label">최고 콤보</div></div>
+        </div>
+        <p class="scene-desc">${msg}</p>
+        <div class="choice-list">
+          <button class="choice-btn primary" data-action="quizContinue">한 세트 더 (${QUIZ_SET_SIZE}문제)</button>
+          ${gameState.quizWrong > 0 ? `<button class="choice-btn" data-action="reviewWrongAnswers">오답노트 복습 (${gameState.quizWrong})</button>` : ""}
+          <button class="choice-btn" data-action="shareResultCard" data-mode="quiz" data-title="${escapeHtml(gameState.quizCategory)} 세트 ${setNum}" data-lines="이번 세트 ${setCorrect}/${QUIZ_SET_SIZE} (${acc}%)|누적 ${gameState.quizSolved}문제|간호사 시뮬레이터">결과 카드</button>
+          <button class="choice-btn" data-action="renderQuizMenu">과목 변경</button>
+          <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
+        </div>
+      </div>`;
+}
+function quizContinue() {
+    track("quiz_set_completed", { category: gameState.quizCategory });
+    renderNextQuizQuestion();
 }
 function renderFeedback(ev, choice, opts = {}) {
     const isCorrect = isCorrectChoice(choice);
@@ -1583,7 +1649,11 @@ function handleQuizChoice(choice, ev) {
     Storage.incrementStat(ev.category, isCorrect);
     updateStats();
     renderFeedback(ev, choice, {
-        onNext: () => renderNextQuizQuestion(),
+        onNext: () => {
+            // 세트(10문제) 완료 시 요약 카드, 아니면 다음 문제
+            if (gameState.quizSolved % QUIZ_SET_SIZE === 0) renderQuizSetSummary();
+            else renderNextQuizQuestion();
+        },
         extraButton: { label: "과목 변경", onClick: renderQuizMenu },
     });
 }
@@ -1744,6 +1814,7 @@ function handleDailyChoice(choice, ev) {
     });
 }
 function endDailyChallenge() {
+    track("daily_challenge_completed", { correct: String(gameState.dailyCorrect) });
     Ads.showInterstitial(ADS_UNITS.interstitial);
     const correct = gameState.dailyCorrect;
     Storage.setDaily(todayKey(), { solved: DAILY_CHALLENGE_TOTAL, correct, completed: true, ts: Date.now() });
@@ -2367,6 +2438,7 @@ function generateCareerOutcome(hp, rep, _completedEpisodes) {
 }
 
 function endEpisode() {
+    track("episode_completed", { id: gameState.episodeId });
     Ads.showInterstitial(ADS_UNITS.interstitial);
     const ep = NC.EPISODES.find(x => x.id === gameState.episodeId);
     if (!ep) return;
@@ -3592,6 +3664,8 @@ function handleKeydown(e) {
 // =========================================================================
 function boot() {
     cacheUI();
+    initAnalytics();
+    track("app_open");
     const settings = Storage.getSettings();
     applyTheme(settings.theme || "auto");
     Sound.enabled = settings.sound !== false;
@@ -3936,6 +4010,7 @@ const DELEGATED_ACTIONS = {
     initSurvival: () => initSurvival(),
     renderQuizMenu: () => renderQuizMenu(),
     startQuiz: (t) => startQuiz(t.dataset.arg),
+    quizContinue: () => quizContinue(),
     startMockExam: () => startMockExam(),
     startDailyChallenge: () => startDailyChallenge(),
     startDailyChallengeForce: () => startDailyChallengeForce(),
