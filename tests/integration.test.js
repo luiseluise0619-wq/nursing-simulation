@@ -159,11 +159,16 @@ describe("이벤트 위임 핸들러", () => {
         expect(active.dataset.mult).toBe("1.5");
     });
 
-    test("renderQuizMenu 클릭으로 8과목 버튼이 노출된다", () => {
+    test("renderQuizMenu 클릭으로 8과목 + 통합 랜덤 버튼이 노출된다", () => {
         loadScript();
         document.querySelector('[data-action="renderQuizMenu"]').click();
         const cats = document.querySelectorAll('[data-action="startQuiz"]');
-        expect(cats.length).toBe(8);
+        // 8과목 + __random__ = 9
+        expect(cats.length).toBe(9);
+        // 8과목 각각 존재
+        const args = [...cats].map(b => b.dataset.arg);
+        expect(args).toContain("__random__");
+        expect(args.filter(a => a !== "__random__").length).toBe(8);
     });
 });
 
@@ -1348,6 +1353,29 @@ describe("P2 — AdMob 어댑터 (Capacitor 호환)", () => {
         expect(() => loadScript()).not.toThrow();
     });
 
+    test("트레이닝 — 🎲 8과목 통합 랜덤 진입 (category null → 전체 풀)", () => {
+        loadScript();
+        document.querySelector('[data-action="renderQuizMenu"]').click();
+        // __random__ 버튼 존재
+        const randBtn = document.querySelector('[data-action="startQuiz"][data-arg="__random__"]');
+        expect(randBtn).not.toBeNull();
+        randBtn.click();
+        // 문제 출제 화면 — category-tag 가 8과목 중 무엇이든 나옴
+        const tag = document.querySelector(".category-tag");
+        expect(tag).not.toBeNull();
+        // 메타에 "통합 랜덤" 표시
+        const chips = [...document.querySelectorAll(".meta-chip")].map(c => c.textContent).join(" ");
+        expect(chips).toMatch(/통합 랜덤/);
+    });
+
+    test("에피소드 메뉴 상단에 🎲 랜덤 에피소드 버튼이 있다", () => {
+        loadScript();
+        document.querySelector('[data-action="renderEpisodeMenu"]').click();
+        const randEp = document.querySelector('[data-action="initSurvival"]');
+        expect(randEp).not.toBeNull();
+        expect(randEp.textContent).toMatch(/랜덤 에피소드/);
+    });
+
     test("트레이닝 모드 — 10문제 세트 완료 시 세트 요약 카드가 뜬다", () => {
         loadScript();
         document.querySelector('[data-action="renderQuizMenu"]').click();
@@ -1434,6 +1462,9 @@ describe("P2 — AdMob 어댑터 (Capacitor 호환)", () => {
                 const hasGraphics = svg.querySelector("path, circle, rect, line, polygon, ellipse, text");
                 expect(hasGraphics).not.toBeNull();
             }
+            // 세트 요약 카드면 계속 버튼 클릭
+            const cont = document.querySelector('[data-action="quizContinue"]');
+            if (cont) { cont.click(); continue; }
             // 다음 문제로
             const btn = document.querySelectorAll("#choice-list .choice-btn")[0];
             if (!btn) break;
@@ -1480,11 +1511,14 @@ describe("P2 — AdMob 어댑터 (Capacitor 호환)", () => {
         // ECG strip 식별 generator 강제 트리거 — 트레이닝 모드 진입
         document.querySelector('[data-action="renderQuizMenu"]').click();
         document.querySelector('[data-action="startQuiz"]').click();
-        // 50회 시도해 이미지 있는 문제 도달
+        // 80회 시도해 이미지 있는 문제 도달 (세트 요약 카드는 quizContinue 로 통과)
         let foundImage = false;
-        for (let i = 0; i < 50; i++) {
+        for (let i = 0; i < 80; i++) {
             const img = document.querySelector(".scene-image svg.clinical-svg");
             if (img) { foundImage = true; break; }
+            // 세트 요약 카드면 계속 버튼 클릭
+            const cont = document.querySelector('[data-action="quizContinue"]');
+            if (cont) { cont.click(); continue; }
             // 첫 보기 클릭 + 다음
             const c = document.querySelectorAll("#choice-list .choice-btn")[0];
             if (!c) break;

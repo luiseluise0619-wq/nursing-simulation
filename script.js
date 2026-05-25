@@ -1530,6 +1530,11 @@ function renderQuizMenu() {
       <div class="scene-card card">
         <h2 class="scene-title">국가고시 8과목 트레이닝</h2>
         <p class="scene-desc">숫자와 상황이 계속 변하는 무한 랜덤 4지선다 문제를 제공합니다.\n트레이닝 모드에서는 체력이 감소하지 않습니다.</p>
+        <h3 class="episode-group-label">🎲 전체 랜덤</h3>
+        <div class="choice-list">
+          <button class="choice-btn primary" data-action="startQuiz" data-arg="__random__">🎲 8과목 통합 랜덤</button>
+        </div>
+        <h3 class="episode-group-label">📚 과목별</h3>
         <div class="choice-list">
           ${CATEGORIES.map(c => `<button class="choice-btn primary" data-action="startQuiz" data-arg="${escapeHtml(c)}">${c}</button>`).join("")}
           <button class="choice-btn center" data-action="returnToMenu">메인 메뉴</button>
@@ -1538,18 +1543,22 @@ function renderQuizMenu() {
 }
 const QUIZ_SET_SIZE = 10; // 한 세트 = 10문제 (종결감 + 진행도)
 function startQuiz(category) {
+    // "__random__" = 8과목 통합 랜덤 (category null → 전체 풀 출제)
+    if (category === "__random__") category = null;
     gameState.mode = "quiz"; gameState.quizCategory = category;
     gameState.quizSolved = 0; gameState.quizCorrect = 0; gameState.quizWrong = 0;
     gameState.quizSetStartCorrect = 0; gameState.quizSetStartSolved = 0;
-    UI.logBar.innerHTML = ""; addLog(`${category} 풀이를 시작합니다. (한 세트 ${QUIZ_SET_SIZE}문제)`, "log-important");
+    const label = category || "8과목 통합 랜덤";
+    UI.logBar.innerHTML = ""; addLog(`${label} 풀이를 시작합니다. (한 세트 ${QUIZ_SET_SIZE}문제)`, "log-important");
     renderNextQuizQuestion();
 }
 function renderNextQuizQuestion() {
     const inSet = (gameState.quizSolved % QUIZ_SET_SIZE) + 1; // 현재 세트 내 위치 (1~10)
+    const catLabel = gameState.quizCategory || "🎲 통합 랜덤";
     renderSceneCard(generateClinicalEventByCategory(gameState.quizCategory), {
         mode: "quiz", questionIndex: gameState.quizSolved + 1,
         totalSteps: QUIZ_SET_SIZE,
-        meta: [gameState.quizCategory, `세트 ${inSet}/${QUIZ_SET_SIZE}`, `총 ${gameState.quizSolved}문제 · 정답률 ${gameState.quizSolved > 0 ? Math.round(gameState.quizCorrect / gameState.quizSolved * 100) : 0}%`]
+        meta: [catLabel, `세트 ${inSet}/${QUIZ_SET_SIZE}`, `총 ${gameState.quizSolved}문제 · 정답률 ${gameState.quizSolved > 0 ? Math.round(gameState.quizCorrect / gameState.quizSolved * 100) : 0}%`]
     });
 }
 // 한 세트(10문제) 완료 시 결과 요약 + 계속/종료 선택
@@ -1557,6 +1566,7 @@ function renderQuizSetSummary() {
     const setNum = Math.floor(gameState.quizSolved / QUIZ_SET_SIZE);
     const setCorrect = gameState.quizCorrect - gameState.quizSetStartCorrect;
     const acc = Math.round((setCorrect / QUIZ_SET_SIZE) * 100);
+    const catLabel = gameState.quizCategory || "8과목 통합 랜덤";
     let msg, emoji;
     if (acc >= 90) { emoji = "🏆"; msg = "완벽에 가까워요! 이 과목은 자신감 가져도 됩니다."; }
     else if (acc >= 70) { emoji = "🌟"; msg = "안정적입니다. 틀린 문제는 오답노트에서 복습하세요."; }
@@ -1569,7 +1579,7 @@ function renderQuizSetSummary() {
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
         <span class="scene-emoji" aria-hidden="true">${emoji}</span>
-        <h2 class="scene-title">세트 ${setNum} 완료 — ${escapeHtml(gameState.quizCategory)}</h2>
+        <h2 class="scene-title">세트 ${setNum} 완료 — ${escapeHtml(catLabel)}</h2>
         <div class="dashboard-row" role="group" aria-label="세트 결과">
           <div class="dash-stat"><div class="ds-num">${setCorrect}/${QUIZ_SET_SIZE}</div><div class="ds-label">이번 세트</div></div>
           <div class="dash-stat"><div class="ds-num">${acc}%</div><div class="ds-label">세트 정답률</div></div>
@@ -1580,7 +1590,7 @@ function renderQuizSetSummary() {
         <div class="choice-list">
           <button class="choice-btn primary" data-action="quizContinue">한 세트 더 (${QUIZ_SET_SIZE}문제)</button>
           ${gameState.quizWrong > 0 ? `<button class="choice-btn" data-action="reviewWrongAnswers">오답노트 복습 (${gameState.quizWrong})</button>` : ""}
-          <button class="choice-btn" data-action="shareResultCard" data-mode="quiz" data-title="${escapeHtml(gameState.quizCategory)} 세트 ${setNum}" data-lines="이번 세트 ${setCorrect}/${QUIZ_SET_SIZE} (${acc}%)|누적 ${gameState.quizSolved}문제|간호사 시뮬레이터">결과 카드</button>
+          <button class="choice-btn" data-action="shareResultCard" data-mode="quiz" data-title="${escapeHtml(catLabel)} 세트 ${setNum}" data-lines="이번 세트 ${setCorrect}/${QUIZ_SET_SIZE} (${acc}%)|누적 ${gameState.quizSolved}문제|간호사 시뮬레이터">결과 카드</button>
           <button class="choice-btn" data-action="renderQuizMenu">과목 변경</button>
           <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
         </div>
@@ -2273,6 +2283,9 @@ function renderEpisodeMenu() {
       <div class="scene-card card">
         <h2 class="scene-title">에피소드 (${NC.EPISODES.length})</h2>
         <p class="scene-desc">한 듀티 10~21단계의 연결된 스토리. 같은 환자·동료·의사가 계속 등장하고, 각 결정이 HP·평판에 누적되어 커리어 엔딩으로 이어집니다.\n\n⚠️ 표시된 에피소드는 자해·약물·폭력 등 민감 컨텐츠를 포함합니다.</p>
+        <div class="choice-list">
+          <button class="choice-btn primary" data-action="initSurvival">🎲 랜덤 에피소드 (오늘의 듀티)</button>
+        </div>
         ${groupsHtml}
         <div class="choice-list">
           <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
