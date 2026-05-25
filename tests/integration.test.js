@@ -457,10 +457,13 @@ describe("에피소드 (장편 스토리)", () => {
     test("정답 클릭 후 다음 step 으로 진행한다", () => {
         loadScript();
         document.querySelector('[data-action="renderEpisodeMenu"]').click();
-        document.querySelector('[data-action="startEpisode"]').click();
+        // 그룹화 메뉴 — 첫 에피소드 버튼의 실제 id 로 정답 조회 (순서 무관)
+        const startBtn = document.querySelector('[data-action="startEpisode"]');
+        const epId = startBtn.dataset.arg;
+        startBtn.click();
         const titleBefore = document.querySelector(".scene-title").textContent;
         const C = require("../content.js");
-        const ep = C.EPISODES[0];
+        const ep = C.EPISODES.find(x => x.id === epId);
         const correctText = ep.steps[0].choices.find(c => c.correct).text;
         const btns = [...document.querySelectorAll("#choice-list .choice-btn")];
         const correctBtn = btns.find(b => b.textContent.includes(correctText.slice(0, 12)));
@@ -682,10 +685,12 @@ describe("P0 신규 — 이어하기·SM-2·검색·출처 표시", () => {
     test("에피소드 진행 중 returnToMenu 시 자동 저장된다", () => {
         loadScript();
         document.querySelector('[data-action="renderEpisodeMenu"]').click();
-        document.querySelector('[data-action="startEpisode"]').click();
-        // 첫 step 정답 클릭하여 step 1로 진행
+        // 그룹화 메뉴 — 클릭한 버튼의 id 로 정답 조회 (순서 무관)
+        const startBtn = document.querySelector('[data-action="startEpisode"]');
+        const epId = startBtn.dataset.arg;
+        startBtn.click();
         const C = require("../content.js");
-        const ep = C.EPISODES[0];
+        const ep = C.EPISODES.find(x => x.id === epId);
         const correctText = ep.steps[0].choices.find(c => c.correct).text;
         const btns = [...document.querySelectorAll("#choice-list .choice-btn")];
         const correctBtn = btns.find(b => b.textContent.includes(correctText.slice(0, 10)));
@@ -701,9 +706,9 @@ describe("P0 신규 — 이어하기·SM-2·검색·출처 표시", () => {
     });
 
     test("에피소드 재진입 시 '이어하기' 화면이 뜬다", () => {
-        // localStorage 에 진행 데이터 시드
+        // localStorage 에 진행 데이터 시드 — 그룹 첫 에피소드 (ep-peds-ed) 기준
         const C = require("../content.js");
-        const ep = C.EPISODES[0];
+        const ep = C.EPISODES.find(x => x.id === "ep-peds-ed") || C.EPISODES[0];
         const seed = {
             accepted: { version: "1.0", at: Date.now() }, onboarded: true,
             episodeProgress: { [ep.id]: { step: 5, hp: 70, rep: 20, ts: Date.now() } },
@@ -711,7 +716,7 @@ describe("P0 신규 — 이어하기·SM-2·검색·출처 표시", () => {
         localStorage.setItem("nurseSim:v1", JSON.stringify(seed));
         loadScript();
         document.querySelector('[data-action="renderEpisodeMenu"]').click();
-        document.querySelector('[data-action="startEpisode"]').click();
+        document.querySelector(`[data-action="startEpisode"][data-arg="${ep.id}"]`).click();
         const resumeBtn = document.querySelector('[data-action="episodeResume"]');
         const restartBtn = document.querySelector('[data-action="episodeRestart"]');
         expect(resumeBtn).not.toBeNull();
@@ -1320,6 +1325,21 @@ describe("P2 — AdMob 어댑터 (Capacitor 호환)", () => {
         expect(src).toMatch(/이직|사직|휴직/);
         expect(src).toMatch(/번아웃/);
         expect(src).toMatch(/우수 간호사상|펠로우십/);
+    });
+
+    test("에피소드 메뉴가 임상 영역 그룹으로 분류되고 모든 에피소드가 노출된다", () => {
+        const C = require("../content.js");
+        loadScript();
+        document.querySelector('[data-action="renderEpisodeMenu"]').click();
+        // 그룹 라벨 존재
+        const groupLabels = document.querySelectorAll(".episode-group-label");
+        expect(groupLabels.length).toBeGreaterThanOrEqual(8);
+        // 모든 에피소드 버튼이 빠짐없이 노출 (그룹 + 기타 fallback 합산)
+        const epButtons = document.querySelectorAll('[data-action="startEpisode"]');
+        expect(epButtons.length).toBe(C.EPISODES.length);
+        // 각 에피소드 id 가 정확히 1번씩 등장 (중복·누락 0)
+        const argSet = new Set([...epButtons].map(b => b.dataset.arg));
+        expect(argSet.size).toBe(C.EPISODES.length);
     });
 
     test("민감 컨텐츠 라벨 시스템 — SENSITIVE_EPISODES 매핑 + 라벨 표시", () => {

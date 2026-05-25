@@ -2147,26 +2147,63 @@ function sensitiveLabelFor(episodeId) {
     return tags ? tags.join("·") : "";
 }
 
+// 에피소드 임상 영역 그룹 — 61개를 8개 카테고리로 묶어 탐색 용이
+const EPISODE_GROUPS = [
+    { label: "🚨 응급·외상", ids: ["ep-peds-ed", "ep-er-codeblue", "ep-air-evac", "ep-ed-overdose", "ep-ems-ambulance", "ep-ed-elder-abuse", "ep-ed-code-black", "ep-ob-er", "ep-er-pesticide", "ep-er-opioid-od", "ep-er-sepsis-bundle", "ep-trauma-ortho", "ep-trauma-center-week"] },
+    { label: "🫀 중환자 (ICU)", ids: ["ep-icu-sepsis", "ep-ccu-stemi", "ep-nsicu-ich", "ep-picu-sepsis", "ep-icu-dnr", "ep-neuro-gbs"] },
+    { label: "🔪 외과·수술", ids: ["ep-surgical-night", "ep-or-shift", "ep-pacu-week", "ep-urology-tx"] },
+    { label: "🤰 산과·분만", ids: ["ep-ob-night", "ep-ob-hellp", "ep-ob-eclampsia", "ep-ldr-first-birth", "ep-postpartum-center", "ep-teen-mother", "ep-ob-clinic-abortion"] },
+    { label: "👶 소아·신생아", ids: ["ep-nicu-week", "ep-peds-hospice"] },
+    { label: "🧠 정신간호", ids: ["ep-psych-closed", "ep-adolescent-psych", "ep-psych-outpatient"] },
+    { label: "🧪 종양·혈액", ids: ["ep-onco-week", "ep-outpatient-chemo", "ep-bmt-week"] },
+    { label: "🏥 외래·클리닉", ids: ["ep-hospice-home", "ep-eye-ent", "ep-neuro-clinic", "ep-hiv-clinic", "ep-hospice-inpatient"] },
+    { label: "🌍 지역사회·공중보건", ids: ["ep-school-health", "ep-occupational-health", "ep-multicultural", "ep-covid-ward", "ep-home-chronic", "ep-tb-isolation", "ep-health-center", "ep-rural-clinic"] },
+    { label: "📋 전문·특수", ids: ["ep-geri-week", "ep-hd-center", "ep-burn-week", "ep-handoff-conflict", "ep-narcotics-incident", "ep-clinical-research", "ep-military-hosp", "ep-rehab-stroke", "ep-trial-1-event", "ep-newgrad-year"] },
+];
+
+function episodeButtonHtml(e) {
+    const prog = Storage.getEpisodeProgress(e.id);
+    const pill = prog && prog.step > 0 && prog.step < e.steps.length
+        ? ` <span class="mc-badge" style="position:static;background:var(--warning);">진행 중 ${prog.step}/${e.steps.length}</span>` : "";
+    const sensitiveTags = sensitiveLabelFor(e.id);
+    const sensitivePill = sensitiveTags
+        ? ` <span class="mc-badge" style="position:static;background:var(--danger);" title="민감 컨텐츠">⚠️ ${escapeHtml(sensitiveTags)}</span>` : "";
+    return `<button class="choice-btn primary" data-action="startEpisode" data-arg="${escapeHtml(e.id)}">${escapeHtml(e.title)}${pill}${sensitivePill}</button>`;
+}
+
 function renderEpisodeMenu() {
     resetStateForMode();
     gameState.mode = "episode_menu";
     showCoreUI(); UI.logBar.innerHTML = "";
     addLog("에피소드 — 한 듀티 전체를 따라가는 장편 스토리.", "log-important");
     updateStats();
+
+    const byId = {};
+    NC.EPISODES.forEach(e => { byId[e.id] = e; });
+    const grouped = new Set();
+    let groupsHtml = "";
+    EPISODE_GROUPS.forEach(grp => {
+        const eps = grp.ids.map(id => byId[id]).filter(Boolean);
+        eps.forEach(e => grouped.add(e.id));
+        if (eps.length === 0) return;
+        groupsHtml += `
+          <h3 class="episode-group-label">${grp.label} <span class="episode-group-count">${eps.length}</span></h3>
+          <div class="choice-list episode-group-list">${eps.map(episodeButtonHtml).join("")}</div>`;
+    });
+    // 미분류 에피소드 (신규 추가 시 누락 방지) → "기타"
+    const ungrouped = NC.EPISODES.filter(e => !grouped.has(e.id));
+    if (ungrouped.length > 0) {
+        groupsHtml += `
+          <h3 class="episode-group-label">📦 기타 <span class="episode-group-count">${ungrouped.length}</span></h3>
+          <div class="choice-list episode-group-list">${ungrouped.map(episodeButtonHtml).join("")}</div>`;
+    }
+
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
-        <h2 class="scene-title">에피소드</h2>
-        <p class="scene-desc">한 듀티 12~15단계의 연결된 스토리. 같은 환자·동료·의사가 계속 등장하고, 각 결정이 HP·평판에 누적됩니다.\n\n⚠️ 표시된 에피소드는 자해·약물·폭력 등 민감한 컨텐츠를 포함합니다. 본인 상태가 어렵다면 다른 에피소드를 권장합니다.</p>
+        <h2 class="scene-title">에피소드 (${NC.EPISODES.length})</h2>
+        <p class="scene-desc">한 듀티 10~21단계의 연결된 스토리. 같은 환자·동료·의사가 계속 등장하고, 각 결정이 HP·평판에 누적되어 커리어 엔딩으로 이어집니다.\n\n⚠️ 표시된 에피소드는 자해·약물·폭력 등 민감 컨텐츠를 포함합니다.</p>
+        ${groupsHtml}
         <div class="choice-list">
-          ${NC.EPISODES.map(e => {
-              const prog = Storage.getEpisodeProgress(e.id);
-              const pill = prog && prog.step > 0 && prog.step < e.steps.length
-                  ? ` <span class="mc-badge" style="position:static;background:var(--warning);">진행 중 ${prog.step}/${e.steps.length}</span>` : "";
-              const sensitiveTags = sensitiveLabelFor(e.id);
-              const sensitivePill = sensitiveTags
-                  ? ` <span class="mc-badge" style="position:static;background:var(--danger);" title="민감 컨텐츠">⚠️ ${escapeHtml(sensitiveTags)}</span>` : "";
-              return `<button class="choice-btn primary" data-action="startEpisode" data-arg="${escapeHtml(e.id)}">${escapeHtml(e.title)}${pill}${sensitivePill}</button>`;
-          }).join("")}
           <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
         </div>
       </div>`;
