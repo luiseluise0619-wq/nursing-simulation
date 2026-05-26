@@ -1378,6 +1378,48 @@ function renderSceneCard(ev, options = {}) {
         listEl.appendChild(btn);
     });
     updateStats();
+
+    // 스토리 모드(에피소드/시나리오) — 내레이션 타이핑 효과 + 탭하면 즉시 전체
+    if (mode === "episode" || mode === "scenario") {
+        startTypewriter(ev.desc);
+    }
+}
+
+let _typewriterTimer = null;
+function startTypewriter(fullText) {
+    if (_typewriterTimer) { clearInterval(_typewriterTimer); _typewriterTimer = null; }
+    const descEl = document.querySelector(".scene-desc");
+    const listEl = document.getElementById("choice-list");
+    const card = document.querySelector(".scene-card");
+    if (!descEl || !fullText) return;
+    // 모션 줄이기 환경 → 타이핑 생략
+    const reduce = (typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    if (reduce) { descEl.textContent = fullText; return; }
+
+    descEl.textContent = "";
+    descEl.classList.add("typing");
+    if (listEl) listEl.classList.add("typing-hidden"); // 타이핑 중 선택지 숨김
+
+    let i = 0, done = false;
+    const finish = () => {
+        if (done) return; done = true;
+        if (_typewriterTimer) { clearInterval(_typewriterTimer); _typewriterTimer = null; }
+        descEl.textContent = fullText;
+        descEl.classList.remove("typing");
+        if (listEl) listEl.classList.remove("typing-hidden");
+        if (card) card.removeEventListener("click", skipHandler);
+    };
+    function skipHandler(e) {
+        if (e.target.closest(".choice-btn")) return; // 선택지 클릭은 제외
+        finish();
+    }
+    if (card) card.addEventListener("click", skipHandler);
+
+    _typewriterTimer = setInterval(() => {
+        i += 2; // 2글자씩 — 부드러우면서 빠르게
+        descEl.textContent = fullText.slice(0, i);
+        if (i >= fullText.length) finish();
+    }, 16);
 }
 
 function dispatchChoice(choice, ev, idx, mode) {
@@ -1670,7 +1712,7 @@ function renderFeedback(ev, choice, opts = {}) {
         box.appendChild(hint);
         box.style.cursor = "pointer";
         box.addEventListener("click", go);
-        const delay = isCorrect ? 1100 : 2200; // 오답은 해설 읽을 시간 더 길게
+        const delay = isCorrect ? 700 : 2200; // 정답은 빠르게 다음, 오답은 해설 읽을 시간
         const timer = setTimeout(go, delay);
         return;
     }

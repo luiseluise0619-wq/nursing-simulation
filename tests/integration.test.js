@@ -1410,6 +1410,29 @@ describe("P2 — AdMob 어댑터 (Capacitor 호환)", () => {
         expect(chips).toMatch(/통합 랜덤/);
     });
 
+    test("스토리 타이핑 효과 — 에피소드 진입 시 내레이션 타이핑 + 선택지 숨김, 탭하면 전체 노출", () => {
+        loadScript();
+        document.querySelector('[data-action="renderEpisodeMenu"]').click();
+        document.querySelector('[data-action="startEpisode"]').click();
+        const desc = document.querySelector(".scene-desc");
+        const list = document.getElementById("choice-list");
+        expect(desc.classList.contains("typing")).toBe(true);
+        expect(list.classList.contains("typing-hidden")).toBe(true);
+        // 카드 탭(선택지 외) → 즉시 전체 텍스트 + 선택지 노출
+        document.querySelector(".scene-card").click();
+        expect(desc.classList.contains("typing")).toBe(false);
+        expect(list.classList.contains("typing-hidden")).toBe(false);
+        expect(document.querySelectorAll("#choice-list .choice-btn").length).toBeGreaterThanOrEqual(3);
+    });
+
+    test("타이핑 효과 — startTypewriter 정의 + 스토리 모드만 적용 (정적)", () => {
+        const fs = require("fs");
+        const path = require("path");
+        const src = fs.readFileSync(path.join(__dirname, "..", "script.js"), "utf-8");
+        expect(src).toMatch(/function\s+startTypewriter\s*\(/);
+        expect(src).toMatch(/mode === "episode" \|\| mode === "scenario"[\s\S]{0,40}startTypewriter/);
+    });
+
     test("일상(틈새) 미니 에피소드 — 5종 존재 + daily 플래그 + 자기돌봄 정답", () => {
         const C = require("../content.js");
         const lifeEps = C.EPISODES.filter(e => e.daily);

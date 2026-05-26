@@ -1461,6 +1461,14 @@ body {
 }
 @keyframes tapHintPulse { 0%,100% { opacity: 0.5; } 50% { opacity: 1; } }
 [data-theme="dark"] .feedback-tap-hint { color: var(--primary); }
+/* 스토리 타이핑 효과 */
+.choice-list.typing-hidden { display: none; }
+.scene-desc.typing::after {
+    content: "▌";
+    color: var(--primary);
+    animation: typeCursor 0.7s step-end infinite;
+}
+@keyframes typeCursor { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
 .feedback-box .feedback-source { color: inherit; opacity: 0.75; }
 [data-theme="dark"] .feedback-box.correct .feedback-source { color: #a7f3d0; }
 [data-theme="dark"] .feedback-box.wrong .feedback-source { color: #fecaca; }
