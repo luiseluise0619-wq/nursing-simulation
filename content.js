@@ -2106,7 +2106,7 @@
                     time: "00:10", title: "Bay 4 — 임신 환자 의식 변화",
                     narration: "Bay 4 에서 정수민이 \"선배! Bay 4 임신 32주 환자 의식이 가라앉아요!\" 이혜진님 BP 170/110, 단백뇨 양성, 발걷이반사 항진. 갑자기 강직간대 경련 시작.",
                     choices: [
-                        { text: "자간증 — MgSO4 4g IV bolus + 좌측위 + 산소 + 기도 보호 + 산과 응급 콜 + 강압제 준비", correct: true, hp: -3, rep: 22, log: "정답. 자간증 응급 — MgSO4 즉시 + 산소 + 산과 콜." },
+                        { text: "자간증 — MgSO4 4~6g 부하용량 IV (15~20분) + 좌측위 + 산소 + 기도 보호 + 산과 응급 콜 + 강압제 준비", correct: true, hp: -3, rep: 22, log: "정답. 자간증 응급 — MgSO4 부하용량(급속 push 금지) + 산소 + 산과 콜." },
                         { text: "Diazepam IV 로 경련 멈춤", hp: -25, rep: -18, log: "Benzo는 신생아 호흡 억제 — MgSO4 가 1차." },
                         { text: "경련 멈출 때까지 자세만 옆으로", hp: -32, rep: -25, log: "자간증 약물 차단이 핵심." },
                         { text: "혈압부터 강하 (Nitroprusside push)", hp: -30, rep: -22, log: "급격한 BP 강하는 태반 관류 차단." },
