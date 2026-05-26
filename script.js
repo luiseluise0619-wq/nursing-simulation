@@ -1659,6 +1659,22 @@ function renderFeedback(ev, choice, opts = {}) {
     }
     fb.appendChild(box);
 
+    // 시뮬(에피소드/시나리오) 자동 진행 — 답 누르면 짧게 보여주고 바로 다음으로.
+    // 결과를 읽을 시간을 주되, 탭하면 즉시 진행.
+    if (opts.autoAdvance) {
+        let advanced = false;
+        const go = () => { if (advanced) return; advanced = true; clearTimeout(timer); if (opts.onNext) opts.onNext(); };
+        const hint = document.createElement("div");
+        hint.className = "feedback-tap-hint";
+        hint.textContent = "탭하면 바로 다음 →";
+        box.appendChild(hint);
+        box.style.cursor = "pointer";
+        box.addEventListener("click", go);
+        const delay = isCorrect ? 1100 : 2200; // 오답은 해설 읽을 시간 더 길게
+        const timer = setTimeout(go, delay);
+        return;
+    }
+
     const next = document.createElement("button");
     next.className = "choice-btn primary center";
     next.textContent = opts.nextLabel || "다음 문제";
@@ -2418,6 +2434,7 @@ function handleEpisodeChoice(choice, ev) {
     if (isCorrect) { bumpCombo(); Sound.correct(); addLog(`[정답] ${choice.log}`, "log-good"); }
     else { resetCombo(); Sound.wrong(); addLog(`[오답] ${choice.log}`, "log-bad"); }
     renderFeedback(ev, choice, {
+        autoAdvance: true,
         onNext: () => {
             gameState.episodeStep += 1;
             // 다음 step 으로 진행하면서 자동 저장
@@ -2793,8 +2810,9 @@ function handleScenarioChoice(choice, ev) {
     const isCorrect = isCorrectChoice(choice);
     if (isCorrect) { bumpCombo(); Sound.correct(); addLog(`[정답] ${choice.log}`, "log-good"); }
     else { resetCombo(); Sound.wrong(); addLog(`[오답] ${choice.log}`, "log-bad"); }
-    if (gameState.hp <= 0) { renderFeedback(ev, choice, { onNext: () => endScenario("환자 상태 악화 — 시나리오 실패") }); return; }
+    if (gameState.hp <= 0) { renderFeedback(ev, choice, { autoAdvance: true, onNext: () => endScenario("환자 상태 악화 — 시나리오 실패") }); return; }
     renderFeedback(ev, choice, {
+        autoAdvance: true,
         onNext: () => { gameState.scenarioStep += 1; renderScenarioStep(); },
     });
 }

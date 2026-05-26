@@ -1449,6 +1449,18 @@ body {
 }
 [data-theme="dark"] .feedback-source { border-top-color: rgba(255,255,255,.08); }
 .feedback-source-unverified { color: var(--warning); font-style: italic; }
+/* 시뮬 자동 진행 — 탭하면 즉시 다음 안내 */
+.feedback-tap-hint {
+    margin-top: 10px;
+    text-align: right;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--primary-dark);
+    opacity: 0.85;
+    animation: tapHintPulse 1.2s ease-in-out infinite;
+}
+@keyframes tapHintPulse { 0%,100% { opacity: 0.5; } 50% { opacity: 1; } }
+[data-theme="dark"] .feedback-tap-hint { color: var(--primary); }
 .feedback-box .feedback-source { color: inherit; opacity: 0.75; }
 [data-theme="dark"] .feedback-box.correct .feedback-source { color: #a7f3d0; }
 [data-theme="dark"] .feedback-box.wrong .feedback-source { color: #fecaca; }

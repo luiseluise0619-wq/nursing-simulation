@@ -93,6 +93,16 @@ function freshDom() {
     };
 }
 
+// 시뮬(에피소드/시나리오)는 답 누르면 자동 진행(autoAdvance) — "다음" 버튼 없음.
+// quiz 는 "다음 문제" 버튼. 두 경우 모두 진행시키는 헬퍼.
+function advanceFeedback() {
+    const btn = document.querySelector('#feedback-zone .choice-btn.primary');
+    if (btn) { btn.click(); return true; }
+    const box = document.querySelector('#feedback-zone .feedback-box');
+    if (box) { box.click(); return true; } // autoAdvance: 박스 탭으로 즉시 진행
+    return false;
+}
+
 function loadScript({ legal = true, onboarded = true } = {}) {
     jest.resetModules();
     const Q = require("../questions.js");
@@ -474,8 +484,7 @@ describe("에피소드 (장편 스토리)", () => {
         const correctBtn = btns.find(b => b.textContent.includes(correctText.slice(0, 12)));
         expect(correctBtn).toBeDefined();
         correctBtn.click();
-        const next = document.querySelector('#feedback-zone .choice-btn.primary');
-        next.click();
+        advanceFeedback();
         const titleAfter = document.querySelector(".scene-title").textContent;
         expect(titleAfter).not.toBe(titleBefore);
     });
@@ -700,7 +709,7 @@ describe("P0 신규 — 이어하기·SM-2·검색·출처 표시", () => {
         const btns = [...document.querySelectorAll("#choice-list .choice-btn")];
         const correctBtn = btns.find(b => b.textContent.includes(correctText.slice(0, 10)));
         correctBtn.click();
-        document.querySelector('#feedback-zone .choice-btn.primary').click();
+        advanceFeedback();
         // 메뉴로 복귀
         document.querySelector('[data-action="returnToMenu"]').click();
         // localStorage 에 진행 저장됐는지
@@ -1325,8 +1334,7 @@ describe("P2 — AdMob 어댑터 (Capacitor 호환)", () => {
                 const choice = document.querySelectorAll("#choice-list .choice-btn")[0];
                 if (!choice) break; // 엔딩 등 step 외 화면이면 종료
                 choice.click();
-                const next = document.querySelector('#feedback-zone .choice-btn.primary');
-                if (next) next.click(); else break;
+                if (!advanceFeedback()) break;
                 // 엔딩(커리어 결과) 도달 시 종료
                 if (document.querySelector('[data-action="generateCareerOutcome"]')) break;
                 const stillEpisode = document.querySelector("#choice-list");
@@ -1489,8 +1497,7 @@ describe("P2 — AdMob 어댑터 (Capacitor 호환)", () => {
             const choice = document.querySelectorAll("#choice-list .choice-btn")[0];
             if (!choice) break;
             choice.click();
-            const next = document.querySelector('#feedback-zone .choice-btn.primary');
-            if (next) next.click(); else break;
+            if (!advanceFeedback()) break;
         }
         // 전환 내레이션 화면 — campaign-interlude 노출 + 누적 평판 표시
         expect(document.querySelector(".campaign-interlude")).not.toBeNull();
@@ -1523,8 +1530,7 @@ describe("P2 — AdMob 어댑터 (Capacitor 호환)", () => {
             const choice = document.querySelectorAll("#choice-list .choice-btn")[0];
             if (!choice) break;
             choice.click();
-            const next = document.querySelector('#feedback-zone .choice-btn.primary');
-            if (next) next.click(); else break;
+            if (!advanceFeedback()) break;
         }
         // 막 마무리 — "막을 내리며" 제목 + 전환 내레이션
         expect(document.querySelector(".scene-title").textContent).toMatch(/막을 내리며/);
