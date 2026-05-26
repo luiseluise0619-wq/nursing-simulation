@@ -164,15 +164,23 @@ describe("에피소드 (장편 스토리) invariants", () => {
                 expect(ep.endings.ok).toBeDefined();
                 expect(ep.endings.bad).toBeDefined();
             });
-            test("최소 10단계 이상의 step 을 가진다 (장편 스토리 기준)", () => {
-                expect(ep.steps.length).toBeGreaterThanOrEqual(10);
-            });
+            // 일상(틈새) 미니 에피소드(daily:true)는 짧은 자기돌봄 컨텐츠 — 장편 기준 면제
+            if (ep.daily) {
+                test("일상 미니 — 최소 1단계 이상", () => {
+                    expect(ep.steps.length).toBeGreaterThanOrEqual(1);
+                });
+            } else {
+                test("최소 10단계 이상의 step 을 가진다 (장편 스토리 기준)", () => {
+                    expect(ep.steps.length).toBeGreaterThanOrEqual(10);
+                });
+            }
             ep.steps.forEach((step, i) => {
-                test(`step ${i + 1} 은 정확히 1개의 정답을 가진 4개 이상의 선택지를 갖는다`, () => {
+                test(`step ${i + 1} 은 정확히 1개의 정답을 가진 선택지를 갖는다`, () => {
                     expect(step.title).toBeTruthy();
                     expect(step.narration).toBeTruthy();
                     expect(Array.isArray(step.choices)).toBe(true);
-                    expect(step.choices.length).toBeGreaterThanOrEqual(3);
+                    // 일상 미니는 2지선다 허용, 임상 에피소드는 3지선다 이상
+                    expect(step.choices.length).toBeGreaterThanOrEqual(ep.daily ? 2 : 3);
                     const correctCount = step.choices.filter(c => c.correct === true).length;
                     expect(correctCount).toBe(1);
                 });

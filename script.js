@@ -1455,20 +1455,32 @@ function initSurvival() {
         returnToMenu();
         return;
     }
-    // 진행 중인 에피소드가 있으면 그것부터 이어가기 제안
+    // 진행 중인 (임상) 에피소드가 있으면 그것부터 이어가기 제안 (일상 미니는 제외)
     const inProgress = episodes
+        .filter(ep => !ep.daily)
         .map(ep => ({ ep, progress: Storage.getEpisodeProgress(ep.id) }))
         .filter(x => x.progress && x.progress.step > 0 && x.progress.step < x.ep.steps.length);
     if (inProgress.length > 0) {
         return renderEpisodeResumeChoice(inProgress[0].ep, inProgress[0].progress);
     }
-    // 미완료(또는 모두 완료된 상태에서) 랜덤 에피소드 선택
-    const data = Storage.load();
-    const done = data.episodes || {};
-    const pool = episodes.filter(ep => !done[ep.id] || !done[ep.id].completed);
-    const target = (pool.length > 0 ? pool : episodes)[Math.floor(Math.random() * (pool.length > 0 ? pool.length : episodes.length))];
+    // 일상(틈새) 미니 에피소드 — ~28% 확률로 가끔 등장 (휴식·식사·퇴근 등)
+    const lifeEps = episodes.filter(ep => ep.daily);
+    let target;
+    if (lifeEps.length > 0 && Math.random() < 0.28) {
+        target = lifeEps[Math.floor(Math.random() * lifeEps.length)];
+    } else {
+        // 미완료 임상 에피소드 우선 랜덤 (일상 미니 제외)
+        const data = Storage.load();
+        const done = data.episodes || {};
+        const clinical = episodes.filter(ep => !ep.daily);
+        const pool = clinical.filter(ep => !done[ep.id] || !done[ep.id].completed);
+        const fromPool = pool.length > 0 ? pool : clinical;
+        target = fromPool[Math.floor(Math.random() * fromPool.length)];
+    }
     const sensitive = sensitiveLabelFor(target.id);
-    if (sensitive) {
+    if (target.daily) {
+        addLog(`🌙 잠깐의 일상 — ${target.title}`, "log-important");
+    } else if (sensitive) {
         addLog(`🎲 듀티 시뮬레이션 — 오늘의 에피소드: ${target.title}`, "log-important");
         addLog(`⚠️ 민감 컨텐츠 포함 (${sensitive}). 어렵다면 메인 메뉴로 돌아가세요.`, "log-bad");
     } else {
@@ -2258,6 +2270,7 @@ const EPISODE_GROUPS = [
     { label: "🏥 외래·클리닉", ids: ["ep-hospice-home", "ep-eye-ent", "ep-neuro-clinic", "ep-hiv-clinic", "ep-hospice-inpatient"] },
     { label: "🌍 지역사회·공중보건", ids: ["ep-school-health", "ep-occupational-health", "ep-multicultural", "ep-covid-ward", "ep-home-chronic", "ep-tb-isolation", "ep-health-center", "ep-rural-clinic"] },
     { label: "📋 전문·특수", ids: ["ep-geri-week", "ep-hd-center", "ep-burn-week", "ep-handoff-conflict", "ep-narcotics-incident", "ep-clinical-research", "ep-military-hosp", "ep-rehab-stroke", "ep-trial-1-event", "ep-newgrad-year"] },
+    { label: "🌙 일상 (틈새 이야기)", ids: ["life-breakroom", "life-meal", "life-clockout", "life-rooftop", "life-locker-chat"] },
 ];
 
 function episodeButtonHtml(e) {

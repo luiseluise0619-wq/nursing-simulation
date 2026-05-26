@@ -1402,6 +1402,41 @@ describe("P2 — AdMob 어댑터 (Capacitor 호환)", () => {
         expect(chips).toMatch(/통합 랜덤/);
     });
 
+    test("일상(틈새) 미니 에피소드 — 5종 존재 + daily 플래그 + 자기돌봄 정답", () => {
+        const C = require("../content.js");
+        const lifeEps = C.EPISODES.filter(e => e.daily);
+        expect(lifeEps.length).toBeGreaterThanOrEqual(5);
+        // 휴식·식사·퇴근 주제 포함
+        const titles = lifeEps.map(e => e.title).join(" ");
+        expect(titles).toMatch(/휴게실|쉬/);
+        expect(titles).toMatch(/식당|밥/);
+        expect(titles).toMatch(/퇴근/);
+        // 일상 미니의 정답은 대체로 HP 회복(자기돌봄)
+        lifeEps.forEach(ep => {
+            ep.steps.forEach(step => {
+                const correct = step.choices.find(c => c.correct);
+                expect(correct).toBeDefined();
+            });
+        });
+    });
+
+    test("듀티 시뮬레이션 — 일상 미니가 가끔 등장 (확률적, 다수 시행 중 1회 이상)", () => {
+        let sawLife = false;
+        const C = require("../content.js");
+        const lifeTitles = C.EPISODES.filter(e => e.daily).map(e => e.title);
+        for (let i = 0; i < 60 && !sawLife; i++) {
+            freshDom();
+            loadScript();
+            document.querySelector('[data-action="initSurvival"]').click();
+            const tag = document.querySelector(".scene-card .category-tag");
+            const title = document.querySelector(".scene-title")?.textContent || "";
+            const tagTxt = tag?.textContent || "";
+            if (lifeTitles.some(t => tagTxt.includes(t) || title.includes(t))) sawLife = true;
+        }
+        // 28% 확률 × 60회 = 통계적으로 거의 확실히 1회 이상 등장
+        expect(sawLife).toBe(true);
+    });
+
     test("에피소드 메뉴 상단에 🎲 랜덤 에피소드 버튼이 있다", () => {
         loadScript();
         document.querySelector('[data-action="renderEpisodeMenu"]').click();
