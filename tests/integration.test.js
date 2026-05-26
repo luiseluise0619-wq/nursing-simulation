@@ -1779,18 +1779,16 @@ describe("P2 — AdMob 어댑터 (Capacitor 호환)", () => {
         expect(slot.classList.contains("hidden")).toBe(true);
     });
 
-    test("모드 종료 함수들이 광고 트리거를 포함한다 (소스 확인)", () => {
+    test("광고는 부활(rewarded)에서만 — interstitial/banner 호출 0건", () => {
         const fs = require("fs");
         const path = require("path");
         const src = fs.readFileSync(path.join(__dirname, "..", "script.js"), "utf-8");
-        // endMockExam / endDailyChallenge / endEpisode / endHandoff / endTriage
-        // 다섯 모드 종료 직후 showInterstitial 이 호출되도록 보강돼야 함
-        const ends = ["endMockExam", "endDailyChallenge", "endEpisode", "endHandoff", "endTriage"];
-        for (const fn of ends) {
-            const re = new RegExp(`function\\s+${fn}\\(\\s*\\w*\\s*\\)\\s*\\{[\\s\\S]{0,200}Ads\\.showInterstitial`);
-            expect(src).toMatch(re);
-        }
-        // 메인 메뉴(홈 탭) 진입 시 banner 호출
-        expect(src).toMatch(/menuTab\s*===\s*"home"[\s\S]{0,80}showBanner/);
+        // 사용자 정책: 광고는 게임오버 후 '부활 선택' 시 보상형 광고만.
+        // 강제 전면광고(interstitial)·배너는 호출하지 않음.
+        expect(src).not.toMatch(/Ads\.showInterstitial\(/);
+        expect(src).not.toMatch(/Ads\.showBanner\(/);
+        // 부활(rewarded) 경로는 유지
+        expect(src).toMatch(/Ads\.showRewarded\(/);
+        expect(src).toMatch(/function\s+reviveByAd\s*\(/);
     });
 });

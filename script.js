@@ -1800,7 +1800,6 @@ function handleMockChoice(choice, ev) {
     });
 }
 function endMockExam(reason) {
-    Ads.showInterstitial(ADS_UNITS.interstitial);
     if (gameState._mockEnded) return;
     gameState._mockEnded = true;
     if (gameState.mockTimerId) { clearInterval(gameState.mockTimerId); gameState.mockTimerId = null; }
@@ -1913,7 +1912,6 @@ function handleDailyChoice(choice, ev) {
 }
 function endDailyChallenge() {
     track("daily_challenge_completed", { correct: String(gameState.dailyCorrect) });
-    Ads.showInterstitial(ADS_UNITS.interstitial);
     const correct = gameState.dailyCorrect;
     Storage.setDaily(todayKey(), { solved: DAILY_CHALLENGE_TOTAL, correct, completed: true, ts: Date.now() });
     Storage.addHistory({ mode: "daily", at: Date.now(), total: DAILY_CHALLENGE_TOTAL, correct, date: todayKey() });
@@ -2156,7 +2154,6 @@ function handoffNext() {
     renderHandoffPatient();
 }
 function endHandoff() {
-    Ads.showInterstitial(ADS_UNITS.interstitial);
     Speech.stop();
     const total = gameState.handoffTotal, correct = gameState.handoffCorrect;
     const acc = total ? Math.round(correct / total * 100) : 0;
@@ -2275,7 +2272,6 @@ function triageSubmit() {
 }
 function triageNext() { gameState.triageIndex += 1; renderTriageCase(); }
 function endTriage() {
-    Ads.showInterstitial(ADS_UNITS.interstitial);
     const total = gameState.triageTotal, correct = gameState.triageCorrect;
     const acc = total ? Math.round(correct / total * 100) : 0;
     Storage.setTriageBest(acc);
@@ -2735,7 +2731,6 @@ function campaignContinue() {
 
 function endEpisode() {
     track("episode_completed", { id: gameState.episodeId });
-    Ads.showInterstitial(ADS_UNITS.interstitial);
     const ep = NC.EPISODES.find(x => x.id === gameState.episodeId);
     if (!ep) return;
     // ending 분기: HP + rep 가중 점수
@@ -3580,10 +3575,6 @@ function returnToMenu() {
 
     // 메인 메뉴에서도 상단 헤더는 표시(테마/사운드 토글 위해)
     UI.topBar.classList.remove("hidden");
-
-    // 홈 탭에서만 배너 노출 (Capacitor 환경에서만 활성)
-    if (gameState.menuTab === "home") Ads.showBanner(ADS_UNITS.banner);
-    else Ads.hideBanner();
 }
 
 // 3탭 메뉴 시스템
