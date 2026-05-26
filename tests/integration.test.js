@@ -1439,6 +1439,68 @@ describe("P2 — AdMob 어댑터 (Capacitor 호환)", () => {
         expect(firstEp).toBeTruthy();
     });
 
+    test("커리어 캠페인 — 1화 정주행 후 전환 내레이션 → 다음 화로 이어진다 (누적 평판 carry)", () => {
+        const C = require("../content.js");
+        loadScript();
+        document.querySelector('[data-action="renderEpisodeMenu"]').click();
+        document.querySelector('[data-action="renderCampaign"]').click();
+        document.querySelector('[data-action="startCampaignEpisode"]').click();
+        // 1막 1화 (ep-newgrad-year) 를 끝까지 정주행
+        let guard = 0;
+        while (guard++ < 60) {
+            // 에피소드 ending 후 "이야기 계속" 버튼이 뜨면 캠페인 전환
+            const cont = document.querySelector('[data-action="campaignContinue"]');
+            if (cont) { cont.click(); break; }
+            const choice = document.querySelectorAll("#choice-list .choice-btn")[0];
+            if (!choice) break;
+            choice.click();
+            const next = document.querySelector('#feedback-zone .choice-btn.primary');
+            if (next) next.click(); else break;
+        }
+        // 전환 내레이션 화면 — campaign-interlude 노출 + 누적 평판 표시
+        expect(document.querySelector(".campaign-interlude")).not.toBeNull();
+        // localStorage 캠페인 상태: episode 가 1로 증가 (다음 화로 이어짐)
+        const stored = JSON.parse(localStorage.getItem("nurseSim:v1") || "{}");
+        expect(stored.campaign).toBeDefined();
+        expect(stored.campaign.log.length).toBe(1); // 1화 완료 기록
+        expect(stored.campaign.episode).toBe(1);     // 1막 2화로 이동
+        expect(C.EPISODES.length).toBeGreaterThan(0);
+    });
+
+    test("커리어 캠페인 — 막 마지막 화 완료 시 다음 막으로 넘어간다 (막 전환)", () => {
+        const C = require("../content.js");
+        // 1막 마지막 화(인덱스 2 = ep-handoff-conflict) 직전 상태로 시드
+        const seed = {
+            accepted: { version: "1.0", at: Date.now() }, onboarded: true,
+            campaign: { started: true, chapter: 0, episode: 2, cumulativeRep: 40,
+                log: [{ id: "ep-newgrad-year", ending: "good", rep: 20 }, { id: "ep-surgical-night", ending: "ok", rep: 20 }] },
+        };
+        localStorage.setItem("nurseSim:v1", JSON.stringify(seed));
+        loadScript();
+        document.querySelector('[data-action="renderEpisodeMenu"]').click();
+        document.querySelector('[data-action="renderCampaign"]').click();
+        document.querySelector('[data-action="startCampaignEpisode"]').click();
+        // 1막 마지막 화 정주행
+        let guard = 0;
+        while (guard++ < 60) {
+            const cont = document.querySelector('[data-action="campaignContinue"]');
+            if (cont) { cont.click(); break; }
+            const choice = document.querySelectorAll("#choice-list .choice-btn")[0];
+            if (!choice) break;
+            choice.click();
+            const next = document.querySelector('#feedback-zone .choice-btn.primary');
+            if (next) next.click(); else break;
+        }
+        // 막 마무리 — "막을 내리며" 제목 + 전환 내레이션
+        expect(document.querySelector(".scene-title").textContent).toMatch(/막을 내리며/);
+        // 캠페인 상태: chapter 1 (2막) episode 0 으로 이동
+        const stored = JSON.parse(localStorage.getItem("nurseSim:v1") || "{}");
+        expect(stored.campaign.chapter).toBe(1);
+        expect(stored.campaign.episode).toBe(0);
+        expect(stored.campaign.log.length).toBe(3);
+        expect(C.EPISODES.length).toBeGreaterThan(0);
+    });
+
     test("커리어 캠페인 — 시드된 완주 상태에서 최종 엔딩 노출", () => {
         const C = require("../content.js");
         // 모든 챕터 완료 상태로 시드
