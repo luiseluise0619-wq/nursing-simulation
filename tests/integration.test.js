@@ -1303,6 +1303,40 @@ describe("P2 — AdMob 어댑터 (Capacitor 호환)", () => {
         expect(hasGenCat).toBe(false);
     });
 
+    test("듀티 시뮬레이션 — 에피소드를 끝까지 진행해도 매 step 이 에피소드 step (일반 문제 0건)", () => {
+        const C = require("../content.js");
+        const generatorCats = ["성인간호학", "모성간호학", "아동간호학", "정신간호학",
+            "지역사회간호학", "간호관리학", "기본간호학", "보건의약관계법규"];
+        // 여러 번 시도해 다양한 랜덤 에피소드를 끝까지 검증
+        for (let run = 0; run < 8; run++) {
+            freshDom();
+            loadScript();
+            document.querySelector('[data-action="initSurvival"]').click();
+            let guard = 0;
+            while (guard++ < 40) {
+                const tag = document.querySelector(".scene-card .category-tag");
+                if (tag) {
+                    const txt = tag.textContent || "";
+                    // 매 화면이 일반 8과목 문제이면 실패
+                    const isGeneralQuestion = generatorCats.some(c => txt.includes(`[${c}]`));
+                    expect(isGeneralQuestion).toBe(false);
+                }
+                // 선택지 클릭 → 다음 step
+                const choice = document.querySelectorAll("#choice-list .choice-btn")[0];
+                if (!choice) break; // 엔딩 등 step 외 화면이면 종료
+                choice.click();
+                const next = document.querySelector('#feedback-zone .choice-btn.primary');
+                if (next) next.click(); else break;
+                // 엔딩(커리어 결과) 도달 시 종료
+                if (document.querySelector('[data-action="generateCareerOutcome"]')) break;
+                const stillEpisode = document.querySelector("#choice-list");
+                if (!stillEpisode) break;
+            }
+        }
+        // 8회 정주행 동안 일반 문제 0건이면 위 expect 들이 모두 통과
+        expect(C.EPISODES.length).toBeGreaterThan(0);
+    });
+
     test("initSurvival 함수 본문에 generator 호출이 없다 (정적 검증)", () => {
         const fs = require("fs");
         const path = require("path");
