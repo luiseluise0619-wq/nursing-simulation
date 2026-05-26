@@ -1779,6 +1779,61 @@ describe("P2 — AdMob 어댑터 (Capacitor 호환)", () => {
         expect(slot.classList.contains("hidden")).toBe(true);
     });
 
+    test("연속 학습일(streak) — 일일 챌린지 완료 시 카운트 + 홈 표시", () => {
+        loadScript();
+        document.querySelector('[data-action="startDailyChallenge"]').click();
+        for (let i = 0; i < 12; i++) {
+            const c = document.querySelectorAll("#choice-list .choice-btn")[0];
+            if (!c) break;
+            c.click();
+            const next = document.querySelector('#feedback-zone .choice-btn.primary');
+            if (next) next.click();
+        }
+        // streak 저장됨 (count 1)
+        const stored = JSON.parse(localStorage.getItem("nurseSim:v1") || "{}");
+        expect(stored.streak).toBeDefined();
+        expect(stored.streak.count).toBe(1);
+        // 완료 화면에 연속 학습 메시지
+        expect(document.querySelector(".scene-desc").textContent).toMatch(/연속 학습|🔥/);
+        // 홈 탭에 streak 배너
+        document.querySelector('[data-action="returnToMenu"]').click();
+        expect(document.querySelector(".streak-banner")).not.toBeNull();
+    });
+
+    test("연속 학습일 — 어제 이어서면 +1, 끊기면 리셋", () => {
+        const today = new Date();
+        const z = n => String(n).padStart(2, "0");
+        const k = (d) => `${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())}`;
+        const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
+        // 어제까지 3일 연속 → 오늘 완료 시 4
+        const seed = {
+            accepted: { version: "1.0", at: Date.now() }, onboarded: true,
+            streak: { count: 3, best: 3, lastDate: k(yesterday) },
+        };
+        localStorage.setItem("nurseSim:v1", JSON.stringify(seed));
+        loadScript();
+        document.querySelector('[data-action="startDailyChallenge"]').click();
+        for (let i = 0; i < 12; i++) {
+            const c = document.querySelectorAll("#choice-list .choice-btn")[0];
+            if (!c) break; c.click();
+            const next = document.querySelector('#feedback-zone .choice-btn.primary');
+            if (next) next.click();
+        }
+        const stored = JSON.parse(localStorage.getItem("nurseSim:v1") || "{}");
+        expect(stored.streak.count).toBe(4);
+        expect(stored.streak.best).toBe(4);
+    });
+
+    test("전역 에러 복구 경계(installErrorBoundary) 존재", () => {
+        const fs = require("fs");
+        const path = require("path");
+        const src = fs.readFileSync(path.join(__dirname, "..", "script.js"), "utf-8");
+        expect(src).toMatch(/function\s+installErrorBoundary\s*\(/);
+        expect(src).toMatch(/addEventListener\("error"/);
+        expect(src).toMatch(/addEventListener\("unhandledrejection"/);
+        expect(src).toMatch(/installErrorBoundary\(\)/); // boot 에서 호출
+    });
+
     test("광고는 부활(rewarded)에서만 — interstitial/banner 호출 0건", () => {
         const fs = require("fs");
         const path = require("path");

@@ -117,6 +117,11 @@ function todayKey() {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
+function dateKeyOffset(days) {
+    const d = new Date();
+    d.setDate(d.getDate() + days);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
 function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
@@ -851,6 +856,7 @@ const Storage = {
             scenarios: (raw.scenarios && typeof raw.scenarios === "object" && !Array.isArray(raw.scenarios)) ? raw.scenarios : {},
             episodes: (raw.episodes && typeof raw.episodes === "object" && !Array.isArray(raw.episodes)) ? raw.episodes : {},
             campaign: (raw.campaign && typeof raw.campaign === "object" && !Array.isArray(raw.campaign)) ? raw.campaign : { started: false, chapter: 0, episode: 0, cumulativeRep: 0, log: [] },
+            streak: (raw.streak && typeof raw.streak === "object" && !Array.isArray(raw.streak)) ? raw.streak : { count: 0, best: 0, lastDate: null },
             errorReports: Array.isArray(raw.errorReports) ? raw.errorReports.filter(e => e && typeof e === "object") : [],
             episodeProgress: (raw.episodeProgress && typeof raw.episodeProgress === "object" && !Array.isArray(raw.episodeProgress)) ? raw.episodeProgress : {},
             daily: (raw.daily && typeof raw.daily === "object") ? raw.daily : {},
@@ -1099,6 +1105,24 @@ const Storage = {
         const data = Storage.load();
         data.daily[dateKey] = state;
         Storage.save(data);
+    },
+    // 연속 학습 일수(streak) — 습관 루프
+    getStreak() {
+        const data = Storage.load();
+        return (data.streak && typeof data.streak === "object") ? data.streak : { count: 0, best: 0, lastDate: null };
+    },
+    bumpStreak() {
+        const data = Storage.load();
+        const s = (data.streak && typeof data.streak === "object") ? data.streak : { count: 0, best: 0, lastDate: null };
+        const today = todayKey();
+        if (s.lastDate === today) return s; // 오늘 이미 카운트됨
+        if (s.lastDate === dateKeyOffset(-1)) s.count = (s.count || 0) + 1; // 어제 이어서
+        else s.count = 1; // 끊김 → 새로 시작
+        s.lastDate = today;
+        s.best = Math.max(s.best || 0, s.count);
+        data.streak = s;
+        Storage.save(data);
+        return s;
     },
     addHistory(entry) {
         const data = Storage.load();
@@ -1915,12 +1939,17 @@ function endDailyChallenge() {
     const correct = gameState.dailyCorrect;
     Storage.setDaily(todayKey(), { solved: DAILY_CHALLENGE_TOTAL, correct, completed: true, ts: Date.now() });
     Storage.addHistory({ mode: "daily", at: Date.now(), total: DAILY_CHALLENGE_TOTAL, correct, date: todayKey() });
+    const streak = Storage.bumpStreak(); // 연속 학습일 갱신
+    const streakMsg = streak.count >= 2
+        ? `🔥 ${streak.count}일 연속 학습 중! (최고 ${streak.best}일)`
+        : `🔥 연속 학습 시작! 내일 또 오면 2일째.`;
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
+        <span class="scene-emoji" aria-hidden="true">🎯</span>
         <h2 class="scene-title">일일 챌린지 완료</h2>
-        <p class="scene-desc">정답 ${correct}/${DAILY_CHALLENGE_TOTAL}\n오늘의 도전을 마쳤습니다. 내일 다시 도전하세요!</p>
+        <p class="scene-desc">정답 ${correct}/${DAILY_CHALLENGE_TOTAL}\n${streakMsg}</p>
         <div class="choice-list">
-          <button class="choice-btn" data-action="shareResultCard" data-mode="daily" data-title="일일 챌린지 ${correct}/${DAILY_CHALLENGE_TOTAL}" data-lines="${todayKey()}|정답 ${correct} 문제|간호사 시뮬레이터">결과 카드 다운로드</button>
+          <button class="choice-btn" data-action="shareResultCard" data-mode="daily" data-title="일일 챌린지 ${correct}/${DAILY_CHALLENGE_TOTAL} · ${streak.count}일 연속" data-lines="${todayKey()}|정답 ${correct} 문제|🔥 ${streak.count}일 연속">결과 카드 다운로드</button>
           <button class="choice-btn primary" data-action="returnToMenu">메뉴로</button>
         </div>
       </div>`;
@@ -3381,6 +3410,8 @@ function renderLegalGate(onAccept) {
           <p>이 앱이 제공하는 임상 시나리오·약물 정보·간호중재 권고는 <strong>교육적 시뮬레이션</strong>이며, 실제 환자에 대한 의학적 자문·진단·치료를 대체하지 않습니다.</p>
           <p>실제 임상에서는 반드시 <strong>면허를 가진 의료인의 판단, 공식 가이드라인(KDCA, ACLS, AHA 등), 의료기관 프로토콜</strong>을 따르십시오.</p>
           <p>작성자와 기여자는 이 앱의 사용·오용에서 비롯된 환자 손상, 의료 사고, 학습 결과의 부정확성에 대해 책임지지 않습니다.</p>
+          <p class="legal-note"><strong>권장 연령:</strong> 만 15세 이상 (간호학과 학생·간호사 대상). 자해·약물·임종 등 일부 민감 컨텐츠 포함 — 해당 에피소드엔 ⚠️ 라벨 표시.</p>
+          <p class="legal-note"><strong>컨텐츠 상태:</strong> 정식 RN/MD 감수 전 베타. AI 1차 검토를 거쳤으나 오류 가능성이 있으며, 앱 내 "오류 신고"로 제보할 수 있습니다.</p>
         </section>
 
         <section class="legal-section">
@@ -3585,6 +3616,13 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
     const dailyCorrect = todayDaily?.correct || 0;
     const bookmarkCount = Object.keys(data.bookmarks || {}).length;
     const weekly = computeWeeklyReport(Date.now(), data);
+    const streak = (data.streak && typeof data.streak === "object") ? data.streak : { count: 0, best: 0, lastDate: null };
+    // 오늘 또는 어제 학습했으면 streak 유효, 아니면 끊긴 것으로 표시
+    const streakAlive = streak.lastDate === todayKey() || streak.lastDate === dateKeyOffset(-1);
+    const streakCount = streakAlive ? streak.count : 0;
+    const streakHtml = streakCount >= 1
+        ? `<div class="streak-banner" title="연속 학습일">🔥 <strong>${streakCount}일</strong> 연속 학습 중${streak.best > streakCount ? ` · 최고 ${streak.best}일` : ""}</div>`
+        : "";
 
     // 활성 에피소드(이어하기) 탐지
     let resumeEp = null;
@@ -3610,6 +3648,7 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
 
     const renderHome = () => `
       <div class="tab-section">
+        ${streakHtml}
         ${weeklyHtml}
         ${resumeEp ? `
           <button class="resume-card" data-action="startEpisode" data-arg="${escapeHtml(resumeEp.ep.id)}">
@@ -3969,8 +4008,33 @@ function handleKeydown(e) {
 // =========================================================================
 // 부트
 // =========================================================================
+// 전역 에러 복구 — 예기치 못한 오류로 빈 화면(white screen) 되는 것 방지.
+// 사용자 데이터는 localStorage 에 안전하므로 메뉴 복귀만으로 회복 가능.
+function installErrorBoundary() {
+    if (typeof window === "undefined") return;
+    const handler = (msg) => {
+        try {
+            const area = document.getElementById("game-area");
+            if (!area) return;
+            area.innerHTML = `
+              <div class="scene-card card">
+                <span class="scene-emoji" aria-hidden="true">🛠️</span>
+                <h2 class="scene-title">일시적 오류가 발생했어요</h2>
+                <p class="scene-desc">화면을 복구했습니다. 학습 기록은 안전하게 저장되어 있어요.\n계속하려면 아래 버튼을 누르세요.</p>
+                <div class="choice-list">
+                  <button class="choice-btn primary" data-action="returnToMenu">메인 메뉴로</button>
+                </div>
+              </div>`;
+            track("error_recovered", { msg: String(msg).slice(0, 60) });
+        } catch { /* 복구 실패 시에도 앱 크래시 방지 */ }
+    };
+    window.addEventListener("error", (e) => handler(e.message || "error"));
+    window.addEventListener("unhandledrejection", (e) => handler((e.reason && e.reason.message) || "promise"));
+}
+
 function boot() {
     cacheUI();
+    installErrorBoundary();
     initAnalytics();
     track("app_open");
     const settings = Storage.getSettings();
