@@ -250,8 +250,12 @@
         const m = rand(1, 12);
         const daysInMonth = new Date(year, m, 0).getDate();
         const d = rand(1, daysInMonth);
-        const lmp = new Date(year, m - 1, d);
-        const edd = new Date(lmp.getTime() + 280 * 24 * 60 * 60 * 1000);
+        // 네겔법(공식): 월 -3, 일 +7 (+1년). 학생이 배운 공식과 정답이 일치하도록 280일 대신 공식으로 계산.
+        let edM = m - 3, edY = year + 1, edD = d + 7;
+        if (edM <= 0) edM += 12;
+        const dim = new Date(edY, edM, 0).getDate();
+        if (edD > dim) { edD -= dim; edM += 1; if (edM > 12) { edM = 1; edY += 1; } }
+        const edd = new Date(edY, edM - 1, edD);
         const eddMonth = edd.getMonth() + 1; const eddDay = edd.getDate();
         const wrongA = new Date(edd.getTime() + 7 * 86400000);
         const wrongB = new Date(edd.getTime() - 14 * 86400000);
@@ -1522,8 +1526,8 @@
         return { baseId: "mch_center", category: "지역사회간호학", part: "모자보건사업", emoji: "🤱", title: "산후도우미 + 영아 건강검진",
             desc: `보건소 영유아 정기 건강검진 시기로 옳은 것은? (영유아 건강검진 표준일정)`,
             choices: shuffle([
-                { text: "생후 4, 9, 18, 30, 42, 54, 66개월 — 총 7회 (영유아건강검진사업)", correct: true, effect: { hp: -2, rep: 22 }, log: "정답. 영유아건강검진사업 표준 일정." },
-                { text: "출생 후 1회만", effect: { hp: -22, rep: -16 }, log: "정기 검진은 7회 표준." },
+                { text: "생후 14~35일 + 4·9·18·30·42·54·66개월 — 총 8회 (구강검진 별도)", correct: true, effect: { hp: -2, rep: 22 }, log: "정답. 영유아건강검진사업 (2021 개정 — 14~35일 추가, 총 8회)." },
+                { text: "출생 후 1회만", effect: { hp: -22, rep: -16 }, log: "정기 검진은 영유아기 총 8회입니다." },
                 { text: "필요시에만 시행", effect: { hp: -25, rep: -20 }, log: "정기 검진은 무료 사업." },
                 { text: "어린이집에서 모두 처리", effect: { hp: -22, rep: -16 }, log: "보건소 사업이 표준." }
             ]) };
