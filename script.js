@@ -850,6 +850,7 @@ const Storage = {
             onboarded: raw.onboarded === true,
             scenarios: (raw.scenarios && typeof raw.scenarios === "object" && !Array.isArray(raw.scenarios)) ? raw.scenarios : {},
             episodes: (raw.episodes && typeof raw.episodes === "object" && !Array.isArray(raw.episodes)) ? raw.episodes : {},
+            campaign: (raw.campaign && typeof raw.campaign === "object" && !Array.isArray(raw.campaign)) ? raw.campaign : { started: false, chapter: 0, episode: 0, cumulativeRep: 0, log: [] },
             errorReports: Array.isArray(raw.errorReports) ? raw.errorReports.filter(e => e && typeof e === "object") : [],
             episodeProgress: (raw.episodeProgress && typeof raw.episodeProgress === "object" && !Array.isArray(raw.episodeProgress)) ? raw.episodeProgress : {},
             daily: (raw.daily && typeof raw.daily === "object") ? raw.daily : {},
@@ -1071,6 +1072,23 @@ const Storage = {
             bestRep: Math.max(prev.bestRep, rep),
             runs: (prev.runs || 0) + 1,
         };
+        Storage.save(data);
+    },
+    // 커리어 캠페인 — 에피소드를 소설처럼 이어가는 연속 진행 상태
+    getCampaign() {
+        const data = Storage.load();
+        const c = data.campaign;
+        if (c && typeof c === "object") return c;
+        return { started: false, chapter: 0, episode: 0, cumulativeRep: 0, log: [] };
+    },
+    saveCampaign(c) {
+        const data = Storage.load();
+        data.campaign = c;
+        Storage.save(data);
+    },
+    resetCampaign() {
+        const data = Storage.load();
+        data.campaign = { started: false, chapter: 0, episode: 0, cumulativeRep: 0, log: [] };
         Storage.save(data);
     },
     getDaily(dateKey) {
@@ -2284,6 +2302,7 @@ function renderEpisodeMenu() {
         <h2 class="scene-title">에피소드 (${NC.EPISODES.length})</h2>
         <p class="scene-desc">한 듀티 10~21단계의 연결된 스토리. 같은 환자·동료·의사가 계속 등장하고, 각 결정이 HP·평판에 누적되어 커리어 엔딩으로 이어집니다.\n\n⚠️ 표시된 에피소드는 자해·약물·폭력 등 민감 컨텐츠를 포함합니다.</p>
         <div class="choice-list">
+          <button class="choice-btn primary" data-action="renderCampaign">📖 커리어 스토리 (4막 13화 — 소설처럼 이어보기)</button>
           <button class="choice-btn primary" data-action="initSurvival">🎲 랜덤 에피소드 (오늘의 듀티)</button>
         </div>
         ${groupsHtml}
@@ -2450,6 +2469,198 @@ function generateCareerOutcome(hp, rep, _completedEpisodes) {
     return { tier, ...pick };
 }
 
+// =========================================================================
+// 커리어 캠페인 — 에피소드를 소설처럼 이어가는 연속 스토리 (4막 13화)
+// 같은 간호사의 신규기 → 경력기 → 전문기 → 리더십기 일대기.
+// 막마다 도입/마무리 내레이션 + 화 사이 전환 내레이션 + 누적 평판.
+// =========================================================================
+const CAREER_CAMPAIGN = {
+    chapters: [
+        {
+            title: "1막 · 신규 간호사",
+            subtitle: "면허를 받고, 첫 출근",
+            intro: "스물넷의 봄. 간호사 면허증을 손에 쥐고 첫 병원에 출근한다.\n흰 가운은 아직 빳빳하고, 복도의 모든 게 낯설다. 선임의 한마디가 떨린다 — \"오늘부터 너도 간호사야.\"\n이제, 한 사람의 이야기가 시작된다.",
+            outro: "첫 해가 지났다. 수많은 밤과 실수와 눈물. 그러나 손은 단단해졌고, 환자를 보는 눈이 생겼다.\n이제 더는 신규가 아니다.",
+            episodes: ["ep-newgrad-year", "ep-surgical-night", "ep-handoff-conflict"],
+        },
+        {
+            title: "2막 · 병동을 누비다",
+            subtitle: "여러 병동, 다양한 환자",
+            intro: "경력 2년차. 이제 여러 병동을 돌며 다양한 환자를 만난다.\nICU의 긴박함, 응급실의 코드블루, 분만실의 새 생명, 소아응급의 작은 손. 매 듀티가 새로운 시험이다.",
+            outro: "다양한 현장을 거치며 본인만의 임상 감각이 자리잡았다. 동료들이 어려운 케이스에 본인을 찾기 시작한다.",
+            episodes: ["ep-icu-sepsis", "ep-er-codeblue", "ep-ob-night", "ep-peds-ed"],
+        },
+        {
+            title: "3막 · 전문가의 길",
+            subtitle: "한 영역을 깊이 파다",
+            intro: "5년차. 이제 한 영역의 전문가로 성장한다.\n심장중환자실의 STEMI, 신경외과의 뇌출혈, 종양병동의 항암, 골수이식의 무균 병동. 깊이가 곧 환자의 생존을 좌우한다.",
+            outro: "전문간호사의 길에 들어섰다. 후배를 가르치고, 다학제 회의에서 목소리를 낸다.",
+            episodes: ["ep-ccu-stemi", "ep-nsicu-ich", "ep-onco-week", "ep-bmt-week"],
+        },
+        {
+            title: "4막 · 무게를 짊어지다",
+            subtitle: "리더십, 윤리, 그리고 책임",
+            intro: "10년차. 이제 가장 무거운 결정들이 본인의 어깨에 놓인다.\nDNR과 임종의 윤리, 응급실의 폭력, 외상센터의 대량재해. 의학을 넘어 사람과 시스템을 책임진다.",
+            outro: "한 간호사의 긴 여정이 한 장을 마친다. 수많은 환자와 동료와 밤들이 지나갔다.\n그러나 이야기는 끝나지 않는다 — 다음 세대의 신규 간호사가 오늘도 첫 출근을 한다.",
+            episodes: ["ep-icu-dnr", "ep-ed-code-black", "ep-trauma-center-week"],
+        },
+    ],
+};
+function campaignTotalEpisodes() {
+    return CAREER_CAMPAIGN.chapters.reduce((a, ch) => a + ch.episodes.length, 0);
+}
+function campaignDoneCount(c) {
+    let n = 0;
+    for (let i = 0; i < c.chapter; i++) n += CAREER_CAMPAIGN.chapters[i].episodes.length;
+    return n + c.episode;
+}
+
+function renderCampaign() {
+    resetStateForMode();
+    gameState.mode = "campaign";
+    gameState.campaignActive = false;
+    showCoreUI(); UI.logBar.innerHTML = "";
+    updateStats();
+    const c = Storage.getCampaign();
+    const total = campaignTotalEpisodes();
+    const done = campaignDoneCount(c);
+
+    // 캠페인 완주
+    if (c.chapter >= CAREER_CAMPAIGN.chapters.length) {
+        const avgRep = c.log.length ? Math.round(c.cumulativeRep / c.log.length) : 0;
+        const goodCount = c.log.filter(l => l.ending === "good").length;
+        let finale;
+        if (goodCount >= total - 2) finale = "🏆 전설의 간호사 — 한 시대를 이끈 임상가로 기억됩니다. 후배들이 본인의 이름을 듣고 간호사를 꿈꿉니다.";
+        else if (goodCount >= total / 2) finale = "🌟 존경받는 선배 — 흔들림 없이 환자 곁을 지킨 간호사. 동료들의 신뢰가 곧 유산입니다.";
+        else finale = "🌿 묵묵한 헌신 — 화려하진 않았지만, 수많은 환자가 본인 덕분에 살았습니다. 그것으로 충분합니다.";
+        UI.gameArea.innerHTML = `
+          <div class="scene-card card">
+            <span class="scene-emoji" aria-hidden="true">📖</span>
+            <h2 class="scene-title">커리어 완주 — 한 사람의 이야기</h2>
+            <p class="scene-desc">${escapeHtml(CAREER_CAMPAIGN.chapters[CAREER_CAMPAIGN.chapters.length - 1].outro)}</p>
+            <hr class="dashboard-divider">
+            <div class="dashboard-row" role="group">
+              <div class="dash-stat"><div class="ds-num">${c.log.length}</div><div class="ds-label">완주 에피소드</div></div>
+              <div class="dash-stat"><div class="ds-num">${goodCount}</div><div class="ds-label">우수 듀티</div></div>
+              <div class="dash-stat"><div class="ds-num">${avgRep}</div><div class="ds-label">평균 평판</div></div>
+            </div>
+            <p class="scene-desc"><strong>${escapeHtml(finale)}</strong></p>
+            <div class="choice-list">
+              <button class="choice-btn" data-action="shareResultCard" data-mode="campaign" data-title="간호사 커리어 완주" data-lines="${c.log.length}화 완주|우수 듀티 ${goodCount}|평균 평판 ${avgRep}">결과 카드 다운로드</button>
+              <button class="choice-btn" data-action="resetCampaignConfirm">처음부터 다시</button>
+              <button class="choice-btn primary" data-action="returnToMenu">메인 메뉴</button>
+            </div>
+          </div>`;
+        return;
+    }
+
+    const chapter = CAREER_CAMPAIGN.chapters[c.chapter];
+    const ep = NC.EPISODES.find(x => x.id === chapter.episodes[c.episode]);
+    const atChapterStart = c.episode === 0;
+    const introHtml = (!c.started || atChapterStart)
+        ? `<div class="campaign-interlude">${escapeHtml(chapter.intro).replace(/\n/g, "<br>")}</div>` : "";
+
+    UI.gameArea.innerHTML = `
+      <div class="scene-card card">
+        <div class="campaign-progress-label">📖 커리어 스토리 · ${done}/${total}화</div>
+        <h2 class="scene-title">${escapeHtml(chapter.title)}</h2>
+        <p class="about-meta">${escapeHtml(chapter.subtitle)} · 누적 평판 ${c.cumulativeRep}</p>
+        ${introHtml}
+        <hr class="dashboard-divider">
+        <h3 class="modal-section-title">다음 이야기</h3>
+        <p class="scene-desc"><strong>${escapeHtml(ep ? ep.title : "")}</strong> ${sensitiveLabelFor(ep ? ep.id : "") ? `<span class="mc-badge" style="position:static;background:var(--danger);">⚠️ ${escapeHtml(sensitiveLabelFor(ep.id))}</span>` : ""}</p>
+        <div class="choice-list">
+          <button class="choice-btn primary" data-action="startCampaignEpisode">${c.started ? "이어서 진행" : "이야기 시작"}</button>
+          <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
+          ${c.started ? `<button class="choice-btn" data-action="resetCampaignConfirm">처음부터 다시</button>` : ""}
+        </div>
+      </div>`;
+}
+
+function startCampaignEpisode() {
+    const c = Storage.getCampaign();
+    if (c.chapter >= CAREER_CAMPAIGN.chapters.length) { renderCampaign(); return; }
+    const chapter = CAREER_CAMPAIGN.chapters[c.chapter];
+    const epId = chapter.episodes[c.episode];
+    const ep = NC.EPISODES.find(x => x.id === epId);
+    if (!ep) { renderCampaign(); return; }
+    if (!c.started) { c.started = true; Storage.saveCampaign(c); }
+    gameState.campaignActive = true;
+    track("campaign_episode_start", { ch: String(c.chapter + 1) });
+    beginEpisode(epId, 0, 100, 0);
+}
+
+function advanceCampaign(endingKey) {
+    const c = Storage.getCampaign();
+    c.cumulativeRep += gameState.rep;
+    c.log.push({ id: gameState.episodeId, ending: endingKey, rep: gameState.rep });
+    c.episode += 1;
+    let chapterCleared = false;
+    if (c.episode >= CAREER_CAMPAIGN.chapters[c.chapter].episodes.length) {
+        chapterCleared = true;
+        c.chapter += 1;
+        c.episode = 0;
+    }
+    Storage.saveCampaign(c);
+    return { c, chapterCleared };
+}
+
+function renderCampaignInterlude(prevChapterIdx, chapterCleared, endingKey) {
+    const c = Storage.getCampaign();
+    const prevChapter = CAREER_CAMPAIGN.chapters[prevChapterIdx];
+    const reaction = endingKey === "good"
+        ? "그날의 판단은 옳았다. 환자도, 동료도 본인을 신뢰한다."
+        : endingKey === "ok"
+            ? "무사히 듀티를 마쳤다. 배운 것을 다음으로 가져간다."
+            : "쉽지 않은 듀티였다. 그러나 무너지지 않고, 다시 가운을 입는다.";
+    let bridgeHtml, nextLabel, nextAction;
+    if (chapterCleared && prevChapter && prevChapter.outro && c.chapter < CAREER_CAMPAIGN.chapters.length) {
+        bridgeHtml = `<div class="campaign-interlude">${escapeHtml(reaction)}<br><br><em>${escapeHtml(prevChapter.outro).replace(/\n/g, "<br>")}</em></div>`;
+        nextLabel = "다음 막으로"; nextAction = "renderCampaign";
+    } else if (c.chapter >= CAREER_CAMPAIGN.chapters.length) {
+        bridgeHtml = `<div class="campaign-interlude">${escapeHtml(reaction)}<br><br><em>${escapeHtml(prevChapter.outro).replace(/\n/g, "<br>")}</em></div>`;
+        nextLabel = "마지막 장 보기"; nextAction = "renderCampaign";
+    } else {
+        const nextEp = NC.EPISODES.find(x => x.id === CAREER_CAMPAIGN.chapters[c.chapter].episodes[c.episode]);
+        bridgeHtml = `<div class="campaign-interlude">${escapeHtml(reaction)}<br><br>시간이 흐른다. 다음 듀티가 기다린다 — <strong>${escapeHtml(nextEp ? nextEp.title : "")}</strong>.</div>`;
+        nextLabel = "이어서 진행"; nextAction = "renderCampaign";
+    }
+    UI.gameArea.innerHTML = `
+      <div class="scene-card card">
+        <span class="scene-emoji" aria-hidden="true">📖</span>
+        <h2 class="scene-title">${chapterCleared ? "막을 내리며" : "다음 이야기로"}</h2>
+        ${bridgeHtml}
+        <p class="about-meta">누적 평판 ${c.cumulativeRep} · ${campaignDoneCount(c)}/${campaignTotalEpisodes()}화 완주</p>
+        <div class="choice-list">
+          <button class="choice-btn primary" data-action="${nextAction}">${nextLabel}</button>
+          <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
+        </div>
+      </div>`;
+}
+
+function resetCampaignConfirm() {
+    UI.gameArea.innerHTML = `
+      <div class="scene-card card">
+        <h2 class="scene-title">커리어를 처음부터?</h2>
+        <p class="scene-desc">지금까지의 커리어 진행과 누적 평판이 모두 초기화됩니다. 계속할까요?</p>
+        <div class="choice-list">
+          <button class="choice-btn primary" data-action="resetCampaignDo">처음부터 다시 시작</button>
+          <button class="choice-btn" data-action="renderCampaign">취소</button>
+        </div>
+      </div>`;
+}
+function resetCampaignDo() {
+    Storage.resetCampaign();
+    addLog("커리어를 처음부터 다시 시작합니다.", "log-important");
+    renderCampaign();
+}
+function campaignContinue() {
+    const t = gameState._campaignTransition;
+    if (!t) { renderCampaign(); return; }
+    gameState._campaignTransition = null;
+    renderCampaignInterlude(t.prevChapterIdx, t.chapterCleared, t.endingKey);
+}
+
 function endEpisode() {
     track("episode_completed", { id: gameState.episodeId });
     Ads.showInterstitial(ADS_UNITS.interstitial);
@@ -2465,6 +2676,25 @@ function endEpisode() {
     Storage.addHistory({ mode: "episode", at: Date.now(), id: gameState.episodeId, hp: gameState.hp, rep: gameState.rep, ending: endingKey });
     Storage.setEpisodeResult(gameState.episodeId, endingKey, gameState.hp, gameState.rep);
     Storage.clearEpisodeProgress(gameState.episodeId); // 완수 시 진행 클리어
+
+    // 캠페인 모드면 ending 카드 → 다음 화 전환 내레이션으로 진행 (소설처럼 연속)
+    if (gameState.campaignActive) {
+        gameState.campaignActive = false;
+        const prevChapterIdx = Storage.getCampaign().chapter;
+        const { chapterCleared } = advanceCampaign(endingKey);
+        UI.gameArea.innerHTML = `
+          <div class="scene-card card">
+            <h2 class="scene-title">${escapeHtml(ending.title)}</h2>
+            <p class="scene-desc">${escapeHtml(ending.body)}</p>
+            <p class="about-meta">이번 듀티 HP ${gameState.hp} · 평판 ${gameState.rep}</p>
+            <div class="choice-list">
+              <button class="choice-btn primary" data-action="campaignContinue">— 이야기 계속 —</button>
+            </div>
+          </div>`;
+        // 전환 내레이션 렌더용 상태 보관
+        gameState._campaignTransition = { prevChapterIdx, chapterCleared, endingKey };
+        return;
+    }
 
     // 커리어 결과 (간호사 일대기 스토리텔링)
     const career = generateCareerOutcome(gameState.hp, gameState.rep, gameState.episodeStep);
@@ -4046,6 +4276,11 @@ const DELEGATED_ACTIONS = {
     renderScenarioMenu: () => renderScenarioMenu(),
     startScenario: (t) => startScenario(t),
     renderEpisodeMenu: () => renderEpisodeMenu(),
+    renderCampaign: () => renderCampaign(),
+    startCampaignEpisode: () => startCampaignEpisode(),
+    campaignContinue: () => campaignContinue(),
+    resetCampaignConfirm: () => resetCampaignConfirm(),
+    resetCampaignDo: () => resetCampaignDo(),
     startEpisode: (t) => startEpisode(t),
     printWrongQueue: () => printWrongQueue(),
     printDashboard: () => printDashboard(),

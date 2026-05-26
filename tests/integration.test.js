@@ -1376,6 +1376,56 @@ describe("P2 — AdMob 어댑터 (Capacitor 호환)", () => {
         expect(randEp.textContent).toMatch(/랜덤 에피소드/);
     });
 
+    test("커리어 캠페인 — 메뉴 진입 + 1막 인트로 + 이야기 시작 버튼", () => {
+        loadScript();
+        document.querySelector('[data-action="renderEpisodeMenu"]').click();
+        const campBtn = document.querySelector('[data-action="renderCampaign"]');
+        expect(campBtn).not.toBeNull();
+        expect(campBtn.textContent).toMatch(/커리어 스토리/);
+        campBtn.click();
+        // 1막 제목 + 인트로 내레이션 + 시작 버튼
+        expect(document.querySelector(".scene-title").textContent).toMatch(/1막/);
+        expect(document.querySelector(".campaign-interlude")).not.toBeNull();
+        expect(document.querySelector('[data-action="startCampaignEpisode"]')).not.toBeNull();
+    });
+
+    test("커리어 캠페인 — 첫 에피소드 진입 시 캠페인 모드로 첫 화 시작", () => {
+        loadScript();
+        document.querySelector('[data-action="renderEpisodeMenu"]').click();
+        document.querySelector('[data-action="renderCampaign"]').click();
+        document.querySelector('[data-action="startCampaignEpisode"]').click();
+        // 에피소드 step 화면 — 캠페인 1막 1화 = ep-newgrad-year
+        const card = document.querySelector(".scene-card");
+        expect(card).not.toBeNull();
+        // 첫 에피소드 카테고리 태그가 신규 간호사 에피소드 제목 포함
+        const C = require("../content.js");
+        const firstEp = C.EPISODES.find(e => e.id === "ep-newgrad-year");
+        const tag = document.querySelector(".category-tag");
+        expect(tag.textContent).toMatch(/신규 간호사/);
+        expect(firstEp).toBeTruthy();
+    });
+
+    test("커리어 캠페인 — 시드된 완주 상태에서 최종 엔딩 노출", () => {
+        const C = require("../content.js");
+        // 모든 챕터 완료 상태로 시드
+        const allEps = ["ep-newgrad-year", "ep-surgical-night", "ep-handoff-conflict",
+            "ep-icu-sepsis", "ep-er-codeblue", "ep-ob-night", "ep-peds-ed",
+            "ep-ccu-stemi", "ep-nsicu-ich", "ep-onco-week", "ep-bmt-week",
+            "ep-icu-dnr", "ep-ed-code-black", "ep-trauma-center-week"];
+        const seed = {
+            accepted: { version: "1.0", at: Date.now() }, onboarded: true,
+            campaign: { started: true, chapter: 4, episode: 0, cumulativeRep: 280,
+                log: allEps.map(id => ({ id, ending: "good", rep: 20 })) },
+        };
+        localStorage.setItem("nurseSim:v1", JSON.stringify(seed));
+        loadScript();
+        document.querySelector('[data-action="renderEpisodeMenu"]').click();
+        document.querySelector('[data-action="renderCampaign"]').click();
+        expect(document.querySelector(".scene-title").textContent).toMatch(/커리어 완주/);
+        expect(document.querySelector('[data-action="resetCampaignConfirm"]')).not.toBeNull();
+        expect(C.EPISODES.length).toBeGreaterThan(0);
+    });
+
     test("트레이닝 모드 — 10문제 세트 완료 시 세트 요약 카드가 뜬다", () => {
         loadScript();
         document.querySelector('[data-action="renderQuizMenu"]').click();

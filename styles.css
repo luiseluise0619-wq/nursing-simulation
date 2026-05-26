@@ -763,6 +763,28 @@ body {
 .episode-group-list {
     margin-bottom: 4px;
 }
+/* 커리어 캠페인 — 소설형 전환 내레이션 */
+.campaign-interlude {
+    background: var(--bg);
+    border-left: 3px solid var(--primary);
+    border-radius: var(--radius-md);
+    padding: 16px 18px;
+    margin: 14px 0;
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: var(--text);
+    font-style: normal;
+    white-space: normal;
+}
+.campaign-interlude em { color: var(--muted); }
+.campaign-progress-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--primary-dark);
+    letter-spacing: 0.02em;
+    margin-bottom: 4px;
+}
+[data-theme="dark"] .campaign-interlude { background: #1e2530; }
 .modal-quiz-card {
     width: 100%;
     background: #1e293b;
