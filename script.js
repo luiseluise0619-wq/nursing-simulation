@@ -1388,8 +1388,14 @@ function renderSceneCard(ev, options = {}) {
     // 현재 ev 를 토글에서 참조하도록 저장
     gameState._currentEv = ev;
 
+    // 보기 셔플 — 정답이 항상 1번이라는 위치 편향 제거.
+    // 셔플 1회만, ev 에 결과를 저장해 재렌더에서도 같은 순서 유지.
+    if (!ev._shuffledChoices) {
+        ev._shuffledChoices = shuffle(ev.choices);
+    }
+    const renderChoices = ev._shuffledChoices;
     const listEl = document.getElementById("choice-list");
-    ev.choices.forEach((choice, idx) => {
+    renderChoices.forEach((choice, idx) => {
         const btn = document.createElement("button");
         btn.className = "choice-btn";
         btn.dataset.idx = String(idx);
@@ -2481,6 +2487,7 @@ function renderEpisodeStep() {
         emoji: "📖",
         title: step.title,
         desc: step.narration,
+        image: step.image || null, // 임상 시각자료 (ECG·X-ray·체위 등) — 있으면 표시
         choices: step.choices.map(c => ({
             text: c.text, correct: !!c.correct,
             effect: { hp: c.hp || 0, rep: c.rep || 0 },
@@ -2862,6 +2869,7 @@ function renderScenarioStep() {
         baseId: "scenario", category: s.title, part: `Step ${gameState.scenarioStep + 1}/${s.steps.length}`,
         emoji: "📋", title: step.prompt,
         desc: gameState.scenarioStep === 0 ? s.intro : `현재 HP ${gameState.hp} / 평판 ${gameState.rep}`,
+        image: step.image || null,
         choices: step.choices.map(c => ({
             text: c.text, correct: !!c.correct,
             effect: { hp: c.hp || 0, rep: c.rep || 0 },
