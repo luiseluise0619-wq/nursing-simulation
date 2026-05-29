@@ -769,7 +769,7 @@
                 {
                     prompt: "MgSO4 유지용량 IV 진행 중. 호흡수 10회/분, 심부건반사 사라짐, 소변량 시간당 25mL 감소. 다음은?",
                     choices: [
-                        { text: "MgSO4 즉시 중단, Calcium gluconate 1g IV 준비, 의사 콜", correct: true, hp: 0, rep: 15, log: "정답. 마그네슘 독성 — 길항제 칼슘이 즉시 필요합니다." },
+                        { text: "MgSO4 즉시 중단, Calcium gluconate IV 준비, 의사 콜", correct: true, hp: 0, rep: 15, log: "정답. 마그네슘 독성 — 길항제 칼슘이 즉시 필요합니다." },
                         { text: "MgSO4 속도를 조금 줄이고 경과 관찰", hp: -30, rep: -25, log: "독성 징후 출현 시 즉시 중단이 원칙입니다." },
                         { text: "Naloxone 을 IV로 투여", hp: -25, rep: -20, log: "마그네슘 길항제가 아닙니다 — Calcium이 답." },
                         { text: "환자를 일으켜 호흡을 격려한다", hp: -35, rep: -30, log: "약물 차단이 우선입니다." },
@@ -829,7 +829,7 @@
                 {
                     prompt: "환자 상태로 가장 먼저 해야 할 중재는?",
                     choices: [
-                        { text: "약물 즉시 중단 + 응급 콜 + Epinephrine 0.3mg IM 외측 대퇴", correct: true, hp: 0, rep: 15, log: "정답. 아나필락시스의 1차 약물은 IM epinephrine 입니다." },
+                        { text: "약물 즉시 중단 + 응급 콜 + Epinephrine IM 외측 대퇴", correct: true, hp: 0, rep: 15, log: "정답. 아나필락시스의 1차 약물은 IM epinephrine 입니다." },
                         { text: "Diphenhydramine 25mg IV 부터 투여", hp: -25, rep: -18, log: "항히스타민은 보조 치료. 1차는 epinephrine." },
                         { text: "스테로이드(methylprednisolone) IV 만 투여", hp: -28, rep: -20, log: "스테로이드는 지연성 반응 예방 — 즉시 효과 없음." },
                         { text: "관찰만 진행하며 의사 콜 + V/S 추적", hp: -35, rep: -28, log: "아나필락시스는 분 단위로 진행. 즉시 처치." },
@@ -864,7 +864,7 @@
                 {
                     prompt: "DKA 가능성 매우 높음. 우선 처치는?",
                     choices: [
-                        { text: "ABC + IV 두 줄 확보 + N/S 1L bolus", correct: true, hp: 0, rep: 15, log: "정답. DKA 의 1차는 수액 → 인슐린 → K+ 순서." },
+                        { text: "ABC + IV 두 줄 확보 + N/S bolus", correct: true, hp: 0, rep: 15, log: "정답. DKA 의 1차는 수액 → 인슐린 → K+ 순서." },
                         { text: "정맥 인슐린 IV push 부터 시행", hp: -28, rep: -20, log: "수액 회복 전 인슐린 단독은 K+ 급강하 위험." },
                         { text: "중탄산나트륨 IV 즉시 투여 + V/S 추적", hp: -25, rep: -18, log: "pH 6.9 이상이면 표준이 아닙니다." },
                         { text: "포도당 50% IV 투여로 식이 보충", hp: -32, rep: -25, log: "혈당 'HI' 상황에서 글루코오스는 금기." },
@@ -1044,7 +1044,7 @@
                 {
                     prompt: "Valsalva 실패. 환자 의식 명료, BP 안정. 다음 조치는?",
                     choices: [
-                        { text: "Adenosine 6mg IV rapid push (large bore IV, 양손 syringe) → 무효 시 12mg + 가능 시 의사 입회", correct: true, hp: 0, rep: 22, log: "정답. SVT 의 약물 1차 (혈역학 안정)." },
+                        { text: "Adenosine IV rapid push (large bore IV, 양손 syringe) → 무효 시 + 가능 시 의사 입회", correct: true, hp: 0, rep: 22, log: "정답. SVT 의 약물 1차 (혈역학 안정)." },
                         { text: "Adenosine slow drip", hp: -28, rep: -22, log: "Adenosine 은 반감기 짧아 rapid push." },
                         { text: "베타차단제 IV 먼저 + V/S 추적", hp: -22, rep: -16, log: "Adenosine 이 우선." },
                         { text: "Digoxin IV 시작 + 보호자 안내", hp: -25, rep: -20, log: "Digoxin 은 즉효 약물 아님." },
@@ -1361,7 +1361,7 @@
                     time: "03:00", title: "코드 종료 후 — 511호 변화",
                     narration: "코드는 ROSC 성공. 돌아오니 511호 박철수님 호흡 양상이 변함. R 8, SpO2 90%. PCA log: 지난 1시간 bolus 12회 통과. 진정 점수 4 (졸음 심함).",
                     choices: [
-                        { text: "PCA 즉시 중단 + 산소 6L 마스크 + Naloxone 준비", correct: true, hp: -3, rep: 18, log: "정답. 오피오이드 유발 호흡 억제 응급 — 4단계 모두 즉시." },
+                        { text: "PCA 즉시 중단 + 산소 마스크 + Naloxone 준비", correct: true, hp: -3, rep: 18, log: "정답. 오피오이드 유발 호흡 억제 응급 — 4단계 모두 즉시." },
                         { text: "흔들어 깨우면서 경과 본다 + 보호자 안내", hp: -35, rep: -25, log: "응급 — 약물 차단과 길항제가 우선." },
                         { text: "산소만 추가하고 다음 V/S 까지 기다린다", hp: -30, rep: -20, log: "PCA 미중단 시 호흡 정지 진행 가능." },
                         { text: "Naloxone 만 IV로 즉시 push", hp: -15, rep: -5, log: "원인(PCA) 차단 없이 길항제만 주면 효과 일시적." },
@@ -1609,7 +1609,7 @@
                     image: "fhr:late",
                     narration: "무통 후 산모 편안한 상태. 자궁경부 7cm. 그런데 태아심음 모니터에서 자궁수축 정점 이후 FHR이 110대로 떨어지는 패턴 반복. 산모는 잠들어 있고, 남편은 모니터를 못 읽음.",
                     choices: [
-                        { text: "후기하강 의심 — 좌측위 즉시 + 산소 8L 마스크 + 옥시토신 있다면 중단", correct: true, hp: -3, rep: 18, log: "정답. 후기하강은 태반 관류 부족 — 4단계 즉시." },
+                        { text: "후기하강 의심 — 좌측위 즉시 + 산소 마스크 + 옥시토신 있다면 중단", correct: true, hp: -3, rep: 18, log: "정답. 후기하강은 태반 관류 부족 — 4단계 즉시." },
                         { text: "모니터 위치만 다시 조정하고 관찰", hp: -35, rep: -25, log: "장비 문제로 단정하면 태아 저산소 진행." },
                         { text: "산모를 깨워 푸시 시도 + 차트 기록", hp: -32, rep: -22, log: "자궁경부 미개대 상태 푸시는 위험 + 후기하강 악화." },
                         { text: "옥시토신 증량으로 분만 가속 + 30분 후 재평가", hp: -40, rep: -30, log: "후기하강에 옥시토신 증량은 치명적." },
@@ -1741,7 +1741,7 @@
                     time: "04:00", title: "입실 — 첫 안정화",
                     narration: "응급실에서 ER 콜 \"BP 80/50, 락테이트 4.5, 의식혼미\" — 한정희님 도착. 휠체어가 아닌 베드 통째로 옮겨옵니다. 호흡 빠르고 얕음, T 39.2.",
                     choices: [
-                        { text: "모니터 즉시 연결 + 산소 6L 마스크 + 두 정맥로 확보", correct: true, hp: -3, rep: 16, log: "정답. ICU 입실 초기 안정화 표준 패키지." },
+                        { text: "모니터 즉시 연결 + 산소 마스크 + 두 정맥로 확보", correct: true, hp: -3, rep: 16, log: "정답. ICU 입실 초기 안정화 표준 패키지." },
                         { text: "활력징후만 측정하고 의사 도착 대기", hp: -25, rep: -20, log: "활성 쇼크 — 즉시 처치 안 하면 분 단위 악화." },
                         { text: "혈액배양 검체부터 먼저 받기 + V/S 추적", hp: -18, rep: -12, log: "검사도 중요하나 안정화가 우선." },
                         { text: "환자가 의식혼미니 가족 동의부터", hp: -22, rep: -16, log: "응급 상황 — 묵시적 동의로 즉시 처치 가능." },
@@ -1751,7 +1751,7 @@
                     time: "04:30", title: "1-hour 번들 — 우선순위",
                     narration: "의사 도착. 패혈증 1-hour 번들 시작. 락테이트 4.5 (>2), MAP 55 (<65), 항생제 아직 미투여. 시간이 곧 생존율.",
                     choices: [
-                        { text: "혈액배양 2set → 광범위 항생제 IV → 30mL/kg 결정질 → 락테이트 재측정 — 순서 정확히", correct: true, hp: -2, rep: 18, log: "정답. SCCM 1-hour bundle 정석 — 배양 후 항생제." },
+                        { text: "혈액배양 2set → 광범위 항생제 IV → 적정 수액 결정질 → 락테이트 재측정 — 순서 정확히", correct: true, hp: -2, rep: 18, log: "정답. SCCM 1-hour bundle 정석 — 배양 후 항생제." },
                         { text: "항생제부터 빨리 시작하고 배양은 나중에", hp: -22, rep: -16, log: "배양 정확도 떨어짐 — 추후 표적 항생제 어려워짐." },
                         { text: "수액부터 1L bolus 후 다른 처치", hp: -15, rep: -8, log: "동시 진행이 표준 — 한 가지씩 미루지 않음." },
                         { text: "스테로이드부터 IV + 동료 확인", hp: -20, rep: -14, log: "1차 아님 — 수액 불응 쇼크에 보조적." },
@@ -1761,7 +1761,7 @@
                     time: "05:30", title: "수액 불응 — 승압제 결정",
                     narration: "1시간 후. 수액 30mL/kg 끝났는데 MAP 60 (목표 65 미만). 락테이트 4.2 변화 없음. 의사 \"승압제 시작합시다.\"",
                     choices: [
-                        { text: "중심정맥로(CVC) 확보 준비 + Norepinephrine 시간당 5mcg 시작", correct: true, hp: -3, rep: 18, log: "정답. 1차 승압제는 Norepi via CVC + A-line 모니터." },
+                        { text: "중심정맥로(CVC) 확보 준비 + Norepinephrine 시간당 시작", correct: true, hp: -3, rep: 18, log: "정답. 1차 승압제는 Norepi via CVC + A-line 모니터." },
                         { text: "말초정맥로로 Norepi 시작", hp: -22, rep: -16, log: "말초 Norepi 는 외삼출 시 조직괴사 — 단기만." },
                         { text: "Dopamine IV push", hp: -30, rep: -25, log: "Push 절대 금기 — 부정맥·심정지." },
                         { text: "수액을 계속 더 줌 + 보호자 안내", hp: -18, rep: -12, log: "과다 수액은 폐부종 위험." },
@@ -1975,7 +1975,7 @@
                     time: "11:30", title: "207호 박재훈 — 금단 진행",
                     narration: "207호에서 식은땀과 손떨림 호소. CIWA-Ar 24점 (전 듀티 18점에서 상승). 환자 \"벽에 거미가 기어다녀요... 무서워요.\" 알코올 환각 시작 신호.",
                     choices: [
-                        { text: "Lorazepam 처방 확인·투여 + Thiamine 100mg IV + 환경 차분히", correct: true, hp: -3, rep: 18, log: "정답. CIWA-Ar 상승 + 환각 = 진전섬망 임박. 즉각 약물 + 환경 조절." },
+                        { text: "Lorazepam 처방 확인·투여 + Thiamine IV + 환경 차분히", correct: true, hp: -3, rep: 18, log: "정답. CIWA-Ar 상승 + 환각 = 진전섬망 임박. 즉각 약물 + 환경 조절." },
                         { text: "환각이라며 무시하고 관찰만", hp: -32, rep: -25, log: "진전섬망은 사망률 5% — 즉시 처치." },
                         { text: "Naloxone 투여 + 30분 후 재평가", hp: -28, rep: -22, log: "알코올 금단에 Naloxone 부적절 — Lorazepam이 답." },
                         { text: "조명 환하게 하고 자극으로 정신 차리게", hp: -20, rep: -15, log: "강한 자극은 환각 + 흥분 악화." },
@@ -2098,7 +2098,7 @@
                     image: "ecg:stemi",
                     narration: "ECG 보드: II, III, aVF lead ST 상승 4mm. 권태수님 BP 95/60, P 110, 식은땀 더 심해짐. \"숨이 차요... 무서워요.\" 강민호 펠로우 도착.",
                     choices: [
-                        { text: "심도자실 즉시 콜 + Aspirin 325mg 씹어 먹기 + NTG 설하", correct: true, hp: -2, rep: 20, log: "정답. STEMI 골든타임 — door-to-balloon 90분 이내 목표." },
+                        { text: "심도자실 즉시 콜 + Aspirin 씹어 먹기 + NTG 설하", correct: true, hp: -2, rep: 20, log: "정답. STEMI 골든타임 — door-to-balloon 90분 이내 목표." },
                         { text: "심초음파 결과 기다리며 관찰 + 차트 기록", hp: -32, rep: -25, log: "STEMI 는 시간 — 영상보다 재관류가 먼저." },
                         { text: "통증이 심하니 모르핀 먼저 push", hp: -18, rep: -12, log: "통증 조절은 ASA·NTG 후. PCI 준비가 1차." },
                         { text: "환자가 무서워하니 안정제 IV", hp: -25, rep: -18, log: "심근 산소요구 + 호흡 억제 위험." },
@@ -2118,7 +2118,7 @@
                     time: "00:10", title: "Bay 4 — 임신 환자 의식 변화",
                     narration: "Bay 4 에서 정수민이 \"선배! Bay 4 임신 32주 환자 의식이 가라앉아요!\" 이혜진님 BP 170/110, 단백뇨 양성, 발걷이반사 항진. 갑자기 강직간대 경련 시작.",
                     choices: [
-                        { text: "자간증 — MgSO4 4~6g 부하용량 IV (15~20분) + 좌측위 + 산소", correct: true, hp: -3, rep: 22, log: "정답. 자간증 응급 — MgSO4 부하용량(급속 push 금지) + 산소 + 산과 콜." },
+                        { text: "자간증 — MgSO4 부하용량 IV + 좌측위 + 산소", correct: true, hp: -3, rep: 22, log: "정답. 자간증 응급 — MgSO4 부하용량(급속 push 금지) + 산소 + 산과 콜." },
                         { text: "Diazepam IV 로 경련 멈춤", hp: -25, rep: -18, log: "Benzo는 신생아 호흡 억제 — MgSO4 가 1차." },
                         { text: "경련 멈출 때까지 자세만 옆으로", hp: -32, rep: -25, log: "자간증 약물 차단이 핵심." },
                         { text: "혈압부터 강하 (Nitroprusside push)", hp: -30, rep: -22, log: "급격한 BP 강하는 태반 관류 차단." },
@@ -2129,7 +2129,7 @@
                     image: "ecg:vfib",
                     narration: "응급실 한가운데 \"CODE BLUE! Critical C!\" 다른 환자 — 권태수님이 PCI 이송 중 갑자기 의식 잃음. 모니터 VF.",
                     choices: [
-                        { text: "ACLS 활성화 — 즉시 CPR + 제세동 200J + 에피네프린", correct: true, hp: -5, rep: 22, log: "정답. VF 는 즉시 제세동. 다른 환자 안전도 위임으로 확보." },
+                        { text: "ACLS 활성화 — 즉시 CPR + 제세동 + 에피네프린", correct: true, hp: -5, rep: 22, log: "정답. VF 는 즉시 제세동. 다른 환자 안전도 위임으로 확보." },
                         { text: "심초음파부터 확인 + 차트 기록", hp: -35, rep: -28, log: "VF + pulseless = 즉시 충격." },
                         { text: "에피네프린 먼저 IV push", hp: -25, rep: -18, log: "VF 는 제세동이 우선, 약물은 그 다음." },
                         { text: "코드 무시하고 자기 환자만 봄", hp: -32, rep: -25, log: "팀 응급 — 1초가 생존율 좌우." },
@@ -2876,7 +2876,7 @@
                     time: "금 08:00", title: "Day 5 — 호중구 0 도달",
                     narration: "금요일. ANC 0. 박지원님 T 38.3 (열). 의사 콜 \"호중구감소성 발열 — Cefepime 즉시.\"",
                     choices: [
-                        { text: "혈액배양 2set (말초·CVC) + Cefepime 2g IV 1시간 내 + 역격리 강화", correct: true, hp: -2, rep: 22, log: "정답. Febrile neutropenia = 1시간 내 광범위 항생제 = 패혈증 사망률 좌우." },
+                        { text: "혈액배양 2set (말초·CVC) + Cefepime IV 1시간 내 + 역격리 강화", correct: true, hp: -2, rep: 22, log: "정답. Febrile neutropenia = 1시간 내 광범위 항생제 = 패혈증 사망률 좌우." },
                         { text: "해열제만 주고 항생제는 배양 결과 후", hp: -32, rep: -25, log: "FN 1시간 지연 = 사망률 급증." },
                         { text: "Cefepime 만 주고 배양 누락", hp: -22, rep: -18, log: "배양은 표적 항생제 + 추후 조정 핵심." },
                         { text: "역격리 적용 안 함 + V/S 추적", hp: -20, rep: -16, log: "ANC 0 = 역격리 필수." },
@@ -2886,7 +2886,7 @@
                     time: "토 02:00", title: "야간 — 패혈성 쇼크 진행",
                     narration: "토요일 새벽 2시. 박지원님 BP 85/50 (어제 110/70), P 130, T 39.2, 의식 처짐. 항생제 시작 18시간 후. 패혈성 쇼크.",
                     choices: [
-                        { text: "ICU 즉시 콜 + 생리식염수 30mL/kg + Norepinephrine 준비", correct: true, hp: -3, rep: 22, log: "정답. FN → 패혈성 쇼크 = ICU 표준 1-hour bundle 즉시." },
+                        { text: "ICU 즉시 콜 + 생리식염수 적정 수액 + Norepinephrine 준비", correct: true, hp: -3, rep: 22, log: "정답. FN → 패혈성 쇼크 = ICU 표준 1-hour bundle 즉시." },
                         { text: "수액만 주고 추적 + 보호자 안내", hp: -32, rep: -25, log: "쇼크 단계 — 승압제 + ICU 필요." },
                         { text: "ICU 대신 일반 병동 그대로", hp: -35, rep: -28, log: "환자 안전 위협." },
                         { text: "해열제부터 + V/S 추적", hp: -28, rep: -22, log: "쇼크 처치가 우선." },
@@ -3139,7 +3139,7 @@
                     time: "월 09:00", title: "투석 중 — 저혈압",
                     narration: "이만수 투석 1시간 30분차. BP 100/60 → 80/50, P 95, \"어지러워요. 다리에 쥐가 나요.\" 식은땀.",
                     choices: [
-                        { text: "Trendelenburg + 식염수 100mL bolus + UF 일시 중단", correct: true, hp: -2, rep: 20, log: "정답. HD 저혈압 = 자세 + 수액 + UF 중단 표준." },
+                        { text: "Trendelenburg + 식염수 bolus + UF 일시 중단", correct: true, hp: -2, rep: 20, log: "정답. HD 저혈압 = 자세 + 수액 + UF 중단 표준." },
                         { text: "환자 일으켜 앉히기 + 동료 확인", hp: -25, rep: -20, log: "저혈압 시 일으키면 실신 위험." },
                         { text: "투석 빠르게 종료 + 30분 후 재평가", hp: -22, rep: -18, log: "원인 평가 + UF 조절이 우선." },
                         { text: "본인이 알아서 회복할 거라며 관찰", hp: -28, rep: -22, log: "HD 저혈압 = 즉시 처치 표준." },
@@ -3280,7 +3280,7 @@
                     image: "rule-of-nines",
                     narration: "환자 체중 75kg. Parkland: 4 × 75 × 45 = 13,500mL. 첫 8시간 = 6,750mL → 시간당 약 845mL. 의사 \"삽관 갑시다.\" 호흡치료사 도착.",
                     choices: [
-                        { text: "Parkland 계산 정확 + 시간당 845mL 펌프", correct: true, hp: -2, rep: 22, log: "정답. Parkland 표준 + 소변량 모니터 + 절차 준비." },
+                        { text: "Parkland 계산 정확 + 시간당 적정 펌프", correct: true, hp: -2, rep: 22, log: "정답. Parkland 표준 + 소변량 모니터 + 절차 준비." },
                         { text: "전체 13,500mL 빠르게 시간 내", hp: -32, rep: -25, log: "8시간 1/2 + 16시간 1/2 표준 — 급속 주입 = 폐부종." },
                         { text: "체중 50kg 으로 계산 (실수)", hp: -28, rep: -22, log: "체중 정확성이 핵심." },
                         { text: "삽관은 환자 깨어 있을 때 동의받고", hp: -25, rep: -20, log: "흡입화상 = 응급 삽관, 가족 동의 가능." },
@@ -3753,7 +3753,7 @@
                     time: "03:30", title: "수술실 — Magnesium 독성 사정",
                     narration: "수술실 이동 전 MgSO4 유지 중. 산모 호흡 12회/분, 심부건반사 사라짐 직전, 소변량 25mL/hr.",
                     choices: [
-                        { text: "MgSO4 즉시 감량·중단 + Calcium gluconate 1g IV 준비 + 의사 콜", correct: true, hp: -3, rep: 22, log: "정답. Mg 독성 = Calcium gluconate 즉시 — sc-preeclampsia (E? scenarios) 와 동일." },
+                        { text: "MgSO4 즉시 감량·중단 + Calcium gluconate IV 준비 + 의사 콜", correct: true, hp: -3, rep: 22, log: "정답. Mg 독성 = Calcium gluconate 즉시 — sc-preeclampsia (E? scenarios) 와 동일." },
                         { text: "Diazepam 으로 경련 예방", hp: -32, rep: -25, log: "Mg 독성 ≠ 경련 — Calcium 이 답." },
                         { text: "MgSO4 속도 그대로 + 보호자 안내", hp: -35, rep: -28, log: "호흡 억제 진행 = 호흡 정지 위험." },
                         { text: "Naloxone 투여 + 30분 후 재평가", hp: -28, rep: -22, log: "Mg 길항제 아님." },
@@ -3804,7 +3804,7 @@
                     time: "10:00", title: "NICU 신생아 — 부모 첫 면회",
                     narration: "산모 ICU 입실 후 안정. 남편이 NICU 가서 신생아 첫 면회. \"이렇게 작은데... 살 수 있어요?\" 떨면서 손 잡음.",
                     choices: [
-                        { text: "33주 1850g 생존율 (>95%) + NRP 후 안정 + Kangaroo care 일정", correct: true, hp: -1, rep: 22, log: "정답. NICU 가족 첫 면회 = 정보 + 정서 + 모유·Kangaroo 안내." },
+                        { text: "33주 생존율 (>95%) + NRP 후 안정 + Kangaroo care 일정", correct: true, hp: -1, rep: 22, log: "정답. NICU 가족 첫 면회 = 정보 + 정서 + 모유·Kangaroo 안내." },
                         { text: "\"의사 선생님께 여쭤보세요\" 회피", hp: -22, rep: -18, log: "교육 + 정서 회피." },
                         { text: "위험 위주로 설명 + 보호자 안내", hp: -25, rep: -20, log: "비례성 없는 정보 = 패닉." },
                         { text: "남편 진정제 권유 + 30분 후 재평가", hp: -18, rep: -14, log: "감정 차단보다 정보 + 지지." },
@@ -4024,6 +4024,7 @@
             steps: [
                 {
                     time: "01:00", title: "응급 입실 — 활성 경련",
+                    image: "fundal:36",
                     narration: "한지수 (33세 초산 36주) 119 이송. 남편 \"갑자기 30분 전 의식 잃고 사지 꼬였어요!\" 현재 사지 강직간대 진행 중, BP 195/120, T 37.5, 청색증.",
                     choices: [
                         { text: "기도 보호 (좌측위·흡인) + MgSO4 4-6g IV 부하용량 + 산소 8L", correct: true, hp: -3, rep: 22, log: "정답. 자간증 = MgSO4 즉시 + 기도 + 분만 준비." },
@@ -4036,7 +4037,7 @@
                     time: "01:15", title: "경련 멈춤 — 즉시 사정",
                     narration: "MgSO4 부하용량 후 경련 멈춤. 환자 의식 혼미 (postictal). BP 175/110, 단백뇨 4+, 심부건반사 4+. 자궁수축 없음 (분만 진행 X).",
                     choices: [
-                        { text: "MgSO4 유지 2g/hr + 즉시 응급 C/S 결정 + 남편 동의", correct: true, hp: -2, rep: 22, log: "정답. 자간증 = 분만이 완치 — 36주 = 즉시 C/S." },
+                        { text: "MgSO4 유지/hr + 즉시 응급 C/S 결정 + 남편 동의", correct: true, hp: -2, rep: 22, log: "정답. 자간증 = 분만이 완치 — 36주 = 즉시 C/S." },
                         { text: "분만 진통 시작될 때까지 대기", hp: -32, rep: -25, log: "자간증 = 즉시 분만 — 자연 진통 대기는 사망 위험." },
                         { text: "MgSO4 끄고 다른 강압제로 변경", hp: -28, rep: -22, log: "MgSO4 24시간 유지가 표준 (경련 재발 예방)." },
                         { text: "유도분만 시도 + 차트 기록", hp: -25, rep: -20, log: "자간증 + 36주 = C/S 우선." },
@@ -4077,7 +4078,7 @@
                     time: "03:30", title: "회복실 — Mg 독성 사정",
                     narration: "산모 마취에서 회복 중. MgSO4 2g/hr 유지. V/S 사정: 호흡 11회/분, 심부건반사 약함, 소변량 20mL/hr.",
                     choices: [
-                        { text: "MgSO4 즉시 감량·중단 + Calcium gluconate 1g IV 준비 + 의사 콜", correct: true, hp: -3, rep: 22, log: "정답. Mg 독성 — Calcium gluconate 즉시 (HELLP·자간증 공통)." },
+                        { text: "MgSO4 즉시 감량·중단 + Calcium gluconate IV 준비 + 의사 콜", correct: true, hp: -3, rep: 22, log: "정답. Mg 독성 — Calcium gluconate 즉시 (HELLP·자간증 공통)." },
                         { text: "MgSO4 그대로 유지 + 동료 확인", hp: -35, rep: -28, log: "호흡 정지 위험 진행." },
                         { text: "MgSO4 만 절반으로 감량 + 30분 후 재평가", hp: -28, rep: -22, log: "독성 = 중단 + Calcium." },
                         { text: "수액만 증량 + 보호자 안내", hp: -25, rep: -20, log: "원인 차단이 우선." },
@@ -4839,7 +4840,7 @@
                     time: "14:30", title: "이송 중 — VT",
                     narration: "헬기 비행 중. 모니터 알람 — 심실빈맥 (VT)! 환자 의식 명료, 맥박 약함, BP 80/50.",
                     choices: [
-                        { text: "동기화 cardioversion 100J + Amiodarone 150mg 준비", correct: true, hp: -3, rep: 22, log: "정답. 맥박 있는 VT = 동기화 cardioversion + Amiodarone." },
+                        { text: "동기화 cardioversion 100J + Amiodarone 준비", correct: true, hp: -3, rep: 22, log: "정답. 맥박 있는 VT = 동기화 cardioversion + Amiodarone." },
                         { text: "비동기 제세동 200J + 동료 확인", hp: -32, rep: -28, log: "맥박 있는 VT = 동기화 표준 — 비동기 = VF 유발." },
                         { text: "CPR 시작 + 동료 확인", hp: -28, rep: -22, log: "맥박 있는 VT = CPR 아님." },
                         { text: "Amiodarone 만 IV + 차트 기록", hp: -22, rep: -18, log: "혈역동 불안정 = cardioversion 먼저." },
@@ -5731,7 +5732,7 @@
                   ] },
                 { time: "22:45", title: "분만 — 태아 만출", image: "apgar:appearance=1,pulse=2,grimace=2,activity=2,respiration=2", narration: "신생아가 분만되어 산모 가슴 위로 올라옵니다. 첫 울음 강함, 분홍, 활발. Apgar 1분: 9점.",
                   choices: [
-                    { text: "Skin-to-skin + 늦은 제대 결찰 (1~3분) + 모자 동침", correct: true, hp: -2, rep: 25, log: "정답. WHO/AAP 권고 모범." },
+                    { text: "Skin-to-skin + 늦은 제대 결찰 + 모자 동침", correct: true, hp: -2, rep: 25, log: "정답. WHO/AAP 권고 모범." },
                     { text: "즉시 제대 결찰 + 신생아실로 분리", hp: -22, rep: -16, log: "근거 없이 분리하지 마세요." },
                     { text: "신생아 즉시 흡인 + 산소 적용", hp: -25, rep: -18, log: "건강한 신생아에 불필요한 침습." },
                     { text: "산모는 회복실로, 신생아는 신생아실로 즉시 분리", hp: -22, rep: -18, log: "Skin-to-skin 1시간이 표준." },
@@ -7053,21 +7054,21 @@
             ],
             cast: "산과 정명숙 교수 · 신생아실 김유리 · 응급 마취의 박철민",
             steps: [
-                { time: "20:00", title: "O1 — 조산 위험 평가", narration: "박혜진씨 임신 28주 도착. 진통 7분 간격 + 양수 파막 + 자궁경부 3cm. FHR 145 reactive.",
+                { time: "20:00", title: "O1 — 조산 위험 평가", image: "fundal:28", narration: "박혜진씨 임신 28주 도착. 진통 7분 간격 + 양수 파막 + 자궁경부 3cm. FHR 145 reactive.",
                   choices: [
                     { text: "Tocolytic (자궁수축 억제) + 베타메타손 (태아 폐 성숙) + 신생아실 알림", correct: true, hp: -3, rep: 28, log: "정답. 32주 미만 조산은 tocolysis + 스테로이드 표준 (ACOG)." },
                     { text: "분만 진행만 허용 + 차트 기록", hp: -32, rep: -28, log: "32주 미만은 폐 성숙 + tocolysis 시도." },
                     { text: "관찰 + 자연 진행", hp: -28, rep: -22, log: "적극 개입이 신생아 예후 개선." },
                     { text: "즉시 응급 제왕절개 + 동료 확인", hp: -32, rep: -28, log: "산모·태아 위험 없으면 보존적 우선." },
                   ] },
-                { time: "21:00", title: "O2 — 태반조기박리 의심", narration: "정수영씨 갑작스러운 복통 + 검붉은 출혈 + 자궁 단단함 + FHR 110 약화. BP 92/55.",
+                { time: "21:00", title: "O2 — 태반조기박리 의심", image: "fhr:late", narration: "정수영씨 갑작스러운 복통 + 검붉은 출혈 + 자궁 단단함 + FHR 110 약화. BP 92/55.",
                   choices: [
                     { text: "태반조기박리 응급 — IV 두 줄 + 산소 + 좌측위", correct: true, hp: -5, rep: 30, log: "정답. 태반조기박리는 산모·태아 동시 위협 — 즉시 분만." },
                     { text: "단순 진통으로 보고 분만 진행", hp: -42, rep: -38, log: "산모·태아 사망 위험." },
                     { text: "출혈량만 측정 후 관찰 + V/S 추적", hp: -38, rep: -32, log: "응급 평가 누락." },
                     { text: "옥시토신 증량으로 분만 가속 + 30분 후 재평가", hp: -45, rep: -42, log: "박리 가속 = 사망 위험." },
                   ] },
-                { time: "22:30", title: "O3 — VBAC 자궁파열 의심", narration: "한지영씨 VBAC (이전 제왕절개 후 자연분만) 시도 중. 갑작스러운 격렬한 복통 + 태아 강하 후퇴 + FHR 80.",
+                { time: "22:30", title: "O3 — VBAC 자궁파열 의심", image: "fhr:variable", narration: "한지영씨 VBAC (이전 제왕절개 후 자연분만) 시도 중. 갑작스러운 격렬한 복통 + 태아 강하 후퇴 + FHR 80.",
                   choices: [
                     { text: "자궁파열 응급 — 즉시 응급 제왕절개 + 산모·신생아실 알림 + 혈액제제", correct: true, hp: -5, rep: 30, log: "정답. VBAC 자궁파열은 응급 — 분 단위로 사망." },
                     { text: "분만 진행만 계속 + 보호자 안내", hp: -48, rep: -42, log: "산모·태아 사망 임박." },
@@ -7595,7 +7596,7 @@
             steps: [
                 { time: "02:00", title: "O1 — Naloxone 응급", image: "pupil:1,1", narration: "정민재 의식 GCS 5 + RR 6 + 핀포인트. 친구가 끌고 옴 + 주사기 흔적.",
                   choices: [
-                    { text: "ABC + bag-mask 양압환기 + Naloxone 0.4~2mg IV/IN 적정", correct: true, hp: -3, rep: 28, log: "정답. 오피오이드 OD 표준 (CDC/SAMHSA)." },
+                    { text: "ABC + bag-mask 양압환기 + Naloxone IV/IN 적정", correct: true, hp: -3, rep: 28, log: "정답. 오피오이드 OD 표준 (CDC/SAMHSA)." },
                     { text: "Flumazenil 즉시 + 동료 확인", hp: -32, rep: -28, log: "벤조 길항 — 마약 무효." },
                     { text: "대량 Naloxone 한 번에", hp: -28, rep: -22, log: "급격한 금단 유발 (구토·흥분)." },
                     { text: "관찰 + 의사 콜만", hp: -42, rep: -38, log: "호흡 정지 = 사망." },
@@ -7865,7 +7866,7 @@
             steps: [
                 { time: "20:00", title: "S1 — 패혈증 의심 1시간 번들", narration: "강순태씨 도착 — 발열 39.5 + BP 88/52 + HR 124 + RR 28 + 의식 처짐. qSOFA 3.",
                   choices: [
-                    { text: "1시간 번들 — 혈배 2세트 + 광범위 항생제 + 30mL/kg 수액", correct: true, hp: -3, rep: 30, log: "정답. SCC + CMS SEP-1 번들 표준 — 사망률 감소." },
+                    { text: "1시간 번들 — 혈배 2세트 + 광범위 항생제 + 적정 수액 수액", correct: true, hp: -3, rep: 30, log: "정답. SCC + CMS SEP-1 번들 표준 — 사망률 감소." },
                     { text: "혈배 결과 대기 후 항생제 + 동료 확인", hp: -38, rep: -32, log: "1시간 골든타임." },
                     { text: "수액 제한 + 차트 기록", hp: -32, rep: -28, log: "수액 부하가 표준." },
                     { text: "관찰 + 다음 검사", hp: -42, rep: -38, log: "사망 위험." },
