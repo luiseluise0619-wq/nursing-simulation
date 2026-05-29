@@ -622,6 +622,7 @@
                 },
                 {
                     prompt: "ECG에서 II, III, aVF 리드 ST상승 확인. NTG 0.6mg 설하 1회 투여 후에도 흉통 지속. 다음 조치는?",
+                    image: "ecg:stemi",
                     choices: [
                         { text: "심도자술실(cath lab) 즉시 콜 — door-to-balloon 90분 이내 목표", correct: true, hp: 0, rep: 10, log: "정답. STEMI 표준 — PCI가 가장 빠른 재관류입니다." },
                         { text: "NTG 5분 간격으로 무한 반복 투여하며 경과 관찰", hp: -20, rep: -15, log: "NTG는 5분 간격 3회까지만. 재관류가 필요합니다." },
@@ -835,6 +836,7 @@
                 },
                 {
                     prompt: "Epi IM 후 5분, BP 96/60 HR 118 으로 호전. 그러나 천명음 지속. 다음 조치는?",
+                    image: "ausc:wheeze-diffuse",
                     choices: [
                         { text: "고농도 산소 + IV 수액 bolus + Epi 5~15분 간격 재투여 가능", correct: true, hp: 0, rep: 12, log: "정답. 반복 epinephrine + 수액 + 모니터링이 표준." },
                         { text: "안정되었으니 일반 병실로 이송", hp: -30, rep: -22, log: "이중상성(biphasic) 반응이 4~24시간 후 가능." },
@@ -1030,6 +1032,7 @@
             steps: [
                 {
                     prompt: "환자 초기 평가 — 우선 중재는?",
+                    image: "ecg:svt",
                     choices: [
                         { text: "ABC + 12-Lead ECG + IV", correct: true, hp: 0, rep: 18, log: "정답. SVT 의 표준 — Valsalva 부터 (혈역학 안정 시)." },
                         { text: "단순 불안 발작으로 보고 anxiolytic 만", hp: -32, rep: -28, log: "SVT 진단 누락." },
@@ -1602,6 +1605,7 @@
                 },
                 {
                     time: "23:30", title: "분만 진행 — FHR 변화",
+                    image: "fhr:late",
                     narration: "무통 후 산모 편안한 상태. 자궁경부 7cm. 그런데 태아심음 모니터에서 자궁수축 정점 이후 FHR이 110대로 떨어지는 패턴 반복. 산모는 잠들어 있고, 남편은 모니터를 못 읽음.",
                     choices: [
                         { text: "후기하강 의심 — 좌측위 즉시 + 산소 8L 마스크 + 옥시토신 있다면 중단", correct: true, hp: -3, rep: 18, log: "정답. 후기하강은 태반 관류 부족 — 4단계 즉시." },
@@ -1622,6 +1626,7 @@
                 },
                 {
                     time: "00:45", title: "수술실 — 신생아 출생 직후",
+                    image: "apgar:appearance=1,pulse=1,grimace=1,activity=1,respiration=1",
                     narration: "C/S 시작 15분 만에 신생아 분만. 출생 30초 — 심박 90, 호흡 약하고 불규칙, 사지 약간 굽힘, 자극에 찡그림, 사지 청색·몸은 분홍.",
                     choices: [
                         { text: "Apgar 1분 5점 평가 + 흡인·마사지·가온 + 1분 후 재평가 준비", correct: true, hp: -2, rep: 18, log: "정답. 1분 5점은 적극 소생 대상. NRP 알고리즘 진행." },
@@ -1632,6 +1637,7 @@
                 },
                 {
                     time: "00:50", title: "신생아 5분 Apgar",
+                    image: "apgar:appearance=2,pulse=2,grimace=2,activity=2,respiration=2",
                     narration: "흡인·자극·가온·산소 후 5분 Apgar 재평가: 심박 145, 호흡 활발한 울음, 사지 활발히 움직임, 재채기 반응, 전신 분홍.",
                     choices: [
                         { text: "Apgar 5분 10점 + 정상화 확인 + 엄마와 첫 접촉(skin-to-skin) 준비", correct: true, hp: 0, rep: 14, log: "정답. 5분 10점은 정상 — 모자 첫 접촉이 회복·수유에 좋음." },
@@ -2169,6 +2175,7 @@
                 },
                 {
                     time: "04:30", title: "Bay 4 — 응급 C/S 결정",
+                    image: "fhr:late",
                     narration: "이혜진님 MgSO4 후 경련 멈췄지만 BP 165/105 유지. 태아심음 후기하강 패턴. 산과 의사 \"응급 C/S, 신생아 32주 미숙아 준비.\"",
                     choices: [
                         { text: "수술실 준비 + 신생아 NICU 콜 + 환자·남편 동의", correct: true, hp: -2, rep: 22, log: "정답. 자간증 분만 + 신생아 미숙아 동시 준비." },
@@ -2472,6 +2479,7 @@
                 },
                 {
                     time: "17:00", title: "OR3 정형 외상 — 압력 손상",
+                    image: "position:prone",
                     narration: "OR3 정형 수술 2시간차. 환자 prone position. 동료 \"환자 이마 압력점에 발적 보여요\" 호출. 수술 진행 중 자세 변경 어려움.",
                     choices: [
                         { text: "외과의에게 알림 + 즉시 추가 패딩 보강 + 안면 압력점 재배치", correct: true, hp: -2, rep: 18, log: "정답. 압력 손상 예방 — 외과의 협의 + 패딩 + 후 사정." },
@@ -3267,6 +3275,7 @@
                 },
                 {
                     time: "월 04:00", title: "Parkland 계산 + 삽관",
+                    image: "rule-of-nines",
                     narration: "환자 체중 75kg. Parkland: 4 × 75 × 45 = 13,500mL. 첫 8시간 = 6,750mL → 시간당 약 845mL. 의사 \"삽관 갑시다.\" 호흡치료사 도착.",
                     choices: [
                         { text: "Parkland 계산 정확 + 시간당 845mL 펌프 + 소변량 0.5-1mL/kg/hr 목표", correct: true, hp: -2, rep: 22, log: "정답. Parkland 표준 + 소변량 모니터 + 절차 준비." },
@@ -3750,6 +3759,7 @@
                 },
                 {
                     time: "04:00", title: "C/S — 신생아 출생",
+                    image: "apgar:appearance=1,pulse=1,grimace=1,activity=1,respiration=1",
                     narration: "C/S 시작 15분 만에 신생아 분만 (33주, 1850g). 1분 Apgar 평가: 심박 100, 호흡 약함, 사지 약간 굽힘, 자극 반응 약, 사지 청색.",
                     choices: [
                         { text: "Apgar 1분 5점 + 적극 소생 (NRP) — 흡인·자극·가온·CPAP·NICU 즉시 이송 + 1분 후 재평가", correct: true, hp: -2, rep: 22, log: "정답. 33주 5점 = 적극 NRP + NICU 즉시." },
@@ -4052,6 +4062,7 @@
                 },
                 {
                     time: "02:50", title: "C/S — 신생아 출생",
+                    image: "apgar:appearance=1,pulse=2,grimace=1,activity=2,respiration=2",
                     narration: "C/S 시작 10분 만에 신생아 분만 (36주, 2400g). 1분 Apgar: 심박 130, 호흡 활발, 사지 굽힘, 자극 찡그림, 사지 청색·몸 분홍.",
                     choices: [
                         { text: "Apgar 1분 8점 = 정상 신생아 + 5분 재평가 + 가온", correct: true, hp: -1, rep: 22, log: "정답. 36주 8점 = 정상 — 모자 결합 가능." },
@@ -4497,6 +4508,7 @@
                 },
                 {
                     time: "월 14:00", title: "Bed 5 정수민 — 산과 위험",
+                    image: "fundal:28",
                     narration: "Bed 5 정수민 (45세 임신 28주 코로나). SpO2 93% on 4L NC, FHR 145 reactive. 산부인과 의사 \"코로나 + 28주 = 태아 모니터링 강화\" 처방.",
                     choices: [
                         { text: "지속 FHR 모니터 + 모성 V/S q4h + 좌측위", correct: true, hp: -2, rep: 22, log: "정답. 코로나 임신부 = 다학제 + 태아 모니터 + 폐 성숙 통합." },
@@ -4537,6 +4549,7 @@
                 },
                 {
                     time: "수 14:00", title: "정수민 응급 C/S — 신생아",
+                    image: "apgar:appearance=0,pulse=1,grimace=1,activity=1,respiration=1",
                     narration: "음압 수술실 C/S. 신생아 1300g 출생. 1분 Apgar 4점. 즉시 NRP + NICU 이송 + 신생아 코로나 검사.",
                     choices: [
                         { text: "NRP 적극 (CPAP·산소·가온) + 신생아 음압 격리 + 코로나 검사", correct: true, hp: -2, rep: 22, log: "정답. 코로나 신생아 = NRP + 음압 격리 + 검사 통합." },
@@ -5326,14 +5339,14 @@
             ],
             cast: "신경외과 전공의 박지원 · 야간 당직 한지영 교수 · 동료 이수민",
             steps: [
-                { time: "03:00", title: "ICH 환자 입실", narration: "응급실에서 강성진님 도착. 한 시간 전 두통 + 의식 저하. BP 입실 시 218/118, HR 58, RR 16(intubated), pupils 좌 4mm/우 3mm 비대칭.",
+                { time: "03:00", title: "ICH 환자 입실", image: "pupil:4,3", narration: "응급실에서 강성진님 도착. 한 시간 전 두통 + 의식 저하. BP 입실 시 218/118, HR 58, RR 16(intubated), pupils 좌 4mm/우 3mm 비대칭.",
                   choices: [
                     { text: "ABC 안정화 + 침대 머리 30도 + V/S·동공·GCS 시리얼", correct: true, hp: -3, rep: 15, log: "정답. ICH 의 표준 초기 관리." },
                     { text: "혈압이 높으니 즉시 sublingual NTG 적용", hp: -28, rep: -22, log: "급격한 BP 강하는 뇌관류를 위협합니다." },
                     { text: "동공 비대칭은 정상 변이로 판단", hp: -32, rep: -25, log: "동공 비대칭은 뇌탈출 의심 징후입니다." },
                     { text: "혈압을 정상범위(120/80)까지 빠르게 낮춘다", hp: -30, rep: -22, log: "ICH 의 BP 목표는 160 이하 점진적 강하입니다." },
                   ] },
-                { time: "03:30", title: "동공 변화", narration: "30분 후 강성진님 좌 동공이 5mm 로 확장, 광반사 소실. GCS E1V T M2.",
+                { time: "03:30", title: "동공 변화", image: "pupil:5,3", narration: "30분 후 강성진님 좌 동공이 5mm 로 확장, 광반사 소실. GCS E1V T M2.",
                   choices: [
                     { text: "신경외과 즉시 콜 + 응급 CT + 만니톨/3% NaCl 처방 확인", correct: true, hp: -5, rep: 20, log: "정답. 뇌탈출 의심 — 5분이 결정." },
                     { text: "혈압 안정 위해 morphine 추가", hp: -35, rep: -28, log: "원인 평가 없이 진정제는 금기." },
@@ -5541,7 +5554,7 @@
                     { text: "자녀 의견이 옳다고 단정하고 환자 설득", hp: -22, rep: -18, log: "환자 자율성 침해." },
                     { text: "이런 결정은 의사가 해야 한다며 회피", hp: -18, rep: -12, log: "간호사 역할 회피." },
                   ] },
-                { time: "목 10:00", title: "H3 — 욕창 발견", narration: "이지숙님 천골부에 Stage II 욕창 발견. 남편 \"몰랐어요, 미안해요\" 자책. 환자는 가벼운 통증 호소.",
+                { time: "목 10:00", title: "H3 — 욕창 발견", image: "ulcer:2", narration: "이지숙님 천골부에 Stage II 욕창 발견. 남편 \"몰랐어요, 미안해요\" 자책. 환자는 가벼운 통증 호소.",
                   choices: [
                     { text: "드레싱 + 압력분산 매트 권유 + 남편에게 자책 대신 자세 변경 교육", correct: true, hp: -3, rep: 22, log: "정답. 비난 대신 교육 + 자원 연계." },
                     { text: "\"왜 못 봤어요?\" 라며 남편을 비판", hp: -22, rep: -18, log: "이차 피해, 신뢰 손상." },
@@ -5631,7 +5644,7 @@
                     { text: "기관 흡인 강하게 반복", hp: -32, rep: -25, log: "흡인은 ICP·기흉을 악화시킬 수 있습니다." },
                     { text: "단순 분비물 막힘으로 보고 자세만 변경", hp: -35, rep: -28, log: "기흉을 놓치면 사망 가능." },
                   ] },
-                { time: "04:00", title: "P3 — 수술 후 부정맥", narration: "이도현이 새벽 모니터에 빈맥 + 불규칙. SVT 또는 JET 가능. BP 84/50, 의식 처짐.",
+                { time: "04:00", title: "P3 — 수술 후 부정맥", image: "ecg:svt", narration: "이도현이 새벽 모니터에 빈맥 + 불규칙. SVT 또는 JET 가능. BP 84/50, 의식 처짐.",
                   choices: [
                     { text: "12-Lead ECG + 응급 의사 콜 + 약물(아데노신/아미오다론) 준비", correct: true, hp: -4, rep: 22, log: "정답. 소아 수술 후 빈맥성 부정맥은 응급 평가 + 약물 + 필요시 동시 자극." },
                     { text: "심방세동으로 보고 디곡신 추가", hp: -32, rep: -25, log: "감별 없이 디곡신은 부적절합니다." },
@@ -5782,7 +5795,7 @@
                     { text: "환자 의식 명료하니 정신과 외래만 안내 후 퇴원", hp: -38, rep: -32, log: "자살 사고 + 30정은 응급. 절대 퇴원 X." },
                     { text: "환자 진정 위해 안정제 IM 강제 투여", hp: -28, rep: -22, log: "협조 환자에 강제 약물 부적절." },
                   ] },
-                { time: "03:00", title: "E2 — 의식 저하 + 호흡 억제", narration: "정재호씨 GCS 11 → 8 로 하강. SpO2 90%, RR 8. 동공 핀포인트(pinpoint).",
+                { time: "03:00", title: "E2 — 의식 저하 + 호흡 억제", image: "pupil:1,1", narration: "정재호씨 GCS 11 → 8 로 하강. SpO2 90%, RR 8. 동공 핀포인트(pinpoint).",
                   choices: [
                     { text: "ABC + 산소 + bag-mask 양압환기 준비", correct: true, hp: -4, rep: 25, log: "정답. 벤조 과량의 호흡 억제는 응급 기도 + 길항제 신중 사용." },
                     { text: "Naloxone 즉시 IV push", hp: -28, rep: -22, log: "Naloxone 은 마약성 진통제 길항제 — 벤조에 무효." },
@@ -5957,14 +5970,14 @@
             ],
             cast: "구급대장 한상호 · 구급대원 정수민 · 본인 의료지도 간호사 동승",
             steps: [
-                { time: "20:00", title: "C1 — STEMI 의심 출동", narration: "출동 코드 STEMI 의심. 도착 시 70세 여성 거실에서 의식 명료, NRS 8 흉통, 발한, 안색 창백.",
+                { time: "20:00", title: "C1 — STEMI 의심 출동", image: "ecg:stemi", narration: "출동 코드 STEMI 의심. 도착 시 70세 여성 거실에서 의식 명료, NRS 8 흉통, 발한, 안색 창백.",
                   choices: [
                     { text: "ABC + IV 확보 + 12-Lead ECG 즉시", correct: true, hp: -3, rep: 25, log: "정답. EMS STEMI 프로토콜의 표준 (door-to-balloon 단축)." },
                     { text: "현장에서 안정 + 30분 후 재평가", hp: -38, rep: -32, log: "STEMI 는 분 단위 시간 결정적." },
                     { text: "심초음파 결과 기다림", hp: -32, rep: -25, log: "현장 EMS 는 ECG + 임상 + 신속 이송." },
                     { text: "환자 가족에게 직접 차량으로 이송 권유", hp: -35, rep: -28, log: "응급 EMS 가 환자 안전." },
                   ] },
-                { time: "20:45", title: "이송 중 — 심정지 발생", narration: "이송 중 환자가 갑자기 의식 잃음. 맥박·호흡 없음. 모니터에 VFib.",
+                { time: "20:45", title: "이송 중 — 심정지 발생", image: "ecg:vfib", narration: "이송 중 환자가 갑자기 의식 잃음. 맥박·호흡 없음. 모니터에 VFib.",
                   choices: [
                     { text: "즉시 차량 정차 + CPR 시작 + AED/제세동", correct: true, hp: -5, rep: 30, log: "정답. EMS 심정지는 즉시 CPR + 제세동 + 약물." },
                     { text: "이송 계속하며 운전 중 CPR", hp: -32, rep: -25, log: "효과적 압박 불가능. 정차가 표준." },
@@ -6068,7 +6081,7 @@
                     { text: "신고하되 가족에게 알리지 않고 비밀로", hp: -22, rep: -18, log: "비밀 유지는 정직성 위반." },
                     { text: "신고 후 가족을 즉시 응급실에서 내보냄", hp: -22, rep: -16, log: "법적 절차에 따라야." },
                   ] },
-                { time: "23:30", title: "E2 — 영양실조 + 욕창 Stage III", narration: "정재훈씨 도착 시 영양실조 (BMI 16), 천골 Stage III 욕창, 요양보호사 동반. 요양보호사 \"제가 가능한 한 다 했어요\" 라며 변명.",
+                { time: "23:30", title: "E2 — 영양실조 + 욕창 Stage III", image: "ulcer:3", narration: "정재훈씨 도착 시 영양실조 (BMI 16), 천골 Stage III 욕창, 요양보호사 동반. 요양보호사 \"제가 가능한 한 다 했어요\" 라며 변명.",
                   choices: [
                     { text: "신체 사정 + 욕창 사진 기록 + 영양 평가", correct: true, hp: -3, rep: 25, log: "정답. 노인 방임도 학대로 신고 대상." },
                     { text: "요양보호사 변명 그대로 수용", hp: -32, rep: -25, log: "방임 신호 무시." },
@@ -6691,7 +6704,7 @@
                     { text: "가족에게만 알리고 환자 안정", hp: -28, rep: -22, log: "전문가 평가 우선." },
                     { text: "본인이 직접 상담 시도", hp: -18, rep: -10, log: "정신과 전문 영역." },
                   ] },
-                { time: "수 11:00", title: "S3 — 황달 추적", narration: "한별 (4일/F) 빌리루빈 13mg/dL. Kramer Zone 3 (가슴까지). 모유수유 활발.",
+                { time: "수 11:00", title: "S3 — 황달 추적", image: "kramer:3", narration: "한별 (4일/F) 빌리루빈 13mg/dL. Kramer Zone 3 (가슴까지). 모유수유 활발.",
                   choices: [
                     { text: "빌리루빈 추적 + 모유수유 지속 + 광선치료 적응 여부 의사 평가", correct: true, hp: -2, rep: 22, log: "정답. 신생아 황달은 추적 + 모유수유 지속이 표준 (모유 황달과 모유수유 황달 감별)." },
                     { text: "즉시 광선치료 시작", hp: -22, rep: -16, log: "광선치료 적응 기준 (Bhutani 노모그램) 평가 필요." },
@@ -6975,7 +6988,7 @@
                     { text: "안정제만 IV", hp: -32, rep: -28, log: "원인 제거 우선." },
                     { text: "관찰 + 다음 회진", hp: -38, rep: -32, log: "AD 는 5~10분 골든타임." },
                   ] },
-                { time: "목 13:00", title: "T3 — 두부 외상 + 동공 변화", narration: "정수민씨 ICU 3일차 갑자기 의식 저하 + 좌측 동공 5mm 비대칭 + GCS E2V2M4.",
+                { time: "목 13:00", title: "T3 — 두부 외상 + 동공 변화", image: "pupil:5,3", narration: "정수민씨 ICU 3일차 갑자기 의식 저하 + 좌측 동공 5mm 비대칭 + GCS E2V2M4.",
                   choices: [
                     { text: "신경외과 즉시 콜 + 응급 CT + 침대 머리 30도", correct: true, hp: -5, rep: 28, log: "정답. 두부 외상 후 의식 변화 = 응급 평가." },
                     { text: "수면제 효과로 보고 관찰", hp: -42, rep: -38, log: "뇌출혈 진행 = 사망." },
@@ -7397,7 +7410,7 @@
             ],
             cast: "응급의 김도윤 · 정신과 협진 정선영 · 독성학자 한태우 협진",
             steps: [
-                { time: "20:00", title: "P1 — 유기인계 중독 응급", narration: "강순태씨 의식 GCS 11 + 분비물 다량 + 동공 핀포인트 + BP 92/58 + HR 48. 콜린성 위기.",
+                { time: "20:00", title: "P1 — 유기인계 중독 응급", image: "pupil:1,1", narration: "강순태씨 의식 GCS 11 + 분비물 다량 + 동공 핀포인트 + BP 92/58 + HR 48. 콜린성 위기.",
                   choices: [
                     { text: "ABC + 흡인·기도 + 산소", correct: true, hp: -5, rep: 30, log: "정답. 유기인계 중독 표준 (Atropine + PAM)." },
                     { text: "Naloxone IV", hp: -38, rep: -32, log: "Naloxone 은 마약 길항. 유기인계 무효." },
@@ -7425,7 +7438,7 @@
                     { text: "단순 위세척 즉시 시행", hp: -22, rep: -16, log: "농약 종류 + 적응증 평가." },
                     { text: "환자 의식 명료하니 외래 권유", hp: -42, rep: -38, log: "의도적 중독은 응급 + 정신과." },
                   ] },
-                { time: "01:00", title: "P1 — Atropine 적정 + 반응", narration: "강순태씨 Atropine 8mg 누적 + 분비물 감소. 동공 점차 산대. 호흡 안정 진행.",
+                { time: "01:00", title: "P1 — Atropine 적정 + 반응", image: "pupil:6,6", narration: "강순태씨 Atropine 8mg 누적 + 분비물 감소. 동공 점차 산대. 호흡 안정 진행.",
                   choices: [
                     { text: "분비물 마를 때까지 Atropine 적정 + V/S 5분 + ICU 이송", correct: true, hp: -2, rep: 25, log: "정답. 유기인계 중독은 분비물 + V/S 가 적정 지표." },
                     { text: "Atropine 충분이라 중단", hp: -28, rep: -22, log: "반복 적정 필요." },
@@ -7577,7 +7590,7 @@
             ],
             cast: "응급의 김도윤 · 중독의학 정선영 · 사회복지 한지영",
             steps: [
-                { time: "02:00", title: "O1 — Naloxone 응급", narration: "정민재 의식 GCS 5 + RR 6 + 핀포인트. 친구가 끌고 옴 + 주사기 흔적.",
+                { time: "02:00", title: "O1 — Naloxone 응급", image: "pupil:1,1", narration: "정민재 의식 GCS 5 + RR 6 + 핀포인트. 친구가 끌고 옴 + 주사기 흔적.",
                   choices: [
                     { text: "ABC + bag-mask 양압환기 + Naloxone 0.4~2mg IV/IN 적정", correct: true, hp: -3, rep: 28, log: "정답. 오피오이드 OD 표준 (CDC/SAMHSA)." },
                     { text: "Flumazenil 즉시", hp: -32, rep: -28, log: "벤조 길항 — 마약 무효." },
