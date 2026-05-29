@@ -1,11 +1,55 @@
 <?xml version="1.0"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="간호사 시뮬레이터">
-  <rect width="512" height="512" rx="112" fill="#7fa881"></rect>
-  <rect x="0" y="0" width="512" height="240" rx="112" fill="#ffffff" opacity="0.12"></rect>
-  <g transform="translate(256,256)">
-    <rect x="-44" y="-128" width="88" height="256" rx="20" fill="#ffffff"></rect>
-    <rect x="-128" y="-44" width="256" height="88" rx="20" fill="#ffffff"></rect>
-    <circle cx="0" cy="0" r="48" fill="#6a9170"></circle>
-    <path d="M -22 -2 L -8 -2 L -2 -18 L 4 18 L 10 -4 L 22 -4" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"></path>
+  <!-- 배경 — 세이지 그린 둥근 사각형 -->
+  <defs>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#9ec0a0"/>
+      <stop offset="100%" stop-color="#7fa881"/>
+    </linearGradient>
+    <linearGradient id="crossGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#f5fbf5"/>
+    </linearGradient>
+    <filter id="softShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="6"/>
+      <feOffset dx="0" dy="4" result="offsetblur"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.25"/></feComponentTransfer>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- 배경 라운드 사각형 -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)"/>
+
+  <!-- 상단 글래스 하이라이트 -->
+  <rect x="0" y="0" width="512" height="200" rx="112" fill="#ffffff" opacity="0.10"/>
+
+  <!-- 중앙 의료 십자가 (그림자 포함) -->
+  <g transform="translate(256,256)" filter="url(#softShadow)">
+    <!-- 수직 막대 -->
+    <rect x="-44" y="-140" width="88" height="280" rx="24" fill="url(#crossGrad)"/>
+    <!-- 수평 막대 -->
+    <rect x="-140" y="-44" width="280" height="88" rx="24" fill="url(#crossGrad)"/>
   </g>
+
+  <!-- 중앙 ECG 심전도 — 십자가 위에 겹쳐서 학습+의료 표현 -->
+  <g transform="translate(256,256)">
+    <!-- 원형 배경 (ECG 모니터 화면 느낌) -->
+    <circle cx="0" cy="0" r="58" fill="#5a7a5c" opacity="0.95"/>
+    <circle cx="0" cy="0" r="58" fill="none" stroke="#ffffff" stroke-width="2.5" opacity="0.6"/>
+    <!-- ECG 파형 -->
+    <path d="M -36 -2 L -18 -2 L -10 -22 L -2 26 L 6 -28 L 14 8 L 22 -4 L 36 -4"
+          fill="none" stroke="#ffffff" stroke-width="5.5"
+          stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- 작은 점 (heartbeat dot) -->
+    <circle cx="36" cy="-4" r="3.5" fill="#ffffff"/>
+  </g>
+
+  <!-- 우상단 작은 'RN' 텍스트 (선택적, 학습 강조) -->
+  <text x="430" y="98" font-family="-apple-system, BlinkMacSystemFont, sans-serif"
+        font-size="36" font-weight="800" fill="#ffffff" opacity="0.55"
+        text-anchor="middle">RN</text>
 </svg>

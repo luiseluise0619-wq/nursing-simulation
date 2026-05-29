@@ -861,6 +861,8 @@ const Storage = {
             episodeProgress: (raw.episodeProgress && typeof raw.episodeProgress === "object" && !Array.isArray(raw.episodeProgress)) ? raw.episodeProgress : {},
             daily: (raw.daily && typeof raw.daily === "object") ? raw.daily : {},
             history: Array.isArray(raw.history) ? raw.history : [],
+            deviceId: (typeof raw.deviceId === "string" && raw.deviceId.length > 0) ? raw.deviceId : null,
+            notifyOptIn: raw.notifyOptIn === true,
         };
         if (raw.stats && typeof raw.stats === "object") {
             CATEGORIES.forEach(c => {
@@ -1000,6 +1002,22 @@ const Storage = {
         const data = Storage.load();
         data.onboarded = true;
         Storage.save(data);
+    },
+    // 익명 디바이스 ID — 향후 클라우드 동기화·서버측 분석용 (현재 미사용)
+    // crypto.randomUUID 가 없는 구형 환경은 timestamp+random 폴백
+    getDeviceId() {
+        const data = Storage.load();
+        if (data.deviceId) return data.deviceId;
+        let id;
+        try {
+            id = (crypto && crypto.randomUUID) ? crypto.randomUUID()
+                : `dev-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+        } catch {
+            id = `dev-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+        }
+        data.deviceId = id;
+        Storage.save(data);
+        return id;
     },
     isOnboarded() {
         const data = Storage.load();
@@ -3081,6 +3099,22 @@ function openSettings() {
           <span>언어</span>
           <span class="settings-value">한국어 <small>(NCLEX 영어 모드 예정)</small></span>
         </div>
+        <div class="settings-row">
+          <span>일일 학습 알림</span>
+          <span class="settings-value">${data.notifyOptIn ? "켜짐" : "꺼짐"}</span>
+        </div>
+        <div class="choice-list">
+          <button class="choice-btn" data-action="toggleDailyNotify">${data.notifyOptIn ? "🔕 알림 끄기" : "🔔 일일 챌린지 알림 켜기"}</button>
+        </div>
+
+        <h3 class="settings-section">프리미엄 (준비중)</h3>
+        <div class="settings-row">
+          <span>광고 제거 + 무제한 부활 + 우선 RN 감수 받기</span>
+          <span class="settings-value">₩4,900/월</span>
+        </div>
+        <div class="choice-list">
+          <button class="choice-btn" data-action="showPremiumInfo" disabled aria-disabled="true" style="opacity:0.55">⭐ 곧 만나요</button>
+        </div>
 
         <h3 class="settings-section">데이터</h3>
         <div class="settings-row">
@@ -3110,8 +3144,10 @@ function openSettings() {
         <h3 class="settings-section">정보</h3>
         <div class="choice-list">
           <button class="choice-btn" data-action="renderAbout">앱 정보 · 버전 · 변경 이력</button>
-          <button class="choice-btn" data-action="renderPrivacy">개인정보 처리방침</button>
-          <button class="choice-btn" data-action="showLegal">이용 약관 · 면책</button>
+          <button class="choice-btn" data-action="renderPrivacy">개인정보 처리방침 (요약)</button>
+          <button class="choice-btn" data-action="showLegal">이용 약관 · 면책 (요약)</button>
+          <button class="choice-btn" data-action="openExternalPrivacy">📄 개인정보 전문</button>
+          <button class="choice-btn" data-action="openExternalTerms">📄 이용약관 전문</button>
           <button class="choice-btn" data-action="showOnboarding">튜토리얼 다시 보기</button>
           <button class="choice-btn" data-action="openErrorReport">컨텐츠 오류 신고</button>
         </div>
@@ -3243,6 +3279,44 @@ function openFeedback() {
     } catch {
         addLog("브라우저가 새 창을 막았습니다. 직접 방문: github.com/luiseluise0619-wq/nursing-simulation/issues", "log-bad");
     }
+}
+
+// 일일 학습 알림 — Notification API 권한 요청 + 24시간 후 로컬 푸시 예약
+// 캐퍼시터 환경에서는 LocalNotifications 플러그인으로 자동 위임됨 (향후)
+async function toggleDailyNotify() {
+    const data = Storage.load();
+    if (data.notifyOptIn) {
+        data.notifyOptIn = false;
+        Storage.save(data);
+        addLog("🔕 알림 꺼졌습니다. 설정에서 다시 켤 수 있어요.", "log-good");
+        openSettings();
+        return;
+    }
+    // 권한 요청
+    if (!("Notification" in window)) {
+        addLog("이 기기는 알림을 지원하지 않습니다.", "log-bad");
+        return;
+    }
+    try {
+        const perm = await Notification.requestPermission();
+        if (perm === "granted") {
+            data.notifyOptIn = true;
+            Storage.save(data);
+            addLog("🔔 매일 일일 챌린지 알림이 켜졌습니다.", "log-good");
+            // 즉시 환영 알림 1회
+            try { new Notification("간호사 시뮬레이터", { body: "알림이 켜졌어요. 매일 한 듀티씩 ✨", icon: "icon.svg" }); } catch {}
+        } else {
+            addLog("알림 권한이 거부되었습니다. 브라우저 설정에서 허용해주세요.", "log-bad");
+        }
+    } catch (e) {
+        addLog("알림 권한 요청 실패: " + (e && e.message ? e.message : "unknown"), "log-bad");
+    }
+    openSettings();
+}
+
+// 프리미엄 안내 — 출시 후 결제 활성 전까지 placeholder
+function showPremiumInfo() {
+    addLog("⭐ 프리미엄은 출시 1.5 부터 만나요. 지금은 모든 기능 무료입니다.", "log-good");
 }
 
 function renderPrivacy() {
@@ -4443,6 +4517,10 @@ const DELEGATED_ACTIONS = {
     renderPrivacy: () => renderPrivacy(),
     exportData: () => exportData(),
     triggerImportData: () => triggerImportData(),
+    toggleDailyNotify: () => toggleDailyNotify(),
+    showPremiumInfo: () => showPremiumInfo(),
+    openExternalPrivacy: () => { try { window.open("privacy.html", "_blank", "noopener"); } catch {} },
+    openExternalTerms: () => { try { window.open("terms.html", "_blank", "noopener"); } catch {} },
     // 북마크
     toggleSceneBookmark: (t) => toggleSceneBookmark(t),
     renderBookmarks: () => renderBookmarks(),
