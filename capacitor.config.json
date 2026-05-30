@@ -1,0 +1,12 @@
+{
+  "appId": "com.luiseluise0619.nursingsim",
+  "appName": "간호사 시뮬레이터",
+  "webDir": "www",
+  "android": {
+    "backgroundColor": "#eef2f5",
+    "allowMixedContent": false
+  },
+  "server": {
+    "androidScheme": "https"
+  }
+}

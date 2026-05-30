@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">간호사 시뮬레이터</string>
+    <string name="title_activity_main">간호사 시뮬레이터</string>
+    <string name="package_name">com.luiseluise0619.nursingsim</string>
+    <string name="custom_url_scheme">com.luiseluise0619.nursingsim</string>
+</resources>

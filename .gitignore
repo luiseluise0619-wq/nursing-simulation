@@ -4,3 +4,24 @@ coverage/
 *.log
 .DS_Store
 .eslintcache
+
+# Capacitor / Android — 빌드 산출물·캐시 (소스만 커밋)
+android/.gradle/
+android/build/
+android/app/build/
+android/captures/
+android/local.properties
+android/.idea/
+android/*.iml
+android/app/*.iml
+android/app/release/
+android/app/src/main/assets/public/
+*.keystore
+*.jks
+keystore.properties
+
+# Capacitor generated
+www/
+
+# iOS
+ios/

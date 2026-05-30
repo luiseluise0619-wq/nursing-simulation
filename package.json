@@ -10,6 +10,9 @@
     "test:coverage": "jest --coverage",
     "lint": "eslint . --ext .js --ignore-pattern node_modules --ignore-pattern dist --ignore-pattern build",
     "icons": "node scripts/generate-icons.js",
+    "build:web": "node scripts/build-www.js",
+    "sync:android": "npm run build:web && npx cap sync android",
+    "open:android": "npx cap open android",
     "pack:mac": "electron-builder --mac --x64 --arm64",
     "pack:win": "electron-builder --win --x64",
     "pack:linux": "electron-builder --linux AppImage"
@@ -84,5 +87,10 @@
         ]
       }
     ]
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.6.5",
+    "@capacitor/cli": "^7.6.5",
+    "@capacitor/core": "^7.6.5"
   }
 }
