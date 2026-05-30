@@ -1617,6 +1617,7 @@
                 },
                 {
                     time: "00:15", title: "응급 제왕절개 결정",
+                    image: "fhr:late",
                     narration: "체위변경·산소 후에도 FHR 회복 불완전. 의사 \"응급 C/S 갑니다\" 발표. 산모가 마취 약효로 일부 의식 + 남편 \"어떻게 된 거예요?! 우리 애 괜찮은 거 맞아요?\" 패닉.",
                     choices: [
                         { text: "산모·남편에게 차분히 사유 설명 + 동의서 진행", correct: true, hp: -3, rep: 16, log: "정답. 응급 상황도 동의·교육 필요. 동시에 수술실 호출." },
@@ -2116,6 +2117,7 @@
                 },
                 {
                     time: "00:10", title: "Bay 4 — 임신 환자 의식 변화",
+                    image: "fundal:32",
                     narration: "Bay 4 에서 정수민이 \"선배! Bay 4 임신 32주 환자 의식이 가라앉아요!\" 이혜진님 BP 170/110, 단백뇨 양성, 발걷이반사 항진. 갑자기 강직간대 경련 시작.",
                     choices: [
                         { text: "자간증 — MgSO4 부하용량 IV + 좌측위 + 산소", correct: true, hp: -3, rep: 22, log: "정답. 자간증 응급 — MgSO4 부하용량(급속 push 금지) + 산소 + 산과 콜." },
@@ -2137,6 +2139,7 @@
                 },
                 {
                     time: "00:35", title: "ROSC — 권태수 회복",
+                    image: "ecg:nsr",
                     narration: "2번째 제세동 후 ROSC. 자발 순환 회복. 환자 의식 점차 돌아옴. BP 100/65. 심도자실에서 \"왜 안 와요?\" 콜.",
                     choices: [
                         { text: "안정화 후 즉시 cath lab 이송 + 도착 후 PCI", correct: true, hp: -2, rep: 20, log: "정답. ROSC 후도 PCI 가 STEMI 의 표준 — 시간 손실 최소." },
@@ -2966,6 +2969,7 @@
             steps: [
                 {
                     time: "월 08:00", title: "출근 — 보건실 준비",
+                    image: "aed:child",
                     narration: "월요일 아침. 보건실 문 열고 비품 점검. 알레르기 응급 키트, EpiPen, 흡입제, 혈당측정기, AED 위치 확인. 7시 55분 첫 학생이 \"머리가 아파요\" 들어옴.",
                     choices: [
                         { text: "응급 비품 모두 사용 가능 상태 + 학생 V/S·통증 사정", correct: true, hp: -2, rep: 18, log: "정답. 학교보건은 응급 대비 + 환경 점검이 매일 시작." },
@@ -2986,6 +2990,7 @@
                 },
                 {
                     time: "화 10:30", title: "박재훈 — 천식 발작",
+                    image: "ausc:wheeze-diffuse",
                     narration: "1-7 박재훈 학생이 헐떡이며 들어옴. \"체육 시간에... 갑자기 숨이...\" 천명음 들림, SpO2 90%, R 30. Albuterol 흡입제 가방에 있음.",
                     choices: [
                         { text: "Albuterol 흡입제 2회 + 직립 자세", correct: true, hp: -3, rep: 20, log: "정답. 학교 천식 발작 = 즉시 흡입제 + V/S + 응급 콜 + 담임 정보." },
@@ -3056,6 +3061,7 @@
                 },
                 {
                     time: "금 14:30", title: "백신 후 — 아나필락시스",
+                    image: "ausc:wheeze-diffuse",
                     narration: "접종 후 12분. 한 학생이 \"숨이 차요... 얼굴이 가려워요\" 호소. 입술 부종, 두드러기, SpO2 92%, 천명음.",
                     choices: [
                         { text: "EpiPen 즉시 IM (대퇴 외측) + 119 콜", correct: true, hp: -3, rep: 22, log: "정답. 아나필락시스 = EpiPen 즉시 + 119 표준." },
@@ -3267,6 +3273,7 @@
             steps: [
                 {
                     time: "월 03:00", title: "응급 입실 — 초기 안정화",
+                    image: "rule-of-nines",
                     narration: "공장 화재 환자 정인호 (38세) 응급실에서 이송. TBSA 45% 2-3도, 안면·경부 흡입화상 의심. BP 90/60, P 130, SpO2 94%, 그을음·천명음·쉰 목소리.",
                     choices: [
                         { text: "기도 평가 (흡입화상 = 삽관 임박) + 마취과·호흡치료사 콜", correct: true, hp: -3, rep: 22, log: "정답. 흡입화상 = 즉시 삽관 준비 + 대량 수액 + 통증 통합." },
@@ -3721,6 +3728,7 @@
             steps: [
                 {
                     time: "02:00", title: "응급 입실 — 첫 사정",
+                    image: "fundal:33",
                     narration: "윤지원 (29세 임신 33주). 남편이 \"갑자기 두통이 심해서 잠을 못 잤어요...\" 호소. BP 165/110, 단백뇨 4+, T 37.5, 우상복부 통증 NRS 8.",
                     choices: [
                         { text: "HELLP 의심 — 즉시 혈액검사 (CBC·간기능·LDH·말초혈) + MgSO4 IV", correct: true, hp: -3, rep: 22, log: "정답. HELLP = 즉시 검사 + MgSO4 + 분만 계획." },
@@ -4838,6 +4846,7 @@
                 },
                 {
                     time: "14:30", title: "이송 중 — VT",
+                    image: "ecg:vtach",
                     narration: "헬기 비행 중. 모니터 알람 — 심실빈맥 (VT)! 환자 의식 명료, 맥박 약함, BP 80/50.",
                     choices: [
                         { text: "동기화 cardioversion 100J + Amiodarone 준비", correct: true, hp: -3, rep: 22, log: "정답. 맥박 있는 VT = 동기화 cardioversion + Amiodarone." },
@@ -4878,6 +4887,7 @@
                 },
                 {
                     time: "23:00", title: "Call 4 — 도서 분만진통",
+                    image: "fundal:36",
                     narration: "야간 콜! \"흑산도 36주 임산부 분만진통 + 도서 의료 부재.\" 이륙. 환자 자궁수축 3분 간격, 자궁경부 7cm, FHR 140 reactive.",
                     choices: [
                         { text: "산모 평가 (FHR·자궁수축·V/S) + 분만 준비 (이송 중 분만 가능)", correct: true, hp: -3, rep: 22, log: "정답. 헬기 분만 = 준비 + 즉각 대비 + 다학제 통합." },
