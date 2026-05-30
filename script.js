@@ -3316,6 +3316,7 @@ async function toggleDailyNotify() {
 
 // 프리미엄 안내 — 출시 후 결제 활성 전까지 placeholder
 function showPremiumInfo() {
+    track("premium_interest"); // 마케팅 시그널 — 얼마나 많은 사용자가 관심을 보이는가
     addLog("⭐ 프리미엄은 출시 1.5 부터 만나요. 지금은 모든 기능 무료입니다.", "log-good");
 }
 
@@ -3538,6 +3539,7 @@ function legalAccept() {
     const cb = document.getElementById("legal-consent-check");
     if (cb && !cb.checked) { cb.focus(); return; }
     Storage.setAccepted(LEGAL_VERSION);
+    track("legal_accepted", { version: LEGAL_VERSION });
     const cont = UI._onLegalAccept;
     UI._onLegalAccept = null;
     if (typeof cont === "function") cont(); else returnToMenu();
@@ -3638,6 +3640,7 @@ function onboardNext() {
 function onboardSkip() { onboardFinish(); }
 function onboardFinish() {
     Storage.setOnboarded();
+    track("onboarding_complete");
     returnToMenu();
 }
 
@@ -4145,17 +4148,60 @@ function boot() {
             navigator.serviceWorker.register("./sw.js").catch(() => {});
         }
     } catch {}
-    // 첫 실행 → 약관 동의 → 온보딩 → 메뉴
+    // PWA 설치 프롬프트 — 가능할 때 holding 해서 사용자 액션 후에만 노출
+    try {
+        window.addEventListener("beforeinstallprompt", (e) => {
+            e.preventDefault();
+            window.__pwaInstallPrompt = e;
+            track("pwa_install_prompt_available");
+        });
+        window.addEventListener("appinstalled", () => track("pwa_installed"));
+    } catch {}
+    // 첫 실행 → 약관 동의 → 온보딩 → 메뉴 → (단축키 URL 처리)
+    const afterReady = () => {
+        handleShortcutUrl();
+    };
     if (!Storage.isAccepted(LEGAL_VERSION)) {
         renderLegalGate(() => {
             if (!Storage.isOnboarded()) renderOnboarding(0);
-            else returnToMenu();
+            else { returnToMenu(); afterReady(); }
         });
     } else if (!Storage.isOnboarded()) {
         renderOnboarding(0);
     } else {
         returnToMenu();
+        afterReady();
     }
+}
+
+// 단축키 URL 처리 — ?shortcut=daily|survival|review 로 진입 시 해당 모드 즉시 시작
+function handleShortcutUrl() {
+    try {
+        const params = new URLSearchParams(location.search);
+        const sc = params.get("shortcut");
+        if (!sc) return;
+        track("shortcut_open", { shortcut: sc });
+        // URL 정리 (다음 새로고침엔 일반 진입)
+        history.replaceState(null, "", location.pathname);
+        if (sc === "daily" && typeof startDailyChallenge === "function") startDailyChallenge();
+        else if (sc === "survival" && typeof initSurvival === "function") initSurvival();
+        else if (sc === "review" && typeof reviewWrongAnswers === "function") reviewWrongAnswers();
+    } catch {}
+}
+
+// 커스텀 PWA 설치 프롬프트 트리거 (메뉴에서 호출)
+function promptPwaInstall() {
+    const ev = window.__pwaInstallPrompt;
+    if (!ev) {
+        addLog("이미 설치되었거나 이 브라우저는 설치를 지원하지 않습니다.", "log-good");
+        return;
+    }
+    ev.prompt();
+    ev.userChoice.then(c => {
+        track("pwa_install_choice", { outcome: c.outcome });
+        if (c.outcome === "accepted") addLog("✨ 앱이 홈 화면에 추가됩니다!", "log-good");
+        window.__pwaInstallPrompt = null;
+    }).catch(() => {});
 }
 
 // =========================================================================
@@ -4230,12 +4276,10 @@ const Ads = {
         } catch { return false; }
     },
 };
-// AdMob unit IDs — 비어있으면 Ads.* 호출이 모두 no-op.
+// AdMob unit IDs — 부활(rewarded)만 사용. 전면/배너는 정책상 노출 안 함.
 // 출시 시 Capacitor 래핑 + AdMob 플러그인 설치 + 실 unit ID 입력 후 활성화.
 const ADS_UNITS = {
-    interstitial: "", // 예: "ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX"
-    banner: "",      // 예: "ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX"
-    rewarded: "",   // 부활용 보상형 광고 (예: 동일 형식)
+    rewarded: "",   // 부활용 보상형 광고 (ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX)
 };
 
 // 부활(revive) 설정 — 게임 오버 시 보상형 광고로 HP 회복

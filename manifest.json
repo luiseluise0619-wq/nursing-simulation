@@ -1,7 +1,7 @@
 {
-  "name": "간호사 시뮬레이터 (BETA)",
+  "name": "간호사 시뮬레이터",
   "short_name": "간호 시뮬",
-  "description": "한국 간호사 국시 8과목 + 임상 시뮬레이션 + 인계/트리아지/시나리오. RN 감수 진행 중 베타. 교육 목적이며 실제 임상 적용은 최신 가이드라인 우선.",
+  "description": "한국 간호사 국가시험 8과목 + 임상 시뮬레이션 + 인계/트리아지/시나리오. 게임처럼 듀티 돌면서 공부하는 학습 도구.",
   "categories": ["education", "medical"],
   "lang": "ko",
   "start_url": "./index.html",
@@ -15,5 +15,28 @@
     { "src": "build/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
     { "src": "build/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" },
     { "src": "build/icon-1024.png", "sizes": "1024x1024", "type": "image/png", "purpose": "any" }
+  ],
+  "shortcuts": [
+    {
+      "name": "오늘의 일일 챌린지",
+      "short_name": "일일챌린지",
+      "description": "10문제로 streak 쌓기",
+      "url": "./index.html?shortcut=daily",
+      "icons": [{ "src": "build/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "실전 듀티 시작",
+      "short_name": "실전듀티",
+      "description": "랜덤 듀티 시뮬레이션 시작",
+      "url": "./index.html?shortcut=survival",
+      "icons": [{ "src": "build/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "오답 복습",
+      "short_name": "오답복습",
+      "description": "틀린 문제 다시 풀기",
+      "url": "./index.html?shortcut=review",
+      "icons": [{ "src": "build/icon-192.png", "sizes": "192x192" }]
+    }
   ]
 }
