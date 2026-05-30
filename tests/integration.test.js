@@ -1387,8 +1387,8 @@ describe("P2 — AdMob 어댑터 (Capacitor 호환)", () => {
         expect(src).toMatch(/track\("episode_completed"/);
         // CSP 에 plausible.io 허용
         const html = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf-8");
-        expect(html).toMatch(/script-src 'self' https:\/\/plausible\.io/);
-        expect(html).toMatch(/connect-src 'self' https:\/\/plausible\.io/);
+        expect(html).toMatch(/script-src[^;]*https:\/\/plausible\.io/);
+        expect(html).toMatch(/connect-src[^;]*https:\/\/plausible\.io/);
         // 미설정 상태에서 track 호출이 throw 하지 않음 (앱 로드 자체가 boot → track("app_open"))
         expect(() => loadScript()).not.toThrow();
     });

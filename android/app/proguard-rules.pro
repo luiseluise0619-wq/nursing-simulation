@@ -16,6 +16,13 @@
 -keep class com.google.android.gms.common.** { *; }
 -dontwarn com.google.android.gms.**
 
+# UMP (User Messaging Platform — GDPR consent SDK, AdMob 의존)
+-keep class com.google.android.ump.** { *; }
+-dontwarn com.google.android.ump.**
+
+# Capacitor Community AdMob 플러그인 (R8 full mode 대응)
+-keep class com.getcapacitor.community.admob.** { *; }
+
 # 로컬 알림 플러그인
 -keep class com.capacitorjs.plugins.localnotifications.** { *; }
 

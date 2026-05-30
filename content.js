@@ -374,7 +374,7 @@
         { atEvent: 10, baseId: "story-lunch", title: "점심 시간 콜벨", emoji: "🍱",
           desc: "겨우 자리에 앉아 첫 입을 떴는데 콜벨 3개가 동시에 울립니다.\n· 503호: 통증 호소\n· 522호: 화장실 도움\n· 614호: 'V/S 좀 빨리...'",
           choices: [
-              { text: "동료에게 점심 인계, 가장 임상적 우선순위(514호)부터 처리", correct: true, effect: { hp: -8, rep: 10 }, log: "정답. 점심을 미루더라도 V/S 호소가 임상 위험도 높음." },
+              { text: "동료에게 점심 인계, 가장 임상적 우선순위(614호)부터 처리", correct: true, effect: { hp: -8, rep: 10 }, log: "정답. 점심을 미루더라도 V/S 호소가 임상 위험도 높음." },
               { text: "점심 마저 먹고 한꺼번에 처리한다", effect: { hp: -5, rep: -20 }, log: "치명적 — V/S 호소가 응급일 수 있습니다." },
               { text: "보조원에게 전달하고 자리 정리", effect: { hp: -10, rep: -15 }, log: "위임 가능 업무와 간호 사정을 구분해야 합니다." },
           ] },
@@ -779,7 +779,7 @@
                     prompt: "안정 후 의사가 응급 제왕절개를 결정. 산모는 \"태아는 괜찮나요?\" 묻습니다. NST 보통 변동성, 후기하강 없음.",
                     choices: [
                         { text: "현재 태아 상태(NST 양호)·제왕절개 사유·다음 절차를 차분히 설명", correct: true, hp: 0, rep: 10, log: "정답. 정확하고 솔직한 정보 제공이 산모 협조를 끌어냅니다." },
-                        { text: "의사에게 먼저 확인 후 설명", hp: -15, rep: -10, log: "산모의 핵심 질문 — 회피는 신뢰 손상." },
+                        { text: "산모 질문에 즉답 없이 분만실로 이동만 안내", hp: -15, rep: -10, log: "산모의 핵심 질문 — 회피는 신뢰 손상." },
                         { text: "\"걱정 마세요, 다 괜찮아요\" 라고만 답한다", hp: -10, rep: -5, log: "근거 없는 안심은 추후 신뢰 위기로 이어집니다." },
                         { text: "의사가 설명할 거라며 다음 라운드에서 재확인", hp: -10, rep: -8, log: "간호사 영역의 정보 제공을 회피했습니다." },
                     ],
@@ -1033,7 +1033,7 @@
             steps: [
                 {
                     prompt: "환자 초기 평가 — 우선 중재는?",
-                    image: "ecg:tachycardia",
+                    image: "ecg:svt",
                     choices: [
                         { text: "ABC + 12-Lead ECG + IV", correct: true, hp: 0, rep: 18, log: "정답. SVT 의 표준 — Valsalva 부터 (혈역학 안정 시)." },
                         { text: "불안 발작으로 보고 anxiolytic 만", hp: -32, rep: -28, log: "SVT 진단 누락." },
@@ -2840,7 +2840,7 @@
                     narration: "Daunorubicin (발포제) 투여 시작. CVC 정상 작동, backflow 확인. 30분 후 박지원님 \"팔이 따끔거려요. 가슴 쪽으로 퍼져요.\" CVC 부위 부종·발적 의심.",
                     choices: [
                         { text: "주입 즉시 중단 + 카테터 잔류 흡인", correct: true, hp: -3, rep: 22, log: "정답. 발포제 외삼출 = 응급. Daunorubicin (anthracycline) 은 차가운 찜질 (Vincristine 등 vinca alkaloid 는 따뜻한 찜질)." },
-                        { text: "Vincristine 처럼 차가운 찜질 + V/S 추적", hp: -25, rep: -20, log: "Daunorubicin (anthracycline) 은 차가운 찜질 — 그러나 즉시 중단·흡인이 선행되어야 한다." },
+                        { text: "주입 유지하며 차가운 찜질만 적용 + V/S 추적", hp: -25, rep: -20, log: "찜질만으로는 부족 — 즉시 중단·흡인이 우선되어야 한다." },
                         { text: "주입 속도만 줄여서 계속 + 동료 확인", hp: -32, rep: -25, log: "발포제 외삼출 의심 시 즉시 중단." },
                         { text: "통증 진통제 IV 로 가림 + 차트 기록", hp: -28, rep: -22, log: "외삼출 진단 지연 + 조직 괴사." },
                     ],
@@ -5658,7 +5658,7 @@
                     { text: "기관 흡인 강하게 반복 + 동료 확인", hp: -32, rep: -25, log: "흡인은 ICP·기흉을 악화시킬 수 있습니다." },
                     { text: "분비물 막힘으로 보고 자세만 변경 + 동료 확인", hp: -35, rep: -28, log: "기흉을 놓치면 사망 가능." },
                   ] },
-                { time: "04:00", title: "P3 — 수술 후 부정맥", image: "ecg:tachycardia", narration: "이도현이 새벽 모니터에 빈맥 + 불규칙. SVT 또는 JET 가능. BP 84/50, 의식 처짐.",
+                { time: "04:00", title: "P3 — 수술 후 부정맥", image: "ecg:svt", narration: "이도현이 새벽 모니터에 빈맥 + 불규칙. SVT 또는 JET 가능. BP 84/50, 의식 처짐.",
                   choices: [
                     { text: "12-Lead ECG + 응급 의사 콜", correct: true, hp: -4, rep: 22, log: "정답. 소아 수술 후 빈맥성 부정맥은 응급 평가 + 약물 + 필요시 동시 자극." },
                     { text: "심방세동으로 보고 디곡신 추가 + 30분 후 재평가", hp: -32, rep: -25, log: "감별 없이 디곡신은 부적절합니다." },

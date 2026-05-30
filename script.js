@@ -819,7 +819,9 @@ const Storage = {
     },
     save(data) {
         try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (e) {
-            if (e && e.name === "QuotaExceededError") addLog("⚠️ 저장 공간 부족. 브라우저 캐시를 정리해주세요.", "log-bad");
+            if (e && e.name === "QuotaExceededError" && typeof UI !== "undefined" && UI.logBar) {
+                try { addLog("⚠️ 저장 공간 부족. 브라우저 캐시를 정리해주세요.", "log-bad"); } catch {}
+            }
         }
     },
     defaults() {
@@ -894,7 +896,7 @@ const Storage = {
             ts: Date.now(),
             // Leitner 5-box: 1d → 3d → 7d → 14d → 30d (box 1~5)
             box: 1,
-            interval: 0, repetitions: 0, easeFactor: 2.5, nextDue: Date.now() + 24 * 60 * 60 * 1000,
+            interval: 0, repetitions: 0, easeFactor: 2.5, nextDue: Date.now(),
         };
         if (data.wrongQueue.length >= 200) data.wrongQueue.shift();
         data.wrongQueue.push(entry);
@@ -3960,7 +3962,8 @@ async function reviveByAd() {
         return;
     }
     gameState.reviveCount = (gameState.reviveCount || 0) + 1;
-    gameState.hp = clamp(gameState.hp + REVIVE_CONFIG.hpRestore, 0, 100);
+    const baseHp = Number.isFinite(gameState.hp) ? Math.max(gameState.hp, 0) : 0;
+    gameState.hp = clamp(baseHp + REVIVE_CONFIG.hpRestore, 0, 100);
     // 모달 닫고 게임 재개
     UI.modal.classList.remove("active");
     document.getElementById("revive-slot")?.classList.add("hidden");
@@ -4206,7 +4209,8 @@ function promptPwaInstall() {
     }).catch(() => {});
 }
 
-// 법적 문서 외부 열기 — Capacitor(Android)에선 시스템 브라우저, PWA/웹에선 새 탭
+// 법적 문서 외부 열기 — Capacitor 환경에선 로컬 파일이 가장 안정적 (asset 동봉)
+// 웹/PWA 에선 새 탭. popup blocker 차단 시 같은 탭으로 폴백.
 function openExternalLegal(type) {
     const PAGES = {
         privacy: "privacy.html",
@@ -4215,20 +4219,17 @@ function openExternalLegal(type) {
     const page = PAGES[type];
     if (!page) return;
 
-    // GitHub Pages 배포 URL (출시 전 실제 URL로 교체)
-    const BASE = "https://luiseluise0619-wq.github.io/nursing-simulation";
-    const fullUrl = `${BASE}/${page}`;
-
     try {
-        // Capacitor Android — InAppBrowser 없이 시스템 브라우저로 강제 열기
-        if (window.Capacitor && window.Capacitor.isNativePlatform()) {
-            window.open(fullUrl, "_system");
+        const isNative = !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === "function" && window.Capacitor.isNativePlatform());
+        if (isNative) {
+            // Capacitor: 로컬 자산 사용 — 인앱 라우팅 (앱 내 화면으로 전환되지 않음)
+            location.href = page;
         } else {
-            window.open(fullUrl, "_blank", "noopener,noreferrer");
+            const w = window.open(page, "_blank", "noopener,noreferrer");
+            if (!w) location.href = page;  // popup blocker 폴백
         }
-        track("legal_open", { type });
+        try { track("legal_open", { type }); } catch {}
     } catch {
-        // 최후 폴백: 같은 탭에서 로컬 파일
         location.href = page;
     }
 }
