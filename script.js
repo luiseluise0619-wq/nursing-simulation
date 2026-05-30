@@ -818,7 +818,9 @@ const Storage = {
         }
     },
     save(data) {
-        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch {}
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (e) {
+            if (e && e.name === "QuotaExceededError") addLog("⚠️ 저장 공간 부족. 브라우저 캐시를 정리해주세요.", "log-bad");
+        }
     },
     defaults() {
         const stats = {};
@@ -892,7 +894,7 @@ const Storage = {
             ts: Date.now(),
             // Leitner 5-box: 1d → 3d → 7d → 14d → 30d (box 1~5)
             box: 1,
-            interval: 0, repetitions: 0, easeFactor: 2.5, nextDue: Date.now(),
+            interval: 0, repetitions: 0, easeFactor: 2.5, nextDue: Date.now() + 24 * 60 * 60 * 1000,
         };
         if (data.wrongQueue.length >= 200) data.wrongQueue.shift();
         data.wrongQueue.push(entry);
@@ -3958,7 +3960,7 @@ async function reviveByAd() {
         return;
     }
     gameState.reviveCount = (gameState.reviveCount || 0) + 1;
-    gameState.hp = clamp(REVIVE_CONFIG.hpRestore, 1, 100);
+    gameState.hp = clamp(gameState.hp + REVIVE_CONFIG.hpRestore, 0, 100);
     // 모달 닫고 게임 재개
     UI.modal.classList.remove("active");
     document.getElementById("revive-slot")?.classList.add("hidden");
