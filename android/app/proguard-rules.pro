@@ -1,21 +1,36 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# Capacitor 기본 규칙 — 플러그인 reflection 보호
+-keep class com.getcapacitor.** { *; }
+-keep class * extends com.getcapacitor.Plugin { *; }
+-keepclassmembers class * {
+    @com.getcapacitor.annotation.CapacitorPlugin <methods>;
+    @com.getcapacitor.PluginMethod <methods>;
+}
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# WebView JavaScript 인터페이스 보호
+-keepclassmembers class * {
+    @android.webkit.JavascriptInterface <methods>;
+}
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# AdMob (Google Mobile Ads SDK)
+-keep class com.google.android.gms.ads.** { *; }
+-keep class com.google.android.gms.common.** { *; }
+-dontwarn com.google.android.gms.**
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# 로컬 알림 플러그인
+-keep class com.capacitorjs.plugins.localnotifications.** { *; }
+
+# Splash Screen 플러그인
+-keep class com.capacitorjs.plugins.splashscreen.** { *; }
+
+# Cordova 호환성 (Capacitor 가 Cordova 플러그인 호환 레이어 포함)
+-keep class org.apache.cordova.** { *; }
+-keep class * extends org.apache.cordova.CordovaPlugin
+
+# 라인 번호 유지 — Play Console 크래시 리포트 디버깅용
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
+
+# 출시 시 일반적 경고 무시
+-dontwarn org.bouncycastle.**
+-dontwarn org.openjsse.**
+-dontwarn org.conscrypt.**

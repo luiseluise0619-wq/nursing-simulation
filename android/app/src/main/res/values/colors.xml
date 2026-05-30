@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 세이지 그린 — 앱 디자인 시스템과 일치 -->
+    <color name="colorPrimary">#7fa881</color>
+    <color name="colorPrimaryDark">#5a7a5c</color>
+    <color name="colorAccent">#7fa881</color>
+    <color name="splashBackgroundColor">#7fa881</color>
+    <!-- 배경 (Soft Neumorphic) -->
+    <color name="appBackground">#eef2f5</color>
+</resources>

@@ -4204,13 +4204,38 @@ function promptPwaInstall() {
     }).catch(() => {});
 }
 
+// 법적 문서 외부 열기 — Capacitor(Android)에선 시스템 브라우저, PWA/웹에선 새 탭
+function openExternalLegal(type) {
+    const PAGES = {
+        privacy: "privacy.html",
+        terms: "terms.html",
+    };
+    const page = PAGES[type];
+    if (!page) return;
+
+    // GitHub Pages 배포 URL (출시 전 실제 URL로 교체)
+    const BASE = "https://luiseluise0619-wq.github.io/nursing-simulation";
+    const fullUrl = `${BASE}/${page}`;
+
+    try {
+        // Capacitor Android — InAppBrowser 없이 시스템 브라우저로 강제 열기
+        if (window.Capacitor && window.Capacitor.isNativePlatform()) {
+            window.open(fullUrl, "_system");
+        } else {
+            window.open(fullUrl, "_blank", "noopener,noreferrer");
+        }
+        track("legal_open", { type });
+    } catch {
+        // 최후 폴백: 같은 탭에서 로컬 파일
+        location.href = page;
+    }
+}
+
 // =========================================================================
-// 광고 (Capacitor AdMob 통합 어댑터) — 웹/PWA 에서는 no-op,
-// `npx cap add ios|android` 이후 Capacitor AdMob 플러그인이 주입되면 자동 활성화
+// 광고 (Capacitor AdMob 통합 어댑터) — 부활(rewarded) 전용
+// 웹/PWA 에서는 자동 no-op. Capacitor 안드로이드 빌드에서 자동 활성화.
 // =========================================================================
 const Ads = {
-    _lastInterstitialAt: 0,
-    _bannerShown: false,
     get plugin() {
         try {
             return (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AdMob) || null;
@@ -4223,46 +4248,17 @@ const Ads = {
         try {
             await p.initialize({
                 initializeForTesting: !!window.NURSESIM_ADS_TESTING,
+                requestTrackingAuthorization: false,
             });
             Ads.initialized = true;
+            track("ads_init_ok");
         } catch (e) {
+            track("ads_init_fail");
             // 광고 SDK 부재/에러는 조용히 무시 (앱 정상 동작 유지)
         }
     },
-    // 모드 종료 시 호출 — 직전 호출 후 최소 1.5초가 지나야 표시 (UX 가드)
-    async showInterstitial(adUnitId) {
-        if (!adUnitId) return; // unit ID 미설정 시 광고 호출 자체 차단
-        const now = Date.now();
-        if (now - Ads._lastInterstitialAt < 1500) return;
-        Ads._lastInterstitialAt = now;
-        const p = Ads.plugin;
-        if (!p) return;
-        try {
-            await Ads.init();
-            await p.prepareInterstitial({ adId: adUnitId });
-            await p.showInterstitial();
-        } catch { /* no-op */ }
-    },
-    // 홈 탭 하단 배너 — 1회만 보이게
-    async showBanner(adUnitId) {
-        if (!adUnitId) return; // unit ID 미설정 시 배너 호출 자체 차단
-        if (Ads._bannerShown) return;
-        const p = Ads.plugin;
-        if (!p) return;
-        try {
-            await Ads.init();
-            await p.showBanner({ adId: adUnitId, position: "BOTTOM_CENTER", margin: 0 });
-            Ads._bannerShown = true;
-        } catch { /* no-op */ }
-    },
-    hideBanner() {
-        Ads._bannerShown = false;
-        const p = Ads.plugin;
-        if (!p) return;
-        try { p.hideBanner(); } catch { /* no-op */ }
-    },
     // 보상형 광고 — 시청 완료 시 true resolve, 미시청·미지원·실패 시 false.
-    // 게임 오버 → 광고 시청 → HP 회복 부활 시나리오에 사용.
+    // 게임 오버 → 광고 시청 → HP 회복 부활 시나리오에만 사용.
     async showRewarded(adUnitId) {
         if (!adUnitId) return false;
         const p = Ads.plugin;
@@ -4271,15 +4267,22 @@ const Ads = {
             await Ads.init();
             await p.prepareRewardVideoAd({ adId: adUnitId });
             const result = await p.showRewardVideoAd();
-            // Capacitor AdMob: 성공 시 result.amount 또는 result.type 이 존재.
-            return !!(result && (result.amount || result.type || result.rewarded));
-        } catch { return false; }
+            const rewarded = !!(result && (result.amount || result.type || result.rewarded));
+            track(rewarded ? "rewarded_ad_completed" : "rewarded_ad_skipped");
+            return rewarded;
+        } catch (e) {
+            track("rewarded_ad_error");
+            return false;
+        }
     },
 };
 // AdMob unit IDs — 부활(rewarded)만 사용. 전면/배너는 정책상 노출 안 함.
-// 출시 시 Capacitor 래핑 + AdMob 플러그인 설치 + 실 unit ID 입력 후 활성화.
+// 기본값은 Google 공식 테스트 ID — 정식 출시 전에 실 광고 단위 ID 로 교체.
+// 테스트 ID 그대로 두고 출시하면 정책 위반으로 계정 정지될 수 있음 (개발 시에만 사용).
+// 실 ID 발급: https://admob.google.com → 앱 만들기 → 광고 단위 만들기 → 보상형
 const ADS_UNITS = {
-    rewarded: "",   // 부활용 보상형 광고 (ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX)
+    // Google 공식 보상형 테스트 ID (Android) — 출시 전 본인 단위 ID 로 교체
+    rewarded: "ca-app-pub-3940256099942544/5224354917",
 };
 
 // 부활(revive) 설정 — 게임 오버 시 보상형 광고로 HP 회복
@@ -4563,8 +4566,10 @@ const DELEGATED_ACTIONS = {
     triggerImportData: () => triggerImportData(),
     toggleDailyNotify: () => toggleDailyNotify(),
     showPremiumInfo: () => showPremiumInfo(),
-    openExternalPrivacy: () => { try { window.open("privacy.html", "_blank", "noopener"); } catch {} },
-    openExternalTerms: () => { try { window.open("terms.html", "_blank", "noopener"); } catch {} },
+    // 약관/개인정보 외부 URL — Capacitor 안드로이드에선 시스템 브라우저로,
+    // PWA 에선 새 탭으로. GitHub Pages 호스팅 URL 우선 시도, 실패 시 로컬 파일.
+    openExternalPrivacy: () => openExternalLegal("privacy"),
+    openExternalTerms: () => openExternalLegal("terms"),
     // 북마크
     toggleSceneBookmark: (t) => toggleSceneBookmark(t),
     renderBookmarks: () => renderBookmarks(),

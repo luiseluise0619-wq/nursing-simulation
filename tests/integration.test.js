@@ -1253,14 +1253,12 @@ describe("P2 — 공유 (Canvas 결과 카드)", () => {
 });
 
 describe("P2 — AdMob 어댑터 (Capacitor 호환)", () => {
-    test("Ads.showInterstitial / Ads.showBanner / Ads.hideBanner 가 정의되어 있다", () => {
+    test("Ads.showRewarded 가 정의되어 있다 (부활 전용 리워드 광고)", () => {
         const fs = require("fs");
         const path = require("path");
         const src = fs.readFileSync(path.join(__dirname, "..", "script.js"), "utf-8");
         expect(src).toMatch(/const\s+Ads\s*=\s*\{/);
-        expect(src).toMatch(/showInterstitial\s*\(/);
-        expect(src).toMatch(/showBanner\s*\(/);
-        expect(src).toMatch(/hideBanner\s*\(/);
+        expect(src).toMatch(/showRewarded\s*\(/);
     });
 
     test("플러그인 부재 시 호출이 throw 없이 no-op 으로 끝난다", () => {
