@@ -1962,3 +1962,37 @@ body:has(.tab-bar) #game-area { padding-bottom: 90px; }
     color: var(--primary-dark);
 }
 .badge-card.locked .badge-status { color: var(--muted); }
+
+/* ── 친구 초대 (referral) — 코드 표시 카드 ── */
+.invite-code-display {
+    margin: 24px 0;
+    padding: 24px;
+    background: var(--primary-soft);
+    border-radius: var(--radius-lg);
+    text-align: center;
+    box-shadow: var(--shadow-in);
+}
+.invite-code {
+    font-size: 36px;
+    font-weight: 800;
+    letter-spacing: 0.15em;
+    color: var(--primary-dark);
+    font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+}
+.invite-code-label {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 8px;
+}
+
+/* ── 약점 분석 — 시나리오/카테고리 행 ── */
+.weakness-row {
+    margin: 12px 0;
+    padding: 12px 16px;
+    background: var(--card);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    border-left: 4px solid var(--danger);
+}
+.weakness-row .wk-title { font-weight: 700; margin-bottom: 4px; }
+.weakness-row .wk-stat { font-size: 13px; color: var(--muted); }

@@ -841,6 +841,10 @@ const Storage = {
             history: [],
             // 배지(achievements) — { unlocked: [{ id, at }], lastChecked, hintUsedCount, graduatedCount }
             achievements: { unlocked: [], lastChecked: 0, hintUsedCount: 0, graduatedCount: 0 },
+            // 친구 초대 — 양쪽 보너스 메커니즘 (?ref=ABC123)
+            referral: { myCode: null, invitedBy: null, invitesSent: 0, bonusGranted: false },
+            // 약점 분석 funnel — 어떤 시나리오/카테고리에서 자주 틀리는지
+            funnel: { sceneStarts: {}, sceneWrongs: {}, lastActivityTs: 0 },
         };
     },
     // localStorage 변조 시 타입을 보정해 무한루프/렌더 오류를 방지
@@ -875,6 +879,19 @@ const Storage = {
                 hintUsedCount: Number.isFinite(raw.achievements.hintUsedCount) ? raw.achievements.hintUsedCount : 0,
                 graduatedCount: Number.isFinite(raw.achievements.graduatedCount) ? raw.achievements.graduatedCount : 0,
             } : { unlocked: [], lastChecked: 0, hintUsedCount: 0, graduatedCount: 0 },
+            referral: (raw.referral && typeof raw.referral === "object" && !Array.isArray(raw.referral)) ? {
+                myCode: (typeof raw.referral.myCode === "string" && /^[A-Z0-9]{6}$/.test(raw.referral.myCode)) ? raw.referral.myCode : null,
+                invitedBy: (typeof raw.referral.invitedBy === "string" && /^[A-Z0-9]{6}$/.test(raw.referral.invitedBy)) ? raw.referral.invitedBy : null,
+                invitesSent: Number.isFinite(raw.referral.invitesSent) ? raw.referral.invitesSent : 0,
+                bonusGranted: raw.referral.bonusGranted === true,
+                bonusAwardedToday: raw.referral.bonusAwardedToday === true ? raw.referral.bonusAwardedToday : false,
+                bonusAwardedDate: typeof raw.referral.bonusAwardedDate === "string" ? raw.referral.bonusAwardedDate : null,
+            } : { myCode: null, invitedBy: null, invitesSent: 0, bonusGranted: false },
+            funnel: (raw.funnel && typeof raw.funnel === "object" && !Array.isArray(raw.funnel)) ? {
+                sceneStarts: (raw.funnel.sceneStarts && typeof raw.funnel.sceneStarts === "object" && !Array.isArray(raw.funnel.sceneStarts)) ? raw.funnel.sceneStarts : {},
+                sceneWrongs: (raw.funnel.sceneWrongs && typeof raw.funnel.sceneWrongs === "object" && !Array.isArray(raw.funnel.sceneWrongs)) ? raw.funnel.sceneWrongs : {},
+                lastActivityTs: Number.isFinite(raw.funnel.lastActivityTs) ? raw.funnel.lastActivityTs : 0,
+            } : { sceneStarts: {}, sceneWrongs: {}, lastActivityTs: 0 },
         };
         if (raw.stats && typeof raw.stats === "object") {
             CATEGORIES.forEach(c => {
@@ -1235,6 +1252,73 @@ const Storage = {
         }
         return newlyUnlocked;
     },
+    // 친구 초대 — 6자리 영숫자 코드 발급/조회. 혼동되는 0/O/1/I/L 제외.
+    getOrCreateReferralCode() {
+        const data = Storage.load();
+        if (!data.referral || typeof data.referral !== "object") {
+            data.referral = { myCode: null, invitedBy: null, invitesSent: 0, bonusGranted: false };
+        }
+        if (typeof data.referral.myCode === "string" && /^[A-Z0-9]{6}$/.test(data.referral.myCode)) {
+            return data.referral.myCode;
+        }
+        const chars = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+        let code = "";
+        for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
+        data.referral.myCode = code;
+        Storage.save(data);
+        return code;
+    },
+    getReferral() {
+        const data = Storage.load();
+        return (data.referral && typeof data.referral === "object") ? data.referral
+            : { myCode: null, invitedBy: null, invitesSent: 0, bonusGranted: false };
+    },
+    incrementInvitesSent() {
+        const data = Storage.load();
+        if (!data.referral || typeof data.referral !== "object") {
+            data.referral = { myCode: null, invitedBy: null, invitesSent: 0, bonusGranted: false };
+        }
+        data.referral.invitesSent = (Number.isFinite(data.referral.invitesSent) ? data.referral.invitesSent : 0) + 1;
+        Storage.save(data);
+        return data.referral.invitesSent;
+    },
+    // 약점 분석 funnel — 어떤 시나리오에서 자주 시작/오답이 발생하는지 기록
+    recordSceneStart(sceneId, category) {
+        if (!sceneId) return;
+        const data = Storage.load();
+        if (!data.funnel || typeof data.funnel !== "object") data.funnel = { sceneStarts: {}, sceneWrongs: {}, lastActivityTs: 0 };
+        if (!data.funnel.sceneStarts || typeof data.funnel.sceneStarts !== "object") data.funnel.sceneStarts = {};
+        const key = String(sceneId);
+        const prev = data.funnel.sceneStarts[key] || { count: 0, category: category || null, lastTs: 0 };
+        data.funnel.sceneStarts[key] = {
+            count: (Number.isFinite(prev.count) ? prev.count : 0) + 1,
+            category: category || prev.category || null,
+            lastTs: Date.now(),
+        };
+        data.funnel.lastActivityTs = Date.now();
+        Storage.save(data);
+    },
+    recordSceneWrong(sceneId, category) {
+        if (!sceneId) return;
+        const data = Storage.load();
+        if (!data.funnel || typeof data.funnel !== "object") data.funnel = { sceneStarts: {}, sceneWrongs: {}, lastActivityTs: 0 };
+        if (!data.funnel.sceneWrongs || typeof data.funnel.sceneWrongs !== "object") data.funnel.sceneWrongs = {};
+        const key = String(sceneId);
+        const prev = data.funnel.sceneWrongs[key] || { count: 0, category: category || null, lastTs: 0 };
+        data.funnel.sceneWrongs[key] = {
+            count: (Number.isFinite(prev.count) ? prev.count : 0) + 1,
+            category: category || prev.category || null,
+            lastTs: Date.now(),
+        };
+        data.funnel.lastActivityTs = Date.now();
+        Storage.save(data);
+    },
+    getFunnel() {
+        const data = Storage.load();
+        return (data.funnel && typeof data.funnel === "object")
+            ? data.funnel
+            : { sceneStarts: {}, sceneWrongs: {}, lastActivityTs: 0 };
+    },
 };
 
 // 배지(achievement) 정의 — id, 이모지, 이름, 잠금 해제 조건 설명
@@ -1465,6 +1549,12 @@ function renderSceneCard(ev, options = {}) {
     const tag = ev.category ? `<div class="category-tag">[${escapeHtml(ev.category)}] ${escapeHtml(ev.part || "")}</div>` : "";
     const metaRow = meta.length ? `<div class="meta-row">${meta.map(m => `<div class="meta-chip">${escapeHtml(m)}</div>`).join("")}</div>` : "";
 
+    // 약점 분석 funnel — 어떤 시나리오에서 자주 시작/오답이 발생하는지 기록
+    try {
+        const sceneId = ev.baseId || ev.title || (questionIndex !== null ? `step-${questionIndex}` : null);
+        if (sceneId && mode !== "wrong_review") Storage.recordSceneStart(sceneId, ev.category || null);
+    } catch {}
+
     // 단계 진행 시각화 — 에피소드 등 다단계 모드에서 현재 단계를 dot 으로 표시
     let stepProgressHtml = "";
     if (totalSteps && questionIndex !== null && totalSteps > 1) {
@@ -1592,6 +1682,13 @@ function startTypewriter(fullText) {
 }
 
 function dispatchChoice(choice, ev, idx, mode) {
+    // 약점 분석 — 오답 기록 (wrong_review 제외, 모든 일반 흐름 공통)
+    try {
+        if (!isCorrectChoice(choice) && mode !== "wrong_review") {
+            const sceneId = ev.baseId || ev.title;
+            if (sceneId) Storage.recordSceneWrong(sceneId, ev.category || null);
+        }
+    } catch {}
     if (mode === "survival") handleSurvivalChoice(choice);
     else if (mode === "mock") handleMockChoice(choice, ev);
     else if (mode === "daily") handleDailyChoice(choice, ev);
@@ -2073,7 +2170,23 @@ function handleDailyChoice(choice, ev) {
     else { gameState.quizWrong += 1; resetCombo(); Sound.wrong(); Storage.addWrong(ev); }
     Storage.incrementStat(ev.category, isCorrect);
     updateStats();
-    if (isCorrect) checkAndNotifyAchievements();
+    if (isCorrect) {
+        checkAndNotifyAchievements();
+        // 친구 초대 보너스 — 일일 챌린지 첫 정답 시 +10 평판 (하루 1회)
+        try {
+            const data = Storage.load();
+            const today = todayKey();
+            if (data.referral && data.referral.invitedBy && data.referral.bonusGranted
+                && data.referral.bonusAwardedDate !== today) {
+                gameState.rep = (gameState.rep || 0) + 10;
+                data.referral.bonusAwardedDate = today;
+                data.referral.bonusAwardedToday = true;
+                Storage.save(data);
+                addLog("🎁 초대 보너스 +10 평판!", "log-good");
+                try { track("referral_bonus_awarded"); } catch {}
+            }
+        } catch {}
+    }
     renderFeedback(ev, choice, {
         onNext: () => {
             if (gameState.dailySolved >= DAILY_CHALLENGE_TOTAL) endDailyChallenge();
@@ -3899,6 +4012,15 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
             </div>
             <div class="row-chev">›</div>
           </button>` : ''}
+
+          <button class="row-card" data-action="renderInviteScreen">
+            <div class="row-icon" aria-hidden="true">🎁</div>
+            <div class="row-body">
+              <div class="row-title">친구 초대</div>
+              <div class="row-sub">코드 공유로 양쪽 보너스</div>
+            </div>
+            <div class="row-chev">›</div>
+          </button>
         </div>
       </div>`;
 
@@ -3976,6 +4098,14 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
           <div class="row-body">
             <div class="row-title">대시보드</div>
             <div class="row-sub">과목별 정답률 · 콤보 · 출제 경향 차트</div>
+          </div>
+          <div class="row-chev">›</div>
+        </button>
+        <button class="row-card big" data-action="renderWeaknessAnalysis">
+          <div class="row-icon big" aria-hidden="true">🎯</div>
+          <div class="row-body">
+            <div class="row-title">약점 분석</div>
+            <div class="row-sub">자주 틀리는 시나리오 발견</div>
           </div>
           <div class="row-chev">›</div>
         </button>
@@ -4380,17 +4510,38 @@ function boot() {
 }
 
 // 단축키 URL 처리 — ?shortcut=daily|survival|review 로 진입 시 해당 모드 즉시 시작
+// ?ref=ABC123 으로 진입 시 친구 초대 보너스 메커니즘 작동
 function handleShortcutUrl() {
     try {
         const params = new URLSearchParams(location.search);
+
+        // 친구 초대 — 양쪽 보너스 (?ref=ABC123)
+        const ref = params.get("ref");
+        if (ref && /^[A-Z0-9]{6}$/.test(ref)) {
+            const data = Storage.load();
+            if (!data.referral) data.referral = { myCode: null, invitedBy: null, invitesSent: 0, bonusGranted: false };
+            if (!data.referral.invitedBy && !data.referral.bonusGranted) {
+                data.referral.invitedBy = ref;
+                data.referral.bonusGranted = true;
+                Storage.save(data);
+                try { track("referral_received", { code: ref }); } catch {}
+                // 보너스: 첫 진입 시 사용자 알림 (boot 완료 후 표시)
+                setTimeout(() => addLog("🎁 친구 초대 보너스 — 일일 챌린지 첫 정답 시 추가 +10 평판", "log-good"), 1500);
+            }
+        }
+
         const sc = params.get("shortcut");
-        if (!sc) return;
-        track("shortcut_open", { shortcut: sc });
-        // URL 정리 (다음 새로고침엔 일반 진입)
-        history.replaceState(null, "", location.pathname);
-        if (sc === "daily" && typeof startDailyChallenge === "function") startDailyChallenge();
-        else if (sc === "survival" && typeof initSurvival === "function") initSurvival();
-        else if (sc === "review" && typeof reviewWrongAnswers === "function") reviewWrongAnswers();
+        if (sc) {
+            track("shortcut_open", { shortcut: sc });
+            if (sc === "daily" && typeof startDailyChallenge === "function") startDailyChallenge();
+            else if (sc === "survival" && typeof initSurvival === "function") initSurvival();
+            else if (sc === "review" && typeof reviewWrongAnswers === "function") reviewWrongAnswers();
+        }
+
+        // URL 정리 (ref/shortcut 모두 처리 후 1회만)
+        if (ref || sc) {
+            try { history.replaceState(null, "", location.pathname); } catch {}
+        }
     } catch {}
 }
 
@@ -4698,6 +4849,9 @@ function shareResultCard(target) {
     const mode = target.dataset.mode || gameState.mode || "result";
     const title = target.dataset.title || "간호사 시뮬레이터 결과";
     const lines = (target.dataset.lines || "").split("|").filter(Boolean);
+    // 친구 초대 코드 — 결과 카드 + 공유 텍스트에 자동 동봉
+    let myCode = null;
+    try { myCode = Storage.getOrCreateReferralCode(); } catch {}
     try {
         const canvas = document.createElement("canvas");
         const W = 720, H = 1024;
@@ -4723,10 +4877,16 @@ function shareResultCard(target) {
         ctx.font = "500 24px 'Pretendard', system-ui, sans-serif";
         let yy = cy + 260;
         for (const ln of lines) { wrapText(ctx, ln, cx + 36, yy, cw - 72, 36); yy += 60; }
-        // 푸터
+        // 푸터 + 워터마크/브랜딩
         ctx.fillStyle = "#64748b";
         ctx.font = "500 18px 'Pretendard', system-ui, sans-serif";
-        ctx.fillText("교육 목적 · 임상 적용 금지", cx + 36, cy + ch - 36);
+        ctx.fillText("교육 목적 · 임상 적용 금지", cx + 36, cy + ch - 56);
+        ctx.font = "500 16px 'Pretendard', system-ui, sans-serif";
+        ctx.fillStyle = "#94a3b8";
+        const watermark = myCode
+            ? `간호사 시뮬레이터 · nursing-sim.app · 초대코드 ${myCode}`
+            : "간호사 시뮬레이터 · nursing-sim.app";
+        ctx.fillText(watermark, cx + 36, cy + ch - 28);
         // 다운로드
         canvas.toBlob((blob) => {
             if (!blob) return;
@@ -4737,6 +4897,17 @@ function shareResultCard(target) {
             setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 0);
             addLog("결과 카드를 다운로드했어요.", "log-good");
         }, "image/png");
+
+        // 공유 텍스트도 클립보드에 (브라우저 권한 가능 시) — 친구 초대 보너스 안내
+        if (myCode) {
+            try {
+                const shareUrl = `${location.origin}${location.pathname}?ref=${myCode}`;
+                const shareText = `간호사 시뮬레이터 — ${title}\n내 초대코드 ${myCode} 로 가입하면 양쪽 +10 평판 보너스!\n${shareUrl}`;
+                if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+                    navigator.clipboard.writeText(shareText).catch(() => {});
+                }
+            } catch {}
+        }
     } catch (err) {
         addLog("브라우저가 캔버스 공유를 지원하지 않아요.", "log-bad");
     }
@@ -4760,6 +4931,172 @@ function wrapText(ctx, text, x, y, maxW, lineH) {
         } else { line = test; }
     }
     if (line) ctx.fillText(line, x, yy);
+}
+
+// =========================================================================
+// 친구 초대 (referral) — 양쪽 보너스 + 코드 공유
+// =========================================================================
+function inviteFriend() {
+    let code = null;
+    try { code = Storage.getOrCreateReferralCode(); } catch {}
+    if (!code) { addLog("초대 코드 생성에 실패했어요.", "log-bad"); return; }
+    const url = `${location.origin}${location.pathname}?ref=${code}`;
+    const title = "간호사 시뮬레이터";
+    const text = `간호사 시뮬레이터 — 한국 간호 국시 RPG. 내 코드로 가입하면 양쪽 보너스! ${code}\n${url}`;
+    try { track("invite_sent"); } catch {}
+    try { Storage.incrementInvitesSent(); } catch {}
+
+    // Web Share API 우선 — 모바일에서 카톡/문자/이메일로 바로 전달
+    if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
+        navigator.share({ title, text, url }).then(() => {
+            addLog("✅ 초대를 공유했어요.", "log-good");
+            try { renderInviteScreen(); } catch {}
+        }).catch(() => {
+            // 사용자 취소 또는 실패 → 클립보드 폴백
+            shareInviteClipboardFallback(text);
+        });
+        return;
+    }
+    shareInviteClipboardFallback(text);
+}
+function shareInviteClipboardFallback(text) {
+    try {
+        if (typeof navigator !== "undefined" && navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+            navigator.clipboard.writeText(text).then(() => {
+                addLog("📋 초대 링크 복사됨 — 친구에게 붙여넣기 해주세요.", "log-good");
+                try { renderInviteScreen(); } catch {}
+            }).catch(() => addLog("클립보드 접근이 거부되었어요.", "log-bad"));
+        } else {
+            addLog("📋 초대 텍스트: " + text, "log-important");
+        }
+    } catch {
+        addLog("공유 기능을 사용할 수 없어요.", "log-bad");
+    }
+}
+function renderInviteScreen() {
+    const code = Storage.getOrCreateReferralCode();
+    const ref = Storage.getReferral();
+    const invitesSent = Number.isFinite(ref.invitesSent) ? ref.invitesSent : 0;
+    const invitedBy = (typeof ref.invitedBy === "string" && /^[A-Z0-9]{6}$/.test(ref.invitedBy)) ? ref.invitedBy : null;
+    showCoreUI(); UI.logBar.innerHTML = "";
+    UI.gameArea.innerHTML = `
+      <div class="scene-card card">
+        <span class="scene-emoji" aria-hidden="true">🎁</span>
+        <h2 class="scene-title">친구 초대</h2>
+        <p class="scene-desc">친구가 내 코드로 가입하면 양쪽 모두에게 +10 평판 보너스! 코드를 공유해보세요.</p>
+
+        <div class="invite-code-display">
+          <div class="invite-code-label">내 초대 코드</div>
+          <div class="invite-code">${escapeHtml(code)}</div>
+        </div>
+
+        <div class="dashboard-row" role="group" aria-label="초대 현황">
+          <div class="dash-stat"><div class="ds-num">${invitesSent}</div><div class="ds-label">초대 발송</div></div>
+          <div class="dash-stat"><div class="ds-num">${invitedBy ? "✅" : "—"}</div><div class="ds-label">${invitedBy ? "초대받음" : "직접 가입"}</div></div>
+          <div class="dash-stat"><div class="ds-num">+10</div><div class="ds-label">양쪽 보너스</div></div>
+        </div>
+
+        <ul class="empty-list" style="margin-top:12px">
+          <li>친구가 가입하면 양쪽에 <strong>+10 평판</strong> 보너스</li>
+          <li>친구의 첫 일일 챌린지 정답 시 자동 지급</li>
+          <li>제한 없음 — 더 많이 초대할수록 좋아요</li>
+        </ul>
+
+        <div class="choice-list">
+          <button class="choice-btn primary" data-action="inviteFriend">🔗 초대 링크 공유하기</button>
+          <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
+        </div>
+      </div>`;
+}
+
+// =========================================================================
+// 약점 분석 — 자주 시작하지만 오답이 잦은 시나리오/카테고리 발견
+// =========================================================================
+function renderWeaknessAnalysis() {
+    const funnel = Storage.getFunnel();
+    const starts = funnel.sceneStarts || {};
+    const wrongs = funnel.sceneWrongs || {};
+    const keys = Object.keys(starts);
+
+    showCoreUI(); UI.logBar.innerHTML = "";
+
+    // 데이터 부족 시
+    const startedEnough = keys.filter(k => (starts[k]?.count || 0) >= 3);
+    if (startedEnough.length === 0) {
+        UI.gameArea.innerHTML = `
+          <div class="scene-card card">
+            <span class="scene-emoji" aria-hidden="true">🎯</span>
+            <h2 class="scene-title">약점 분석</h2>
+            <p class="scene-desc">아직 데이터가 부족해요. 시뮬레이션을 더 진행해주세요.\n(시나리오를 3회 이상 진행해야 분석이 시작됩니다.)</p>
+            <div class="choice-list">
+              <button class="choice-btn primary" data-action="initSurvival">듀티 시뮬레이션 시작</button>
+              <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
+            </div>
+          </div>`;
+        return;
+    }
+
+    // 각 시나리오별 정답률 계산 — starts >= 3 만
+    const rows = startedEnough.map(k => {
+        const s = starts[k];
+        const w = wrongs[k] || { count: 0, category: s.category || null };
+        const startCount = s.count || 0;
+        const wrongCount = Math.min(w.count || 0, startCount);
+        const rate = startCount > 0 ? Math.round(((startCount - wrongCount) / startCount) * 100) : 0;
+        return { id: k, title: k, category: s.category || w.category || "기타", starts: startCount, wrongs: wrongCount, rate };
+    });
+    // 정답률 낮은 순 (가장 약한 시나리오)
+    rows.sort((a, b) => a.rate - b.rate || b.starts - a.starts);
+    const top5 = rows.slice(0, 5);
+
+    // 카테고리별 집계 (가중치: 오답 count)
+    const catAgg = {};
+    rows.forEach(r => {
+        const c = r.category || "기타";
+        if (!catAgg[c]) catAgg[c] = { starts: 0, wrongs: 0 };
+        catAgg[c].starts += r.starts;
+        catAgg[c].wrongs += r.wrongs;
+    });
+    const catList = Object.keys(catAgg).map(c => {
+        const a = catAgg[c];
+        const rate = a.starts > 0 ? Math.round(((a.starts - a.wrongs) / a.starts) * 100) : 0;
+        return { category: c, starts: a.starts, wrongs: a.wrongs, rate };
+    }).filter(c => c.starts >= 3).sort((a, b) => a.rate - b.rate).slice(0, 3);
+
+    const knownCats = new Set(CATEGORIES);
+
+    const top5Html = top5.length > 0 ? top5.map(r => `
+      <div class="weakness-row">
+        <div class="wk-title">❌ ${escapeHtml(r.title)}</div>
+        <div class="wk-stat">정답률 ${r.rate}% (오답 ${r.wrongs}/${r.starts}) · ${escapeHtml(r.category)}</div>
+      </div>`).join("") : `<p class="scene-desc">아직 표시할 약점이 없어요.</p>`;
+
+    const catHtml = catList.length > 0 ? `
+      <h3 class="episode-group-label">📂 카테고리별 약점</h3>
+      ${catList.map(c => {
+          const isCat = knownCats.has(c.category);
+          return `
+        <div class="weakness-row">
+          <div class="wk-title">${escapeHtml(c.category)}</div>
+          <div class="wk-stat">정답률 ${c.rate}% (오답 ${c.wrongs}/${c.starts})</div>
+          ${isCat ? `<button class="choice-btn" data-action="startQuiz" data-arg="${escapeHtml(c.category)}" style="margin-top:8px">이 카테고리 집중 복습 →</button>` : ""}
+        </div>`;
+      }).join("")}` : "";
+
+    UI.gameArea.innerHTML = `
+      <div class="scene-card card">
+        <span class="scene-emoji" aria-hidden="true">🎯</span>
+        <h2 class="scene-title">약점 분석</h2>
+        <p class="scene-desc">자주 진행하지만 정답률이 낮은 시나리오를 모아봤어요. 집중 복습으로 점수를 끌어올리세요.</p>
+
+        <h3 class="episode-group-label">⚠️ 약점 시나리오 Top ${top5.length}</h3>
+        ${top5Html}
+        ${catHtml}
+
+        <div class="choice-list">
+          <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
+        </div>
+      </div>`;
 }
 
 // 인라인 onclick 핸들러를 모두 data-action 위임으로 대체 → CSP `script-src 'self'`만 허용 가능
@@ -4846,6 +5183,10 @@ const DELEGATED_ACTIONS = {
     useHint: () => useHint(),
     // 배지 컬렉션
     renderAchievements: () => renderAchievements(),
+    // 친구 초대 · 약점 분석
+    renderInviteScreen: () => renderInviteScreen(),
+    inviteFriend: () => inviteFriend(),
+    renderWeaknessAnalysis: () => renderWeaknessAnalysis(),
 };
 function handleDelegatedAction(e) {
     const target = e.target.closest("[data-action]");
