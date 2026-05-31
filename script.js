@@ -839,6 +839,8 @@ const Storage = {
             scenarios: {},     // { scenarioId: { bestHp, bestRep, completed } }
             daily: {},
             history: [],
+            // 배지(achievements) — { unlocked: [{ id, at }], lastChecked, hintUsedCount, graduatedCount }
+            achievements: { unlocked: [], lastChecked: 0, hintUsedCount: 0, graduatedCount: 0 },
         };
     },
     // localStorage 변조 시 타입을 보정해 무한루프/렌더 오류를 방지
@@ -867,6 +869,12 @@ const Storage = {
             history: Array.isArray(raw.history) ? raw.history : [],
             deviceId: (typeof raw.deviceId === "string" && raw.deviceId.length > 0) ? raw.deviceId : null,
             notifyOptIn: raw.notifyOptIn === true,
+            achievements: (raw.achievements && typeof raw.achievements === "object" && !Array.isArray(raw.achievements)) ? {
+                unlocked: Array.isArray(raw.achievements.unlocked) ? raw.achievements.unlocked.filter(x => x && typeof x === "object" && typeof x.id === "string") : [],
+                lastChecked: Number.isFinite(raw.achievements.lastChecked) ? raw.achievements.lastChecked : 0,
+                hintUsedCount: Number.isFinite(raw.achievements.hintUsedCount) ? raw.achievements.hintUsedCount : 0,
+                graduatedCount: Number.isFinite(raw.achievements.graduatedCount) ? raw.achievements.graduatedCount : 0,
+            } : { unlocked: [], lastChecked: 0, hintUsedCount: 0, graduatedCount: 0 },
         };
         if (raw.stats && typeof raw.stats === "object") {
             CATEGORIES.forEach(c => {
@@ -929,6 +937,8 @@ const Storage = {
         if (graduate) {
             const idx = data.wrongQueue.findIndex(e => e.id === id);
             if (idx >= 0) data.wrongQueue.splice(idx, 1);
+            if (!data.achievements || typeof data.achievements !== "object") data.achievements = { unlocked: [], lastChecked: 0, hintUsedCount: 0, graduatedCount: 0 };
+            data.achievements.graduatedCount = (data.achievements.graduatedCount || 0) + 1;
         }
         Storage.save(data);
     },
@@ -1152,7 +1162,94 @@ const Storage = {
         data.history = data.history.slice(0, 20);
         Storage.save(data);
     },
+    // 배지(achievements) — 학습 동기 부여를 위한 도전과제 시스템
+    getAchievements() {
+        const data = Storage.load();
+        return data.achievements || { unlocked: [], lastChecked: 0, hintUsedCount: 0, graduatedCount: 0 };
+    },
+    isAchievementUnlocked(id) {
+        const ach = Storage.getAchievements();
+        return (ach.unlocked || []).some(u => u && u.id === id);
+    },
+    unlockAchievement(id) {
+        const data = Storage.load();
+        if (!data.achievements || typeof data.achievements !== "object") {
+            data.achievements = { unlocked: [], lastChecked: 0, hintUsedCount: 0, graduatedCount: 0 };
+        }
+        if (!Array.isArray(data.achievements.unlocked)) data.achievements.unlocked = [];
+        if (data.achievements.unlocked.some(u => u && u.id === id)) return false;
+        data.achievements.unlocked.push({ id, at: Date.now() });
+        Storage.save(data);
+        return true;
+    },
+    incrementHintUsed() {
+        const data = Storage.load();
+        if (!data.achievements || typeof data.achievements !== "object") {
+            data.achievements = { unlocked: [], lastChecked: 0, hintUsedCount: 0, graduatedCount: 0 };
+        }
+        data.achievements.hintUsedCount = (data.achievements.hintUsedCount || 0) + 1;
+        Storage.save(data);
+        return data.achievements.hintUsedCount;
+    },
+    // 현재 데이터 상태를 스캔해 새로 달성된 배지를 잠금 해제 → 새로 잠금해제된 항목 배열 반환
+    checkAchievements() {
+        const data = Storage.load();
+        const stats = data.stats || {};
+        const totalSolved = Object.values(stats).reduce((s, v) => s + (v.solved || 0), 0);
+        const totalCorrect = Object.values(stats).reduce((s, v) => s + (v.correct || 0), 0);
+        const acc = totalSolved > 0 ? (totalCorrect / totalSolved) * 100 : 0;
+        const streak = data.streak || { count: 0, best: 0 };
+        const streakBest = streak.best || streak.count || 0;
+        const bestCombo = data.bestCombo || 0;
+        const campaignLog = (data.campaign && Array.isArray(data.campaign.log)) ? data.campaign.log.length : 0;
+        const graduatedCount = (data.achievements && data.achievements.graduatedCount) || 0;
+        const hintUsedCount = (data.achievements && data.achievements.hintUsedCount) || 0;
+
+        const checks = [
+            { id: "first-step", earned: totalCorrect >= 1 },
+            { id: "century", earned: totalSolved >= 100 },
+            { id: "sharpshooter", earned: totalSolved >= 50 && acc >= 80 },
+            { id: "streak-7", earned: streakBest >= 7 },
+            { id: "streak-30", earned: streakBest >= 30 },
+            { id: "combo-10", earned: bestCombo >= 10 },
+            { id: "campaign-runner", earned: campaignLog >= 1 },
+            { id: "wrong-tamer", earned: graduatedCount >= 5 },
+            { id: "hint-master", earned: hintUsedCount >= 3 },
+        ];
+
+        const newlyUnlocked = [];
+        const already = new Set((data.achievements && Array.isArray(data.achievements.unlocked) ? data.achievements.unlocked : []).map(u => u.id));
+        checks.forEach(c => {
+            if (c.earned && !already.has(c.id)) newlyUnlocked.push(c.id);
+        });
+        // 마스터 — 위 9 개 모두 달성 시
+        const wouldBeUnlocked = new Set([...already, ...newlyUnlocked]);
+        const nineCount = checks.filter(c => wouldBeUnlocked.has(c.id)).length;
+        if (nineCount >= 9 && !already.has("master")) newlyUnlocked.push("master");
+
+        newlyUnlocked.forEach(id => Storage.unlockAchievement(id));
+        if (newlyUnlocked.length > 0) {
+            const fresh = Storage.load();
+            fresh.achievements.lastChecked = Date.now();
+            Storage.save(fresh);
+        }
+        return newlyUnlocked;
+    },
 };
+
+// 배지(achievement) 정의 — id, 이모지, 이름, 잠금 해제 조건 설명
+const BADGES = [
+    { id: "first-step",      emoji: "🌱", name: "첫걸음",     desc: "첫 문제 정답" },
+    { id: "century",         emoji: "📚", name: "100문제",   desc: "누적 100문제 풀이" },
+    { id: "sharpshooter",    emoji: "🎯", name: "명사수",     desc: "50문제 이상 + 정답률 80% 이상" },
+    { id: "streak-7",        emoji: "🔥", name: "7일 연속",  desc: "연속 학습 7일 달성" },
+    { id: "streak-30",       emoji: "💎", name: "30일 연속", desc: "연속 학습 30일 달성" },
+    { id: "combo-10",        emoji: "⚡", name: "콤보 10",   desc: "최고 콤보 10 이상" },
+    { id: "campaign-runner", emoji: "🏥", name: "캠페인 완주", desc: "커리어 캠페인 1화 이상 완주" },
+    { id: "wrong-tamer",     emoji: "🩺", name: "오답 정복", desc: "Leitner 박스 5 졸업 5건 이상" },
+    { id: "hint-master",     emoji: "💡", name: "힌트 마스터", desc: "힌트 3회 누적 사용" },
+    { id: "master",          emoji: "🎓", name: "마스터",     desc: "위 9개 배지 모두 달성" },
+];
 
 // =========================================================================
 // 사운드 (WebAudio, 외부 자원 없음)
@@ -1394,6 +1491,24 @@ function renderSceneCard(ev, options = {}) {
     // 임상 시각자료 — ev.image 키가 있으면 자체 제작 SVG 렌더
     const imageHtml = ev.image ? `<div class="scene-image">${renderClinicalImage(ev.image)}</div>` : "";
 
+    // 힌트 버튼 — 보기 ≥3 + 광고 unit 세팅 + 보상 가능 모드. 1회만 노출.
+    const HINT_MODES = new Set(["survival", "episode", "scenario", "quiz", "daily", "wrong_review"]);
+    const choicesLen = Array.isArray(ev.choices) ? ev.choices.length : 0;
+    const hintEligible = HINT_MODES.has(mode) && choicesLen >= 3 && !!ADS_UNITS.rewarded;
+    const hintUsed = !!ev._hintUsed;
+    const hintBtnHtml = hintEligible
+        ? `<button class="choice-btn hint-btn" data-action="useHint" data-hint-used="${hintUsed ? '1' : '0'}"${hintUsed ? ' disabled' : ''}>💡 광고 보고 힌트 — 오답 1개 제거 (1회만)</button>`
+        : "";
+
+    // 임상 근거 (clinical source attribution) — ev.sourceKey 가 있으면 출처 표시
+    const sourceKey = ev.sourceKey || null;
+    const sourceTable = (typeof window !== "undefined" && window.CLINICAL_SOURCES)
+        || (NC && NC.CLINICAL_SOURCES) || null;
+    const srcEntry = (sourceKey && sourceTable) ? sourceTable[sourceKey] : null;
+    const clinicalSourceHtml = srcEntry
+        ? `<div class="clinical-source-tag">📖 임상 근거: ${escapeHtml(srcEntry.ref)}</div>`
+        : "";
+
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
         ${bookmarkBtnHtml}
@@ -1404,6 +1519,8 @@ function renderSceneCard(ev, options = {}) {
         ${imageHtml}
         <p class="scene-desc">${escapeHtml(ev.desc)}</p>
         <div class="choice-list" id="choice-list" role="list"></div>
+        ${hintBtnHtml}
+        ${clinicalSourceHtml}
         <div id="feedback-zone" aria-live="polite" aria-atomic="true"></div>
       </div>
     `;
@@ -1630,7 +1747,7 @@ function applyChoiceEffect(choice) {
 function handleSurvivalChoice(choice) {
     applyChoiceEffect(choice);
     const isCorrect = isCorrectChoice(choice);
-    if (isCorrect) { bumpCombo(); Sound.correct(); }
+    if (isCorrect) { bumpCombo(); Sound.correct(); checkAndNotifyAchievements(); }
     else { resetCombo(); Sound.wrong(); }
     if (choice.log) addLog(choice.log, isCorrect ? "log-good" : (choice.effect?.rep || 0) < 0 ? "log-bad" : "");
     if (gameState.hp <= 0) return showGameOver("체력 고갈", "번아웃 되었습니다. 환자 안전을 위해 퇴근하세요.");
@@ -1798,6 +1915,7 @@ function handleQuizChoice(choice, ev) {
     }
     Storage.incrementStat(ev.category, isCorrect);
     updateStats();
+    if (isCorrect) checkAndNotifyAchievements();
     renderFeedback(ev, choice, {
         onNext: () => {
             // 세트(10문제) 완료 시 요약 카드, 아니면 다음 문제
@@ -1955,6 +2073,7 @@ function handleDailyChoice(choice, ev) {
     else { gameState.quizWrong += 1; resetCombo(); Sound.wrong(); Storage.addWrong(ev); }
     Storage.incrementStat(ev.category, isCorrect);
     updateStats();
+    if (isCorrect) checkAndNotifyAchievements();
     renderFeedback(ev, choice, {
         onNext: () => {
             if (gameState.dailySolved >= DAILY_CHALLENGE_TOTAL) endDailyChallenge();
@@ -1968,6 +2087,7 @@ function endDailyChallenge() {
     Storage.setDaily(todayKey(), { solved: DAILY_CHALLENGE_TOTAL, correct, completed: true, ts: Date.now() });
     Storage.addHistory({ mode: "daily", at: Date.now(), total: DAILY_CHALLENGE_TOTAL, correct, date: todayKey() });
     const streak = Storage.bumpStreak(); // 연속 학습일 갱신
+    checkAndNotifyAchievements();
     const streakMsg = streak.count >= 2
         ? `🔥 ${streak.count}일 연속 학습 중! (최고 ${streak.best}일)`
         : `🔥 연속 학습 시작! 내일 또 오면 2일째.`;
@@ -2510,6 +2630,7 @@ function renderEpisodeStep() {
         title: step.title,
         desc: step.narration,
         image: step.image || null, // 임상 시각자료 (ECG·X-ray·체위 등) — 있으면 표시
+        sourceKey: step.sourceKey || null, // 임상 근거 키 — 있으면 카드 하단 출처 표시
         choices: step.choices.map(c => ({
             text: c.text, correct: !!c.correct,
             effect: { hp: c.hp || 0, rep: c.rep || 0 },
@@ -2527,7 +2648,7 @@ function renderEpisodeStep() {
 function handleEpisodeChoice(choice, ev) {
     applyChoiceEffect(choice);
     const isCorrect = isCorrectChoice(choice);
-    if (isCorrect) { bumpCombo(); Sound.correct(); addLog(`[정답] ${choice.log}`, "log-good"); }
+    if (isCorrect) { bumpCombo(); Sound.correct(); addLog(`[정답] ${choice.log}`, "log-good"); checkAndNotifyAchievements(); }
     else { resetCombo(); Sound.wrong(); addLog(`[오답] ${choice.log}`, "log-bad"); }
     renderFeedback(ev, choice, {
         autoAdvance: true,
@@ -2789,6 +2910,7 @@ function campaignContinue() {
 
 function endEpisode() {
     track("episode_completed", { id: gameState.episodeId });
+    checkAndNotifyAchievements();
     const ep = NC.EPISODES.find(x => x.id === gameState.episodeId);
     if (!ep) return;
     // ending 분기: HP + rep 가중 점수
@@ -2892,6 +3014,7 @@ function renderScenarioStep() {
         emoji: "📋", title: step.prompt,
         desc: gameState.scenarioStep === 0 ? s.intro : `현재 HP ${gameState.hp} / 평판 ${gameState.rep}`,
         image: step.image || null,
+        sourceKey: step.sourceKey || null,
         choices: step.choices.map(c => ({
             text: c.text, correct: !!c.correct,
             effect: { hp: c.hp || 0, rep: c.rep || 0 },
@@ -3842,13 +3965,25 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
         </div>
       </div>`;
 
-    const renderMy = () => `
+    const renderMy = () => {
+        const achState = (typeof Storage !== "undefined" && Storage.getAchievements) ? Storage.getAchievements() : { unlocked: [] };
+        const gotCount = Array.isArray(achState.unlocked) ? achState.unlocked.length : 0;
+        const totalBadges = (typeof BADGES !== "undefined" && Array.isArray(BADGES)) ? BADGES.length : 10;
+        return `
       <div class="tab-section">
         <button class="row-card big" data-action="renderDashboard">
           <div class="row-icon big">${ICONS.dash}</div>
           <div class="row-body">
             <div class="row-title">대시보드</div>
             <div class="row-sub">과목별 정답률 · 콤보 · 출제 경향 차트</div>
+          </div>
+          <div class="row-chev">›</div>
+        </button>
+        <button class="row-card big" data-action="renderAchievements">
+          <div class="row-icon big" aria-hidden="true">🏆</div>
+          <div class="row-body">
+            <div class="row-title">배지 컬렉션 ${gotCount > 0 ? `<span class="row-pill">${gotCount}/${totalBadges}</span>` : `<span class="row-pill">0/${totalBadges}</span>`}</div>
+            <div class="row-sub">${gotCount > 0 ? `획득한 배지 ${gotCount}개` : '학습 도전과제 10종'}</div>
           </div>
           <div class="row-chev">›</div>
         </button>
@@ -3895,6 +4030,7 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
           <button class="text-link" data-action="renderAbout">v${APP_VERSION}</button>
         </div>
       </div>`;
+    };
 
     const tabContent = tab === "study" ? renderStudy() : tab === "my" ? renderMy() : renderHome();
 
@@ -3950,6 +4086,54 @@ function renderReviveSlot() {
         <span class="revive-text">광고 보고 부활하기 (HP ${REVIVE_CONFIG.hpRestore} 회복)</span>
         <span class="revive-sub">남은 기회: ${REVIVE_CONFIG.maxPerSession - (gameState.reviveCount || 0)}회</span>
       </button>`;
+}
+
+// =========================================================================
+// 힌트 — 보상형 광고 시청 시 오답 1개 제거 (보기 ≥3 인 카드에서 1회만)
+// =========================================================================
+async function useHint() {
+    const ev = gameState._currentEv;
+    if (!ev || !Array.isArray(ev._shuffledChoices)) {
+        addLog("힌트를 적용할 수 없는 화면입니다.", "log-bad");
+        return;
+    }
+    if (ev._hintUsed) { addLog("이미 힌트를 사용했습니다.", ""); return; }
+    if (ev._shuffledChoices.length < 3) {
+        addLog("보기가 3개 이상일 때만 힌트를 쓸 수 있습니다.", "");
+        return;
+    }
+    const hintBtn = document.querySelector(".hint-btn");
+    if (hintBtn) { hintBtn.disabled = true; hintBtn.classList.add("loading"); }
+    if (!ADS_UNITS.rewarded) {
+        addLog("광고가 준비되지 않았습니다.", "log-bad");
+        if (hintBtn) { hintBtn.disabled = false; hintBtn.classList.remove("loading"); }
+        return;
+    }
+    const ok = await Ads.showRewarded(ADS_UNITS.rewarded);
+    if (!ok) {
+        if (hintBtn) { hintBtn.disabled = false; hintBtn.classList.remove("loading"); }
+        addLog("광고 시청이 완료되지 않았습니다.", "log-bad");
+        return;
+    }
+    ev._hintUsed = true;
+    // 오답 1개 찾아 비활성 + 시각 마킹
+    const wrongIdx = ev._shuffledChoices.findIndex(c => !c.correct);
+    if (wrongIdx >= 0) {
+        const btn = document.querySelector(`#choice-list .choice-btn[data-idx="${wrongIdx}"]`);
+        if (btn) {
+            btn.disabled = true;
+            btn.classList.add("choice-btn-eliminated");
+        }
+    }
+    if (hintBtn) {
+        hintBtn.disabled = true;
+        hintBtn.dataset.hintUsed = "1";
+        hintBtn.classList.remove("loading");
+    }
+    try { Storage.incrementHintUsed(); } catch {}
+    addLog("💡 힌트 사용 — 오답 1개 제거됨", "log-good");
+    try { track("hint_used"); } catch {}
+    checkAndNotifyAchievements();
 }
 
 async function reviveByAd() {
@@ -4431,6 +4615,61 @@ function renderBookmarks() {
         </div>
       </div>`;
 }
+// 새로 획득한 배지를 사용자에게 알림 — addLog + 정답 사운드
+function checkAndNotifyAchievements() {
+    let newly;
+    try { newly = Storage.checkAchievements(); } catch { newly = []; }
+    if (!Array.isArray(newly) || newly.length === 0) return;
+    newly.forEach(id => {
+        const b = BADGES.find(x => x.id === id);
+        if (!b) return;
+        try { addLog(`🏆 배지 획득: ${b.emoji} ${b.name}`, "log-good"); } catch {}
+    });
+    if (newly.length > 0) {
+        try { Sound.correct(); } catch {}
+        try { track("achievement_unlocked", { count: String(newly.length) }); } catch {}
+    }
+}
+
+function renderAchievements() {
+    resetStateForMode();
+    gameState.mode = "achievements";
+    showCoreUI(); updateStats();
+    // 진입 시 한 번 더 스캔 — 다른 화면에서 누락된 항목 보정
+    try { Storage.checkAchievements(); } catch {}
+    const ach = Storage.getAchievements();
+    const unlocked = new Map((ach.unlocked || []).map(u => [u.id, u.at || 0]));
+    const total = BADGES.length;
+    const got = BADGES.filter(b => unlocked.has(b.id)).length;
+
+    const cards = BADGES.map(b => {
+        const isUnlocked = unlocked.has(b.id);
+        const at = unlocked.get(b.id) || 0;
+        const dateStr = at > 0 ? new Date(at).toLocaleDateString("ko-KR") : "";
+        const cls = isUnlocked ? "badge-card unlocked" : "badge-card locked";
+        const status = isUnlocked
+            ? `<div class="badge-status">획득 · ${escapeHtml(dateStr)}</div>`
+            : `<div class="badge-status">잠김</div>`;
+        return `
+          <div class="${cls}">
+            <div class="badge-emoji" aria-hidden="true">${b.emoji}</div>
+            <div class="badge-name">${escapeHtml(b.name)}</div>
+            <div class="badge-desc">${escapeHtml(b.desc)}</div>
+            ${status}
+          </div>`;
+    }).join("");
+
+    UI.gameArea.innerHTML = `
+      <div class="scene-card card">
+        <h2 class="scene-title">🏆 배지 컬렉션</h2>
+        <p class="scene-desc">획득 ${got} / ${total}</p>
+        <div class="badge-grid">${cards}</div>
+        <div class="choice-list">
+          <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
+        </div>
+      </div>`;
+}
+
 function openBookmark(target) {
     const bmId = target.dataset.bmId;
     const bm = Storage.getBookmarks();
@@ -4603,6 +4842,10 @@ const DELEGATED_ACTIONS = {
     renderWeeklyReport: () => renderWeeklyReport(),
     // 부활 (보상형 광고)
     reviveByAd: () => reviveByAd(),
+    // 힌트 (보상형 광고 시청 → 오답 1개 제거)
+    useHint: () => useHint(),
+    // 배지 컬렉션
+    renderAchievements: () => renderAchievements(),
 };
 function handleDelegatedAction(e) {
     const target = e.target.closest("[data-action]");

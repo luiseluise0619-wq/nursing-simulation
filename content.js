@@ -10,6 +10,10 @@
     const mod = factory();
     if (typeof module !== "undefined" && module.exports) module.exports = mod;
     else root.NurseContent = mod;
+    // 별도 글로벌 노출 — CLINICAL_SOURCES 는 화면 카드에서 직접 참조
+    if (typeof root !== "undefined" && mod && mod.CLINICAL_SOURCES) {
+        root.CLINICAL_SOURCES = mod.CLINICAL_SOURCES;
+    }
 })(typeof self !== "undefined" ? self : this, function () {
 
     // -------------------------------------------------------------------
@@ -2837,6 +2841,7 @@
                 },
                 {
                     time: "월 10:00", title: "Daunorubicin — 외삼출 위험",
+                    sourceKey: "anthracycline-extravasation",
                     narration: "Daunorubicin (발포제) 투여 시작. CVC 정상 작동, backflow 확인. 30분 후 박지원님 \"팔이 따끔거려요. 가슴 쪽으로 퍼져요.\" CVC 부위 부종·발적 의심.",
                     choices: [
                         { text: "주입 즉시 중단 + 카테터 잔류 흡인", correct: true, hp: -3, rep: 22, log: "정답. 발포제 외삼출 = 응급. Daunorubicin (anthracycline) 은 차가운 찜질 (Vincristine 등 vinca alkaloid 는 따뜻한 찜질)." },
@@ -3446,6 +3451,7 @@
                 },
                 {
                     time: "월 11:00", title: "Doxorubicin 외삼출 의심",
+                    sourceKey: "anthracycline-extravasation",
                     narration: "김혜진 Doxorubicin 투여 30분차. \"팔이 좀 따끔거려요\" 호소. CVC 부위 사정 — 부종 의심, 발적 미세. backflow 확인 어려움.",
                     choices: [
                         { text: "즉시 주입 중단 + 카테터 흡인", correct: true, hp: -3, rep: 22, log: "정답. Doxorubicin · Daunorubicin 등 anthracycline = 차가운 찜질. Vinca alkaloid (Vincristine 등) = 따뜻한 찜질 — 약물별 반드시 구분." },
@@ -8687,5 +8693,25 @@
 
     ];
 
-    return { HANDOFF_PATIENTS, SURVIVAL_STORY_BEATS, TRIAGE_CASES, SCENARIOS, EPISODES, EXAM_TRENDS };
+    // -------------------------------------------------------------------
+    // 임상 근거 (clinical source attribution) — sourceKey 가 지정된 장면 카드에
+    // 표시되는 임상 가이드라인 출처. 학습자에게 “왜 이게 정답인지” 외부 근거 제시.
+    // -------------------------------------------------------------------
+    const CLINICAL_SOURCES = {
+        "anthracycline-extravasation": {
+            ref: "ONS Chemotherapy and Biotherapy Guidelines, 4th Ed., 2019",
+            url: "https://www.ons.org/clinical-practice-resources/chemotherapy-extravasation",
+        },
+        "code-blue-acls": { ref: "AHA 2020 ACLS Adult Cardiac Arrest Algorithm" },
+        "fhr-late-decel": { ref: "AWHONN Fetal Heart Monitoring Principles and Practices, 5th Ed." },
+        "stemi-door-to-balloon": { ref: "AHA/ACC 2013 STEMI Guidelines, Door-to-balloon ≤90 min" },
+        "thyroidectomy-hematoma": { ref: "AACE Clinical Practice Guidelines for Thyroid Disorders" },
+        "rsv-bronchiolitis": { ref: "AAP Clinical Practice Guideline: Bronchiolitis 2014" },
+        "sepsis-1hr-bundle": { ref: "Surviving Sepsis Campaign 2021 Adult Sepsis Bundle" },
+        "stroke-fast": { ref: "AHA/ASA Stroke Guidelines 2019" },
+        "narcotics-waste": { ref: "한국 의료법 시행규칙 제40조 (마약류 폐기)" },
+        "pressure-ulcer-staging": { ref: "NPIAP 2019 Pressure Injury Staging System" },
+    };
+
+    return { HANDOFF_PATIENTS, SURVIVAL_STORY_BEATS, TRIAGE_CASES, SCENARIOS, EPISODES, EXAM_TRENDS, CLINICAL_SOURCES };
 });
