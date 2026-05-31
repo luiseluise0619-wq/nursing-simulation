@@ -1201,6 +1201,110 @@
                 },
             ],
         },
+        {
+            id: "sc-abg-acidosis",
+            title: "ABG 해석 — 대사성 산증",
+            intro: "24세 남성 DKA. ABG: pH 7.20, PaCO2 30, HCO3 12, PaO2 92. K+ 5.8. BS 480.",
+            steps: [
+                {
+                    prompt: "현재 ABG 양상은?",
+                    image: "ecg:svt",
+                    choices: [
+                        { text: "대사성 산증·보상중 (PaCO2↓ 호흡 보상)", correct: true, hp: 0, rep: 12, log: "정답. pH↓ HCO3↓ PaCO2↓ — 일차 대사성 산증 + 호흡성 보상.", sourceKey: "abg-interpretation" },
+                        { text: "호흡성 산증", hp: -20, rep: -15, log: "호흡성 산증은 PaCO2↑ 와 함께 pH↓. 여기선 PaCO2↓." },
+                        { text: "대사성 알칼리증", hp: -22, rep: -18, log: "대사성 알칼리증은 pH↑ HCO3↑. 정반대." },
+                        { text: "호흡성 알칼리증", hp: -22, rep: -18, log: "호흡성 알칼리증은 pH↑ PaCO2↓. pH 해석 오류." },
+                    ],
+                },
+                {
+                    prompt: "우선 중재는?",
+                    choices: [
+                        { text: "생리식염수 1L IV bolus + insulin protocol 동시 시작", correct: true, hp: 0, rep: 15, log: "정답. DKA 표준: 수액 → 인슐린 → K+ 관리.", sourceKey: "abg-interpretation" },
+                        { text: "베타카보네이트(NaHCO3) 즉시 IV push", hp: -28, rep: -22, log: "pH ≥6.9 면 표준 NaHCO3 권장 안 됨. 수액·인슐린이 먼저." },
+                        { text: "K+ 보정만 우선 (Ca-resonium 등)", hp: -25, rep: -18, log: "K+ 5.8 은 인슐린·수액으로 자연 감소. 단독 보정은 부적절." },
+                        { text: "산소 100% NRB", hp: -18, rep: -12, log: "PaO2 92 정상 — 산소는 불필요." },
+                    ],
+                },
+                {
+                    prompt: "K+ 5.8 인데 인슐린 시작 시 주의점?",
+                    choices: [
+                        { text: "K+ 추적 + 정맥 K+ 보정 준비 (인슐린은 K+ 를 세포내로 이동시킴)", correct: true, hp: 0, rep: 14, log: "정답. 인슐린 시작 후 K+ 급강하 위험 — 2시간 간격 추적.", sourceKey: "abg-interpretation" },
+                        { text: "K+ 낮추는 약(Ca-resonium) 즉시 추가", hp: -22, rep: -16, log: "K+ 5.8 + 인슐린 곧 시작 = K+ 급강하 위험. 낮추는 약은 부적절." },
+                        { text: "인슐린 보류 (K+ 정상화까지)", hp: -25, rep: -18, log: "K+ 5.8 은 인슐린 금기 아님. K+ <3.3 일 때만 보류." },
+                        { text: "칼슘 글루코네이트 IV 우선", hp: -20, rep: -14, log: "ECG 변화(peaked T) 동반 시에만 적응증." },
+                    ],
+                },
+            ],
+        },
+        {
+            id: "sc-narcotics-waste",
+            title: "마약류 폐기 — 2인 확인 절차",
+            intro: "모르핀 10mg 처방 환자 통증 호소 없어 5mg만 사용. 남은 5mg 폐기 필요. 동료 박지원 선생님이 1m 떨어진 곳에서 차트 정리 중.",
+            steps: [
+                {
+                    prompt: "폐기 절차 시작은?",
+                    choices: [
+                        { text: "동료 직접 호명 + 시각·시간 명시하며 폐기 입회 요청", correct: true, hp: 0, rep: 12, log: "정답. 마약류 폐기는 2인 직접 입회 — 단순 동석 ≠ 입회.", sourceKey: "narcotics-waste" },
+                        { text: "본인 혼자 폐기 후 차트만 기록", hp: -30, rep: -25, log: "마약류관리법 위반 — 단독 폐기 금지." },
+                        { text: "동료가 보지 못해도 차트에 2인 서명", hp: -35, rep: -30, log: "허위 서명 — 형사처벌 대상." },
+                        { text: "다음 듀티에 폐기 인계", hp: -22, rep: -16, log: "마약류 미사용분은 즉시 폐기 원칙." },
+                    ],
+                },
+                {
+                    prompt: "폐기 방법은?",
+                    choices: [
+                        { text: "흐르는 물에 희석 폐기 + 2인 동시 관찰 + 즉시 차트 기록", correct: true, hp: 0, rep: 14, log: "정답. 회수 불가 상태로 폐기 + 2인 입회 + 즉시 기록이 표준.", sourceKey: "narcotics-waste" },
+                        { text: "화장실에 그냥 버림", hp: -28, rep: -22, log: "환경 오염 + 마약류 추적 불가. 표준 위반." },
+                        { text: "빈 앰플 보관함에 통째로 보관", hp: -32, rep: -25, log: "잔여 마약 보관은 부적절 — 분실·도난 위험." },
+                        { text: "일반 의료폐기물 봉투에 그대로", hp: -32, rep: -25, log: "마약류 분리 폐기 위반 — 표준 절차 무시." },
+                    ],
+                },
+                {
+                    prompt: "폐기 후 차트 기록이 누락된 사실을 다음 듀티에 발견한 경우?",
+                    choices: [
+                        { text: "즉시 수간호사 보고 + 사건보고서 작성", correct: true, hp: 0, rep: 13, log: "정답. 마약류 기록 누락은 사건보고 의무 — 은폐는 추가 위반.", sourceKey: "narcotics-waste" },
+                        { text: "다음 듀티에 구두로만 알림", hp: -22, rep: -16, log: "구두만으로는 기록 보전 불가. 사건보고서 필수." },
+                        { text: "본인이 메모로 비공식 보완", hp: -25, rep: -18, log: "공식 시스템 외 기록은 인정되지 않음." },
+                        { text: "이미 폐기됐으니 그냥 둔다", hp: -32, rep: -25, log: "은폐 시도 — 발각 시 가중 처분." },
+                    ],
+                },
+            ],
+        },
+        {
+            id: "sc-ventilator-alarm",
+            title: "인공호흡기 — High Pressure Alarm",
+            intro: "ICU 50대 폐렴 환자, 인공호흡기 P-CMV. 갑자기 high pressure alarm. SpO2 88% (이전 96%). 가슴 청진 우측 호흡음 감소.",
+            steps: [
+                {
+                    prompt: "가장 먼저 확인할 것은?",
+                    choices: [
+                        { text: "환자 사정 (의식·SpO2·청진) + DOPE 평가", correct: true, hp: 0, rep: 14, log: "정답. 알람 = 환자 우선. DOPE: Displacement·Obstruction·Pneumothorax·Equipment.", sourceKey: "ventilator-dope" },
+                        { text: "알람 음소거만 누름", hp: -32, rep: -28, log: "알람 무시는 사망 사고로 직결." },
+                        { text: "호흡기 setting(PEEP·Vt)만 조정", hp: -25, rep: -20, log: "원인 미파악 setting 변경은 위험." },
+                        { text: "다음 V/S 측정까지 관찰", hp: -30, rep: -25, log: "SpO2 88% = 즉각 대응 필요." },
+                    ],
+                },
+                {
+                    prompt: "DOPE 평가 결과 — 가장 의심되는 원인은?",
+                    image: "ausc:stridor-upper",
+                    choices: [
+                        { text: "우측 기흉 (Pneumothorax) 의심", correct: true, hp: 0, rep: 15, log: "정답. 우측 호흡음↓ + high pressure + SpO2↓ = tension pneumothorax 의심.", sourceKey: "ventilator-dope" },
+                        { text: "약물 부작용", hp: -22, rep: -16, log: "급성 압력 상승 + 청진 변화는 약물보다 기계적 원인." },
+                        { text: "정상 변동", hp: -32, rep: -25, log: "SpO2 8% 강하는 절대 정상 아님." },
+                        { text: "침대 위치 변경 필요", hp: -25, rep: -18, log: "원인 평가 없는 임의 조치는 부적절." },
+                    ],
+                },
+                {
+                    prompt: "즉시 행동은?",
+                    choices: [
+                        { text: "의사 콜 + portable CXR 준비 + needle decompression 트레이 준비", correct: true, hp: 0, rep: 16, log: "정답. tension pneumothorax 의심 시 즉시 의사 + 영상 + 감압 준비.", sourceKey: "ventilator-dope" },
+                        { text: "약물(진정제)만 증량", hp: -30, rep: -25, log: "원인 미해결 + 감압 지연 = 사망 위험." },
+                        { text: "호흡기 모드 변경 (PCV→VCV)", hp: -25, rep: -20, log: "기계적 원인은 mode 변경으로 해결 안 됨." },
+                        { text: "진정제만 추가 + 차트 기록", hp: -32, rep: -28, log: "기흉 미처치는 수분 내 사망 가능." },
+                    ],
+                },
+            ],
+        },
     ];
 
     // -------------------------------------------------------------------
@@ -8711,6 +8815,8 @@
         "stroke-fast": { ref: "AHA/ASA Stroke Guidelines 2019" },
         "narcotics-waste": { ref: "한국 의료법 시행규칙 제40조 (마약류 폐기)" },
         "pressure-ulcer-staging": { ref: "NPIAP 2019 Pressure Injury Staging System" },
+        "abg-interpretation": { ref: "ADA Diabetes Care 2023 — DKA Management" },
+        "ventilator-dope": { ref: "AACN Critical Care Nursing — Mechanical Ventilation Troubleshooting" },
     };
 
     return { HANDOFF_PATIENTS, SURVIVAL_STORY_BEATS, TRIAGE_CASES, SCENARIOS, EPISODES, EXAM_TRENDS, CLINICAL_SOURCES };

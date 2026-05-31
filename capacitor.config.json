@@ -8,6 +8,11 @@
     "captureInput": true,
     "webContentsDebuggingEnabled": false
   },
+  "ios": {
+    "backgroundColor": "#eef2f5",
+    "contentInset": "automatic",
+    "scrollEnabled": true
+  },
   "server": {
     "androidScheme": "https"
   },

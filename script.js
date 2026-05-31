@@ -845,6 +845,8 @@ const Storage = {
             referral: { myCode: null, invitedBy: null, invitesSent: 0, bonusGranted: false },
             // 약점 분석 funnel — 어떤 시나리오/카테고리에서 자주 틀리는지
             funnel: { sceneStarts: {}, sceneWrongs: {}, lastActivityTs: 0 },
+            // 직군 선택 (persona) — 시장 확장용 수요 신호
+            persona: { discipline: null, year: null, choseAt: 0 },
         };
     },
     // localStorage 변조 시 타입을 보정해 무한루프/렌더 오류를 방지
@@ -892,6 +894,11 @@ const Storage = {
                 sceneWrongs: (raw.funnel.sceneWrongs && typeof raw.funnel.sceneWrongs === "object" && !Array.isArray(raw.funnel.sceneWrongs)) ? raw.funnel.sceneWrongs : {},
                 lastActivityTs: Number.isFinite(raw.funnel.lastActivityTs) ? raw.funnel.lastActivityTs : 0,
             } : { sceneStarts: {}, sceneWrongs: {}, lastActivityTs: 0 },
+            persona: (raw.persona && typeof raw.persona === "object" && !Array.isArray(raw.persona)) ? {
+                discipline: (typeof raw.persona.discipline === "string" && raw.persona.discipline.length > 0) ? raw.persona.discipline : null,
+                year: (typeof raw.persona.year === "string" && raw.persona.year.length > 0) ? raw.persona.year : null,
+                choseAt: Number.isFinite(raw.persona.choseAt) ? raw.persona.choseAt : 0,
+            } : { discipline: null, year: null, choseAt: 0 },
         };
         if (raw.stats && typeof raw.stats === "object") {
             CATEGORIES.forEach(c => {
@@ -1032,6 +1039,15 @@ const Storage = {
     setOnboarded() {
         const data = Storage.load();
         data.onboarded = true;
+        Storage.save(data);
+    },
+    setPersona(discipline, year) {
+        const data = Storage.load();
+        data.persona = {
+            discipline: (typeof discipline === "string" && discipline.length > 0) ? discipline : null,
+            year: (typeof year === "string" && year.length > 0) ? year : null,
+            choseAt: Date.now(),
+        };
         Storage.save(data);
     },
     // 익명 디바이스 ID — 향후 클라우드 동기화·서버측 분석용 (현재 미사용)
@@ -3389,6 +3405,7 @@ function openSettings() {
           <button class="choice-btn" data-action="openExternalPrivacy">📄 개인정보 전문</button>
           <button class="choice-btn" data-action="openExternalTerms">📄 이용약관 전문</button>
           <button class="choice-btn" data-action="showOnboarding">튜토리얼 다시 보기</button>
+          <button class="choice-btn" data-action="renderPersonaPicker">🧭 직군 다시 선택</button>
           <button class="choice-btn" data-action="openErrorReport">컨텐츠 오류 신고</button>
         </div>
 
@@ -3881,6 +3898,73 @@ function onboardSkip() { onboardFinish(); }
 function onboardFinish() {
     Storage.setOnboarded();
     track("onboarding_complete");
+    returnToMenu();
+    // 온보딩 완료 후 직군(persona) 미선택이면 메뉴 위에 오버레이로 1회 노출
+    const data = Storage.load();
+    if (!data.persona || !data.persona.discipline) {
+        renderPersonaPicker();
+    }
+}
+
+// =========================================================================
+// 직군 선택 (persona picker) — 시장 확장용 수요 신호 수집
+// 온보딩 완료 후 1회 노출. 메인 메뉴 위에 오버레이로 표시.
+// =========================================================================
+const PERSONA_OPTIONS = [
+    { id: "student",    icon: "🩺", label: "간호학과 학생",   sub: "재학생",   available: true },
+    { id: "rn-exam",    icon: "📖", label: "간호사 국시 준비", sub: "시험 준비", available: true },
+    { id: "pharmacist", icon: "💊", label: "약사 국시",        sub: "예정",     available: false },
+    { id: "ems",        icon: "🚑", label: "응급구조사",       sub: "예정",     available: false },
+];
+
+function renderPersonaPicker() {
+    // 기존 picker 가 있으면 중복 렌더 방지
+    if (document.getElementById("persona-picker-overlay")) return;
+    const overlay = document.createElement("div");
+    overlay.id = "persona-picker-overlay";
+    overlay.className = "persona-overlay";
+    overlay.setAttribute("role", "dialog");
+    overlay.setAttribute("aria-modal", "true");
+    overlay.setAttribute("aria-labelledby", "persona-title");
+    const cards = PERSONA_OPTIONS.map(opt => {
+        const disabled = !opt.available;
+        return `
+          <button class="persona-card${disabled ? " disabled" : ""}"
+                  data-action="choosePersona"
+                  data-persona="${opt.id}"
+                  ${disabled ? 'aria-disabled="true"' : ""}>
+            <span class="persona-icon" aria-hidden="true">${opt.icon}</span>
+            <span class="persona-label">${escapeHtml(opt.label)}</span>
+            <span class="persona-sub">${escapeHtml(opt.sub)}</span>
+          </button>`;
+    }).join("");
+    overlay.innerHTML = `
+      <div class="persona-card-wrap">
+        <h2 id="persona-title" class="persona-title">어떤 분야 준비 중이세요?</h2>
+        <p class="persona-subdesc">학습 콘텐츠 추천에 활용해요. 언제든 설정에서 변경할 수 있어요.</p>
+        <div class="persona-grid">${cards}</div>
+        <button class="choice-btn subtle center" data-action="skipPersona">나중에 선택</button>
+      </div>`;
+    document.body.appendChild(overlay);
+    track("persona_picker_shown");
+}
+
+function closePersonaPicker() {
+    const overlay = document.getElementById("persona-picker-overlay");
+    if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
+}
+
+function choosePersona(discipline) {
+    if (!discipline) return;
+    // "예정" 분야 — 수요 신호만 수집, picker 유지
+    if (discipline === "pharmacist" || discipline === "ems") {
+        track("persona_demand_signal", { discipline });
+        addLog("관심 감사합니다! 곧 만나요 💚", "log-good");
+        return;
+    }
+    Storage.setPersona(discipline, null);
+    track("persona_chosen", { discipline });
+    closePersonaPicker();
     returnToMenu();
 }
 
@@ -5187,6 +5271,10 @@ const DELEGATED_ACTIONS = {
     renderInviteScreen: () => renderInviteScreen(),
     inviteFriend: () => inviteFriend(),
     renderWeaknessAnalysis: () => renderWeaknessAnalysis(),
+    // 직군 선택 (persona)
+    choosePersona: (t) => choosePersona(t.dataset.persona),
+    skipPersona: () => { Storage.setPersona("skip", null); track("persona_skipped"); closePersonaPicker(); returnToMenu(); },
+    renderPersonaPicker: () => renderPersonaPicker(),
 };
 function handleDelegatedAction(e) {
     const target = e.target.closest("[data-action]");
