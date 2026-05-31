@@ -4147,6 +4147,22 @@ function boot() {
         if (mq.addEventListener) mq.addEventListener("change", onChange);
         else if (mq.addListener) mq.addListener(onChange);
     } catch {}
+    // 백그라운드 진입 시 사운드 / 타이머 정리 — 모바일 발열·배터리 보호
+    try {
+        document.addEventListener("visibilitychange", () => {
+            if (document.hidden) {
+                // 오디오 컨텍스트 suspend (재진입 시 자동 resume)
+                try { if (Sound.ctx && Sound.ctx.state === "running") Sound.ctx.suspend(); } catch {}
+                // 타자기 효과 중단 (다음 진입 시 자연스럽게 재개됨)
+                try { if (_typewriterTimer) { clearInterval(_typewriterTimer); _typewriterTimer = null; } } catch {}
+                // CSS 무한 애니메이션 일괄 정지
+                document.body.classList.add("app-hidden");
+            } else {
+                try { if (Sound.ctx && Sound.ctx.state === "suspended") Sound.ctx.resume(); } catch {}
+                document.body.classList.remove("app-hidden");
+            }
+        });
+    } catch {}
     // 서비스 워커 등록 (PWA — Electron file:// 에서는 자동으로 무시됨)
     try {
         if (navigator.serviceWorker && location.protocol !== "file:") {

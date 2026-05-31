@@ -1,3 +1,10 @@
+/* 백그라운드 진입 시 모든 무한 애니메이션 정지 — 모바일 발열 방지 */
+body.app-hidden *,
+body.app-hidden *::before,
+body.app-hidden *::after {
+    animation-play-state: paused !important;
+}
+
 :root {
     /* === Sage Neumorphic — Light === */
     --primary:       #7fa881;   /* sage */
