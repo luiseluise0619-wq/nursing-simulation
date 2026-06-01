@@ -842,7 +842,7 @@ const Storage = {
             // 배지(achievements) — { unlocked: [{ id, at }], lastChecked, hintUsedCount, graduatedCount }
             achievements: { unlocked: [], lastChecked: 0, hintUsedCount: 0, graduatedCount: 0 },
             // 친구 초대 — 양쪽 보너스 메커니즘 (?ref=ABC123)
-            referral: { myCode: null, invitedBy: null, invitesSent: 0, bonusGranted: false },
+            referral: { myCode: null, invitedBy: null, invitesSent: 0, bonusGranted: false, bonusAwardedOnce: false, bonusAwardedDate: null },
             // 약점 분석 funnel — 어떤 시나리오/카테고리에서 자주 틀리는지
             funnel: { sceneStarts: {}, sceneWrongs: {}, lastActivityTs: 0 },
             // 직군 선택 (persona) — 시장 확장용 수요 신호
@@ -1299,6 +1299,15 @@ const Storage = {
         return data.referral.invitesSent;
     },
     // 약점 분석 funnel — 어떤 시나리오에서 자주 시작/오답이 발생하는지 기록
+    // 키 수 제한 — 가장 오래된 항목부터 제거 (LRU). 시나리오 ID 다양성 < 500 가정으로 여유 유지
+    _capFunnelDict(dict, cap) {
+        const keys = Object.keys(dict);
+        if (keys.length <= cap) return dict;
+        const sorted = keys.sort((a, b) => (dict[a].lastTs || 0) - (dict[b].lastTs || 0));
+        const toRemove = sorted.slice(0, keys.length - cap);
+        toRemove.forEach(k => { delete dict[k]; });
+        return dict;
+    },
     recordSceneStart(sceneId, category) {
         if (!sceneId) return;
         const data = Storage.load();
@@ -1312,6 +1321,7 @@ const Storage = {
             lastTs: Date.now(),
         };
         data.funnel.lastActivityTs = Date.now();
+        Storage._capFunnelDict(data.funnel.sceneStarts, 500);
         Storage.save(data);
     },
     recordSceneWrong(sceneId, category) {
@@ -1327,6 +1337,7 @@ const Storage = {
             lastTs: Date.now(),
         };
         data.funnel.lastActivityTs = Date.now();
+        Storage._capFunnelDict(data.funnel.sceneWrongs, 500);
         Storage.save(data);
     },
     getFunnel() {
@@ -2188,17 +2199,16 @@ function handleDailyChoice(choice, ev) {
     updateStats();
     if (isCorrect) {
         checkAndNotifyAchievements();
-        // 친구 초대 보너스 — 일일 챌린지 첫 정답 시 +10 평판 (하루 1회)
+        // 친구 초대 보너스 — 일일 챌린지 첫 정답 시 +10 평판 (1회 한정, 영구)
         try {
             const data = Storage.load();
-            const today = todayKey();
             if (data.referral && data.referral.invitedBy && data.referral.bonusGranted
-                && data.referral.bonusAwardedDate !== today) {
+                && !data.referral.bonusAwardedOnce) {
                 gameState.rep = (gameState.rep || 0) + 10;
-                data.referral.bonusAwardedDate = today;
-                data.referral.bonusAwardedToday = true;
+                data.referral.bonusAwardedOnce = true;
+                data.referral.bonusAwardedDate = todayKey();
                 Storage.save(data);
-                addLog("🎁 초대 보너스 +10 평판!", "log-good");
+                addLog("🎁 초대 보너스 +10 평판! (1회 한정)", "log-good");
                 try { track("referral_bonus_awarded"); } catch {}
             }
         } catch {}
@@ -3899,6 +3909,8 @@ function onboardFinish() {
     Storage.setOnboarded();
     track("onboarding_complete");
     returnToMenu();
+    // 신규 사용자의 ?ref= / ?shortcut= URL 파라미터 — 온보딩 완료 후에도 한 번 더 처리
+    try { handleShortcutUrl(); } catch {}
     // 온보딩 완료 후 직군(persona) 미선택이면 메뉴 위에 오버레이로 1회 노출
     const data = Storage.load();
     if (!data.persona || !data.persona.discipline) {
@@ -3933,6 +3945,7 @@ function renderPersonaPicker() {
                   data-action="choosePersona"
                   data-persona="${opt.id}"
                   ${disabled ? 'aria-disabled="true"' : ""}>
+            ${disabled ? '<span class="persona-coming">곧 만나요</span>' : ""}
             <span class="persona-icon" aria-hidden="true">${opt.icon}</span>
             <span class="persona-label">${escapeHtml(opt.label)}</span>
             <span class="persona-sub">${escapeHtml(opt.sub)}</span>
@@ -3956,10 +3969,17 @@ function closePersonaPicker() {
 
 function choosePersona(discipline) {
     if (!discipline) return;
-    // "예정" 분야 — 수요 신호만 수집, picker 유지
+    // "예정" 분야 — 수요 신호 + 오버레이 내부에 즉시 피드백 (logBar 가 가려져 있을 수 있음)
     if (discipline === "pharmacist" || discipline === "ems") {
         track("persona_demand_signal", { discipline });
-        addLog("관심 감사합니다! 곧 만나요 💚", "log-good");
+        const wrap = document.querySelector(".persona-card-wrap");
+        if (wrap && !wrap.querySelector(".persona-toast")) {
+            const toast = document.createElement("div");
+            toast.className = "persona-toast";
+            toast.textContent = "관심 감사합니다! 곧 만나요 💚";
+            wrap.appendChild(toast);
+            setTimeout(() => { toast.remove(); }, 2400);
+        }
         return;
     }
     Storage.setPersona(discipline, null);
@@ -4327,6 +4347,11 @@ async function useHint() {
     if (!ok) {
         if (hintBtn) { hintBtn.disabled = false; hintBtn.classList.remove("loading"); }
         addLog("광고 시청이 완료되지 않았습니다.", "log-bad");
+        return;
+    }
+    // Race guard — 광고 시청 중 다음 문제로 넘어갔으면 적용하지 않음
+    if (gameState._currentEv !== ev) {
+        addLog("이미 다음 문제로 넘어가 힌트가 적용되지 않았습니다.", "");
         return;
     }
     ev._hintUsed = true;
