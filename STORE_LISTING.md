@@ -77,6 +77,12 @@ Korean nursing board exam + clinical simulation, learned like a game
 • ECG·동공·Apgar·FHR·욕창·자궁저부 등 45개 SVG
 • 외부 자원 0 — 인터넷 끊겨도 OK
 
+🇺🇸 NCLEX-RN English Mode (NEW)
+• US RN licensing prep — toggle from Settings
+• 60+ English items across 4 client need categories
+• Standard MCQ + SATA (Select All That Apply) + Priority items
+• Rationales referenced to ANA, AHA, ADA, CDC, Joint Commission NPSGs
+
 ━━━━━━━━━━━━━━━━━━━━━
 💡 왜 다른가요?
 ━━━━━━━━━━━━━━━━━━━━━

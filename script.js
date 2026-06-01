@@ -828,7 +828,7 @@ const Storage = {
         const stats = {};
         CATEGORIES.forEach(c => stats[c] = { solved: 0, correct: 0 });
         return {
-            settings: { theme: "auto", sound: true },
+            settings: { theme: "auto", sound: true, examMode: "korean" },
             stats,
             wrongQueue: [],
             bookmarks: {},     // { contentId: { type, label, ts } } — 즐겨찾기
@@ -1016,6 +1016,17 @@ const Storage = {
     setSettings(s) {
         const data = Storage.load();
         data.settings = Object.assign(data.settings, s);
+        Storage.save(data);
+    },
+    // NCLEX-RN 영어 모드 토글 — "korean" | "nclex"
+    getExamMode() {
+        const s = Storage.getSettings();
+        return s && s.examMode === "nclex" ? "nclex" : "korean";
+    },
+    setExamMode(mode) {
+        if (mode !== "korean" && mode !== "nclex") return;
+        const data = Storage.load();
+        data.settings = Object.assign(data.settings || {}, { examMode: mode });
         Storage.save(data);
     },
     setBestCombo(n) {
@@ -1778,6 +1789,13 @@ function resetStateForMode() {
     gameState.firedStoryBeats = [];
     gameState.reviveCount = 0;
     gameState._lastDeath = null;
+    // NCLEX 영어 모드 상태
+    gameState.nclexQueue = null;
+    gameState.nclexIndex = 0;
+    gameState.nclexCorrect = 0;
+    gameState.nclexAnswered = 0;
+    gameState.nclexCategory = null;
+    gameState.nclexSataPick = null;
 }
 function initSurvival() {
     // v1.2: 듀티 시뮬레이션 = 랜덤 에피소드 자동 진입.
@@ -1965,6 +1983,250 @@ function quizContinue() {
     track("quiz_set_completed", { category: gameState.quizCategory });
     renderNextQuizQuestion();
 }
+
+// =========================================================================
+// NCLEX-RN 영어 모드 — 카테고리별 문제풀이 (MCQ / SATA / Priority)
+// 데이터: window.NCLEX_CATEGORIES, window.NCLEX_QUESTIONS (nclex-content.js)
+// 한국 국시 퀴즈 흐름과 별도 — 무한 랜덤이 아닌 카테고리별 풀 셔플 1세트
+// =========================================================================
+function _nclexAvailable() {
+    return typeof window !== "undefined"
+        && Array.isArray(window.NCLEX_CATEGORIES)
+        && Array.isArray(window.NCLEX_QUESTIONS)
+        && window.NCLEX_QUESTIONS.length > 0;
+}
+
+function renderNclexMenu() {
+    gameState.mode = "nclex_menu"; resetStateForMode();
+    showCoreUI(); UI.logBar.innerHTML = "";
+    if (!_nclexAvailable()) {
+        UI.gameArea.innerHTML = `
+          <div class="scene-card card">
+            <h2 class="scene-title">NCLEX-RN Practice</h2>
+            <p class="scene-desc">NCLEX content failed to load. Please reinstall or report the issue.</p>
+            <div class="choice-list">
+              <button class="choice-btn" data-action="returnToMenu">Back to Menu</button>
+            </div>
+          </div>`;
+        return;
+    }
+    addLog("NCLEX-RN practice — English-language US licensing prep.", "log-important");
+    const cats = window.NCLEX_CATEGORIES;
+    const counts = {};
+    cats.forEach(c => { counts[c] = window.NCLEX_QUESTIONS.filter(q => q.category === c).length; });
+    const buttons = cats.map(c => `<button class="choice-btn primary" data-action="startNclexQuiz" data-arg="${escapeHtml(c)}">${escapeHtml(c)} <small>(${counts[c]})</small></button>`).join("");
+    UI.gameArea.innerHTML = `
+      <div class="scene-card card">
+        <h2 class="scene-title">🇺🇸 NCLEX-RN Practice</h2>
+        <p class="scene-desc">US RN licensing prep — 4 client need categories.\nIncludes standard MCQ, SATA (Select All That Apply), and Priority items.</p>
+        <h3 class="episode-group-label">🎲 Mixed</h3>
+        <div class="choice-list">
+          <button class="choice-btn primary" data-action="startNclexQuiz" data-arg="__random__">🎲 All Categories (Random)</button>
+        </div>
+        <h3 class="episode-group-label">📚 By Client Need Category</h3>
+        <div class="choice-list">
+          ${buttons}
+          <button class="choice-btn center" data-action="returnToMenu">Back to Menu</button>
+        </div>
+      </div>`;
+}
+
+function _nclexShuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+}
+
+function startNclexQuiz(category) {
+    if (!_nclexAvailable()) { renderNclexMenu(); return; }
+    gameState.mode = "nclex_quiz";
+    const isRandom = !category || category === "__random__";
+    const pool = isRandom
+        ? window.NCLEX_QUESTIONS.slice()
+        : window.NCLEX_QUESTIONS.filter(q => q.category === category);
+    if (pool.length === 0) {
+        addLog("No questions in this category.", "log-bad");
+        renderNclexMenu();
+        return;
+    }
+    gameState.nclexQueue = _nclexShuffle(pool);
+    gameState.nclexCategory = isRandom ? null : category;
+    gameState.nclexIndex = 0;
+    gameState.nclexCorrect = 0;
+    gameState.nclexAnswered = 0;
+    gameState.nclexSataPick = new Set();
+    UI.logBar.innerHTML = "";
+    addLog(`NCLEX-RN — ${isRandom ? "All categories" : category} (${pool.length} items)`, "log-important");
+    track("nclex_quiz_started", { category: isRandom ? "__random__" : category, total: pool.length });
+    renderNclexQuestion();
+}
+
+function renderNclexQuestion() {
+    const q = gameState.nclexQueue && gameState.nclexQueue[gameState.nclexIndex];
+    if (!q) { renderNclexSummary(); return; }
+    showCoreUI();
+    const idx = gameState.nclexIndex + 1;
+    const total = gameState.nclexQueue.length;
+    const typeLabel = q.type === "sata" ? "SATA — Select all that apply"
+        : q.type === "priority" ? "PRIORITY — Choose the highest-acuity client"
+        : "Multiple choice";
+    gameState.nclexSataPick = new Set();
+
+    let choicesHtml = "";
+    if (q.type === "sata") {
+        // Render checkboxes; user toggles, then submits
+        choicesHtml = q.choices.map((c, i) => `
+          <button class="choice-btn sata-choice" data-action="nclexSataToggle" data-i="${i}" aria-pressed="false">
+            <span class="sata-box" aria-hidden="true">☐</span>
+            <span class="sata-text">${escapeHtml(c.text)}</span>
+          </button>`).join("");
+        choicesHtml += `<button class="choice-btn primary" data-action="nclexSataSubmit">Submit</button>`;
+    } else {
+        // mcq + priority: single-choice tap to lock answer
+        choicesHtml = q.choices.map((c, i) => `
+          <button class="choice-btn" data-action="nclexAnswer" data-i="${i}">${escapeHtml(c.text)}</button>`).join("");
+    }
+
+    UI.gameArea.innerHTML = `
+      <div class="scene-card card">
+        <div class="scene-meta-row">
+          <span class="scene-meta">${escapeHtml(q.category)}</span>
+          <span class="scene-meta">${idx} / ${total}</span>
+          <span class="scene-meta">${typeLabel}</span>
+        </div>
+        <h2 class="scene-title">${escapeHtml(q.title)}</h2>
+        <p class="scene-desc">${escapeHtml(q.desc)}</p>
+        <div class="choice-list" id="nclex-choices">${choicesHtml}</div>
+        <div id="nclex-feedback" class="modal-result" aria-live="polite"></div>
+      </div>`;
+}
+
+function nclexSataToggle(t) {
+    const i = parseInt(t.dataset.i, 10);
+    if (!Number.isFinite(i)) return;
+    if (!gameState.nclexSataPick) gameState.nclexSataPick = new Set();
+    if (gameState.nclexSataPick.has(i)) {
+        gameState.nclexSataPick.delete(i);
+        t.setAttribute("aria-pressed", "false");
+        t.classList.remove("selected");
+        const box = t.querySelector(".sata-box"); if (box) box.textContent = "☐";
+    } else {
+        gameState.nclexSataPick.add(i);
+        t.setAttribute("aria-pressed", "true");
+        t.classList.add("selected");
+        const box = t.querySelector(".sata-box"); if (box) box.textContent = "☑";
+    }
+}
+
+function nclexSataSubmit() {
+    const q = gameState.nclexQueue[gameState.nclexIndex];
+    if (!q || q.type !== "sata") return;
+    const pick = gameState.nclexSataPick || new Set();
+    const correctSet = new Set(q.choices.map((c, i) => c.correct ? i : -1).filter(i => i >= 0));
+    // 모든 정답이 선택되고 오답이 하나도 선택되지 않은 경우만 정답 — 표준 NCLEX SATA 채점
+    let isAllCorrect = pick.size === correctSet.size;
+    if (isAllCorrect) {
+        for (const i of correctSet) { if (!pick.has(i)) { isAllCorrect = false; break; } }
+    }
+    _nclexRenderFeedback(q, { sataPick: pick, sataCorrect: correctSet, isCorrect: isAllCorrect });
+}
+
+function nclexAnswer(t) {
+    const q = gameState.nclexQueue[gameState.nclexIndex];
+    if (!q) return;
+    const i = parseInt(t.dataset.i, 10);
+    if (!Number.isFinite(i)) return;
+    const choice = q.choices[i];
+    if (!choice) return;
+    _nclexRenderFeedback(q, { picked: i, isCorrect: !!choice.correct });
+}
+
+function _nclexRenderFeedback(q, info) {
+    // 채점 + 해설 표시 + Next 버튼
+    const list = document.getElementById("nclex-choices");
+    if (list) list.querySelectorAll(".choice-btn").forEach(b => b.disabled = true);
+    gameState.nclexAnswered = (gameState.nclexAnswered || 0) + 1;
+    if (info.isCorrect) gameState.nclexCorrect = (gameState.nclexCorrect || 0) + 1;
+    track("nclex_answered", { id: q.id, type: q.type, correct: !!info.isCorrect });
+
+    // 각 보기에 정답/오답 표시
+    if (list) {
+        q.choices.forEach((c, i) => {
+            const btn = list.querySelector(`[data-i="${i}"]`);
+            if (!btn) return;
+            if (c.correct) btn.classList.add("nclex-correct");
+            if (q.type === "sata") {
+                const picked = info.sataPick && info.sataPick.has(i);
+                if (picked && !c.correct) btn.classList.add("nclex-wrong");
+            } else {
+                if (info.picked === i && !c.correct) btn.classList.add("nclex-wrong");
+            }
+        });
+    }
+
+    // 해설 박스
+    const fb = document.getElementById("nclex-feedback");
+    if (fb) {
+        const verdict = info.isCorrect ? "✅ Correct" : "❌ Incorrect";
+        const explainItems = q.choices
+            .filter(c => c.correct || (q.type === "sata" ? (info.sataPick && info.sataPick.has(q.choices.indexOf(c))) : info.picked === q.choices.indexOf(c)))
+            .map(c => `<div class="nclex-explain-row"><strong>${escapeHtml(c.text)}</strong><div>${escapeHtml(c.log || "")}</div></div>`)
+            .join("");
+        fb.innerHTML = `
+          <div class="feedback-box ${info.isCorrect ? "correct" : "wrong"}">
+            <div class="feedback-title">${verdict}</div>
+            <div class="nclex-explain">${explainItems}</div>
+          </div>
+          <div class="choice-list" style="margin-top:12px">
+            <button class="choice-btn primary" data-action="nclexNext">Next ›</button>
+            <button class="choice-btn" data-action="renderNclexMenu">Back to Categories</button>
+          </div>`;
+        try { fb.scrollIntoView({ behavior: "smooth", block: "nearest" }); } catch {}
+    }
+}
+
+function nclexNext() {
+    gameState.nclexIndex = (gameState.nclexIndex || 0) + 1;
+    if (!gameState.nclexQueue || gameState.nclexIndex >= gameState.nclexQueue.length) {
+        renderNclexSummary();
+        return;
+    }
+    renderNclexQuestion();
+}
+
+function renderNclexSummary() {
+    const total = (gameState.nclexQueue || []).length;
+    const correct = gameState.nclexCorrect || 0;
+    const answered = gameState.nclexAnswered || 0;
+    const acc = answered ? Math.round((correct / answered) * 100) : 0;
+    const catLabel = gameState.nclexCategory || "All Categories";
+    let msg, emoji;
+    if (acc >= 85) { emoji = "🏆"; msg = "Excellent — you are at passing level for this domain."; }
+    else if (acc >= 65) { emoji = "🌟"; msg = "Solid. Review the missed rationales for full retention."; }
+    else if (acc >= 50) { emoji = "📚"; msg = "Halfway there. Re-run this category after reviewing wrong rationales."; }
+    else { emoji = "💪"; msg = "Tough domain. Review each rationale and retry — repetition builds NCLEX recall."; }
+    track("nclex_quiz_completed", { category: gameState.nclexCategory || "__random__", total, correct, accuracy: acc });
+    try { Storage.addHistory({ mode: "nclex", at: Date.now(), category: gameState.nclexCategory || "__random__", total, answered, correct, accuracy: acc }); } catch {}
+    UI.gameArea.innerHTML = `
+      <div class="scene-card card">
+        <span class="scene-emoji" aria-hidden="true">${emoji}</span>
+        <h2 class="scene-title">NCLEX-RN — ${escapeHtml(catLabel)}</h2>
+        <div class="dashboard-row" role="group" aria-label="session result">
+          <div class="dash-stat"><div class="ds-num">${correct}/${total}</div><div class="ds-label">Score</div></div>
+          <div class="dash-stat"><div class="ds-num">${acc}%</div><div class="ds-label">Accuracy</div></div>
+          <div class="dash-stat"><div class="ds-num">${answered}</div><div class="ds-label">Answered</div></div>
+        </div>
+        <p class="scene-desc">${msg}</p>
+        <div class="choice-list">
+          <button class="choice-btn primary" data-action="renderNclexMenu">Practice Another Category</button>
+          <button class="choice-btn" data-action="returnToMenu">Main Menu</button>
+        </div>
+      </div>`;
+}
+
 function renderFeedback(ev, choice, opts = {}) {
     const isCorrect = isCorrectChoice(choice);
     const correctChoice = ev.choices.find(isCorrectChoice);
@@ -3361,10 +3623,16 @@ function openSettings() {
           <span>사운드</span>
           <span class="settings-value">${settings.sound !== false ? "켜짐" : "꺼짐"}</span>
         </div>
+        <h3 class="settings-section">시험 모드 (Exam Mode)</h3>
         <div class="settings-row">
-          <span>언어</span>
-          <span class="settings-value">한국어 <small>(NCLEX 영어 모드 예정)</small></span>
+          <span>현재 모드</span>
+          <span class="settings-value">${settings.examMode === "nclex" ? "🇺🇸 NCLEX-RN (English)" : "🇰🇷 한국 국시"}</span>
         </div>
+        <div class="choice-list">
+          <button class="choice-btn ${settings.examMode !== "nclex" ? "primary" : ""}" data-action="setExamMode" data-mode="korean">🇰🇷 한국 국시</button>
+          <button class="choice-btn ${settings.examMode === "nclex" ? "primary" : ""}" data-action="setExamMode" data-mode="nclex">🇺🇸 NCLEX-RN</button>
+        </div>
+        <p class="settings-help">${settings.examMode === "nclex" ? "NCLEX-RN: US licensing exam questions in English (MCQ + SATA + Priority)." : "한국 간호사 국가고시 문제 (8과목)."}</p>
         <div class="settings-row">
           <span>일일 학습 알림</span>
           <span class="settings-value">${data.notifyOptIn ? "켜짐" : "꺼짐"}</span>
@@ -3578,6 +3846,23 @@ async function toggleDailyNotify() {
     } catch (e) {
         addLog("알림 권한 요청 실패: " + (e && e.message ? e.message : "unknown"), "log-bad");
     }
+    openSettings();
+}
+
+// 시험 모드 전환 — 한국 국시 ↔ NCLEX-RN (영어)
+function setExamMode(t) {
+    const mode = (t && t.dataset && t.dataset.mode) || null;
+    if (mode !== "korean" && mode !== "nclex") return;
+    const cur = Storage.getExamMode();
+    if (cur === mode) {
+        // 같은 모드 — 다시 누른 경우 가벼운 토스트만
+        addLog(mode === "nclex" ? "Already in NCLEX-RN mode." : "이미 한국 국시 모드입니다.", "log-good");
+        return;
+    }
+    Storage.setExamMode(mode);
+    track("exam_mode_changed", { mode });
+    addLog(mode === "nclex" ? "🇺🇸 NCLEX-RN mode activated — English questions enabled" : "🇰🇷 한국 국시 모드로 전환했습니다", "log-good");
+    // 메뉴/설정 재렌더 — 새 상태 반영
     openSettings();
 }
 
@@ -3923,10 +4208,10 @@ function onboardFinish() {
 // 온보딩 완료 후 1회 노출. 메인 메뉴 위에 오버레이로 표시.
 // =========================================================================
 const PERSONA_OPTIONS = [
-    { id: "student",    icon: "🩺", label: "간호학과 학생",   sub: "재학생",   available: true },
-    { id: "rn-exam",    icon: "📖", label: "간호사 국시 준비", sub: "시험 준비", available: true },
-    { id: "pharmacist", icon: "💊", label: "약사 국시",        sub: "예정",     available: false },
-    { id: "ems",        icon: "🚑", label: "응급구조사",       sub: "예정",     available: false },
+    { id: "student",    icon: "🩺", label: "간호학과 학생",   sub: "재학생",       available: true },
+    { id: "rn-exam",    icon: "📖", label: "간호사 국시 준비", sub: "시험 준비",     available: true },
+    { id: "nclex",      icon: "🇺🇸", label: "NCLEX-RN 준비",   sub: "미국 간호사 면허", available: true },
+    { id: "pharmacist", icon: "💊", label: "약사 국시",        sub: "예정",         available: false },
 ];
 
 function renderPersonaPicker() {
@@ -3981,6 +4266,10 @@ function choosePersona(discipline) {
             setTimeout(() => { toast.remove(); }, 2400);
         }
         return;
+    }
+    // NCLEX 선택 시 영어 모드를 자동 활성화 (사용자 의도 강한 신호)
+    if (discipline === "nclex") {
+        try { Storage.setExamMode("nclex"); } catch {}
     }
     Storage.setPersona(discipline, null);
     track("persona_chosen", { discipline });
@@ -4128,10 +4417,22 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
         </div>
       </div>`;
 
-    const renderStudy = () => `
+    const renderStudy = () => {
+      const examMode = (typeof Storage !== "undefined" && Storage.getExamMode) ? Storage.getExamMode() : "korean";
+      const nclexTile = examMode === "nclex" ? `
+          <button class="row-card" data-action="renderNclexMenu">
+            <div class="row-icon" aria-hidden="true">🇺🇸</div>
+            <div class="row-body">
+              <div class="row-title">NCLEX-RN Practice</div>
+              <div class="row-sub">4 client need categories · MCQ + SATA + Priority</div>
+            </div>
+            <div class="row-chev">›</div>
+          </button>` : '';
+      return `
       <div class="tab-section">
         <div class="section-label">빠른 풀이</div>
         <div class="home-row">
+          ${nclexTile}
           <button class="row-card" data-action="renderQuizMenu">
             <div class="row-icon">${ICONS.training}</div>
             <div class="row-body">
@@ -4190,6 +4491,7 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
           </button>
         </div>
       </div>`;
+    };
 
     const renderMy = () => {
         const achState = (typeof Storage !== "undefined" && Storage.getAchievements) ? Storage.getAchievements() : { unlocked: [] };
@@ -5263,6 +5565,13 @@ const DELEGATED_ACTIONS = {
     reviewWrongForce: () => reviewWrongForce(),
     // 출시 1.0 페이지들
     openSettings: () => openSettings(),
+    setExamMode: (t) => setExamMode(t),
+    renderNclexMenu: () => renderNclexMenu(),
+    startNclexQuiz: (t) => startNclexQuiz(t.dataset.arg),
+    nclexAnswer: (t) => nclexAnswer(t),
+    nclexSataToggle: (t) => nclexSataToggle(t),
+    nclexSataSubmit: () => nclexSataSubmit(),
+    nclexNext: () => nclexNext(),
     renderAbout: () => renderAbout(),
     openFeedback: () => openFeedback(),
     renderPrivacy: () => renderPrivacy(),

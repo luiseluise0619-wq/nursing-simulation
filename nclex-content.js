@@ -1,0 +1,851 @@
+// =========================================================================
+// NCLEX-RN content — 영문 객관식 + SATA + Priority 문제
+// 참조: NCLEX-RN 2023 Test Plan — 4 client need categories
+//   1. Safe & Effective Care Environment
+//   2. Health Promotion & Maintenance
+//   3. Psychosocial Integrity
+//   4. Physiological Integrity
+// 약물명: US (epinephrine, acetaminophen, albuterol).
+// 단위: SI + US 병기.
+// 임상 참조: ANA Code of Ethics, JC NPSGs, AHA ACLS/BLS, ADA SoC, GOLD/GINA.
+// =========================================================================
+(function () {
+    const NCLEX_CATEGORIES = [
+        "Safe & Effective Care Environment",
+        "Health Promotion & Maintenance",
+        "Psychosocial Integrity",
+        "Physiological Integrity",
+    ];
+
+    // Question shape:
+    //   { id, category, type: "mcq" | "sata" | "priority",
+    //     title, desc, choices: [{ text, correct?: true, log }] }
+    // - mcq: exactly 1 correct (4 choices)
+    // - sata: 2-3 correct (5-6 choices); user submits a set, all-or-nothing
+    // - priority: 4 client/situation descriptions, 1 = highest acuity (ABCs/unstable)
+    const NCLEX_QUESTIONS = [
+
+        // =====================================================================
+        // Safe & Effective Care Environment (15)
+        //   - Management of care, safety/infection control, delegation,
+        //     informed consent, HIPAA, NPSGs
+        // =====================================================================
+        {
+            id: "nclex-001",
+            category: "Safe & Effective Care Environment",
+            type: "mcq",
+            title: "Medication Reconciliation",
+            desc: "A nurse is admitting an older adult client. Which action is the priority during medication reconciliation?",
+            choices: [
+                { text: "Compare home medications with admission orders and reconcile discrepancies with the provider", correct: true, log: "Correct. Rationale: Reconciliation at care transitions prevents omission/duplication errors (Joint Commission NPSG 03.06.01)." },
+                { text: "Document the client's preferred pharmacy for discharge", log: "Useful for discharge planning but not the admission-time priority." },
+                { text: "Schedule all home medications at 0900 for nursing convenience", log: "Inappropriate — timing affects efficacy (e.g., levothyroxine, statins) and may cause harm." },
+                { text: "Discontinue all home medications until the provider rounds", log: "May precipitate withdrawal (e.g., beta-blockers, SSRIs) or disease decompensation." },
+            ],
+        },
+        {
+            id: "nclex-002",
+            category: "Safe & Effective Care Environment",
+            type: "mcq",
+            title: "RN Delegation to UAP",
+            desc: "Which task is appropriate for the RN to delegate to unlicensed assistive personnel (UAP)?",
+            choices: [
+                { text: "Ambulating a stable post-op day 2 client to the bathroom", correct: true, log: "Correct. Rationale: Stable, predictable ADL care fits the 5 Rights of Delegation (NCSBN)." },
+                { text: "Performing the initial admission assessment", log: "Assessment requires RN clinical judgment and cannot be delegated." },
+                { text: "Administering a PRN dose of oral acetaminophen", log: "Medication administration is outside UAP scope in most US states." },
+                { text: "Teaching a newly diagnosed diabetic about insulin injection", log: "Client education requires licensed nurse scope." },
+            ],
+        },
+        {
+            id: "nclex-003",
+            category: "Safe & Effective Care Environment",
+            type: "mcq",
+            title: "Informed Consent",
+            desc: "The surgeon obtained informed consent. The client now tells the nurse, 'I do not really understand what they are going to do.' What is the nurse's best action?",
+            choices: [
+                { text: "Notify the surgeon to return and clarify before signing/proceeding", correct: true, log: "Correct. Rationale: Only the provider performing the procedure can obtain informed consent; the nurse is a witness and advocate (ANA Standards)." },
+                { text: "Explain the procedure in detail so the client feels comfortable", log: "Re-explaining the procedure exceeds the RN's role — the surgeon must clarify." },
+                { text: "Reassure the client that the surgeon knows best", log: "Dismissive; violates client autonomy and the right to refuse." },
+                { text: "Document that consent is invalid and cancel the surgery", log: "Unilateral cancellation is not within RN scope without provider notification." },
+            ],
+        },
+        {
+            id: "nclex-004",
+            category: "Safe & Effective Care Environment",
+            type: "mcq",
+            title: "Standard Precautions",
+            desc: "A nurse is preparing to start a peripheral IV. According to CDC Standard Precautions, which PPE is required at minimum?",
+            choices: [
+                { text: "Clean (non-sterile) gloves", correct: true, log: "Correct. Rationale: Standard Precautions require gloves for any anticipated contact with blood/body fluids (CDC 2007)." },
+                { text: "Gown, gloves, and surgical mask", log: "Unnecessary for routine IV insertion; reserved for splash risk or contact/droplet isolation." },
+                { text: "N95 respirator and goggles", log: "Required for airborne precautions (e.g., TB), not routine IV." },
+                { text: "Sterile gloves and sterile gown", log: "Sterile gloves are needed for central lines, not peripheral IV starts." },
+            ],
+        },
+        {
+            id: "nclex-005",
+            category: "Safe & Effective Care Environment",
+            type: "mcq",
+            title: "HIPAA / Privacy",
+            desc: "Which action by the nurse is a HIPAA violation?",
+            choices: [
+                { text: "Discussing a client's diagnosis with the spouse in the elevator", correct: true, log: "Correct. Rationale: PHI must not be disclosed in public areas or to family without authorization (HIPAA Privacy Rule)." },
+                { text: "Giving a verbal handoff in a private nursing report room", log: "Handoff in a secured area is appropriate." },
+                { text: "Documenting in the EHR while logged in under your own credentials", log: "Standard, attributable documentation." },
+                { text: "Asking the client's identity at the bedside using two identifiers", log: "Best practice — NPSG 01.01.01." },
+            ],
+        },
+        {
+            id: "nclex-006",
+            category: "Safe & Effective Care Environment",
+            type: "mcq",
+            title: "Medication Error Reporting",
+            desc: "A nurse realizes a wrong dose of heparin was given 30 minutes ago. What is the first action?",
+            choices: [
+                { text: "Assess the client and notify the provider", correct: true, log: "Correct. Rationale: Client safety first — assess, then notify provider, then file an incident report (just-culture model)." },
+                { text: "Complete an incident report before assessing the client", log: "Incident reports never precede client assessment." },
+                { text: "Wait to see if the client develops bleeding before reporting", log: "Delaying disclosure violates safety standards and client rights." },
+                { text: "Document the correct dose in the MAR to avoid disciplinary action", log: "Falsification of records is illegal and unethical." },
+            ],
+        },
+        {
+            id: "nclex-007",
+            category: "Safe & Effective Care Environment",
+            type: "mcq",
+            title: "Fall Prevention",
+            desc: "Which intervention is most effective for fall prevention in a hospitalized older adult?",
+            choices: [
+                { text: "Hourly rounding for toileting, pain, and positioning needs", correct: true, log: "Correct. Rationale: Proactive rounding addresses the most common fall triggers (AHRQ Fall TIPS toolkit)." },
+                { text: "Apply a vest restraint at night to prevent the client from getting up", log: "Restraints increase, not decrease, fall and injury risk and require an order plus reassessment." },
+                { text: "Keep all four side rails up at all times", log: "Four side rails are considered a restraint and increase fall-from-height injury severity." },
+                { text: "Dim the room lighting to encourage sleep", log: "Inadequate lighting raises fall risk during nighttime ambulation." },
+            ],
+        },
+        {
+            id: "nclex-008",
+            category: "Safe & Effective Care Environment",
+            type: "mcq",
+            title: "Restraint Use",
+            desc: "A client in ICU is intubated and pulling at the endotracheal tube. The provider orders soft wrist restraints. Which nursing action is required?",
+            choices: [
+                { text: "Assess circulation, skin integrity, and behavior at least every 2 hours and release per protocol", correct: true, log: "Correct. Rationale: CMS Conditions of Participation require periodic assessment, least-restrictive method, and documented continued need." },
+                { text: "Keep restraints in place until the provider personally removes them", log: "Restraints are RN-managed under the order; continued need is reassessed routinely." },
+                { text: "Obtain consent from the family before applying restraints", log: "Emergency safety restraints do not require family consent, though family should be informed." },
+                { text: "Use the tightest knot possible to prevent self-release", log: "Quick-release knots are required so the restraint can be removed in an emergency." },
+            ],
+        },
+        {
+            id: "nclex-009",
+            category: "Safe & Effective Care Environment",
+            type: "mcq",
+            title: "Contact Precautions",
+            desc: "A nurse is caring for a client with Clostridioides difficile (C. diff) infection. Which action is correct?",
+            choices: [
+                { text: "Wash hands with soap and water after client contact", correct: true, log: "Correct. Rationale: C. diff spores are not killed by alcohol-based hand rub; soap and water mechanical removal is required (CDC)." },
+                { text: "Use alcohol-based hand sanitizer to save time", log: "Alcohol does not kill C. diff spores." },
+                { text: "Wear a surgical mask when entering the room", log: "Mask is not part of contact precautions unless splash risk." },
+                { text: "Place the client in a negative-pressure airborne isolation room", log: "C. diff is transmitted by contact, not airborne." },
+            ],
+        },
+        {
+            id: "nclex-010",
+            category: "Safe & Effective Care Environment",
+            type: "mcq",
+            title: "Advance Directives",
+            desc: "A client with a DNR order suddenly becomes unresponsive and pulseless. What is the nurse's action?",
+            choices: [
+                { text: "Provide comfort care and notify the provider and family; do not initiate CPR", correct: true, log: "Correct. Rationale: A valid DNR order means resuscitation must not be initiated; nurse follows the legal document (Patient Self-Determination Act)." },
+                { text: "Initiate full CPR until the provider arrives to confirm the DNR", log: "Performing CPR against a valid DNR is battery." },
+                { text: "Ask the family if they still want the DNR honored before acting", log: "Family cannot override a valid client-signed DNR in real time." },
+                { text: "Begin chest compressions only, omitting intubation", log: "Any resuscitation conflicts with a DNR order." },
+            ],
+        },
+        {
+            id: "nclex-011",
+            category: "Safe & Effective Care Environment",
+            type: "mcq",
+            title: "Time-Out / Surgical Safety",
+            desc: "Just before the surgeon makes the incision, what is the purpose of the surgical 'time-out'?",
+            choices: [
+                { text: "Verify correct client, correct procedure, and correct site with the entire team", correct: true, log: "Correct. Rationale: Universal Protocol — final verification by all team members to prevent wrong-site/wrong-patient surgery (Joint Commission)." },
+                { text: "Allow the surgeon a moment of mental preparation", log: "Not the documented purpose of the Universal Protocol." },
+                { text: "Confirm that the consent form is signed", log: "Consent is verified earlier; the time-out is the final shared verification." },
+                { text: "Re-administer prophylactic antibiotics", log: "Antibiotic timing is separate from the time-out (SCIP)." },
+            ],
+        },
+        {
+            id: "nclex-012",
+            category: "Safe & Effective Care Environment",
+            type: "mcq",
+            title: "Two Patient Identifiers",
+            desc: "Before administering medication, the nurse should identify the client using which two identifiers?",
+            choices: [
+                { text: "Client's stated full name and date of birth, matched to the armband", correct: true, log: "Correct. Rationale: NPSG 01.01.01 requires two identifiers, neither being the room number." },
+                { text: "Room number and bed assignment", log: "Room and bed numbers change and are unreliable identifiers." },
+                { text: "Diagnosis and attending physician", log: "Diagnosis is not a patient identifier." },
+                { text: "Client's chart number only", log: "Single identifier is insufficient — two are required." },
+            ],
+        },
+        {
+            id: "nclex-013",
+            category: "Safe & Effective Care Environment",
+            type: "mcq",
+            title: "Mandatory Reporting",
+            desc: "A 4-year-old presents with bruising in various stages of healing and a spiral femur fracture. Which action is required of the nurse?",
+            choices: [
+                { text: "Report the suspected abuse to Child Protective Services (CPS)", correct: true, log: "Correct. Rationale: All US states require nurses to report suspected child abuse — suspicion, not proof, triggers the duty to report (CAPTA)." },
+                { text: "Confront the parents to determine the cause of injuries", log: "Confrontation may endanger the child; reporting and assessment come first." },
+                { text: "Wait for the social worker's evaluation before reporting", log: "RN's reporting duty is independent and immediate." },
+                { text: "Discharge the child after treating the fracture", log: "Discharge into possible abuse violates safety duty." },
+            ],
+        },
+        {
+            id: "nclex-014",
+            category: "Safe & Effective Care Environment",
+            type: "mcq",
+            title: "High-Alert Medication Check",
+            desc: "Before administering IV heparin, which step is required for this high-alert medication?",
+            choices: [
+                { text: "Independent double-check by a second RN of dose, pump, and rate", correct: true, log: "Correct. Rationale: ISMP recommends independent double verification for IV heparin, insulin, opioids, and chemo." },
+                { text: "Verbal verification with the prescriber over the phone", log: "Phone verification is not the standard safety check for IV heparin." },
+                { text: "Single nurse calculation is sufficient if the EHR auto-populates", log: "Even with smart pumps, ISMP recommends an independent second check." },
+                { text: "Family member confirmation of the dose", log: "Family cannot serve as a clinical safety check." },
+            ],
+        },
+        {
+            id: "nclex-015",
+            category: "Safe & Effective Care Environment",
+            type: "mcq",
+            title: "Charge Nurse Assignment",
+            desc: "A charge nurse is making assignments. Which client is most appropriate to assign to a newly graduated RN?",
+            choices: [
+                { text: "A stable client post-op day 2 from a laparoscopic cholecystectomy awaiting discharge teaching", correct: true, log: "Correct. Rationale: Stable, predictable clients with routine teaching match the new graduate competency level." },
+                { text: "A client in DKA on an insulin drip with hourly glucose checks", log: "Unstable client with titrating drip requires experienced ICU/stepdown RN." },
+                { text: "A client receiving blood transfusion who is febrile", log: "Possible transfusion reaction requires an experienced nurse." },
+                { text: "A client immediately post-thrombolytic for ischemic stroke", log: "High-risk neuro monitoring requires experienced stroke-trained RN." },
+            ],
+        },
+
+        // =====================================================================
+        // Health Promotion & Maintenance (15)
+        //   - Antepartum/intrapartum, screening, immunizations,
+        //     growth & development, aging, lifestyle counseling
+        // =====================================================================
+        {
+            id: "nclex-101",
+            category: "Health Promotion & Maintenance",
+            type: "mcq",
+            title: "Adult Immunization",
+            desc: "Which immunization does the CDC recommend annually for all adults?",
+            choices: [
+                { text: "Influenza vaccine", correct: true, log: "Correct. Rationale: CDC ACIP recommends annual flu vaccination for everyone aged 6 months and older." },
+                { text: "Tetanus (Td) booster every year", log: "Td/Tdap is every 10 years, not annually." },
+                { text: "Pneumococcal (PCV20) every year", log: "Pneumococcal is age- and risk-based, not annual." },
+                { text: "Zoster (Shingrix) every year", log: "Shingrix is a one-time 2-dose series for ≥50, not annual." },
+            ],
+        },
+        {
+            id: "nclex-102",
+            category: "Health Promotion & Maintenance",
+            type: "mcq",
+            title: "Infant Growth & Development",
+            desc: "At what age should an infant be able to sit unsupported, according to typical milestones?",
+            choices: [
+                { text: "6-8 months", correct: true, log: "Correct. Rationale: Independent sitting is typically achieved by 6-8 months (CDC milestones)." },
+                { text: "2-3 months", log: "Too early; infants this age have only head control developing." },
+                { text: "10-12 months", log: "By this age children are usually pulling to stand and cruising." },
+                { text: "14-15 months", log: "Most are walking by this age — sitting alone happens far earlier." },
+            ],
+        },
+        {
+            id: "nclex-103",
+            category: "Health Promotion & Maintenance",
+            type: "mcq",
+            title: "Prenatal Nutrition",
+            desc: "Which dietary supplement is most important for a woman planning pregnancy to prevent neural tube defects?",
+            choices: [
+                { text: "Folic acid 400 mcg daily", correct: true, log: "Correct. Rationale: USPSTF recommends 400-800 mcg folic acid daily for all women of childbearing potential, started at least 1 month preconception." },
+                { text: "Vitamin C 1000 mg daily", log: "Useful for immunity but not for NTD prevention." },
+                { text: "Calcium 2000 mg daily", log: "Important for bone health but does not prevent NTDs." },
+                { text: "Vitamin A 10,000 IU daily", log: "High-dose vitamin A is teratogenic in pregnancy — contraindicated." },
+            ],
+        },
+        {
+            id: "nclex-104",
+            category: "Health Promotion & Maintenance",
+            type: "mcq",
+            title: "Colorectal Cancer Screening",
+            desc: "According to USPSTF, at what age should average-risk adults begin colorectal cancer screening?",
+            choices: [
+                { text: "Age 45", correct: true, log: "Correct. Rationale: USPSTF 2021 lowered the recommended start from 50 to 45 for average-risk adults." },
+                { text: "Age 30", log: "Too early for average-risk adults; reserved for high-risk (e.g., FAP, Lynch)." },
+                { text: "Age 55", log: "Outdated guideline; the threshold was lowered to 45." },
+                { text: "Age 65 only if symptomatic", log: "Screening is not based on symptoms." },
+            ],
+        },
+        {
+            id: "nclex-105",
+            category: "Health Promotion & Maintenance",
+            type: "mcq",
+            title: "Leopold's Maneuvers",
+            desc: "A nurse performs Leopold's maneuvers on a pregnant client at 36 weeks. What is the primary purpose?",
+            choices: [
+                { text: "Determine fetal lie, presentation, position, and engagement", correct: true, log: "Correct. Rationale: The four maneuvers establish fetal position before auscultating the FHR at the back." },
+                { text: "Estimate fetal weight in grams", log: "Weight estimation requires ultrasound, not palpation alone." },
+                { text: "Assess for placenta previa", log: "Previa is diagnosed by ultrasound — palpation is contraindicated if previa is suspected (no vaginal exam)." },
+                { text: "Detect fetal distress", log: "Distress is detected by FHR monitoring, not Leopold's." },
+            ],
+        },
+        {
+            id: "nclex-106",
+            category: "Health Promotion & Maintenance",
+            type: "mcq",
+            title: "Newborn Apgar",
+            desc: "A newborn has a heart rate of 90, slow irregular respirations, some flexion, grimace to stimulation, and pink body with blue extremities. What is the 1-minute Apgar score?",
+            choices: [
+                { text: "5", correct: true, log: "Correct. Rationale: HR<100 (1) + slow/irregular (1) + some flexion (1) + grimace (1) + acrocyanosis (1) = 5." },
+                { text: "3", log: "Under-scores tone and grimace — recount each component carefully." },
+                { text: "7", log: "Over-scores HR and respirations." },
+                { text: "10", log: "10 requires HR>100, vigorous cry, active motion, vigorous response, and completely pink — this newborn is depressed." },
+            ],
+        },
+        {
+            id: "nclex-107",
+            category: "Health Promotion & Maintenance",
+            type: "mcq",
+            title: "Breastfeeding Counseling",
+            desc: "A new mother asks how often she should breastfeed her healthy term newborn. What is the best response?",
+            choices: [
+                { text: "On demand, typically every 2-3 hours, including night feeds", correct: true, log: "Correct. Rationale: AAP recommends 8-12 feeds per 24 hours on demand to establish supply and prevent hypoglycemia." },
+                { text: "Every 4 hours strictly by the clock", log: "Rigid scheduling may impair supply and risks underfeeding." },
+                { text: "Only when the baby cries", log: "Crying is a late hunger cue — feeding should begin with early cues (rooting, sucking)." },
+                { text: "Every 6 hours, supplementing with formula", log: "Routine supplementation interferes with milk supply." },
+            ],
+        },
+        {
+            id: "nclex-108",
+            category: "Health Promotion & Maintenance",
+            type: "mcq",
+            title: "Tobacco Cessation",
+            desc: "A nurse is counseling a 50-year-old smoker. Which statement uses the best evidence-based approach?",
+            choices: [
+                { text: "Use the 5 A's framework: Ask, Advise, Assess, Assist, Arrange", correct: true, log: "Correct. Rationale: USPHS clinical practice guideline endorses the 5 A's for every clinical encounter with tobacco users." },
+                { text: "Tell the client they will die early if they don't quit", log: "Fear-based messaging is less effective than structured behavioral counseling." },
+                { text: "Recommend cold-turkey cessation without pharmacotherapy", log: "Combining counseling with NRT, bupropion, or varenicline doubles success rates." },
+                { text: "Avoid bringing up smoking unless the client mentions it", log: "Guidelines recommend asking all clients at every visit." },
+            ],
+        },
+        {
+            id: "nclex-109",
+            category: "Health Promotion & Maintenance",
+            type: "mcq",
+            title: "Cervical Cancer Screening",
+            desc: "According to ACS/USPSTF, when should a healthy 25-year-old woman begin cervical cancer screening?",
+            choices: [
+                { text: "Begin at age 21 with cytology every 3 years (or HPV testing at 25)", correct: true, log: "Correct. Rationale: Screening begins at 21 regardless of sexual history; HPV-primary testing is acceptable from age 25 (ACS 2020)." },
+                { text: "Begin at the start of sexual activity regardless of age", log: "Onset of activity no longer triggers screening — the age-based guideline takes priority." },
+                { text: "Not until age 30", log: "30 is the recommended start for HPV co-testing every 5 years, but cytology starts at 21." },
+                { text: "Only after the first pregnancy", log: "Pregnancy history does not determine screening start." },
+            ],
+        },
+        {
+            id: "nclex-110",
+            category: "Health Promotion & Maintenance",
+            type: "mcq",
+            title: "Car Seat Safety",
+            desc: "What is the current AAP recommendation for car seat positioning of toddlers?",
+            choices: [
+                { text: "Rear-facing as long as possible, until reaching the seat's height/weight limit", correct: true, log: "Correct. Rationale: AAP 2018 dropped the age-2 rule — children should ride rear-facing until they outgrow the seat-specific limit, often 3-4 years." },
+                { text: "Forward-facing at 12 months regardless of weight", log: "Outdated; AAP now recommends extended rear-facing." },
+                { text: "In the front seat once they reach 30 lb (13.6 kg)", log: "Children under 13 should ride in the back seat — front seat exposes them to airbag injury." },
+                { text: "Booster seat from birth", log: "Boosters are for older children (typically 4-8 years/40-65 lb) — not infants." },
+            ],
+        },
+        {
+            id: "nclex-111",
+            category: "Health Promotion & Maintenance",
+            type: "mcq",
+            title: "Postpartum Depression Screening",
+            desc: "Which screening tool is validated for postpartum depression?",
+            choices: [
+                { text: "Edinburgh Postnatal Depression Scale (EPDS)", correct: true, log: "Correct. Rationale: EPDS is the most widely used 10-item validated screen, recommended by ACOG and AAP." },
+                { text: "Mini-Mental State Examination (MMSE)", log: "MMSE screens cognition, not depression." },
+                { text: "Glasgow Coma Scale (GCS)", log: "GCS assesses level of consciousness in head injury." },
+                { text: "Apgar Score", log: "Apgar evaluates newborn transition." },
+            ],
+        },
+        {
+            id: "nclex-112",
+            category: "Health Promotion & Maintenance",
+            type: "mcq",
+            title: "Menopause Counseling",
+            desc: "A 52-year-old woman reports hot flashes and asks about long-term hormone replacement therapy (HRT). What is the most accurate teaching?",
+            choices: [
+                { text: "Short-term HRT may help symptoms; long-term use is individualized based on risk of breast cancer, VTE, and CV disease", correct: true, log: "Correct. Rationale: WHI data and NAMS 2022 endorse short-term symptomatic use with shared decision-making." },
+                { text: "HRT should be used by all menopausal women for life", log: "WHI showed long-term risks (breast cancer, VTE) outweigh benefits for most." },
+                { text: "HRT prevents Alzheimer's disease", log: "Evidence does not support HRT for dementia prevention; may even harm cognition if started late." },
+                { text: "HRT is contraindicated for all postmenopausal women", log: "Blanket contraindication is incorrect — it is individualized." },
+            ],
+        },
+        {
+            id: "nclex-113",
+            category: "Health Promotion & Maintenance",
+            type: "mcq",
+            title: "Fall Risk in Older Adults",
+            desc: "Which modifiable risk factor is the most impactful target for fall prevention in community-dwelling older adults?",
+            choices: [
+                { text: "Polypharmacy review and removal of psychoactive medications", correct: true, log: "Correct. Rationale: Medication review (especially benzos, hypnotics, anticholinergics) is the single highest-yield intervention (AGS Beers Criteria)." },
+                { text: "Age (over 75)", log: "Age is not modifiable." },
+                { text: "Female sex", log: "Not modifiable." },
+                { text: "Past fall history", log: "Past history is a risk factor but not modifiable — the goal is to modify what we can." },
+            ],
+        },
+        {
+            id: "nclex-114",
+            category: "Health Promotion & Maintenance",
+            type: "mcq",
+            title: "Adolescent Confidentiality",
+            desc: "A 16-year-old asks the nurse not to tell her parents about her sexual activity. What is the best response?",
+            choices: [
+                { text: "Most US states allow minors to consent confidentially for STI testing and contraception; explain limits", correct: true, log: "Correct. Rationale: All 50 states allow minors to consent to STI services without parental consent; the nurse should explain confidentiality and its limits (abuse, self-harm)." },
+                { text: "Tell her you must inform her parents", log: "Disclosure is not required for STI/contraception in any state." },
+                { text: "Refuse to discuss until a parent is present", log: "Blocks access to essential adolescent care." },
+                { text: "Promise complete confidentiality with no exceptions", log: "Mandatory reporting (abuse, suicidality) remains an exception." },
+            ],
+        },
+        {
+            id: "nclex-115",
+            category: "Health Promotion & Maintenance",
+            type: "mcq",
+            title: "Exercise Prescription",
+            desc: "According to the American Heart Association, what is the minimum aerobic exercise recommendation for healthy adults?",
+            choices: [
+                { text: "150 minutes/week of moderate intensity or 75 minutes/week of vigorous intensity", correct: true, log: "Correct. Rationale: AHA/ACSM guideline; activity may be accumulated in any duration." },
+                { text: "60 minutes once a week", log: "Insufficient frequency for cardiovascular benefit." },
+                { text: "2 hours of intense exercise daily", log: "Exceeds standard recommendation and may increase injury risk." },
+                { text: "Walking only when convenient", log: "Not measurable; does not meet AHA targets." },
+            ],
+        },
+
+        // =====================================================================
+        // Psychosocial Integrity (15)
+        //   - Therapeutic communication, grief, end-of-life, abuse,
+        //     mental health crisis, substance use, suicide risk
+        // =====================================================================
+        {
+            id: "nclex-201",
+            category: "Psychosocial Integrity",
+            type: "mcq",
+            title: "Therapeutic Communication",
+            desc: "A client tearfully says, 'I just found out I have cancer. I don't know what to do.' Which response is most therapeutic?",
+            choices: [
+                { text: "'This must feel overwhelming. Tell me what you are thinking right now.'", correct: true, log: "Correct. Rationale: Acknowledges feelings (empathy) and uses an open-ended invitation — core therapeutic communication." },
+                { text: "'Don't worry, the doctors here are very good.'", log: "False reassurance blocks expression of feelings." },
+                { text: "'Other clients with this cancer have done well.'", log: "Comparisons minimize the individual experience." },
+                { text: "'You should focus on staying positive.'", log: "Giving advice/judgement is non-therapeutic." },
+            ],
+        },
+        {
+            id: "nclex-202",
+            category: "Psychosocial Integrity",
+            type: "mcq",
+            title: "Suicide Risk Assessment",
+            desc: "A client with major depression states, 'I just want this pain to end.' What is the nurse's priority action?",
+            choices: [
+                { text: "Ask directly: 'Are you thinking about killing yourself? Do you have a plan?'", correct: true, log: "Correct. Rationale: Direct questioning does not increase risk; assessing ideation, plan, means, and intent is the SAFE-T standard." },
+                { text: "Avoid the topic so as not to plant the idea", log: "Myth — direct asking is therapeutic and reduces risk." },
+                { text: "Tell the client that suicide is never the answer", log: "Lecturing is non-therapeutic and shuts down assessment." },
+                { text: "Document the statement and continue with routine care", log: "Documentation without assessment misses an emergency." },
+            ],
+        },
+        {
+            id: "nclex-203",
+            category: "Psychosocial Integrity",
+            type: "mcq",
+            title: "Grief Stages (Kubler-Ross)",
+            desc: "A widow says, 'If only I had taken him to the hospital sooner, he would still be alive.' This statement reflects which stage of grief?",
+            choices: [
+                { text: "Bargaining", correct: true, log: "Correct. Rationale: 'If only…' self-blame is characteristic of the bargaining stage (Kubler-Ross 1969)." },
+                { text: "Denial", log: "Denial sounds like 'This can't be happening.'" },
+                { text: "Anger", log: "Anger is overt hostility or rage." },
+                { text: "Acceptance", log: "Acceptance is acknowledgment and meaning-making." },
+            ],
+        },
+        {
+            id: "nclex-204",
+            category: "Psychosocial Integrity",
+            type: "mcq",
+            title: "Acute Alcohol Withdrawal",
+            desc: "A client 24 hours after his last drink develops tremors, diaphoresis, and HR 118. What is the priority medication category?",
+            choices: [
+                { text: "Benzodiazepine (e.g., lorazepam) per CIWA-Ar protocol", correct: true, log: "Correct. Rationale: Benzos are the standard of care to prevent progression to seizures and delirium tremens." },
+                { text: "Opioid (e.g., morphine)", log: "Opioids do not treat alcohol withdrawal and add respiratory depression risk." },
+                { text: "SSRI (e.g., sertraline)", log: "SSRIs take weeks to work and are not for acute withdrawal." },
+                { text: "Antipsychotic (e.g., haloperidol)", log: "Haloperidol lowers the seizure threshold in withdrawal and is not first-line." },
+            ],
+        },
+        {
+            id: "nclex-205",
+            category: "Psychosocial Integrity",
+            type: "mcq",
+            title: "Manic Episode",
+            desc: "A client with bipolar disorder is in an acute manic episode: rapid speech, no sleep for 3 days, attempting to leave AMA. What is the priority nursing intervention?",
+            choices: [
+                { text: "Provide a low-stimulation environment and reassess for medication adjustment", correct: true, log: "Correct. Rationale: Reducing sensory stimulation and ensuring mood-stabilizer adherence is foundational to mania care." },
+                { text: "Engage the client in group therapy immediately", log: "Group settings are over-stimulating in acute mania." },
+                { text: "Allow AMA discharge to respect autonomy", log: "Capacity is impaired in acute mania — may justify a hold to prevent harm." },
+                { text: "Restrict all food until the client is calm", log: "Manic clients often miss meals; high-calorie finger foods are appropriate, not restriction." },
+            ],
+        },
+        {
+            id: "nclex-206",
+            category: "Psychosocial Integrity",
+            type: "mcq",
+            title: "Domestic Violence Screening",
+            desc: "A nurse notices bruises on an adult client. What is the best way to screen for intimate partner violence?",
+            choices: [
+                { text: "Interview the client privately, away from the partner", correct: true, log: "Correct. Rationale: Private interview is essential; presence of the perpetrator suppresses disclosure (Futures Without Violence)." },
+                { text: "Ask the client in front of the partner so both can hear", log: "Endangers the client; partner presence inhibits truthful disclosure." },
+                { text: "Wait for the client to bring it up", log: "Most survivors will not disclose unless asked directly." },
+                { text: "Call the police immediately", log: "Adult survivors choose disclosure timing; mandatory reporting varies by state and victim status." },
+            ],
+        },
+        {
+            id: "nclex-207",
+            category: "Psychosocial Integrity",
+            type: "mcq",
+            title: "End-of-Life Communication",
+            desc: "A dying client asks, 'Am I going to die?' What is the best response?",
+            choices: [
+                { text: "'Tell me what makes you ask that question.'", correct: true, log: "Correct. Rationale: Open-ended reflection invites the client to share fears/needs and informs honest follow-up." },
+                { text: "'Of course not — you'll be fine.'", log: "False reassurance dismisses reality." },
+                { text: "'Yes, you are dying. Are you ready?'", log: "Abrupt delivery is non-therapeutic without first exploring the client's frame." },
+                { text: "'That is something to ask your doctor.'", log: "Deflection — nurse can still respond therapeutically." },
+            ],
+        },
+        {
+            id: "nclex-208",
+            category: "Psychosocial Integrity",
+            type: "mcq",
+            title: "Anxiety Disorder",
+            desc: "A client with generalized anxiety reports chest tightness and feeling 'on edge.' Which initial intervention is best?",
+            choices: [
+                { text: "Stay with the client and guide slow paced breathing", correct: true, log: "Correct. Rationale: Presence and grounding techniques de-escalate acute anxiety before pharmacologic options." },
+                { text: "Leave the room so the client can self-soothe", log: "Isolation worsens panic." },
+                { text: "Administer a PRN benzodiazepine first", log: "Non-pharmacologic measures first; meds if needed after." },
+                { text: "Insist the client describe the trauma in detail", log: "Trauma exposure during panic is non-therapeutic and inappropriate." },
+            ],
+        },
+        {
+            id: "nclex-209",
+            category: "Psychosocial Integrity",
+            type: "mcq",
+            title: "Schizophrenia / Hallucinations",
+            desc: "A client with schizophrenia says, 'The voices are telling me to hurt myself.' What is the priority action?",
+            choices: [
+                { text: "Initiate 1:1 observation and notify the provider immediately", correct: true, log: "Correct. Rationale: Command hallucinations to self-harm are an emergency — initiate continuous safety monitoring." },
+                { text: "Tell the client the voices are not real", log: "Arguing with hallucinations is non-therapeutic and ineffective." },
+                { text: "Encourage the client to attend group therapy", log: "Group is inappropriate during active command hallucinations to self-harm." },
+                { text: "Document and reassess in 4 hours", log: "Delayed reassessment misses an active safety emergency." },
+            ],
+        },
+        {
+            id: "nclex-210",
+            category: "Psychosocial Integrity",
+            type: "mcq",
+            title: "Eating Disorder Refeeding",
+            desc: "A severely malnourished client with anorexia nervosa is admitted. Which complication should the nurse monitor for during refeeding?",
+            choices: [
+                { text: "Hypophosphatemia and cardiac arrhythmias", correct: true, log: "Correct. Rationale: Refeeding syndrome shifts P, K, Mg intracellularly — phosphate drop can cause cardiac arrest." },
+                { text: "Hyperglycemia and ketosis", log: "Not the dominant risk of refeeding; electrolyte shifts predominate." },
+                { text: "Hypothyroidism", log: "Thyroid changes are chronic, not acute refeeding risk." },
+                { text: "Hypertension", log: "Hypotension/bradycardia is more typical; HTN is uncommon." },
+            ],
+        },
+        {
+            id: "nclex-211",
+            category: "Psychosocial Integrity",
+            type: "mcq",
+            title: "Restraints — Behavioral",
+            desc: "After applying behavioral restraints, how often must an RN reassess the client per CMS?",
+            choices: [
+                { text: "Every 15 minutes for behavior, circulation, and skin", correct: true, log: "Correct. Rationale: CMS requires every-15-minute reassessment for violent/self-destructive restraints (vs every 2 hr for non-behavioral)." },
+                { text: "Every 2 hours", log: "Two-hour interval applies to medical/non-behavioral restraints." },
+                { text: "Every 4 hours", log: "Too infrequent for behavioral restraints — risk of injury/death." },
+                { text: "Only at the end of each shift", log: "Far below CMS requirement." },
+            ],
+        },
+        {
+            id: "nclex-212",
+            category: "Psychosocial Integrity",
+            type: "mcq",
+            title: "Cultural Sensitivity",
+            desc: "A Muslim client refuses morning medications during Ramadan. What is the best nursing response?",
+            choices: [
+                { text: "Collaborate with the provider and client to reschedule to non-fasting hours when possible", correct: true, log: "Correct. Rationale: Culturally congruent care honors religious practice while maintaining therapeutic intent (Leininger)." },
+                { text: "Insist the client take medications on schedule for safety", log: "Rigid adherence without dialogue violates patient-centered care." },
+                { text: "Tell the client religion is not a medical issue", log: "Dismissive and culturally insensitive." },
+                { text: "Discontinue all medications until Ramadan ends", log: "Could cause harm — collaboration, not abandonment, is needed." },
+            ],
+        },
+        {
+            id: "nclex-213",
+            category: "Psychosocial Integrity",
+            type: "mcq",
+            title: "Opioid Use Disorder",
+            desc: "A client in opioid withdrawal reports anxiety, myalgia, rhinorrhea, and diaphoresis. Which medication is FDA-approved for opioid use disorder maintenance?",
+            choices: [
+                { text: "Buprenorphine/naloxone (Suboxone)", correct: true, log: "Correct. Rationale: Buprenorphine, methadone, and naltrexone are FDA-approved MOUD therapies (SAMHSA)." },
+                { text: "Naloxone IM only", log: "Naloxone is for overdose reversal, not maintenance." },
+                { text: "Clonidine alone", log: "Clonidine helps autonomic symptoms but is not MOUD." },
+                { text: "Diazepam", log: "Benzodiazepines combined with opioids increase overdose risk." },
+            ],
+        },
+        {
+            id: "nclex-214",
+            category: "Psychosocial Integrity",
+            type: "mcq",
+            title: "Crisis Intervention",
+            desc: "A client just learned of a sudden family death. What is the first priority of crisis intervention?",
+            choices: [
+                { text: "Ensure safety and provide a calm, supportive presence", correct: true, log: "Correct. Rationale: Safety and stabilization precede problem-solving in crisis intervention (Roberts' 7-stage model)." },
+                { text: "Begin grief therapy immediately", log: "Formal therapy is later — stabilization first." },
+                { text: "Provide detailed information about funeral planning", log: "Premature problem-solving overlooks emotional needs." },
+                { text: "Encourage the client to be strong for the family", log: "Suppression of feelings is harmful and non-therapeutic." },
+            ],
+        },
+        {
+            id: "nclex-215",
+            category: "Psychosocial Integrity",
+            type: "mcq",
+            title: "Lithium Teaching",
+            desc: "A client newly prescribed lithium for bipolar disorder needs teaching. Which statement indicates further teaching is required?",
+            choices: [
+                { text: "'I will drink less water so I don't have to urinate as often.'", correct: true, log: "Correct (this is the answer to identify). Rationale: Dehydration concentrates lithium and can cause toxicity; clients must maintain steady fluid and sodium intake." },
+                { text: "'I will get my lithium level checked regularly.'", log: "Correct understanding — therapeutic level 0.6-1.2 mEq/L." },
+                { text: "'I will not change my salt intake drastically.'", log: "Correct — sodium changes affect lithium reabsorption." },
+                { text: "'I will report tremor, vomiting, or confusion.'", log: "Correct — early signs of lithium toxicity." },
+            ],
+        },
+
+        // =====================================================================
+        // Physiological Integrity (15+) — includes 3 SATA + 2 Priority + 10 MCQ
+        //   - Pharmacology, F&E, sepsis, ABG, ventilator, cardiac
+        // =====================================================================
+
+        // ----- 10 standard MCQ -----
+        {
+            id: "nclex-301",
+            category: "Physiological Integrity",
+            type: "mcq",
+            title: "Digoxin Toxicity",
+            desc: "A client on digoxin reports nausea, blurred yellow-green vision, and a HR of 48 bpm. What is the priority action?",
+            choices: [
+                { text: "Hold the dose and obtain serum digoxin and potassium levels; notify provider", correct: true, log: "Correct. Rationale: Classic dig toxicity (HR<60, GI, visual halos); hypokalemia potentiates toxicity. Therapeutic range 0.5-2 ng/mL." },
+                { text: "Administer the dose and recheck in 4 hours", log: "Continuing the drug in suspected toxicity worsens arrhythmia risk." },
+                { text: "Encourage extra potassium-rich food before next dose", log: "Hyperkalemia in dig toxicity can also be dangerous and complicates management." },
+                { text: "Administer atropine prophylactically", log: "Atropine is for symptomatic bradycardia — assess and notify provider first." },
+            ],
+        },
+        {
+            id: "nclex-302",
+            category: "Physiological Integrity",
+            type: "mcq",
+            title: "Sepsis Bundle",
+            desc: "Within the first hour of sepsis recognition, which action is part of the Surviving Sepsis Campaign hour-1 bundle?",
+            choices: [
+                { text: "Obtain lactate, blood cultures before antibiotics, and start broad-spectrum antibiotics", correct: true, log: "Correct. Rationale: Hour-1 bundle: measure lactate, blood cultures before abx, broad-spectrum abx, 30 mL/kg crystalloid if hypotensive/lactate≥4, vasopressors to MAP≥65." },
+                { text: "Administer only oral antibiotics", log: "Oral abx are inappropriate for severe sepsis; IV broad-spectrum required." },
+                { text: "Restrict fluids to prevent overload", log: "Initial resuscitation requires 30 mL/kg crystalloid for hypotension or lactate ≥4 mmol/L." },
+                { text: "Wait for culture results before treating", log: "Empiric broad-spectrum abx within 1 hr improves survival — do not wait." },
+            ],
+        },
+        {
+            id: "nclex-303",
+            category: "Physiological Integrity",
+            type: "mcq",
+            title: "ABG Interpretation",
+            desc: "A client has pH 7.28, PaCO2 56 mmHg, HCO3- 24 mEq/L. What acid-base disorder is this?",
+            choices: [
+                { text: "Uncompensated respiratory acidosis", correct: true, log: "Correct. Rationale: pH↓ + PaCO2↑ with normal HCO3 = uncompensated respiratory acidosis. Common in COPD exacerbation, opioid overdose." },
+                { text: "Metabolic acidosis", log: "Metabolic acidosis would show ↓HCO3, not ↑PaCO2 as primary driver." },
+                { text: "Respiratory alkalosis", log: "Alkalosis would have pH>7.45 with ↓PaCO2." },
+                { text: "Compensated metabolic alkalosis", log: "Compensation would normalize pH; HCO3 is not elevated." },
+            ],
+        },
+        {
+            id: "nclex-304",
+            category: "Physiological Integrity",
+            type: "mcq",
+            title: "Insulin Onset/Peak",
+            desc: "A client receives regular insulin (Humulin R) 6 units subcutaneously at 0730. The nurse should monitor for hypoglycemia most carefully at:",
+            choices: [
+                { text: "0930 - 1230 (2-5 hours after dose)", correct: true, log: "Correct. Rationale: Regular insulin onset 30-60 min, peak 2-4 hr, duration 5-8 hr." },
+                { text: "0800 immediately after the dose", log: "Onset begins at 30-60 min, not immediately." },
+                { text: "1500 - 1800", log: "This is past peak; risk decreases though still present." },
+                { text: "2100 at bedtime", log: "Duration is typically 5-8 hr; effect mostly gone by night." },
+            ],
+        },
+        {
+            id: "nclex-305",
+            category: "Physiological Integrity",
+            type: "mcq",
+            title: "Anaphylaxis Treatment",
+            desc: "A client develops sudden urticaria, wheezing, and BP 80/40 after IV antibiotic. What is the first-line medication?",
+            choices: [
+                { text: "Epinephrine 0.3-0.5 mg IM in the anterolateral thigh", correct: true, log: "Correct. Rationale: IM epi to thigh is first-line anaphylaxis therapy (WAO 2020); reverses bronchospasm and hypotension." },
+                { text: "Diphenhydramine IV only", log: "Antihistamines are adjuncts; epi must come first." },
+                { text: "Methylprednisolone IV only", log: "Steroids are adjuncts and have delayed onset (4-6 hr)." },
+                { text: "Albuterol nebulizer alone", log: "Albuterol addresses bronchospasm but does not reverse hypotension or laryngeal edema." },
+            ],
+        },
+        {
+            id: "nclex-306",
+            category: "Physiological Integrity",
+            type: "mcq",
+            title: "Pulmonary Embolism",
+            desc: "A post-op client suddenly develops dyspnea, pleuritic chest pain, SpO2 86%, and HR 124. What is the priority action?",
+            choices: [
+                { text: "Administer oxygen, elevate HOB, and notify the provider immediately", correct: true, log: "Correct. Rationale: Classic PE — stabilize ABCs, oxygenate, then provider notification for imaging (CTPA) and anticoagulation." },
+                { text: "Encourage the client to ambulate to clear lungs", log: "Ambulation in suspected PE can dislodge more clot and worsen instability." },
+                { text: "Administer a beta-blocker for the tachycardia", log: "Tachycardia is compensatory; blocking it can precipitate decompensation." },
+                { text: "Apply cold compresses to the chest", log: "Does nothing for PE; delays definitive care." },
+            ],
+        },
+        {
+            id: "nclex-307",
+            category: "Physiological Integrity",
+            type: "mcq",
+            title: "Hypokalemia",
+            desc: "A client on furosemide has K 2.8 mEq/L and reports weakness and palpitations. What is the priority assessment?",
+            choices: [
+                { text: "Continuous ECG monitoring for U waves and arrhythmia", correct: true, log: "Correct. Rationale: Hypokalemia causes flattened T, U waves, PVCs, and torsades — cardiac monitoring is critical." },
+                { text: "Daily weights", log: "Useful for fluid status but not the priority for acute hypokalemia symptoms." },
+                { text: "Strict I&O only", log: "Important but does not detect dysrhythmia." },
+                { text: "Hourly blood glucose checks", log: "Not directly relevant to hypokalemia." },
+            ],
+        },
+        {
+            id: "nclex-308",
+            category: "Physiological Integrity",
+            type: "mcq",
+            title: "MI Pain Management",
+            desc: "A client with acute STEMI receives morphine. The nurse should monitor primarily for which adverse effect?",
+            choices: [
+                { text: "Hypotension and respiratory depression", correct: true, log: "Correct. Rationale: Morphine reduces preload and can cause RR depression — both lower MAP and oxygen delivery. (Note: recent ACC/AHA guidance limits routine morphine in NSTEMI.)" },
+                { text: "Hypertension and tachycardia", log: "Opposite effect; opioids typically lower BP and HR." },
+                { text: "Hyperglycemia", log: "Not a typical morphine adverse effect." },
+                { text: "Bradycardia from histamine release", log: "Histamine release causes hypotension primarily, not bradycardia." },
+            ],
+        },
+        {
+            id: "nclex-309",
+            category: "Physiological Integrity",
+            type: "mcq",
+            title: "Warfarin Teaching",
+            desc: "A client newly on warfarin asks about diet. Which statement indicates correct understanding?",
+            choices: [
+                { text: "'I should keep my intake of green leafy vegetables consistent from week to week.'", correct: true, log: "Correct. Rationale: Vitamin K antagonism — consistent intake stabilizes INR (target 2-3 for AFib/DVT)." },
+                { text: "'I should avoid all green vegetables completely.'", log: "Total avoidance is not required — consistency is the goal." },
+                { text: "'I can take ibuprofen for headaches without restriction.'", log: "NSAIDs increase bleeding risk on warfarin." },
+                { text: "'Cranberry juice has no effect on this medication.'", log: "Cranberry can increase warfarin effect (CYP interaction)." },
+            ],
+        },
+        {
+            id: "nclex-310",
+            category: "Physiological Integrity",
+            type: "mcq",
+            title: "Ventilator Alarm",
+            desc: "A high-pressure alarm sounds on a client receiving mechanical ventilation. Which is the most likely cause to check first?",
+            choices: [
+                { text: "Kinked tubing, biting on ETT, or mucus plug requiring suction", correct: true, log: "Correct. Rationale: High-pressure alarm = ↑resistance or ↓compliance. Check obstruction first (DOPE: Displacement, Obstruction, Pneumothorax, Equipment)." },
+                { text: "Disconnection of the circuit", log: "Disconnection causes a low-pressure alarm." },
+                { text: "Cuff leak", log: "Cuff leak triggers low-pressure / low-tidal-volume alarms." },
+                { text: "Battery failure", log: "Battery issues trigger device-fault alarms, not pressure alarms." },
+            ],
+        },
+
+        // ----- 3 SATA -----
+        {
+            id: "nclex-311",
+            category: "Physiological Integrity",
+            type: "sata",
+            title: "Left-Sided Heart Failure (SATA)",
+            desc: "Select ALL manifestations of LEFT-sided heart failure that the nurse would expect to find.",
+            choices: [
+                { text: "Crackles in the lung bases", correct: true, log: "Correct. Pulmonary venous congestion from LV failure." },
+                { text: "Pink, frothy sputum", correct: true, log: "Correct. Acute pulmonary edema with capillary rupture." },
+                { text: "Orthopnea / paroxysmal nocturnal dyspnea", correct: true, log: "Correct. Recumbent position increases venous return → pulmonary congestion." },
+                { text: "Jugular venous distention (JVD)", log: "Incorrect. JVD reflects RIGHT-sided failure (systemic venous congestion)." },
+                { text: "Peripheral / dependent edema", log: "Incorrect. Peripheral edema is a RIGHT-sided failure sign." },
+                { text: "Hepatomegaly with ascites", log: "Incorrect. Right-sided failure manifestation." },
+            ],
+        },
+        {
+            id: "nclex-312",
+            category: "Physiological Integrity",
+            type: "sata",
+            title: "Hypoglycemia Signs (SATA)",
+            desc: "Select ALL signs/symptoms of hypoglycemia in an adult client.",
+            choices: [
+                { text: "Diaphoresis and shakiness", correct: true, log: "Correct. Adrenergic response to falling glucose." },
+                { text: "Confusion and difficulty concentrating", correct: true, log: "Correct. Neuroglycopenic symptom as glucose <70 mg/dL." },
+                { text: "Tachycardia and palpitations", correct: true, log: "Correct. Catecholamine surge." },
+                { text: "Fruity breath odor", log: "Incorrect. Acetone breath is a sign of DKA (hyperglycemia), not hypoglycemia." },
+                { text: "Kussmaul respirations", log: "Incorrect. Kussmaul is deep/rapid compensation for metabolic acidosis (DKA)." },
+                { text: "Polyuria and polydipsia", log: "Incorrect. Classic hyperglycemia signs." },
+            ],
+        },
+        {
+            id: "nclex-313",
+            category: "Physiological Integrity",
+            type: "sata",
+            title: "Diabetic Ketoacidosis (SATA)",
+            desc: "Select ALL findings the nurse expects in a client admitted with DKA.",
+            choices: [
+                { text: "Serum glucose >250 mg/dL", correct: true, log: "Correct. ADA DKA criteria: glucose typically >250 mg/dL." },
+                { text: "Arterial pH <7.30 with HCO3 <18 mEq/L", correct: true, log: "Correct. Metabolic acidosis from ketoacid accumulation." },
+                { text: "Positive serum or urine ketones", correct: true, log: "Correct. β-hydroxybutyrate elevation defines ketoacidosis." },
+                { text: "Kussmaul respirations and fruity breath", correct: true, log: "Correct. Respiratory compensation + acetone exhalation." },
+                { text: "Serum osmolality >320 mOsm/kg without acidosis", log: "Incorrect. HHS profile, not DKA." },
+                { text: "Hypoglycemia with normal pH", log: "Incorrect — opposite of DKA." },
+            ],
+        },
+
+        // ----- 2 Priority -----
+        {
+            id: "nclex-314",
+            category: "Physiological Integrity",
+            type: "priority",
+            title: "Priority — Which Client First?",
+            desc: "A nurse on a medical floor receives report on 4 clients. Which client should the nurse assess FIRST?",
+            choices: [
+                { text: "Client with COPD exacerbation, RR 32, SpO2 86% on 2 L NC, increasingly somnolent", correct: true, log: "Correct. Rationale: ABC priority — impending respiratory failure with CO2 narcosis. Assess immediately for possible BiPAP or intubation." },
+                { text: "Client post-op day 1 hip arthroplasty with pain 6/10 requesting PRN analgesia", log: "Pain management is important but the client is stable — not the priority." },
+                { text: "Client with T2DM and morning glucose 210 mg/dL, asymptomatic", log: "Hyperglycemia is not acutely life-threatening; address after the unstable client." },
+                { text: "Client with cellulitis, T 38.2°C, on scheduled IV antibiotic in 1 hour", log: "Stable infection on antibiotics; can wait briefly." },
+            ],
+        },
+        {
+            id: "nclex-315",
+            category: "Physiological Integrity",
+            type: "priority",
+            title: "Priority — ED Triage",
+            desc: "In the emergency department, which client should be triaged as the highest acuity (ESI-1)?",
+            choices: [
+                { text: "65-year-old with crushing chest pain, diaphoretic, BP 78/40, HR 132", correct: true, log: "Correct. Rationale: Suspected STEMI with cardiogenic shock — immediate ABCs, IV access, ECG, activate cath lab. ESI Level 1." },
+                { text: "30-year-old with ankle sprain after running, able to bear partial weight", log: "ESI-4/5 — non-urgent musculoskeletal injury." },
+                { text: "22-year-old with sore throat × 2 days and T 38.0°C", log: "ESI-4 — stable, non-life-threatening complaint." },
+                { text: "45-year-old with chronic low back pain unchanged from baseline", log: "ESI-5 — non-urgent chronic complaint." },
+            ],
+        },
+    ];
+
+    if (typeof window !== "undefined") {
+        window.NCLEX_CATEGORIES = NCLEX_CATEGORIES;
+        window.NCLEX_QUESTIONS = NCLEX_QUESTIONS;
+    }
+    if (typeof module !== "undefined" && module.exports) {
+        module.exports = { NCLEX_CATEGORIES, NCLEX_QUESTIONS };
+    }
+})();

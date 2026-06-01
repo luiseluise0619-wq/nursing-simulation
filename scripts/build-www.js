@@ -6,7 +6,7 @@ const path = require("path");
 const ROOT = path.resolve(__dirname, "..");
 const WWW = path.join(ROOT, "www");
 const FILES = [
-    "index.html", "styles.css", "script.js", "questions.js", "content.js",
+    "index.html", "styles.css", "script.js", "questions.js", "nclex-content.js", "content.js",
     "manifest.json", "sw.js", "icon.svg", "privacy.html", "terms.html",
 ];
 const DIRS = ["build"];
