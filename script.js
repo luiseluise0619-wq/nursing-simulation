@@ -828,7 +828,7 @@ const Storage = {
         const stats = {};
         CATEGORIES.forEach(c => stats[c] = { solved: 0, correct: 0 });
         return {
-            settings: { theme: "auto", sound: true, examMode: "korean" },
+            settings: { theme: "auto", sound: true, haptics: true, examMode: "korean" },
             stats,
             wrongQueue: [],
             bookmarks: {},     // { contentId: { type, label, ts } } — 즐겨찾기
@@ -1400,16 +1400,50 @@ const Sound = {
         osc.start();
         osc.stop(ctx.currentTime + duration);
     },
-    correct() { Sound.beep(880, 0.1); setTimeout(() => Sound.beep(1320, 0.16), 90); },
-    wrong()   { Sound.beep(220, 0.18, "sawtooth", 0.06); setTimeout(() => Sound.beep(160, 0.22, "sawtooth", 0.05), 110); },
+    correct() { Sound.beep(880, 0.1); setTimeout(() => Sound.beep(1320, 0.16), 90); Haptics.light(); },
+    wrong()   { Sound.beep(220, 0.18, "sawtooth", 0.06); setTimeout(() => Sound.beep(160, 0.22, "sawtooth", 0.05), 110); Haptics.medium(); },
     combo(n)  { Sound.beep(660 + n * 60, 0.08, "triangle", 0.07); },
     tick()    { Sound.beep(520, 0.04, "square", 0.04); },
+};
+
+// 햅틱 — Capacitor Haptics 플러그인 있으면 사용, 없으면 navigator.vibrate 폴백
+const Haptics = {
+    enabled: true,
+    get plugin() {
+        try { return (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Haptics) || null; }
+        catch { return null; }
+    },
+    light() {
+        if (!Haptics.enabled) return;
+        const p = Haptics.plugin;
+        try {
+            if (p && p.impact) p.impact({ style: "LIGHT" });
+            else if (navigator.vibrate) navigator.vibrate(10);
+        } catch {}
+    },
+    medium() {
+        if (!Haptics.enabled) return;
+        const p = Haptics.plugin;
+        try {
+            if (p && p.impact) p.impact({ style: "MEDIUM" });
+            else if (navigator.vibrate) navigator.vibrate([30, 20, 30]);
+        } catch {}
+    },
+    heavy() {
+        if (!Haptics.enabled) return;
+        const p = Haptics.plugin;
+        try {
+            if (p && p.impact) p.impact({ style: "HEAVY" });
+            else if (navigator.vibrate) navigator.vibrate(50);
+        } catch {}
+    },
 };
 
 // =========================================================================
 // 테마
 // =========================================================================
 function resolvedTheme(t) {
+    if (t === "amoled") return "amoled";
     if (t === "auto" || !t) {
         try { return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"; }
         catch { return "light"; }
@@ -1419,13 +1453,26 @@ function resolvedTheme(t) {
 function applyTheme(theme) {
     const r = resolvedTheme(theme);
     document.documentElement.setAttribute("data-theme", r);
-    if (UI.themeToggle) UI.themeToggle.textContent = r === "dark" ? "☀️" : "🌙";
+    if (UI.themeToggle) {
+        UI.themeToggle.textContent = r === "amoled" ? "🌑" : r === "dark" ? "☀️" : "🌙";
+    }
 }
 function toggleTheme() {
-    const cur = resolvedTheme(Storage.getSettings().theme);
-    const next = cur === "dark" ? "light" : "dark";
+    // light → dark → amoled → light 순환
+    const cur = Storage.getSettings().theme || "auto";
+    const resolved = resolvedTheme(cur);
+    let next;
+    if (resolved === "light") next = "dark";
+    else if (resolved === "dark") next = "amoled";
+    else next = "light";
     applyTheme(next);
     Storage.setSettings({ theme: next });
+}
+function toggleHaptics() {
+    Haptics.enabled = !Haptics.enabled;
+    Storage.setSettings({ haptics: Haptics.enabled });
+    if (Haptics.enabled) Haptics.medium();
+    addLog(Haptics.enabled ? "📳 햅틱 켜짐" : "햅틱 꺼짐", "log-good");
 }
 function toggleSound() {
     Sound.enabled = !Sound.enabled;
@@ -3826,11 +3873,23 @@ function openSettings() {
         <h3 class="settings-section">일반</h3>
         <div class="settings-row">
           <span>테마</span>
-          <span class="settings-value">${settings.theme === "dark" ? "다크" : settings.theme === "light" ? "라이트" : "자동(시스템)"}</span>
+          <span class="settings-value">${settings.theme === "amoled" ? "AMOLED (OLED 절약)" : settings.theme === "dark" ? "다크" : settings.theme === "light" ? "라이트" : "자동(시스템)"}</span>
+        </div>
+        <div class="settings-row-3col">
+          <button class="choice-btn ${settings.theme === "light" ? "primary" : ""}" data-action="setTheme" data-theme="light">🌞 라이트</button>
+          <button class="choice-btn ${settings.theme === "dark" ? "primary" : ""}" data-action="setTheme" data-theme="dark">🌙 다크</button>
+          <button class="choice-btn ${settings.theme === "amoled" ? "primary" : ""}" data-action="setTheme" data-theme="amoled">🌑 AMOLED</button>
         </div>
         <div class="settings-row">
           <span>사운드</span>
           <span class="settings-value">${settings.sound !== false ? "켜짐" : "꺼짐"}</span>
+        </div>
+        <div class="settings-row">
+          <span>햅틱 (진동)</span>
+          <span class="settings-value">${settings.haptics !== false ? "켜짐" : "꺼짐"}</span>
+        </div>
+        <div class="choice-list">
+          <button class="choice-btn" data-action="toggleHaptics">${settings.haptics !== false ? "📳 햅틱 끄기" : "📳 햅틱 켜기"}</button>
         </div>
         <h3 class="settings-section">시험 모드 (Exam Mode)</h3>
         <div class="settings-row">
@@ -5072,6 +5131,7 @@ function boot() {
     const settings = Storage.getSettings();
     applyTheme(settings.theme || "auto");
     Sound.enabled = settings.sound !== false;
+    Haptics.enabled = settings.haptics !== false;
     if (UI.soundToggle) UI.soundToggle.textContent = Sound.enabled ? "🔊" : "🔇";
     const stored = Storage.load();
     gameState.bestCombo = stored.bestCombo || 0;
@@ -5733,6 +5793,8 @@ const DELEGATED_ACTIONS = {
     initSurvival: () => initSurvival(),
     renderQuizMenu: () => renderQuizMenu(),
     renderImageQuizMenu: () => renderImageQuizMenu(),
+    toggleHaptics: () => toggleHaptics(),
+    setTheme: (t) => { const mode = t.dataset.theme; applyTheme(mode); Storage.setSettings({ theme: mode }); },
     startImageQuiz: (t) => startImageQuiz(t),
     imageQuizAnswer: (t) => imageQuizAnswer(t),
     imageQuizNext: () => imageQuizNext(),

@@ -2156,3 +2156,86 @@ body:has(.tab-bar) #game-area { padding-bottom: 90px; }
 }
 .quiz-stat-row:last-child { border-bottom: none; }
 .quiz-stat-row strong { font-size: 18px; color: var(--primary-dark); }
+
+/* ===== AMOLED 다크 (true black) — OLED 배터리 절약 + 깊은 대비 ===== */
+[data-theme="amoled"] {
+    --primary:       #a3c4a5;
+    --primary-dark:  #8eb190;
+    --primary-soft:  #1a2a1c;
+    --danger:  #d99494;
+    --warning: #d9b87a;
+    --success: #a3c4a5;
+    --bg:        #000000;
+    --text:      #f3f4f6;
+    --card:      #0a0a0a;
+    --muted:     #9ca3af;
+    --border:    #1f1f1f;
+    --soft:      #0f0f0f;
+    --softer:    #050505;
+    --log-bg:     #000000;
+    --log-text:   #e5e7eb;
+    --log-border: #1f1f1f;
+    --modal-bg: rgba(0, 0, 0, 0.98);
+}
+
+/* ===== 페이지 진입 트랜지션 (게임 영역 카드) ===== */
+@keyframes pageSlideUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+#game-area > .card,
+#game-area > .scene-card {
+    animation: pageSlideUp 220ms cubic-bezier(.22,.61,.36,1);
+}
+
+/* ===== 빈 상태 일러스트 (간단 SVG 인라인) ===== */
+.empty-state {
+    text-align: center;
+    padding: 36px 16px;
+}
+.empty-state-svg {
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 16px;
+    opacity: 0.85;
+}
+.empty-state-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 6px;
+}
+.empty-state-sub {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.5;
+}
+
+/* ===== 햅틱 / 사운드 / AMOLED 설정 행 ===== */
+.settings-row-3col {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin: 8px 0 12px;
+}
+.settings-row-3col .choice-btn { font-size: 13px; padding: 10px 6px; }
+
+/* ===== Skeleton loader (로딩 placeholder) ===== */
+.skeleton {
+    background: linear-gradient(90deg, var(--soft) 0%, var(--softer) 50%, var(--soft) 100%);
+    background-size: 200% 100%;
+    animation: skeletonShimmer 1.4s linear infinite;
+    border-radius: var(--radius-md);
+}
+@keyframes skeletonShimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+.skeleton-row {
+    height: 18px;
+    margin: 10px 0;
+}
+.skeleton-card {
+    height: 88px;
+    margin: 12px 0;
+}
