@@ -894,9 +894,9 @@ describe("디자인 — 메인 메뉴는 이모지 대신 SVG 아이콘 사용",
                 collectIcons();
             }
         });
-        // 중복 제거
+        // 중복 제거 — 잡스 단순화 후 일부 row-card 가 텍스트만 사용 (이미지/약물/인계/트리아지)
         const unique = Array.from(new Set(collected));
-        expect(unique.length).toBeGreaterThanOrEqual(8);
+        expect(unique.length).toBeGreaterThanOrEqual(5);
         unique.forEach(el => {
             expect(el.tagName.toLowerCase()).toBe("svg");
         });

@@ -1347,28 +1347,13 @@ const Storage = {
         const hour = new Date().getHours();
         // 학습 활동이 있으면 시간대 마킹
         const studiedToday = totalSolved > 0 || (data.daily && Object.keys(data.daily).length > 0);
-        const isNight = studiedToday && hour >= 0 && hour < 5;
-        const isEarly = studiedToday && hour >= 5 && hour < 9;
         const checks = [
             { id: "first-step", earned: totalCorrect >= 1 },
             { id: "century", earned: totalSolved >= 100 },
             { id: "sharpshooter", earned: totalSolved >= 50 && acc >= 80 },
             { id: "streak-7", earned: streakBest >= 7 },
-            { id: "streak-30", earned: streakBest >= 30 },
-            { id: "combo-10", earned: bestCombo >= 10 },
             { id: "campaign-runner", earned: campaignLog >= 1 },
-            { id: "wrong-tamer", earned: graduatedCount >= 5 },
-            { id: "hint-master", earned: hintUsedCount >= 3 },
-            { id: "image-eye", earned: (counters.imageCorrect || 0) >= 20 },
-            { id: "nclex-rookie", earned: (counters.nclexCorrect || 0) >= 10 },
-            { id: "night-owl", earned: !!counters.nightStudy || isNight },
-            { id: "early-bird", earned: !!counters.earlyStudy || isEarly },
             { id: "perfect-set", earned: (counters.perfectSets || 0) >= 1 },
-            { id: "mock-master", earned: (counters.mockBest || 0) >= 90 },
-            { id: "comeback", earned: !!counters.comebackWin },
-            { id: "scenario-hunter", earned: (counters.scenariosDone || 0) >= 5 },
-            { id: "explorer", earned: (counters.modesUsed && Array.isArray(counters.modesUsed) ? counters.modesUsed.length : 0) >= 5 },
-            { id: "supporter", earned: !!counters.supporter },
         ];
 
         const newlyUnlocked = [];
@@ -1376,7 +1361,7 @@ const Storage = {
         checks.forEach(c => {
             if (c.earned && !already.has(c.id)) newlyUnlocked.push(c.id);
         });
-        // 마스터 — 위 19개 모두 달성 시
+        // 마스터 — 위 6개 모두 달성 시
         const wouldBeUnlocked = new Set([...already, ...newlyUnlocked]);
         const nineCount = checks.filter(c => wouldBeUnlocked.has(c.id)).length;
         if (nineCount >= 9 && !already.has("master")) newlyUnlocked.push("master");
@@ -1473,25 +1458,11 @@ const Storage = {
 const BADGES = [
     { id: "first-step",      emoji: "🌱", name: "첫걸음",     desc: "첫 문제 정답" },
     { id: "century",         emoji: "📚", name: "100문제",   desc: "누적 100문제 풀이" },
-    { id: "sharpshooter",    emoji: "🎯", name: "명사수",     desc: "50문제 이상 + 정답률 80% 이상" },
-    { id: "streak-7",        emoji: "🔥", name: "7일 연속",  desc: "연속 학습 7일 달성" },
-    { id: "streak-30",       emoji: "💎", name: "30일 연속", desc: "연속 학습 30일 달성" },
-    { id: "combo-10",        emoji: "⚡", name: "콤보 10",   desc: "최고 콤보 10 이상" },
-    { id: "campaign-runner", emoji: "🏥", name: "캠페인 완주", desc: "커리어 캠페인 1화 이상 완주" },
-    { id: "wrong-tamer",     emoji: "🩺", name: "오답 정복", desc: "Leitner 박스 5 졸업 5건 이상" },
-    { id: "hint-master",     emoji: "💡", name: "힌트 마스터", desc: "힌트 3회 누적 사용" },
-    // 추가 배지 (15→20 확장)
-    { id: "image-eye",       emoji: "👁️", name: "임상의 눈",  desc: "이미지 문제 20개 정답" },
-    { id: "nclex-rookie",    emoji: "🇺🇸", name: "NCLEX 입문", desc: "NCLEX 영문 모드 10문제 정답" },
-    { id: "night-owl",       emoji: "🦉", name: "올빼미",     desc: "새벽(00-05시) 학습 1회" },
-    { id: "early-bird",      emoji: "🐦", name: "아침형",     desc: "이른 아침(05-09시) 학습 1회" },
+    { id: "sharpshooter",    emoji: "🎯", name: "명사수",     desc: "50문제 + 정답률 80%" },
+    { id: "streak-7",        emoji: "🔥", name: "7일 연속",  desc: "연속 학습 7일" },
+    { id: "campaign-runner", emoji: "🏥", name: "캠페인 완주", desc: "에피소드 1화 완주" },
     { id: "perfect-set",     emoji: "💯", name: "완벽한 세트", desc: "한 세트 10/10 정답" },
-    { id: "mock-master",     emoji: "🏆", name: "모의 90+",   desc: "모의고사 90점 이상" },
-    { id: "comeback",        emoji: "🔄", name: "컴백 킹",    desc: "광고 부활 후 정답 1회 이상" },
-    { id: "scenario-hunter", emoji: "🎬", name: "시나리오 헌터", desc: "임상 시나리오 5편 완료" },
-    { id: "explorer",        emoji: "🗺️", name: "탐험가",    desc: "5개 이상의 학습 모드 진입" },
-    { id: "supporter",       emoji: "💚", name: "응원",       desc: "프리미엄 출시 알림 신청" },
-    { id: "master",          emoji: "🎓", name: "마스터",     desc: "위 19개 배지 모두 달성" },
+    { id: "master",          emoji: "🎓", name: "마스터",     desc: "위 6개 모두 달성" },
 ];
 
 // =========================================================================
@@ -1701,7 +1672,7 @@ function renderTtsSettings() {
     if (!TTS.available) {
         UI.gameArea.innerHTML = `
           <div class="card">
-            <h2 class="scene-title">🎙️ 음성 설정</h2>
+            <h2 class="scene-title">음성 설정</h2>
             <p class="scene-desc">이 브라우저는 음성 합성을 지원하지 않습니다.</p>
             <button class="choice-btn center" data-action="openSettings">설정으로</button>
           </div>`;
@@ -1724,7 +1695,7 @@ function renderTtsSettings() {
 
     UI.gameArea.innerHTML = `
       <div class="card">
-        <h2 class="scene-title">🎙️ 음성 설정</h2>
+        <h2 class="scene-title">음성 설정</h2>
         <p class="scene-desc">목소리·속도·톤을 조절해 가장 자연스러운 조합을 찾아보세요. 보이스 품질은 기기/브라우저에 따라 다릅니다 — 모바일은 보통 클라우드 보이스가 가장 자연스러워요.</p>
 
         <h3 class="settings-section">현재 보이스</h3>
@@ -2396,7 +2367,7 @@ function renderImageQuizMenu() {
     if (scenes.length === 0) {
         UI.gameArea.innerHTML = `
           <div class="scene-card card">
-            <h2 class="scene-title">📷 이미지 문제 모음</h2>
+            <h2 class="scene-title">이미지 문제</h2>
             <p class="scene-desc">아직 이미지 문제가 없어요.</p>
             <button class="choice-btn center" data-action="returnToMenu">메인 메뉴</button>
           </div>`;
@@ -2421,7 +2392,7 @@ function renderImageQuizMenu() {
           </button>`).join("");
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
-        <h2 class="scene-title">📷 이미지 문제 모음</h2>
+        <h2 class="scene-title">이미지 문제</h2>
         <p class="scene-desc">에피소드·시나리오의 임상 이미지 문제 ${scenes.length}개를 모았어요. 카테고리를 선택하세요.</p>
         <div class="choice-list">
           <button class="choice-btn primary" data-action="startImageQuiz" data-bucket="__all__">🎯 전체 (${scenes.length}문제, 무작위)</button>
@@ -2542,7 +2513,7 @@ function renderImageQuizSummary() {
     const acc = total > 0 ? Math.round((correct / total) * 100) : 0;
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
-        <h2 class="scene-title">📷 이미지 문제 완료</h2>
+        <h2 class="scene-title">완료</h2>
         <div class="quiz-summary-stats">
             <div class="quiz-stat-row"><span>총 문제</span><strong>${total}</strong></div>
             <div class="quiz-stat-row"><span>정답</span><strong>${correct}</strong></div>
@@ -4250,17 +4221,17 @@ function openSettings() {
     const acc = totalSolved ? Math.round(totalCorrect / totalSolved * 100) : 0;
     UI.gameArea.innerHTML = `
       <div class="card settings-card">
-        <h2 class="scene-title">⚙️ 설정</h2>
+        <h2 class="scene-title">설정</h2>
 
         <h3 class="settings-section">일반</h3>
         <div class="settings-row">
           <span>테마</span>
-          <span class="settings-value">${settings.theme === "amoled" ? "AMOLED (OLED 절약)" : settings.theme === "dark" ? "다크" : settings.theme === "light" ? "라이트" : "자동(시스템)"}</span>
+          <span class="settings-value">${settings.theme === "dark" ? "다크" : settings.theme === "light" ? "라이트" : "자동"}</span>
         </div>
         <div class="settings-row-3col">
-          <button class="choice-btn ${settings.theme === "light" ? "primary" : ""}" data-action="setTheme" data-theme="light">🌞 라이트</button>
-          <button class="choice-btn ${settings.theme === "dark" ? "primary" : ""}" data-action="setTheme" data-theme="dark">🌙 다크</button>
-          <button class="choice-btn ${settings.theme === "amoled" ? "primary" : ""}" data-action="setTheme" data-theme="amoled">🌑 AMOLED</button>
+          <button class="choice-btn ${settings.theme === "light" ? "primary" : ""}" data-action="setTheme" data-theme="light">라이트</button>
+          <button class="choice-btn ${settings.theme === "dark" ? "primary" : ""}" data-action="setTheme" data-theme="dark">다크</button>
+          <button class="choice-btn ${(!settings.theme || settings.theme === "auto") ? "primary" : ""}" data-action="setTheme" data-theme="auto">자동</button>
         </div>
         <div class="settings-row">
           <span>사운드</span>
@@ -4341,7 +4312,6 @@ function openSettings() {
           <button class="choice-btn" data-action="openExternalPrivacy">📄 개인정보 전문</button>
           <button class="choice-btn" data-action="openExternalTerms">📄 이용약관 전문</button>
           <button class="choice-btn" data-action="showOnboarding">튜토리얼 다시 보기</button>
-          <button class="choice-btn" data-action="renderPersonaPicker">🧭 직군 다시 선택</button>
           <button class="choice-btn" data-action="openErrorReport">컨텐츠 오류 신고</button>
         </div>
 
@@ -4536,62 +4506,16 @@ function renderPremiumPage() {
     UI.gameArea.innerHTML = `
       <div class="card">
         <div class="premium-hero">
-            <span class="premium-tag">PREMIUM · 출시 예정</span>
-            <h2>⭐ 간호사 시뮬레이터 PRO</h2>
-            <p>광고 없이 집중 학습. 추가 콘텐츠와 고급 분석.</p>
+            <h2>프리미엄 준비 중</h2>
+            <p>광고 없이, 더 깊게.</p>
         </div>
-        <div class="premium-features">
-            <div class="premium-feature">
-                <div class="premium-feature-icon">🚫</div>
-                <div class="premium-feature-body">
-                    <div class="premium-feature-title">광고 완전 제거</div>
-                    <div class="premium-feature-sub">부활·힌트도 광고 시청 없이 무제한</div>
-                </div>
-            </div>
-            <div class="premium-feature">
-                <div class="premium-feature-icon">📚</div>
-                <div class="premium-feature-body">
-                    <div class="premium-feature-title">독점 에피소드 20+</div>
-                    <div class="premium-feature-sub">실제 임상 케이스 기반 추가 시나리오</div>
-                </div>
-            </div>
-            <div class="premium-feature">
-                <div class="premium-feature-icon">📊</div>
-                <div class="premium-feature-body">
-                    <div class="premium-feature-title">고급 약점 분석 + AI 코칭</div>
-                    <div class="premium-feature-sub">개인 맞춤 학습 계획 자동 생성</div>
-                </div>
-            </div>
-            <div class="premium-feature">
-                <div class="premium-feature-icon">☁️</div>
-                <div class="premium-feature-body">
-                    <div class="premium-feature-title">기기 간 자동 동기화</div>
-                    <div class="premium-feature-sub">폰·태블릿·PC 어디서나 진도 이어가기</div>
-                </div>
-            </div>
-            <div class="premium-feature">
-                <div class="premium-feature-icon">🎓</div>
-                <div class="premium-feature-body">
-                    <div class="premium-feature-title">기출 라이선스 문제집</div>
-                    <div class="premium-feature-sub">5년치 국시 + NCLEX 공식 풀이</div>
-                </div>
-            </div>
-            <div class="premium-feature">
-                <div class="premium-feature-icon">💎</div>
-                <div class="premium-feature-body">
-                    <div class="premium-feature-title">우선 임상 검수 적용</div>
-                    <div class="premium-feature-sub">현직 간호사 검수 콘텐츠 우선 공개</div>
-                </div>
-            </div>
+        <p class="scene-desc" style="text-align:center; margin: 24px 0;">
+            지금은 모든 기능이 무료입니다. 준비되면 알려드릴게요.
+        </p>
+        <div class="choice-list">
+            <button class="choice-btn primary" data-action="notifyPremium">알림 받기</button>
+            <button class="choice-btn center" data-action="returnToMenu">메인 메뉴</button>
         </div>
-        <div class="tip-jar-card">
-            <h3>💚 후원으로 응원하기</h3>
-            <p>아직 결제는 준비 중입니다.<br>지금은 무료로 모든 기능을 쓸 수 있어요.<br>나중에 도움됐다면 작은 후원으로 응원해주세요.</p>
-            <div class="choice-list">
-                <button class="choice-btn" data-action="notifyPremium">출시 알림 받기 🔔</button>
-            </div>
-        </div>
-        <button class="choice-btn center" data-action="returnToMenu">메인 메뉴</button>
       </div>`;
 }
 
@@ -4675,7 +4599,7 @@ function renderDrugDrill() {
     updateStats();
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
-        <h2 class="scene-title">💊 약물 드릴</h2>
+        <h2 class="scene-title">약물 드릴</h2>
         <p class="scene-desc">국시·NCLEX 공통 핵심 약물 ${DRUGS.length}종. 무작위로 작용·계열·부작용·모니터링 항목을 묻습니다.</p>
         <div class="drug-stats-grid">
             <div class="drug-stat-card"><div class="drug-stat-num">${DRUGS.length}</div><div class="drug-stat-label">약물</div></div>
@@ -4795,7 +4719,7 @@ function renderDrugDrillSummary() {
     try { Storage.recordSetScore("💊 약물 드릴", correct, total); checkAndNotifyAchievements(); } catch {}
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
-        <h2 class="scene-title">💊 약물 드릴 완료</h2>
+        <h2 class="scene-title">완료</h2>
         <div class="quiz-summary-stats">
             <div class="quiz-stat-row"><span>총 문제</span><strong>${total}</strong></div>
             <div class="quiz-stat-row"><span>정답</span><strong>${correct}</strong></div>
@@ -4846,7 +4770,7 @@ function renderLeaderboard() {
 
     UI.gameArea.innerHTML = `
       <div class="card">
-        <h2 class="scene-title">📊 나의 최고 기록</h2>
+        <h2 class="scene-title">나의 기록</h2>
         <div class="lb-summary">
             <div class="lb-summary-cell">
                 <div class="lb-summary-label">모의고사 최고</div>
@@ -5192,11 +5116,6 @@ function onboardFinish() {
     returnToMenu();
     // 신규 사용자의 ?ref= / ?shortcut= URL 파라미터 — 온보딩 완료 후에도 한 번 더 처리
     try { handleShortcutUrl(); } catch {}
-    // 온보딩 완료 후 직군(persona) 미선택이면 메뉴 위에 오버레이로 1회 노출
-    const data = Storage.load();
-    if (!data.persona || !data.persona.discipline) {
-        renderPersonaPicker();
-    }
 }
 
 // =========================================================================
@@ -5461,7 +5380,6 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
         <div class="section-label">특화 학습</div>
         <div class="home-row">
           <button class="row-card" data-action="renderImageQuizMenu">
-            <div class="row-icon">📷</div>
             <div class="row-body">
               <div class="row-title">이미지 문제</div>
               <div class="row-sub">ECG · 청진 · 산과 · 신경</div>
@@ -5469,7 +5387,6 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
             <div class="row-chev">›</div>
           </button>
           <button class="row-card" data-action="renderDrugDrill">
-            <div class="row-icon">💊</div>
             <div class="row-body">
               <div class="row-title">약물 드릴</div>
               <div class="row-sub">핵심 약물 50종</div>
@@ -5477,7 +5394,6 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
             <div class="row-chev">›</div>
           </button>
           <button class="row-card" data-action="startHandoff">
-            <div class="row-icon">${ICONS.handoff}</div>
             <div class="row-body">
               <div class="row-title">인계 시뮬</div>
               <div class="row-sub">100명 풀 셔플</div>
@@ -5485,7 +5401,6 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
             <div class="row-chev">›</div>
           </button>
           <button class="row-card" data-action="startTriage">
-            <div class="row-icon">${ICONS.triage}</div>
             <div class="row-body">
               <div class="row-title">트리아지</div>
               <div class="row-sub">응급실 다중환자 분류</div>
@@ -5565,7 +5480,7 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
       <div class="menu-shell">
         <header class="menu-header">
           <h1 class="menu-title-v2">간호사 시뮬레이터</h1>
-          <span class="version-badge-v2" title="RN 감수 진행 중 베타">v${APP_VERSION || '1.0'} · BETA</span>
+          <span class="version-badge-v2">v${APP_VERSION || '1.0'}</span>
         </header>
 
         <main class="menu-body">${tabContent}</main>
@@ -6171,7 +6086,7 @@ function renderBookmarks() {
     }).join("");
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
-        <h2 class="scene-title">⭐ 북마크 (${ids.length})</h2>
+        <h2 class="scene-title">북마크 (${ids.length})</h2>
         <div class="bookmark-list" role="list">${items}</div>
         <div class="choice-list">
           <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
@@ -6243,7 +6158,7 @@ function renderAchievements() {
 
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
-        <h2 class="scene-title">🏆 배지 컬렉션</h2>
+        <h2 class="scene-title">배지</h2>
         <p class="scene-desc">획득 ${got} / ${total}</p>
         <div class="badge-grid">${cards}</div>
         <div class="choice-list">
