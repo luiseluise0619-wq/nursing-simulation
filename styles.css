@@ -1300,18 +1300,18 @@ body {
    면책 스트립 — 모든 화면 상단 (modal 제외)
    ============================================================ */
 .app-disclaimer {
-    background: var(--warning);
-    color: #fff;
-    padding: 5px 12px;
-    font-size: 11px;
+    background: var(--softer);
+    color: var(--muted);
+    padding: 3px 12px;
+    font-size: 10px;
     text-align: center;
-    border-bottom: 1px solid var(--border);
+    border-bottom: none;
     line-height: 1.4;
     letter-spacing: -0.005em;
 }
 [data-theme="dark"] .app-disclaimer {
-    background: #92400e;
-    color: #fef3c7;
+    background: var(--softer);
+    color: var(--muted);
 }
 .disclaimer-link {
     background: transparent;

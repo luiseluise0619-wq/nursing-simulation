@@ -1865,11 +1865,16 @@ function updateStats() {
     UI.hp.textContent = shownHp;
     UI.rep.textContent = gameState.rep;
     UI.hp.style.color = shownHp < 30 ? "var(--danger)" : shownHp < 60 ? "var(--warning)" : "var(--success)";
-    // HP 게이지 fill + level (라이트→오렌지→빨강 펄스)
     const hpFill = document.getElementById("hp-fill");
     const hpGauge = document.getElementById("hp-gauge");
     if (hpFill) hpFill.style.width = `${shownHp}%`;
     if (hpGauge) hpGauge.dataset.level = shownHp > 60 ? "hi" : shownHp > 30 ? "mid" : "lo";
+
+    // 게임 모드에서만 HP/REP 표시 — 메뉴/통계/설정에선 숨김 (잡스 모드: 컨텍스트 없는 정보 제거)
+    const isGameMode = ["survival", "episode", "scenario", "quiz", "mock", "daily", "wrong_review", "handoff", "triage", "image_quiz", "drug_drill", "nclex"].includes(gameState.mode);
+    if (hpGauge) hpGauge.classList.toggle("hidden", !isGameMode);
+    const repGauge = document.getElementById("rep-gauge");
+    if (repGauge) repGauge.classList.toggle("hidden", !isGameMode);
     // 평판 게이지 fill (-60 ~ +120 범위를 0~100% 로 매핑)
     const repFill = document.getElementById("rep-fill");
     if (repFill) {
@@ -4208,13 +4213,17 @@ function renderDashboard() {
         <h3 class="dash-section-title">누적 성과</h3>
         <div class="dash-stats-grid">${summaryRows}</div>
 
+        <div class="choice-list dashboard-actions">
+          <button class="choice-btn primary" data-action="renderWeaknessAnalysis">🎯 약점 분석</button>
+          <button class="choice-btn primary" data-action="renderLeaderboard">📊 나의 최고 기록</button>
+        </div>
+
         <h3 class="dash-section-title">최근 5개년 출제 경향</h3>
         ${renderTrendsChart()}
 
         <div class="choice-list dashboard-actions">
-          <button class="choice-btn primary" data-action="reviewWrongAnswers">오답 복습 (${wrongCount})</button>
-          <button class="choice-btn" data-action="printWrongQueue">오답노트 PDF / 인쇄</button>
-          <button class="choice-btn" data-action="printDashboard">대시보드 PDF / 인쇄</button>
+          <button class="choice-btn" data-action="reviewWrongAnswers">오답 복습 (${wrongCount})</button>
+          <button class="choice-btn" data-action="printDashboard">PDF 인쇄</button>
           <button class="choice-btn" data-action="confirmClearStats">통계 초기화</button>
         </div>
       </div>`;
@@ -5392,15 +5401,6 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
             </div>
             <div class="row-chev">›</div>
           </button>` : ''}
-
-          <button class="row-card" data-action="renderInviteScreen">
-            <div class="row-icon" aria-hidden="true">🎁</div>
-            <div class="row-body">
-              <div class="row-title">친구 초대</div>
-              <div class="row-sub">코드 공유로 양쪽 보너스</div>
-            </div>
-            <div class="row-chev">›</div>
-          </button>
         </div>
       </div>`;
 
@@ -5417,14 +5417,14 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
           </button>` : '';
       return `
       <div class="tab-section">
-        <div class="section-label">빠른 풀이</div>
+        <div class="section-label">시험 대비</div>
         <div class="home-row">
           ${nclexTile}
           <button class="row-card" data-action="renderQuizMenu">
             <div class="row-icon">${ICONS.training}</div>
             <div class="row-body">
-              <div class="row-title">과목별 무한 풀이</div>
-              <div class="row-sub">국시 8과목 · 랜덤 출제</div>
+              <div class="row-title">과목별 풀이</div>
+              <div class="row-sub">국시 8과목 · 무한 랜덤</div>
             </div>
             <div class="row-chev">›</div>
           </button>
@@ -5432,55 +5432,55 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
             <div class="row-icon">${ICONS.mock}</div>
             <div class="row-body">
               <div class="row-title">모의고사</div>
-              <div class="row-sub">${MOCK_EXAM_TOTAL}문제 · ${MOCK_EXAM_SECONDS / 60}분 타이머</div>
-            </div>
-            <div class="row-chev">›</div>
-          </button>
-          <button class="row-card" data-action="renderImageQuizMenu">
-            <div class="row-icon">📷</div>
-            <div class="row-body">
-              <div class="row-title">이미지 문제 모음</div>
-              <div class="row-sub">ECG · 청진 · 산과 · 신경 · 화상 등 시각 자료 퀴즈</div>
-            </div>
-            <div class="row-chev">›</div>
-          </button>
-          <button class="row-card" data-action="renderDrugDrill">
-            <div class="row-icon">💊</div>
-            <div class="row-body">
-              <div class="row-title">약물 드릴 (Top 50)</div>
-              <div class="row-sub">국시·NCLEX 핵심 약물 · 작용·부작용·모니터링 무작위 출제</div>
+              <div class="row-sub">${MOCK_EXAM_TOTAL}문제 · ${MOCK_EXAM_SECONDS / 60}분</div>
             </div>
             <div class="row-chev">›</div>
           </button>
         </div>
 
-        <div class="section-label">임상 시나리오</div>
+        <div class="section-label">시뮬레이션</div>
         <div class="home-row">
           <button class="row-card" data-action="renderEpisodeMenu">
             <div class="row-icon">${ICONS.episode}</div>
             <div class="row-body">
-              <div class="row-title">에피소드 (한 듀티 전체)</div>
-              <div class="row-sub">26개 · 12~15단계 연결 스토리</div>
+              <div class="row-title">에피소드</div>
+              <div class="row-sub">한 듀티 전체 · 35편</div>
             </div>
             <div class="row-chev">›</div>
           </button>
           <button class="row-card" data-action="renderScenarioMenu">
             <div class="row-icon">${ICONS.scenario}</div>
             <div class="row-body">
-              <div class="row-title">짧은 임상 시나리오</div>
-              <div class="row-sub">6 케이스 · 다단계 의사결정</div>
+              <div class="row-title">짧은 시나리오</div>
+              <div class="row-sub">단편 임상 의사결정</div>
             </div>
             <div class="row-chev">›</div>
           </button>
         </div>
 
-        <div class="section-label">임상 술기</div>
+        <div class="section-label">특화 학습</div>
         <div class="home-row">
+          <button class="row-card" data-action="renderImageQuizMenu">
+            <div class="row-icon">📷</div>
+            <div class="row-body">
+              <div class="row-title">이미지 문제</div>
+              <div class="row-sub">ECG · 청진 · 산과 · 신경</div>
+            </div>
+            <div class="row-chev">›</div>
+          </button>
+          <button class="row-card" data-action="renderDrugDrill">
+            <div class="row-icon">💊</div>
+            <div class="row-body">
+              <div class="row-title">약물 드릴</div>
+              <div class="row-sub">핵심 약물 50종</div>
+            </div>
+            <div class="row-chev">›</div>
+          </button>
           <button class="row-card" data-action="startHandoff">
             <div class="row-icon">${ICONS.handoff}</div>
             <div class="row-body">
               <div class="row-title">인계 시뮬</div>
-              <div class="row-sub">TTS 음성 · 100명 풀 셔플</div>
+              <div class="row-sub">100명 풀 셔플</div>
             </div>
             <div class="row-chev">›</div>
           </button>
@@ -5488,7 +5488,7 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
             <div class="row-icon">${ICONS.triage}</div>
             <div class="row-body">
               <div class="row-title">트리아지</div>
-              <div class="row-sub">응급실 다중환자 분류 · 7 케이스</div>
+              <div class="row-sub">응급실 다중환자 분류</div>
             </div>
             <div class="row-chev">›</div>
           </button>
@@ -5505,32 +5505,16 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
         <button class="row-card big" data-action="renderDashboard">
           <div class="row-icon big">${ICONS.dash}</div>
           <div class="row-body">
-            <div class="row-title">대시보드</div>
-            <div class="row-sub">과목별 정답률 · 콤보 · 출제 경향 차트</div>
-          </div>
-          <div class="row-chev">›</div>
-        </button>
-        <button class="row-card big" data-action="renderWeaknessAnalysis">
-          <div class="row-icon big" aria-hidden="true">🎯</div>
-          <div class="row-body">
-            <div class="row-title">약점 분석</div>
-            <div class="row-sub">자주 틀리는 시나리오 발견</div>
+            <div class="row-title">통계</div>
+            <div class="row-sub">과목별 정답률 · 약점 · 최고 기록</div>
           </div>
           <div class="row-chev">›</div>
         </button>
         <button class="row-card big" data-action="renderAchievements">
           <div class="row-icon big" aria-hidden="true">🏆</div>
           <div class="row-body">
-            <div class="row-title">배지 컬렉션 ${gotCount > 0 ? `<span class="row-pill">${gotCount}/${totalBadges}</span>` : `<span class="row-pill">0/${totalBadges}</span>`}</div>
-            <div class="row-sub">${gotCount > 0 ? `획득한 배지 ${gotCount}개` : `학습 도전과제 ${totalBadges}종`}</div>
-          </div>
-          <div class="row-chev">›</div>
-        </button>
-        <button class="row-card big" data-action="renderLeaderboard">
-          <div class="row-icon big" aria-hidden="true">📊</div>
-          <div class="row-body">
-            <div class="row-title">나의 최고 기록</div>
-            <div class="row-sub">세트 정답률 TOP 10 · 모의 최고 점수 · 연속 학습</div>
+            <div class="row-title">배지 ${gotCount > 0 ? `<span class="row-pill">${gotCount}/${totalBadges}</span>` : `<span class="row-pill">0/${totalBadges}</span>`}</div>
+            <div class="row-sub">${gotCount > 0 ? `획득 ${gotCount}개` : `도전과제 ${totalBadges}종`}</div>
           </div>
           <div class="row-chev">›</div>
         </button>
@@ -5538,7 +5522,7 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
           <div class="row-icon big">${ICONS.wrong}</div>
           <div class="row-body">
             <div class="row-title">오답노트 ${wrongCount > 0 ? `<span class="row-pill warn">${wrongCount}</span>` : ''}</div>
-            <div class="row-sub">${wrongCount > 0 ? `복습 대기 ${wrongCount}건 · Leitner 5박스` : '오답 없음'}</div>
+            <div class="row-sub">${wrongCount > 0 ? `복습 대기 ${wrongCount}건` : 'Leitner 5박스 복습'}</div>
           </div>
           <div class="row-chev">›</div>
         </button>
@@ -5547,14 +5531,6 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
           <div class="row-body">
             <div class="row-title">북마크 ${bookmarkCount > 0 ? `<span class="row-pill">${bookmarkCount}</span>` : ''}</div>
             <div class="row-sub">${bookmarkCount > 0 ? `별표 ${bookmarkCount}건` : '⭐ 로 즐겨찾기'}</div>
-          </div>
-          <div class="row-chev">›</div>
-        </button>
-        <button class="row-card big" data-action="openSearch">
-          <div class="row-icon big"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></div>
-          <div class="row-body">
-            <div class="row-title">컨텐츠 검색</div>
-            <div class="row-sub">에피소드 · 인계 · 시나리오 · 문제 전체</div>
           </div>
           <div class="row-chev">›</div>
         </button>
@@ -5568,7 +5544,11 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
         </button>
 
         <div class="my-footer">
-          <button class="text-link" data-action="showOnboarding">튜토리얼 다시 보기</button>
+          <button class="text-link" data-action="openSearch">🔍 검색</button>
+          <span class="dot-sep" aria-hidden="true">·</span>
+          <button class="text-link" data-action="renderInviteScreen">🎁 친구 초대</button>
+          <span class="dot-sep" aria-hidden="true">·</span>
+          <button class="text-link" data-action="showOnboarding">튜토리얼</button>
           <span class="dot-sep" aria-hidden="true">·</span>
           <button class="text-link" data-action="renderPrivacy">개인정보</button>
           <span class="dot-sep" aria-hidden="true">·</span>
