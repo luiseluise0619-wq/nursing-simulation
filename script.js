@@ -828,7 +828,7 @@ const Storage = {
         const stats = {};
         CATEGORIES.forEach(c => stats[c] = { solved: 0, correct: 0 });
         return {
-            settings: { theme: "auto", sound: true, haptics: true, examMode: "korean" },
+            settings: { theme: "auto", sound: true, haptics: true, tts: false, examMode: "korean" },
             stats,
             wrongQueue: [],
             bookmarks: {},     // { contentId: { type, label, ts } } — 즐겨찾기
@@ -1235,6 +1235,73 @@ const Storage = {
         Storage.save(data);
         return data.achievements.hintUsedCount;
     },
+    // 신규 카운터 — 배지 시스템 확장용 (15→20 배지)
+    _ensureCounters() {
+        const data = Storage.load();
+        if (!data.achievements || typeof data.achievements !== "object") {
+            data.achievements = { unlocked: [], lastChecked: 0, hintUsedCount: 0, graduatedCount: 0 };
+        }
+        if (!data.achievements.counters || typeof data.achievements.counters !== "object") {
+            data.achievements.counters = {};
+        }
+        return data;
+    },
+    incrementImageCorrect() {
+        const data = Storage._ensureCounters();
+        data.achievements.counters.imageCorrect = (data.achievements.counters.imageCorrect || 0) + 1;
+        Storage.save(data);
+    },
+    incrementNclexCorrect() {
+        const data = Storage._ensureCounters();
+        data.achievements.counters.nclexCorrect = (data.achievements.counters.nclexCorrect || 0) + 1;
+        Storage.save(data);
+    },
+    incrementScenarioDone() {
+        const data = Storage._ensureCounters();
+        data.achievements.counters.scenariosDone = (data.achievements.counters.scenariosDone || 0) + 1;
+        Storage.save(data);
+    },
+    incrementPerfectSet() {
+        const data = Storage._ensureCounters();
+        data.achievements.counters.perfectSets = (data.achievements.counters.perfectSets || 0) + 1;
+        Storage.save(data);
+    },
+    updateMockBest(score) {
+        if (!Number.isFinite(score)) return;
+        const data = Storage._ensureCounters();
+        const prev = data.achievements.counters.mockBest || 0;
+        if (score > prev) {
+            data.achievements.counters.mockBest = score;
+            Storage.save(data);
+        }
+    },
+    markComebackWin() {
+        const data = Storage._ensureCounters();
+        data.achievements.counters.comebackWin = true;
+        Storage.save(data);
+    },
+    markStudyTime() {
+        const data = Storage._ensureCounters();
+        const hour = new Date().getHours();
+        if (hour >= 0 && hour < 5) data.achievements.counters.nightStudy = true;
+        else if (hour >= 5 && hour < 9) data.achievements.counters.earlyStudy = true;
+        Storage.save(data);
+    },
+    markModeUsed(mode) {
+        if (!mode) return;
+        const data = Storage._ensureCounters();
+        const arr = Array.isArray(data.achievements.counters.modesUsed) ? data.achievements.counters.modesUsed : [];
+        if (!arr.includes(mode)) {
+            arr.push(mode);
+            data.achievements.counters.modesUsed = arr;
+            Storage.save(data);
+        }
+    },
+    markSupporter() {
+        const data = Storage._ensureCounters();
+        data.achievements.counters.supporter = true;
+        Storage.save(data);
+    },
     // 현재 데이터 상태를 스캔해 새로 달성된 배지를 잠금 해제 → 새로 잠금해제된 항목 배열 반환
     checkAchievements() {
         const data = Storage.load();
@@ -1249,6 +1316,12 @@ const Storage = {
         const graduatedCount = (data.achievements && data.achievements.graduatedCount) || 0;
         const hintUsedCount = (data.achievements && data.achievements.hintUsedCount) || 0;
 
+        const counters = (data.achievements && data.achievements.counters) || {};
+        const hour = new Date().getHours();
+        // 학습 활동이 있으면 시간대 마킹
+        const studiedToday = totalSolved > 0 || (data.daily && Object.keys(data.daily).length > 0);
+        const isNight = studiedToday && hour >= 0 && hour < 5;
+        const isEarly = studiedToday && hour >= 5 && hour < 9;
         const checks = [
             { id: "first-step", earned: totalCorrect >= 1 },
             { id: "century", earned: totalSolved >= 100 },
@@ -1259,6 +1332,16 @@ const Storage = {
             { id: "campaign-runner", earned: campaignLog >= 1 },
             { id: "wrong-tamer", earned: graduatedCount >= 5 },
             { id: "hint-master", earned: hintUsedCount >= 3 },
+            { id: "image-eye", earned: (counters.imageCorrect || 0) >= 20 },
+            { id: "nclex-rookie", earned: (counters.nclexCorrect || 0) >= 10 },
+            { id: "night-owl", earned: !!counters.nightStudy || isNight },
+            { id: "early-bird", earned: !!counters.earlyStudy || isEarly },
+            { id: "perfect-set", earned: (counters.perfectSets || 0) >= 1 },
+            { id: "mock-master", earned: (counters.mockBest || 0) >= 90 },
+            { id: "comeback", earned: !!counters.comebackWin },
+            { id: "scenario-hunter", earned: (counters.scenariosDone || 0) >= 5 },
+            { id: "explorer", earned: (counters.modesUsed && Array.isArray(counters.modesUsed) ? counters.modesUsed.length : 0) >= 5 },
+            { id: "supporter", earned: !!counters.supporter },
         ];
 
         const newlyUnlocked = [];
@@ -1266,7 +1349,7 @@ const Storage = {
         checks.forEach(c => {
             if (c.earned && !already.has(c.id)) newlyUnlocked.push(c.id);
         });
-        // 마스터 — 위 9 개 모두 달성 시
+        // 마스터 — 위 19개 모두 달성 시
         const wouldBeUnlocked = new Set([...already, ...newlyUnlocked]);
         const nineCount = checks.filter(c => wouldBeUnlocked.has(c.id)).length;
         if (nineCount >= 9 && !already.has("master")) newlyUnlocked.push("master");
@@ -1370,7 +1453,18 @@ const BADGES = [
     { id: "campaign-runner", emoji: "🏥", name: "캠페인 완주", desc: "커리어 캠페인 1화 이상 완주" },
     { id: "wrong-tamer",     emoji: "🩺", name: "오답 정복", desc: "Leitner 박스 5 졸업 5건 이상" },
     { id: "hint-master",     emoji: "💡", name: "힌트 마스터", desc: "힌트 3회 누적 사용" },
-    { id: "master",          emoji: "🎓", name: "마스터",     desc: "위 9개 배지 모두 달성" },
+    // 추가 배지 (15→20 확장)
+    { id: "image-eye",       emoji: "👁️", name: "임상의 눈",  desc: "이미지 문제 20개 정답" },
+    { id: "nclex-rookie",    emoji: "🇺🇸", name: "NCLEX 입문", desc: "NCLEX 영문 모드 10문제 정답" },
+    { id: "night-owl",       emoji: "🦉", name: "올빼미",     desc: "새벽(00-05시) 학습 1회" },
+    { id: "early-bird",      emoji: "🐦", name: "아침형",     desc: "이른 아침(05-09시) 학습 1회" },
+    { id: "perfect-set",     emoji: "💯", name: "완벽한 세트", desc: "한 세트 10/10 정답" },
+    { id: "mock-master",     emoji: "🏆", name: "모의 90+",   desc: "모의고사 90점 이상" },
+    { id: "comeback",        emoji: "🔄", name: "컴백 킹",    desc: "광고 부활 후 정답 1회 이상" },
+    { id: "scenario-hunter", emoji: "🎬", name: "시나리오 헌터", desc: "임상 시나리오 5편 완료" },
+    { id: "explorer",        emoji: "🗺️", name: "탐험가",    desc: "5개 이상의 학습 모드 진입" },
+    { id: "supporter",       emoji: "💚", name: "응원",       desc: "프리미엄 출시 알림 신청" },
+    { id: "master",          emoji: "🎓", name: "마스터",     desc: "위 19개 배지 모두 달성" },
 ];
 
 // =========================================================================
@@ -1438,6 +1532,53 @@ const Haptics = {
         } catch {}
     },
 };
+
+// TTS — 시각 의존 완화 + 접근성 (Web Speech API)
+const TTS = {
+    enabled: false,
+    available: typeof window !== "undefined" && "speechSynthesis" in window,
+    voice: null,
+    pickVoice() {
+        if (!TTS.available) return null;
+        try {
+            const voices = window.speechSynthesis.getVoices();
+            const ko = voices.find(v => v.lang && v.lang.startsWith("ko"));
+            return ko || voices[0] || null;
+        } catch { return null; }
+    },
+    speak(text) {
+        if (!TTS.available || !TTS.enabled || !text) return;
+        try {
+            window.speechSynthesis.cancel();
+            const u = new SpeechSynthesisUtterance(String(text).slice(0, 500));
+            const v = TTS.voice || TTS.pickVoice();
+            if (v) u.voice = v;
+            u.lang = "ko-KR";
+            u.rate = 1.0;
+            window.speechSynthesis.speak(u);
+        } catch {}
+    },
+    stop() {
+        if (!TTS.available) return;
+        try { window.speechSynthesis.cancel(); } catch {}
+    },
+    toggle() {
+        if (!TTS.available) { addLog("이 브라우저는 음성 읽기를 지원하지 않습니다.", "log-bad"); return; }
+        TTS.enabled = !TTS.enabled;
+        Storage.setSettings({ tts: TTS.enabled });
+        if (!TTS.enabled) TTS.stop();
+        addLog(TTS.enabled ? "🔊 음성 읽기 켜짐" : "🔇 음성 읽기 꺼짐", "log-good");
+    },
+};
+
+function ttsSpeak(t) {
+    const text = t && t.dataset ? t.dataset.text : "";
+    if (!TTS.enabled) {
+        addLog("음성 읽기가 꺼져 있어요. 설정에서 켤 수 있어요.", "");
+        return;
+    }
+    if (text) TTS.speak(text);
+}
 
 // =========================================================================
 // 테마
@@ -1684,13 +1825,19 @@ function renderSceneCard(ev, options = {}) {
         ? `<div class="clinical-source-tag">📖 임상 근거: ${escapeHtml(srcEntry.ref)}</div>`
         : "";
 
+    // TTS 읽어주기 버튼 — TTS 사용 가능 + 텍스트가 있을 때만
+    const ttsText = (ev.desc || ev.narration || ev.prompt || ev.title || "").slice(0, 500);
+    const ttsBtnHtml = (TTS.available && ttsText)
+        ? `<button class="tts-btn" data-action="ttsSpeak" data-text="${escapeHtml(ttsText)}" aria-label="장면 읽어주기" title="음성 읽기">🔊</button>`
+        : "";
+
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
         ${bookmarkBtnHtml}
         ${tag}${metaRow}
         ${stepProgressHtml}
         <span class="scene-emoji" aria-hidden="true">${ev.emoji || "🩺"}</span>
-        <h2 class="scene-title">${questionIndex !== null ? `[Q${questionIndex}] ` : ""}${escapeHtml(ev.title)}</h2>
+        <h2 class="scene-title">${questionIndex !== null ? `[Q${questionIndex}] ` : ""}${escapeHtml(ev.title)} ${ttsBtnHtml}</h2>
         ${imageHtml}
         <p class="scene-desc">${escapeHtml(ev.desc)}</p>
         <div class="choice-list" id="choice-list" role="list"></div>
@@ -2136,8 +2283,11 @@ function imageQuizAnswer(t) {
     const choice = scene._shuffled[idx];
     if (!choice) return;
     const isCorrect = !!choice.correct;
-    if (isCorrect) { gameState.imageQuizCorrect = (gameState.imageQuizCorrect || 0) + 1; Sound.correct(); }
-    else { Sound.wrong(); }
+    if (isCorrect) {
+        gameState.imageQuizCorrect = (gameState.imageQuizCorrect || 0) + 1;
+        Sound.correct();
+        try { Storage.incrementImageCorrect(); } catch {}
+    } else { Sound.wrong(); }
     document.querySelectorAll("#image-quiz-choices .choice-btn").forEach((btn, bi) => {
         btn.disabled = true;
         const c = scene._shuffled[bi];
@@ -3891,6 +4041,13 @@ function openSettings() {
         <div class="choice-list">
           <button class="choice-btn" data-action="toggleHaptics">${settings.haptics !== false ? "📳 햅틱 끄기" : "📳 햅틱 켜기"}</button>
         </div>
+        <div class="settings-row">
+          <span>음성 읽기 (TTS)</span>
+          <span class="settings-value">${settings.tts === true ? "켜짐" : "꺼짐"}</span>
+        </div>
+        <div class="choice-list">
+          <button class="choice-btn" data-action="toggleTts">${settings.tts === true ? "🔇 TTS 끄기" : "🔊 TTS 켜기"}</button>
+        </div>
         <h3 class="settings-section">시험 모드 (Exam Mode)</h3>
         <div class="settings-row">
           <span>현재 모드</span>
@@ -3915,7 +4072,7 @@ function openSettings() {
           <span class="settings-value">₩4,900/월</span>
         </div>
         <div class="choice-list">
-          <button class="choice-btn" data-action="showPremiumInfo" disabled aria-disabled="true" style="opacity:0.55">⭐ 곧 만나요</button>
+          <button class="choice-btn primary" data-action="renderPremiumPage">⭐ 프리미엄 자세히 보기</button>
         </div>
 
         <h3 class="settings-section">데이터</h3>
@@ -4134,10 +4291,81 @@ function setExamMode(t) {
     openSettings();
 }
 
-// 프리미엄 안내 — 출시 후 결제 활성 전까지 placeholder
+// 프리미엄 안내 — 결제 활성 전까지 마케팅 풀페이지
 function showPremiumInfo() {
-    track("premium_interest"); // 마케팅 시그널 — 얼마나 많은 사용자가 관심을 보이는가
-    addLog("⭐ 프리미엄은 출시 1.5 부터 만나요. 지금은 모든 기능 무료입니다.", "log-good");
+    track("premium_interest");
+    renderPremiumPage();
+}
+
+function renderPremiumPage() {
+    gameState.mode = "premium";
+    showCoreUI(); updateStats();
+    UI.gameArea.innerHTML = `
+      <div class="card">
+        <div class="premium-hero">
+            <span class="premium-tag">PREMIUM · 출시 예정</span>
+            <h2>⭐ 간호사 시뮬레이터 PRO</h2>
+            <p>광고 없이 집중 학습. 추가 콘텐츠와 고급 분석.</p>
+        </div>
+        <div class="premium-features">
+            <div class="premium-feature">
+                <div class="premium-feature-icon">🚫</div>
+                <div class="premium-feature-body">
+                    <div class="premium-feature-title">광고 완전 제거</div>
+                    <div class="premium-feature-sub">부활·힌트도 광고 시청 없이 무제한</div>
+                </div>
+            </div>
+            <div class="premium-feature">
+                <div class="premium-feature-icon">📚</div>
+                <div class="premium-feature-body">
+                    <div class="premium-feature-title">독점 에피소드 20+</div>
+                    <div class="premium-feature-sub">실제 임상 케이스 기반 추가 시나리오</div>
+                </div>
+            </div>
+            <div class="premium-feature">
+                <div class="premium-feature-icon">📊</div>
+                <div class="premium-feature-body">
+                    <div class="premium-feature-title">고급 약점 분석 + AI 코칭</div>
+                    <div class="premium-feature-sub">개인 맞춤 학습 계획 자동 생성</div>
+                </div>
+            </div>
+            <div class="premium-feature">
+                <div class="premium-feature-icon">☁️</div>
+                <div class="premium-feature-body">
+                    <div class="premium-feature-title">기기 간 자동 동기화</div>
+                    <div class="premium-feature-sub">폰·태블릿·PC 어디서나 진도 이어가기</div>
+                </div>
+            </div>
+            <div class="premium-feature">
+                <div class="premium-feature-icon">🎓</div>
+                <div class="premium-feature-body">
+                    <div class="premium-feature-title">기출 라이선스 문제집</div>
+                    <div class="premium-feature-sub">5년치 국시 + NCLEX 공식 풀이</div>
+                </div>
+            </div>
+            <div class="premium-feature">
+                <div class="premium-feature-icon">💎</div>
+                <div class="premium-feature-body">
+                    <div class="premium-feature-title">우선 임상 검수 적용</div>
+                    <div class="premium-feature-sub">현직 간호사 검수 콘텐츠 우선 공개</div>
+                </div>
+            </div>
+        </div>
+        <div class="tip-jar-card">
+            <h3>💚 후원으로 응원하기</h3>
+            <p>아직 결제는 준비 중입니다.<br>지금은 무료로 모든 기능을 쓸 수 있어요.<br>나중에 도움됐다면 작은 후원으로 응원해주세요.</p>
+            <div class="choice-list">
+                <button class="choice-btn" data-action="notifyPremium">출시 알림 받기 🔔</button>
+            </div>
+        </div>
+        <button class="choice-btn center" data-action="returnToMenu">메인 메뉴</button>
+      </div>`;
+}
+
+function notifyPremium() {
+    track("premium_notify_requested");
+    try { Storage.markSupporter(); checkAndNotifyAchievements(); } catch {}
+    addLog("💚 출시 알림 신청됨! 준비되는 대로 알려드릴게요.", "log-good");
 }
 
 function renderPrivacy() {
@@ -5132,6 +5360,12 @@ function boot() {
     applyTheme(settings.theme || "auto");
     Sound.enabled = settings.sound !== false;
     Haptics.enabled = settings.haptics !== false;
+    TTS.enabled = settings.tts === true;
+    try { if (TTS.available && window.speechSynthesis.onvoiceschanged !== undefined) {
+        window.speechSynthesis.onvoiceschanged = () => { TTS.voice = TTS.pickVoice(); };
+    } } catch {}
+    // 학습 시간대 마킹 (배지 — 올빼미/아침형)
+    try { Storage.markStudyTime(); } catch {}
     if (UI.soundToggle) UI.soundToggle.textContent = Sound.enabled ? "🔊" : "🔇";
     const stored = Storage.load();
     gameState.bestCombo = stored.bestCombo || 0;
@@ -5794,6 +6028,10 @@ const DELEGATED_ACTIONS = {
     renderQuizMenu: () => renderQuizMenu(),
     renderImageQuizMenu: () => renderImageQuizMenu(),
     toggleHaptics: () => toggleHaptics(),
+    toggleTts: () => TTS.toggle(),
+    ttsSpeak: (t) => ttsSpeak(t),
+    renderPremiumPage: () => renderPremiumPage(),
+    notifyPremium: () => notifyPremium(),
     setTheme: (t) => { const mode = t.dataset.theme; applyTheme(mode); Storage.setSettings({ theme: mode }); },
     startImageQuiz: (t) => startImageQuiz(t),
     imageQuizAnswer: (t) => imageQuizAnswer(t),

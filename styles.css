@@ -2239,3 +2239,98 @@ body:has(.tab-bar) #game-area { padding-bottom: 90px; }
     height: 88px;
     margin: 12px 0;
 }
+
+/* ===== TTS / 음성 읽기 버튼 ===== */
+.tts-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg);
+    border: none;
+    color: var(--text);
+    border-radius: 50%;
+    width: 32px; height: 32px;
+    padding: 0;
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+    font-size: 13px;
+    transition: box-shadow .15s, transform .1s;
+    margin-left: 6px;
+    vertical-align: middle;
+}
+.tts-btn:hover { box-shadow: var(--shadow-md); }
+.tts-btn:active { box-shadow: var(--shadow-press); transform: scale(.95); }
+
+/* ===== 프리미엄 페이지 / 후원 ===== */
+.premium-hero {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: #fff;
+    padding: 28px 22px;
+    border-radius: var(--radius-lg);
+    margin-bottom: 18px;
+    text-align: center;
+    box-shadow: var(--shadow-md);
+}
+.premium-hero h2 { margin: 0 0 8px; font-size: 22px; font-weight: 800; }
+.premium-hero .premium-tag {
+    display: inline-block;
+    font-size: 11px;
+    background: rgba(255,255,255,0.25);
+    padding: 3px 10px;
+    border-radius: var(--radius-pill);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    margin-bottom: 12px;
+}
+.premium-hero p { margin: 0; opacity: 0.95; font-size: 14px; }
+
+.premium-features {
+    margin: 20px 0;
+}
+.premium-feature {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 14px 16px;
+    background: var(--card);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 10px;
+}
+.premium-feature-icon {
+    font-size: 24px;
+    line-height: 1;
+    width: 32px;
+    text-align: center;
+    flex-shrink: 0;
+}
+.premium-feature-body {
+    flex: 1;
+}
+.premium-feature-title {
+    font-weight: 700;
+    font-size: 15px;
+    margin-bottom: 2px;
+}
+.premium-feature-sub {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.4;
+}
+
+.tip-jar-card {
+    background: var(--primary-soft);
+    padding: 20px;
+    border-radius: var(--radius-lg);
+    text-align: center;
+    margin: 16px 0;
+    box-shadow: var(--shadow-in);
+}
+.tip-jar-card h3 { margin: 0 0 6px; font-size: 16px; font-weight: 700; color: var(--primary-dark); }
+.tip-jar-card p { margin: 0 0 14px; font-size: 13px; color: var(--text); line-height: 1.5; }
+.tip-jar-amounts {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 12px;
+}
