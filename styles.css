@@ -2457,3 +2457,60 @@ body:has(.tab-bar) #game-area { padding-bottom: 90px; }
 @keyframes badgeFloat {
     to { transform: translate(-50%, -130%); opacity: 0; }
 }
+
+/* ===== TTS 음성 설정 페이지 ===== */
+.voice-quality {
+    font-size: 10px;
+    opacity: 0.7;
+    margin-left: 6px;
+    font-weight: 500;
+}
+.tts-slider-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 10px 0 4px;
+}
+.tts-slider-label {
+    font-size: 11px;
+    color: var(--muted);
+    flex-shrink: 0;
+}
+.tts-slider {
+    flex: 1;
+    height: 6px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: var(--soft);
+    border-radius: var(--radius-pill);
+    outline: none;
+    cursor: pointer;
+    box-shadow: var(--shadow-in);
+}
+.tts-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--primary);
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+    border: 2px solid var(--card);
+}
+.tts-slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--primary);
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+    border: 2px solid var(--card);
+}
+.tts-slider-value {
+    text-align: center;
+    font-size: 12px;
+    color: var(--primary-dark);
+    font-weight: 600;
+    margin-bottom: 16px;
+}

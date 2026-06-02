@@ -1565,24 +1565,86 @@ const TTS = {
     enabled: false,
     available: typeof window !== "undefined" && "speechSynthesis" in window,
     voice: null,
+    rate: 0.95,    // 0.95 = 살짝 느리게 (1.0 보다 자연스러움)
+    pitch: 0.98,   // 0.98 = 약간 낮은 톤 (덜 합성적)
+    selectedVoiceName: null,  // 사용자가 명시 선택한 보이스명 (없으면 자동)
+
+    // 자연스러운 한국어 보이스 우선순위 — 플랫폼별 최상위 품질 검출
+    // Android: Google 한국어, iOS: Yuna (남자 한국어), Mac: 신지/Yuna (여자)
+    // Windows: Heami(Microsoft) → 합성적이라 우선순위 낮음
+    listKoreanVoices() {
+        if (!TTS.available) return [];
+        try {
+            const voices = window.speechSynthesis.getVoices() || [];
+            return voices.filter(v => v.lang && (v.lang.startsWith("ko") || v.lang === "ko-KR"));
+        } catch { return []; }
+    },
     pickVoice() {
         if (!TTS.available) return null;
         try {
-            const voices = window.speechSynthesis.getVoices();
-            const ko = voices.find(v => v.lang && v.lang.startsWith("ko"));
-            return ko || voices[0] || null;
+            const koVoices = TTS.listKoreanVoices();
+            if (koVoices.length === 0) {
+                // 한국어 보이스 없으면 일반 보이스 fallback
+                const all = window.speechSynthesis.getVoices() || [];
+                return all[0] || null;
+            }
+            // 사용자가 명시 선택한 보이스 있으면 그것 사용
+            if (TTS.selectedVoiceName) {
+                const chosen = koVoices.find(v => v.name === TTS.selectedVoiceName);
+                if (chosen) return chosen;
+            }
+            // 자연스러운 보이스 score 계산
+            const scoreVoice = (v) => {
+                const name = (v.name || "").toLowerCase();
+                let score = 0;
+                // 클라우드 보이스 (localService false) = 일반적으로 더 자연스러움
+                if (v.localService === false) score += 50;
+                // Google (Android Chrome) — WaveNet 기반, 가장 자연스러움
+                if (name.includes("google")) score += 100;
+                // Apple Neural / Premium / Enhanced
+                if (name.includes("neural") || name.includes("premium") || name.includes("enhanced")) score += 80;
+                // iOS/Mac 한국어 보이스 (자연스러움 순)
+                if (name.includes("yuna")) score += 70;       // iOS 한국어 여성
+                if (name.includes("siri")) score += 75;       // iOS Siri 보이스
+                if (name.includes("heami")) score += 30;      // Microsoft (덜 자연)
+                if (name.includes("seolhee")) score += 60;
+                if (name.includes("sora")) score += 60;
+                if (name.includes("inha")) score += 55;
+                if (name.includes("jian")) score += 55;
+                // 기본 보이스 (default 마크)
+                if (v.default) score += 20;
+                return score;
+            };
+            const sorted = [...koVoices].sort((a, b) => scoreVoice(b) - scoreVoice(a));
+            return sorted[0];
         } catch { return null; }
     },
     speak(text) {
         if (!TTS.available || !TTS.enabled || !text) return;
         try {
             window.speechSynthesis.cancel();
-            const u = new SpeechSynthesisUtterance(String(text).slice(0, 500));
+            const cleanText = String(text).slice(0, 800);
             const v = TTS.voice || TTS.pickVoice();
-            if (v) u.voice = v;
-            u.lang = "ko-KR";
-            u.rate = 1.0;
-            window.speechSynthesis.speak(u);
+            // 긴 텍스트는 문장 단위로 끊어 자연스러운 호흡 (마침표/물음표/느낌표 기준)
+            const sentences = cleanText
+                .split(/(?<=[.!?。!?])\s+/)
+                .map(s => s.trim())
+                .filter(Boolean);
+            if (sentences.length === 0) sentences.push(cleanText);
+
+            sentences.forEach((sentence, i) => {
+                const u = new SpeechSynthesisUtterance(sentence);
+                if (v) u.voice = v;
+                u.lang = "ko-KR";
+                u.rate = TTS.rate;
+                u.pitch = TTS.pitch;
+                u.volume = 1.0;
+                // 마지막 문장 외엔 짧은 호흡 (pause)
+                if (i < sentences.length - 1) {
+                    u.onend = null; // 시스템이 자연 큐잉
+                }
+                window.speechSynthesis.speak(u);
+            });
         } catch {}
     },
     stop() {
@@ -1596,6 +1658,32 @@ const TTS = {
         if (!TTS.enabled) TTS.stop();
         addLog(TTS.enabled ? "🔊 음성 읽기 켜짐" : "🔇 음성 읽기 꺼짐", "log-good");
     },
+    setVoice(voiceName) {
+        TTS.selectedVoiceName = voiceName || null;
+        TTS.voice = TTS.pickVoice();
+        Storage.setSettings({ ttsVoice: voiceName || null });
+        // 미리듣기 — 1초만
+        if (TTS.enabled) TTS.speak("안녕하세요. 저는 간호사 시뮬레이터입니다.");
+        else { TTS.enabled = true; Storage.setSettings({ tts: true }); TTS.speak("안녕하세요. 저는 간호사 시뮬레이터입니다."); }
+    },
+    setRate(rate) {
+        const n = parseFloat(rate);
+        if (Number.isFinite(n) && n >= 0.5 && n <= 1.5) {
+            TTS.rate = n;
+            Storage.setSettings({ ttsRate: n });
+        }
+    },
+    setPitch(pitch) {
+        const n = parseFloat(pitch);
+        if (Number.isFinite(n) && n >= 0.5 && n <= 1.5) {
+            TTS.pitch = n;
+            Storage.setSettings({ ttsPitch: n });
+        }
+    },
+    preview() {
+        if (!TTS.enabled) { TTS.enabled = true; Storage.setSettings({ tts: true }); }
+        TTS.speak("환자가 갑자기 호흡곤란을 호소합니다. SpO2 88%. 우선 중재를 선택하세요.");
+    },
 };
 
 function ttsSpeak(t) {
@@ -1605,6 +1693,111 @@ function ttsSpeak(t) {
         return;
     }
     if (text) TTS.speak(text);
+}
+
+function renderTtsSettings() {
+    gameState.mode = "tts_settings";
+    showCoreUI();
+    if (!TTS.available) {
+        UI.gameArea.innerHTML = `
+          <div class="card">
+            <h2 class="scene-title">🎙️ 음성 설정</h2>
+            <p class="scene-desc">이 브라우저는 음성 합성을 지원하지 않습니다.</p>
+            <button class="choice-btn center" data-action="openSettings">설정으로</button>
+          </div>`;
+        return;
+    }
+    const settings = Storage.getSettings();
+    const voices = TTS.listKoreanVoices();
+    const currentName = TTS.selectedVoiceName || (TTS.pickVoice() ? TTS.pickVoice().name : "(자동)");
+    const voiceListHtml = voices.length > 0
+        ? voices.map(v => {
+            const isSelected = v.name === TTS.selectedVoiceName
+                || (!TTS.selectedVoiceName && TTS.voice && TTS.voice.name === v.name);
+            const isCloud = v.localService === false;
+            const quality = isCloud ? "☁️ 클라우드 (자연)" : "📱 로컬";
+            return `<button class="choice-btn ${isSelected ? "primary" : ""}" data-action="setTtsVoice" data-voice="${escapeHtml(v.name)}">
+                ${escapeHtml(v.name)} <span class="voice-quality">${quality}</span>
+            </button>`;
+        }).join("")
+        : `<p class="scene-desc">사용 가능한 한국어 보이스가 없어요. 브라우저/OS의 한국어 TTS 보이스를 설치하면 더 자연스러워집니다.</p>`;
+
+    UI.gameArea.innerHTML = `
+      <div class="card">
+        <h2 class="scene-title">🎙️ 음성 설정</h2>
+        <p class="scene-desc">목소리·속도·톤을 조절해 가장 자연스러운 조합을 찾아보세요. 보이스 품질은 기기/브라우저에 따라 다릅니다 — 모바일은 보통 클라우드 보이스가 가장 자연스러워요.</p>
+
+        <h3 class="settings-section">현재 보이스</h3>
+        <div class="settings-row">
+          <span>${escapeHtml(currentName)}</span>
+          <button class="choice-btn" data-action="ttsPreview" style="padding: 6px 14px; font-size: 13px;">▶ 미리듣기</button>
+        </div>
+
+        <h3 class="settings-section">보이스 선택 (한국어)</h3>
+        <div class="choice-list">${voiceListHtml}</div>
+
+        <h3 class="settings-section">속도</h3>
+        <div class="tts-slider-row">
+          <span class="tts-slider-label">느림 (0.7)</span>
+          <input type="range" id="tts-rate" min="0.7" max="1.3" step="0.05" value="${TTS.rate}" class="tts-slider">
+          <span class="tts-slider-label">빠름 (1.3)</span>
+        </div>
+        <div class="tts-slider-value">현재: ${TTS.rate.toFixed(2)}x</div>
+
+        <h3 class="settings-section">톤 (피치)</h3>
+        <div class="tts-slider-row">
+          <span class="tts-slider-label">낮음 (0.8)</span>
+          <input type="range" id="tts-pitch" min="0.8" max="1.2" step="0.05" value="${TTS.pitch}" class="tts-slider">
+          <span class="tts-slider-label">높음 (1.2)</span>
+        </div>
+        <div class="tts-slider-value">현재: ${TTS.pitch.toFixed(2)}</div>
+
+        <div class="settings-help">
+          💡 <strong>덜 AI 스럽게 만드는 팁</strong><br>
+          · 클라우드 ☁️ 보이스 선택 (Google·Apple 신경망)<br>
+          · 속도 0.90~0.95 (살짝 느리게)<br>
+          · 톤 0.95~1.00 (약간 낮게)<br>
+          · 모바일에서 더 자연스러움 (PC 합성음 한계)
+        </div>
+
+        <div class="choice-list" style="margin-top: 18px;">
+          <button class="choice-btn primary" data-action="ttsPreview">▶ 현재 설정 미리듣기</button>
+          <button class="choice-btn center" data-action="openSettings">설정으로</button>
+        </div>
+      </div>`;
+
+    // 슬라이더 이벤트 — DOM 렌더 후 바인딩
+    setTimeout(() => {
+        const rateEl = document.getElementById("tts-rate");
+        const pitchEl = document.getElementById("tts-pitch");
+        if (rateEl) {
+            rateEl.addEventListener("input", (e) => {
+                TTS.setRate(e.target.value);
+                const display = rateEl.parentElement.parentElement.querySelector(".tts-slider-value");
+                if (display) display.textContent = `현재: ${parseFloat(e.target.value).toFixed(2)}x`;
+            });
+        }
+        if (pitchEl) {
+            pitchEl.addEventListener("input", (e) => {
+                TTS.setPitch(e.target.value);
+                // 두 번째 .tts-slider-value 찾기
+                const allDisplays = document.querySelectorAll(".tts-slider-value");
+                if (allDisplays[1]) allDisplays[1].textContent = `현재: ${parseFloat(e.target.value).toFixed(2)}`;
+            });
+        }
+    }, 50);
+}
+
+function setTtsVoice(t) {
+    const name = t && t.dataset ? t.dataset.voice : null;
+    if (name) {
+        TTS.setVoice(name);
+        renderTtsSettings();
+    }
+}
+
+function ttsPreview() {
+    TTS.preview();
 }
 
 // =========================================================================
@@ -4077,6 +4270,7 @@ function openSettings() {
         </div>
         <div class="choice-list">
           <button class="choice-btn" data-action="toggleTts">${settings.tts === true ? "🔇 TTS 끄기" : "🔊 TTS 켜기"}</button>
+          <button class="choice-btn" data-action="renderTtsSettings">🎙️ 음성 설정 (목소리·속도·톤)</button>
         </div>
         <h3 class="settings-section">시험 모드 (Exam Mode)</h3>
         <div class="settings-row">
@@ -5674,6 +5868,9 @@ function boot() {
     Sound.enabled = settings.sound !== false;
     Haptics.enabled = settings.haptics !== false;
     TTS.enabled = settings.tts === true;
+    if (settings.ttsVoice) TTS.selectedVoiceName = settings.ttsVoice;
+    if (Number.isFinite(settings.ttsRate)) TTS.rate = settings.ttsRate;
+    if (Number.isFinite(settings.ttsPitch)) TTS.pitch = settings.ttsPitch;
     try { if (TTS.available && window.speechSynthesis.onvoiceschanged !== undefined) {
         window.speechSynthesis.onvoiceschanged = () => { TTS.voice = TTS.pickVoice(); };
     } } catch {}
@@ -6362,6 +6559,9 @@ const DELEGATED_ACTIONS = {
     toggleHaptics: () => toggleHaptics(),
     toggleTts: () => TTS.toggle(),
     ttsSpeak: (t) => ttsSpeak(t),
+    renderTtsSettings: () => renderTtsSettings(),
+    setTtsVoice: (t) => setTtsVoice(t),
+    ttsPreview: () => ttsPreview(),
     renderPremiumPage: () => renderPremiumPage(),
     notifyPremium: () => notifyPremium(),
     renderLeaderboard: () => renderLeaderboard(),
