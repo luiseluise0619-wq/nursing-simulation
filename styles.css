@@ -2334,3 +2334,126 @@ body:has(.tab-bar) #game-area { padding-bottom: 90px; }
     gap: 8px;
     margin-top: 12px;
 }
+
+/* ===== 로컬 리더보드 ===== */
+.lb-summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin: 16px 0 20px;
+}
+.lb-summary-cell {
+    background: var(--primary-soft);
+    border-radius: var(--radius-md);
+    padding: 14px 8px;
+    text-align: center;
+    box-shadow: var(--shadow-in);
+}
+.lb-summary-label {
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 4px;
+}
+.lb-summary-value {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--primary-dark);
+}
+.lb-list {
+    margin: 12px 0 18px;
+}
+.lb-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    background: var(--card);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 8px;
+}
+.lb-medal {
+    font-size: 22px;
+    width: 32px;
+    text-align: center;
+    flex-shrink: 0;
+}
+.lb-rank {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--muted);
+}
+.lb-body { flex: 1; }
+.lb-title { font-weight: 700; font-size: 14px; }
+.lb-sub { font-size: 11px; color: var(--muted); }
+.lb-acc {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--primary-dark);
+}
+
+/* ===== 약물 드릴 ===== */
+.drug-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin: 14px 0 20px;
+}
+.drug-stat-card {
+    background: var(--primary-soft);
+    border-radius: var(--radius-md);
+    padding: 14px 6px;
+    text-align: center;
+    box-shadow: var(--shadow-in);
+}
+.drug-stat-num {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--primary-dark);
+}
+.drug-stat-label {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+}
+
+/* ===== 배지 잠금해제 축하 모달 (toast → modal upgrade) ===== */
+.badge-unlock-banner {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 9999;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: #fff;
+    padding: 28px 36px;
+    border-radius: var(--radius-lg);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    text-align: center;
+    animation: badgePop 600ms cubic-bezier(.34,1.56,.64,1), badgeFloat 2.5s ease-out forwards;
+    animation-delay: 0s, 0.6s;
+    max-width: 320px;
+}
+.badge-unlock-banner .badge-unlock-emoji {
+    font-size: 48px;
+    line-height: 1;
+    margin-bottom: 10px;
+}
+.badge-unlock-banner .badge-unlock-title {
+    font-size: 12px;
+    font-weight: 700;
+    opacity: 0.85;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+.badge-unlock-banner .badge-unlock-name {
+    font-size: 22px;
+    font-weight: 800;
+}
+@keyframes badgePop {
+    from { transform: translate(-50%, -50%) scale(0.4); opacity: 0; }
+    to { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+@keyframes badgeFloat {
+    to { transform: translate(-50%, -130%); opacity: 0; }
+}

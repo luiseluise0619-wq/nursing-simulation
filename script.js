@@ -1302,6 +1302,33 @@ const Storage = {
         data.achievements.counters.supporter = true;
         Storage.save(data);
     },
+    // 로컬 리더보드 — 본인 최고 기록 (백엔드 없음)
+    recordSetScore(category, correct, total) {
+        if (!Number.isFinite(correct) || !Number.isFinite(total) || total <= 0) return;
+        const data = Storage.load();
+        if (!data.leaderboard || typeof data.leaderboard !== "object") {
+            data.leaderboard = { topSets: [], mockBest: 0 };
+        }
+        if (!Array.isArray(data.leaderboard.topSets)) data.leaderboard.topSets = [];
+        data.leaderboard.topSets.push({ category: category || "전체", correct, total, ts: Date.now() });
+        // 상위 10개만 유지 (정답률 우선, 동률 시 최근 우선)
+        data.leaderboard.topSets.sort((a, b) => {
+            const ra = (a.correct || 0) / Math.max(1, a.total || 1);
+            const rb = (b.correct || 0) / Math.max(1, b.total || 1);
+            if (rb !== ra) return rb - ra;
+            return (b.ts || 0) - (a.ts || 0);
+        });
+        data.leaderboard.topSets = data.leaderboard.topSets.slice(0, 10);
+        // 완벽 세트 카운터
+        if (correct === total && total >= 5) Storage.incrementPerfectSet();
+        Storage.save(data);
+    },
+    getLeaderboard() {
+        const data = Storage.load();
+        return data.leaderboard && typeof data.leaderboard === "object"
+            ? data.leaderboard
+            : { topSets: [], mockBest: 0 };
+    },
     // 현재 데이터 상태를 스캔해 새로 달성된 배지를 잠금 해제 → 새로 잠금해제된 항목 배열 반환
     checkAchievements() {
         const data = Storage.load();
@@ -2365,6 +2392,8 @@ function renderQuizSetSummary() {
     gameState.quizSetStartCorrect = gameState.quizCorrect;
     gameState.quizSetStartSolved = gameState.quizSolved;
     Storage.addHistory({ mode: "quiz", at: Date.now(), category: gameState.quizCategory, total: QUIZ_SET_SIZE, correct: setCorrect, accuracy: acc, set: setNum });
+    try { Storage.recordSetScore(catLabel, setCorrect, QUIZ_SET_SIZE); Storage.markModeUsed("quiz"); } catch {}
+    try { checkAndNotifyAchievements(); } catch {}
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
         <span class="scene-emoji" aria-hidden="true">${emoji}</span>
@@ -2770,6 +2799,7 @@ function endMockExam(reason) {
     const answered = gameState.mockAnswered;
     const acc = answered > 0 ? Math.round((correct / answered) * 100) : 0;
     Storage.setMockBest(correct);
+    try { Storage.updateMockBest(correct); Storage.markModeUsed("mock"); checkAndNotifyAchievements(); } catch {}
     Storage.addHistory({ mode: "mock", at: Date.now(), total, answered, correct, accuracy: acc, reason });
 
     const title = reason === "timeout" ? "⏰ 시간 종료" : reason === "abort" ? "모의고사 중단" : "🏁 모의고사 완료";
@@ -4368,6 +4398,273 @@ function notifyPremium() {
     addLog("💚 출시 알림 신청됨! 준비되는 대로 알려드릴게요.", "log-good");
 }
 
+// =========================================================================
+// 약물 드릴 — Top 50 임상 약물 빠른 학습 (국시 + NCLEX 공통 핵심)
+// =========================================================================
+const DRUGS = [
+    // 심혈관 (10)
+    { name: "Aspirin", class: "항혈소판", action: "COX 억제 → 혈소판 응집 차단", se: "위장 출혈, 알레르기", monitor: "출혈 징후, CBC" },
+    { name: "Warfarin", class: "항응고 (Vit K 길항)", action: "프로트롬빈 합성 억제", se: "출혈, 태아 기형", monitor: "PT/INR (목표 2-3)" },
+    { name: "Heparin", class: "항응고", action: "Antithrombin III 활성화", se: "출혈, HIT", monitor: "aPTT (1.5-2배)" },
+    { name: "Digoxin", class: "강심제", action: "Na-K ATPase 억제 → Ca 증가", se: "독성 (시야 황색·서맥)", monitor: "혈중농도 0.5-2 ng/mL, K+" },
+    { name: "Furosemide", class: "Loop 이뇨제", action: "Henle 상행각 Na-K-Cl 차단", se: "저K, 청력 손실, 탈수", monitor: "K+, Cr, BUN, 체중" },
+    { name: "Metoprolol", class: "β1 차단제", action: "심박·혈압 감소", se: "서맥, 기관지 수축, 우울", monitor: "HR(>60), BP" },
+    { name: "Lisinopril", class: "ACEi", action: "Angiotensin II 합성 억제", se: "마른기침, 고K, 혈관부종", monitor: "Cr, K+, BP" },
+    { name: "Atorvastatin", class: "Statin", action: "HMG-CoA 환원효소 억제", se: "간독성, 근육통 (횡문근융해)", monitor: "LFT, CK, lipid panel" },
+    { name: "Nitroglycerin", class: "혈관확장제", action: "정맥 확장 → preload 감소", se: "두통, 저혈압, 내성", monitor: "BP, 흉통 호전" },
+    { name: "Amiodarone", class: "Class III 항부정맥", action: "K 채널 차단 → AP 연장", se: "폐섬유화, 갑상선·간·시야", monitor: "TFT, LFT, CXR, 안과" },
+    // 내분비 (5)
+    { name: "Insulin (Regular)", class: "단기형 인슐린", action: "혈당 → 세포내 K+ 이동", se: "저혈당, 저K", monitor: "혈당, K+ (DKA 시)" },
+    { name: "Metformin", class: "Biguanide", action: "간 포도당 생성 억제", se: "유산산증 (조영제 금기)", monitor: "Cr, B12, lactate" },
+    { name: "Levothyroxine", class: "갑상선 호르몬", action: "T4 보충", se: "빈맥, 골밀도↓ (과량)", monitor: "TSH 6-8주마다" },
+    { name: "Prednisone", class: "Glucocorticoid", action: "항염증·면역억제", se: "Cushing, 골다공증, 감염", monitor: "혈당, BP, 체중, 골밀도" },
+    { name: "Glucagon", class: "혈당↑ 호르몬", action: "간 glycogen → glucose", se: "오심, 구토", monitor: "혈당 (저혈당 응급)" },
+    // 진통/마취 (6)
+    { name: "Morphine", class: "Opioid", action: "μ 수용체 작용", se: "호흡 억제, 변비, 의존", monitor: "RR(>12), 진통, 동공" },
+    { name: "Fentanyl", class: "Opioid (강력)", action: "Morphine 100배", se: "호흡 억제, 흉벽 경직", monitor: "RR, SpO2" },
+    { name: "Naloxone", class: "Opioid 길항제", action: "μ 수용체 차단", se: "급성 금단, 폐부종", monitor: "RR, 의식 (재투여 가능)" },
+    { name: "Acetaminophen", class: "해열·진통", action: "중추 COX 억제", se: "간독성 (>4g/일)", monitor: "LFT, 일일 총량" },
+    { name: "Ibuprofen", class: "NSAID", action: "COX-1/2 억제", se: "GI 출혈, 신독성", monitor: "Cr, GI 증상" },
+    { name: "Lidocaine", class: "국소마취·항부정맥", action: "Na 채널 차단", se: "이명, 경련, 부정맥", monitor: "심전도, CNS 증상" },
+    // 항생제 (6)
+    { name: "Vancomycin", class: "Glycopeptide (MRSA)", action: "세포벽 합성 억제", se: "Red man, 신독성, 이독성", monitor: "trough 15-20, Cr" },
+    { name: "Penicillin G", class: "β-lactam", action: "세포벽 합성 억제", se: "Anaphylaxis", monitor: "알레르기 병력" },
+    { name: "Gentamicin", class: "Aminoglycoside", action: "단백 합성 억제 (30S)", se: "신독성, 이독성", monitor: "peak/trough, Cr, 청력" },
+    { name: "Ciprofloxacin", class: "Fluoroquinolone", action: "DNA gyrase 억제", se: "건염 파열, QT 연장", monitor: "QT, 건 증상" },
+    { name: "Metronidazole", class: "Nitroimidazole", action: "DNA 손상", se: "Disulfiram 반응 (음주 금기)", monitor: "신경증상, 음주 금지" },
+    { name: "Azithromycin", class: "Macrolide", action: "단백 합성 (50S)", se: "QT 연장, GI 불편", monitor: "QT, 간기능" },
+    // 호흡 (3)
+    { name: "Albuterol", class: "β2 작용제", action: "기관지 확장", se: "빈맥, 떨림, 저K", monitor: "HR, SpO2, K+" },
+    { name: "Ipratropium", class: "항콜린", action: "기관지 확장", se: "구건, 요폐 (BPH 주의)", monitor: "SpO2, 호흡음" },
+    { name: "Theophylline", class: "Methylxanthine", action: "기관지 확장 + 횡격막 자극", se: "독성 (불안, 부정맥, 발작)", monitor: "혈중농도 10-20" },
+    // 신경/정신 (5)
+    { name: "Phenytoin", class: "항경련 (Na 차단)", action: "발작 역치 상승", se: "잇몸 비대, 다모, 안진", monitor: "혈중농도 10-20, LFT" },
+    { name: "Lithium", class: "기분조절제", action: "양극성 유지", se: "독성 (떨림, 의식·신장)", monitor: "혈중농도 0.6-1.2, TFT, Cr" },
+    { name: "Haloperidol", class: "1세대 항정신", action: "D2 차단", se: "EPS, NMS, QT 연장", monitor: "EPS, 체온, QT" },
+    { name: "Diazepam", class: "Benzodiazepine", action: "GABA-A 강화", se: "호흡 억제, 의존", monitor: "RR, 의식 (역제 flumazenil)" },
+    { name: "Sertraline", class: "SSRI", action: "Serotonin 재흡수 차단", se: "GI, 성기능, 자살 사고 증가(청소년)", monitor: "기분, 자살 사고" },
+    // GI (3)
+    { name: "Omeprazole", class: "PPI", action: "위산 분비 억제", se: "B12·Mg·Ca↓, C.diff", monitor: "장기 사용 시 골밀도" },
+    { name: "Ondansetron", class: "5-HT3 길항", action: "구토 중추 억제", se: "QT 연장, 두통, 변비", monitor: "QT" },
+    { name: "Loperamide", class: "지사제 (Opioid 유사)", action: "장 운동 억제", se: "변비, 마비성 장폐색", monitor: "배변 양상" },
+    // 응급/기타 (12)
+    { name: "Epinephrine", class: "α/β 작용제", action: "혈관 수축 + 기관지 확장", se: "고혈압, 빈맥, 부정맥", monitor: "HR, BP, ECG" },
+    { name: "Atropine", class: "항콜린 (서맥용)", action: "M 수용체 차단", se: "구건, 요폐, 빈맥", monitor: "HR (서맥 응급용)" },
+    { name: "Magnesium sulfate", class: "Mg 보충 (자간전증)", action: "신경근 차단", se: "독성 (반사 소실, 호흡 억제)", monitor: "DTR, RR, 소변량" },
+    { name: "Calcium gluconate", class: "Ca 보충", action: "Mg 독성 역제·고K 안정화", se: "조직 괴사 (extravasation)", monitor: "ECG, IV 부위" },
+    { name: "Potassium chloride", class: "K 보충", action: "K 정상화", se: "고K (>5.5 → ECG 변화)", monitor: "K+, ECG (peaked T)" },
+    { name: "Mannitol", class: "삼투성 이뇨제", action: "두개내압↓·이뇨", se: "탈수, 폐부종 (CHF 금기)", monitor: "ICP, 소변량, 전해질" },
+    { name: "Heparin (LMW Enoxaparin)", class: "저분자량 헤파린", action: "Factor Xa 억제", se: "출혈 (역제 protamine 일부)", monitor: "Anti-Xa, 혈소판" },
+    { name: "Furosemide-K-sparing combo (Spironolactone)", class: "K 보존 이뇨제", action: "Aldosterone 길항", se: "고K, 여성형 유방", monitor: "K+, Cr, BP" },
+    { name: "tPA (Alteplase)", class: "혈전 용해", action: "Plasminogen → Plasmin", se: "두개내 출혈", monitor: "ICH 증상, BP <185/110" },
+    { name: "Dobutamine", class: "β1 작용 (cardiogenic shock)", action: "심수축력 증가", se: "빈맥, 부정맥", monitor: "HR, BP, CO" },
+    { name: "Norepinephrine", class: "α 작용 (septic shock 1st)", action: "혈관 수축", se: "extravasation 시 괴사", monitor: "MAP >65, IV 부위" },
+    { name: "Vasopressin", class: "ADH 작용", action: "혈관 수축 + 수분 보유", se: "저Na (SIADH 유사)", monitor: "Na, 소변량" },
+];
+
+const DRUG_QUESTION_TYPES = ["action", "class", "se", "monitor"];
+
+function renderDrugDrill() {
+    gameState.mode = "drug_drill_menu";
+    resetStateForMode();
+    showCoreUI();
+    if (UI.logBar) UI.logBar.innerHTML = "";
+    updateStats();
+    UI.gameArea.innerHTML = `
+      <div class="scene-card card">
+        <h2 class="scene-title">💊 약물 드릴</h2>
+        <p class="scene-desc">국시·NCLEX 공통 핵심 약물 ${DRUGS.length}종. 무작위로 작용·계열·부작용·모니터링 항목을 묻습니다.</p>
+        <div class="drug-stats-grid">
+            <div class="drug-stat-card"><div class="drug-stat-num">${DRUGS.length}</div><div class="drug-stat-label">약물</div></div>
+            <div class="drug-stat-card"><div class="drug-stat-num">4</div><div class="drug-stat-label">질문 유형</div></div>
+            <div class="drug-stat-card"><div class="drug-stat-num">10</div><div class="drug-stat-label">세트 문항</div></div>
+        </div>
+        <div class="choice-list">
+            <button class="choice-btn primary" data-action="startDrugDrill">🎯 10문제 시작</button>
+            <button class="choice-btn center" data-action="returnToMenu">메인 메뉴</button>
+        </div>
+      </div>`;
+    try { track("drug_drill_menu"); } catch {}
+}
+
+function startDrugDrill() {
+    // 10문제 무작위 생성 — 각 문제는 (약물, 질문유형) 페어
+    const pool = [];
+    const used = new Set();
+    while (pool.length < 10) {
+        const drug = DRUGS[Math.floor(Math.random() * DRUGS.length)];
+        const qType = DRUG_QUESTION_TYPES[Math.floor(Math.random() * DRUG_QUESTION_TYPES.length)];
+        const key = `${drug.name}|${qType}`;
+        if (used.has(key)) continue;
+        used.add(key);
+        pool.push(buildDrugQuestion(drug, qType));
+    }
+    gameState.mode = "drug_drill";
+    gameState.drugPool = pool;
+    gameState.drugIndex = 0;
+    gameState.drugCorrect = 0;
+    Storage.markModeUsed("drug_drill");
+    renderDrugDrillCard();
+    try { track("drug_drill_start"); } catch {}
+}
+
+function buildDrugQuestion(drug, qType) {
+    const LABELS = {
+        action: { q: "다음 약물의 작용 기전은?", field: "action" },
+        class: { q: "다음 약물의 계열은?", field: "class" },
+        se: { q: "다음 약물의 주요 부작용은?", field: "se" },
+        monitor: { q: "다음 약물 투여 시 모니터링 항목은?", field: "monitor" },
+    };
+    const label = LABELS[qType];
+    const correctText = drug[label.field];
+    // 오답 3개 — 같은 필드의 다른 약물에서 가져옴
+    const wrongPool = DRUGS.filter(d => d.name !== drug.name).map(d => d[label.field]);
+    const shuffled = wrongPool.sort(() => Math.random() - 0.5).slice(0, 3);
+    const choices = [
+        { text: correctText, correct: true, log: `정답. ${drug.name} = ${label.field === "action" ? "작용: " : label.field === "class" ? "계열: " : label.field === "se" ? "부작용: " : "모니터: "}${correctText}` },
+        ...shuffled.map(t => ({ text: t, log: `오답. 이 답은 다른 약물의 ${label.field === "action" ? "작용" : label.field === "class" ? "계열" : label.field === "se" ? "부작용" : "모니터"}입니다.` })),
+    ];
+    // 셔플
+    for (let i = choices.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [choices[i], choices[j]] = [choices[j], choices[i]];
+    }
+    return { drug: drug.name, qType, prompt: `${label.q} — ${drug.name}`, choices };
+}
+
+function renderDrugDrillCard() {
+    const pool = gameState.drugPool || [];
+    const i = gameState.drugIndex || 0;
+    if (i >= pool.length) { renderDrugDrillSummary(); return; }
+    const q = pool[i];
+    const choicesHtml = q.choices.map((c, idx) => `
+        <button class="choice-btn" data-action="drugDrillAnswer" data-idx="${idx}">${escapeHtml(c.text)}</button>
+    `).join("");
+    UI.gameArea.innerHTML = `
+      <div class="scene-card card">
+        <div class="quiz-progress">💊 약물 드릴 ${i + 1}/${pool.length}</div>
+        <h2 class="scene-title">${escapeHtml(q.prompt)}</h2>
+        <div class="choice-list" id="drug-drill-choices">${choicesHtml}</div>
+        <div id="drug-drill-feedback" class="image-quiz-feedback hidden"></div>
+        <button class="choice-btn subtle center hidden" id="drug-drill-next-btn" data-action="drugDrillNext">다음 →</button>
+        <button class="choice-btn center" data-action="returnToMenu">중단하고 메뉴로</button>
+      </div>`;
+}
+
+function drugDrillAnswer(t) {
+    const pool = gameState.drugPool || [];
+    const i = gameState.drugIndex || 0;
+    const q = pool[i];
+    if (!q) return;
+    const idx = parseInt(t.dataset.idx, 10);
+    const choice = q.choices[idx];
+    if (!choice) return;
+    const isCorrect = !!choice.correct;
+    if (isCorrect) { gameState.drugCorrect = (gameState.drugCorrect || 0) + 1; Sound.correct(); }
+    else { Sound.wrong(); }
+    document.querySelectorAll("#drug-drill-choices .choice-btn").forEach((btn, bi) => {
+        btn.disabled = true;
+        const c = q.choices[bi];
+        if (c && c.correct) btn.classList.add("correct-flash");
+        else if (bi === idx) btn.classList.add("wrong-flash");
+    });
+    const fb = document.getElementById("drug-drill-feedback");
+    if (fb) {
+        fb.innerHTML = `
+            <div class="${isCorrect ? "feedback-good" : "feedback-bad"}">${isCorrect ? "✅ 정답" : "❌ 오답"}</div>
+            <div class="feedback-log">${escapeHtml(choice.log || "")}</div>`;
+        fb.classList.remove("hidden");
+    }
+    const nextBtn = document.getElementById("drug-drill-next-btn");
+    if (nextBtn) nextBtn.classList.remove("hidden");
+    try { track("drug_drill_answer", { correct: isCorrect, drug: q.drug, qType: q.qType }); } catch {}
+}
+
+function drugDrillNext() {
+    gameState.drugIndex = (gameState.drugIndex || 0) + 1;
+    renderDrugDrillCard();
+}
+
+function renderDrugDrillSummary() {
+    const total = (gameState.drugPool || []).length;
+    const correct = gameState.drugCorrect || 0;
+    const acc = total > 0 ? Math.round((correct / total) * 100) : 0;
+    try { Storage.recordSetScore("💊 약물 드릴", correct, total); checkAndNotifyAchievements(); } catch {}
+    UI.gameArea.innerHTML = `
+      <div class="scene-card card">
+        <h2 class="scene-title">💊 약물 드릴 완료</h2>
+        <div class="quiz-summary-stats">
+            <div class="quiz-stat-row"><span>총 문제</span><strong>${total}</strong></div>
+            <div class="quiz-stat-row"><span>정답</span><strong>${correct}</strong></div>
+            <div class="quiz-stat-row"><span>정답률</span><strong>${acc}%</strong></div>
+        </div>
+        <div class="choice-list">
+          <button class="choice-btn primary" data-action="renderDrugDrill">다시 풀기</button>
+          <button class="choice-btn center" data-action="returnToMenu">메인 메뉴</button>
+        </div>
+      </div>`;
+    try { track("drug_drill_complete", { total, correct, acc }); } catch {}
+}
+
+// 로컬 리더보드 — 본인 최고 기록 페이지
+function renderLeaderboard() {
+    gameState.mode = "leaderboard";
+    showCoreUI(); updateStats();
+    const lb = Storage.getLeaderboard();
+    const data = Storage.load();
+    const streak = (data.streak && typeof data.streak === "object") ? data.streak : { count: 0, best: 0 };
+    const counters = (data.achievements && data.achievements.counters) || {};
+    const mockBest = counters.mockBest || lb.mockBest || 0;
+
+    const topSetsHtml = (lb.topSets && lb.topSets.length > 0)
+        ? lb.topSets.map((s, i) => {
+            const acc = s.total > 0 ? Math.round((s.correct / s.total) * 100) : 0;
+            const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `<span class="lb-rank">${i+1}</span>`;
+            const dt = new Date(s.ts || 0);
+            const dateStr = `${dt.getMonth()+1}/${dt.getDate()}`;
+            return `<div class="lb-row">
+                <div class="lb-medal">${medal}</div>
+                <div class="lb-body">
+                    <div class="lb-title">${escapeHtml(s.category || "전체")}</div>
+                    <div class="lb-sub">${s.correct}/${s.total} · ${dateStr}</div>
+                </div>
+                <div class="lb-acc">${acc}%</div>
+            </div>`;
+        }).join("")
+        : `<div class="empty-state">
+            <svg class="empty-state-svg" viewBox="0 0 120 120" fill="none">
+                <circle cx="60" cy="60" r="50" fill="var(--primary-soft)"/>
+                <path d="M40 70 L55 55 L65 65 L80 50" stroke="var(--primary)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                <circle cx="80" cy="50" r="4" fill="var(--primary)"/>
+            </svg>
+            <div class="empty-state-title">아직 기록이 없어요</div>
+            <div class="empty-state-sub">퀴즈 세트를 한 번 완주하면 여기에 기록돼요.</div>
+          </div>`;
+
+    UI.gameArea.innerHTML = `
+      <div class="card">
+        <h2 class="scene-title">📊 나의 최고 기록</h2>
+        <div class="lb-summary">
+            <div class="lb-summary-cell">
+                <div class="lb-summary-label">모의고사 최고</div>
+                <div class="lb-summary-value">${mockBest > 0 ? mockBest + "점" : "—"}</div>
+            </div>
+            <div class="lb-summary-cell">
+                <div class="lb-summary-label">연속 학습 최고</div>
+                <div class="lb-summary-value">${streak.best > 0 ? streak.best + "일" : "—"}</div>
+            </div>
+            <div class="lb-summary-cell">
+                <div class="lb-summary-label">현재 연속</div>
+                <div class="lb-summary-value">${streak.count > 0 ? streak.count + "일" : "—"}</div>
+            </div>
+        </div>
+        <h3 class="settings-section">세트 정답률 TOP 10</h3>
+        <div class="lb-list">${topSetsHtml}</div>
+        <button class="choice-btn center" data-action="returnToMenu">메인 메뉴</button>
+      </div>`;
+    try { track("leaderboard_view"); } catch {}
+}
+
 function renderPrivacy() {
     gameState.mode = "privacy";
     showCoreUI(); updateStats();
@@ -4953,6 +5250,14 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
             </div>
             <div class="row-chev">›</div>
           </button>
+          <button class="row-card" data-action="renderDrugDrill">
+            <div class="row-icon">💊</div>
+            <div class="row-body">
+              <div class="row-title">약물 드릴 (Top 50)</div>
+              <div class="row-sub">국시·NCLEX 핵심 약물 · 작용·부작용·모니터링 무작위 출제</div>
+            </div>
+            <div class="row-chev">›</div>
+          </button>
         </div>
 
         <div class="section-label">임상 시나리오</div>
@@ -5023,7 +5328,15 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
           <div class="row-icon big" aria-hidden="true">🏆</div>
           <div class="row-body">
             <div class="row-title">배지 컬렉션 ${gotCount > 0 ? `<span class="row-pill">${gotCount}/${totalBadges}</span>` : `<span class="row-pill">0/${totalBadges}</span>`}</div>
-            <div class="row-sub">${gotCount > 0 ? `획득한 배지 ${gotCount}개` : '학습 도전과제 10종'}</div>
+            <div class="row-sub">${gotCount > 0 ? `획득한 배지 ${gotCount}개` : `학습 도전과제 ${totalBadges}종`}</div>
+          </div>
+          <div class="row-chev">›</div>
+        </button>
+        <button class="row-card big" data-action="renderLeaderboard">
+          <div class="row-icon big" aria-hidden="true">📊</div>
+          <div class="row-body">
+            <div class="row-title">나의 최고 기록</div>
+            <div class="row-sub">세트 정답률 TOP 10 · 모의 최고 점수 · 연속 학습</div>
           </div>
           <div class="row-chev">›</div>
         </button>
@@ -5697,11 +6010,30 @@ function checkAndNotifyAchievements() {
         const b = BADGES.find(x => x.id === id);
         if (!b) return;
         try { addLog(`🏆 배지 획득: ${b.emoji} ${b.name}`, "log-good"); } catch {}
+        try { showBadgeUnlockBanner(b); } catch {}
     });
     if (newly.length > 0) {
         try { Sound.correct(); } catch {}
+        try { Haptics.heavy(); } catch {}
         try { track("achievement_unlocked", { count: String(newly.length) }); } catch {}
     }
+}
+
+// 배지 잠금해제 축하 배너 — 2.5s 자동 사라짐
+function showBadgeUnlockBanner(badge) {
+    if (!badge) return;
+    const existing = document.querySelector(".badge-unlock-banner");
+    if (existing) existing.remove();
+    const el = document.createElement("div");
+    el.className = "badge-unlock-banner";
+    el.setAttribute("role", "alert");
+    el.innerHTML = `
+        <div class="badge-unlock-emoji">${badge.emoji || "🏆"}</div>
+        <div class="badge-unlock-title">배지 획득</div>
+        <div class="badge-unlock-name">${escapeHtml(badge.name || "")}</div>
+    `;
+    document.body.appendChild(el);
+    setTimeout(() => { try { el.remove(); } catch {} }, 3200);
 }
 
 function renderAchievements() {
@@ -6032,6 +6364,11 @@ const DELEGATED_ACTIONS = {
     ttsSpeak: (t) => ttsSpeak(t),
     renderPremiumPage: () => renderPremiumPage(),
     notifyPremium: () => notifyPremium(),
+    renderLeaderboard: () => renderLeaderboard(),
+    renderDrugDrill: () => renderDrugDrill(),
+    startDrugDrill: () => startDrugDrill(),
+    drugDrillAnswer: (t) => drugDrillAnswer(t),
+    drugDrillNext: () => drugDrillNext(),
     setTheme: (t) => { const mode = t.dataset.theme; applyTheme(mode); Storage.setSettings({ theme: mode }); },
     startImageQuiz: (t) => startImageQuiz(t),
     imageQuizAnswer: (t) => imageQuizAnswer(t),
