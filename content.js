@@ -3234,6 +3234,7 @@
             steps: [
                 {
                     time: "월 06:30", title: "월요일 아침 — 환자 입장",
+                    image: "urine:dark",
                     narration: "월요일 첫 환자. 이만수 (58세) 도착. \"주말 동안 부종 심해졌어요. 체중 5kg 늘었어요.\" 평소 시간 3kg → 5kg 초과. 호흡 약간 빠름.",
                     choices: [
                         { text: "체중·V/S·부종 사정 + 호흡·청진 (폐 수포음)", correct: true, hp: -2, rep: 20, log: "정답. HD 환자 주말 체중 증가는 흔하지만 5kg 초과는 폐부종 위험 — UF 목표 신중." },
@@ -3264,6 +3265,7 @@
                 },
                 {
                     time: "월 11:00", title: "박순영 — 입원 권유",
+                    image: "skin:pallor",
                     narration: "박순영 (72세) 도착. 체중 1.5kg 증가만, V/S 안정. 그러나 \"가슴이 답답하고 손발이 차요.\" SpO2 94%, P 110.",
                     choices: [
                         { text: "심전도 + 흉부 청진 + 의사 콜", correct: true, hp: -2, rep: 20, log: "정답. HD 환자 흉부 증상 + 빈맥 = 심혈관 응급 의심." },
@@ -3416,6 +3418,7 @@
                 },
                 {
                     time: "화 10:00", title: "Day 2 — 드레싱 첫 교체",
+                    image: "wound:stage3",
                     narration: "하룻밤이 지나고 — 한지수 선생님과 함께 무균 카트를 베드사이드로 끌고 가는데 정인호님의 손끝이 미세하게 움찔합니다. 화요일 아침. 첫 드레싱 교체. 통증 NRS 9점 (PCA 모르핀 사용 중). 환자 의식 처짐 (진정 RASS -2). 화상 부위 진물 + 일부 deep 2도 → 3도 진행 보임.",
                     choices: [
                         { text: "추가 진통 (Ketamine·Lorazepam) 의사 협진 + 무균 드레싱 (Silver sulfadiazine)", correct: true, hp: -2, rep: 22, log: "정답. 화상 드레싱 = 적극 통증 + 무균 + 사진 + 다학제." },
@@ -3436,6 +3439,7 @@
                 },
                 {
                     time: "수 09:00", title: "Day 3 — Escharotomy",
+                    image: "wound:stage4",
                     narration: "사흘째 아침 — 한지수 선생님이 손등의 변색을 확인하며 \"손가락 살리려면 지금이에요\" 하고 짧게 결심을 굳힙니다. 수요일. 환자 양손 부종 진행, 손가락 색 변색. 외과 의사 \"Escharotomy 필요합니다 — 베드사이드에서.\" 환자 진정 깊게.",
                     choices: [
                         { text: "Escharotomy 준비 (무균 + 통증 조절 + 부종 평가) 동행", correct: true, hp: -3, rep: 22, log: "회복적 선택. Escharotomy 는 응급 + 통증 + 무균 + 동행이 함께 가야 합니다." },
@@ -3851,6 +3855,7 @@
                 },
                 {
                     time: "02:30", title: "검사 결과 — HELLP 확진",
+                    image: "fhr:late",
                     narration: "검사 결과 도착. Hgb 9.0, 혈소판 65,000, AST 250, ALT 220, LDH 800, 말초혈 schistocyte. HELLP 확진. 의사 \"응급 C/S 갑니다.\"",
                     choices: [
                         { text: "혈소판 수혈 준비 + 수술실·NICU 준비 + 동의서", correct: true, hp: -2, rep: 22, log: "정답. HELLP + 33주 = 분만 + 미숙아 폐 성숙 + 출혈 준비." },
@@ -3892,6 +3897,7 @@
                 },
                 {
                     time: "04:30", title: "회복실 — 산후 출혈",
+                    image: "skin:pallor",
                     narration: "C/S 후 30분. 산모 BP 90/55 (수술 후 100/65), 자궁저부 단단하지만 ooze 다량. Hgb 결과 7.0 (수술 전 9.0).",
                     choices: [
                         { text: "산후 출혈 응급 — Oxytocin + Methergine 검토", correct: true, hp: -3, rep: 22, log: "정답. HELLP 산모 = 출혈 위험 극대 — 즉시 처치." },
@@ -4155,6 +4161,7 @@
                 },
                 {
                     time: "01:15", title: "경련 멈춤 — 즉시 사정",
+                    image: "urine:foamy",
                     narration: "MgSO4 부하용량 후 경련 멈춤. 환자 의식 혼미 (postictal). BP 175/110, 단백뇨 4+, 심부건반사 4+. 자궁수축 없음 (분만 진행 X).",
                     choices: [
                         { text: "MgSO4 유지/hr + 즉시 응급 C/S 결정", correct: true, hp: -2, rep: 22, log: "정답. 자간증 = 분만이 완치 — 36주 = 즉시 C/S." },
@@ -4196,6 +4203,7 @@
                 },
                 {
                     time: "03:30", title: "회복실 — Mg 독성 사정",
+                    image: "pupil:pinpoint",
                     narration: "산모 마취에서 회복 중. MgSO4 2g/hr 유지. V/S 사정: 호흡 11회/분, 심부건반사 약함, 소변량 20mL/hr.",
                     choices: [
                         { text: "MgSO4 즉시 감량·중단 + Calcium gluconate IV 준비", correct: true, hp: -3, rep: 22, log: "정답. Mg 독성 — Calcium gluconate 즉시 (HELLP·자간증 공통)." },
@@ -4611,6 +4619,7 @@
                 },
                 {
                     time: "월 08:00", title: "Bed 1 권태수 — ARDS 진행",
+                    image: "cxr:pneumonia",
                     narration: "PPE를 마치고 첫 라운드에 들어선 직후 — 모니터의 SpO2 숫자가 어제 인계와 다른 색으로 깜빡이는 것이 눈에 먼저 들어옵니다. Bed 1 권태수 (75세). 어제 SpO2 92% on NRB → 오늘 88%. R 30, 자가 호흡 어려움. 의사 \"삽관 + 인공호흡기 갑시다.\"",
                     choices: [
                         { text: "삽관 준비 (약물·튜브·CO2 monitor) + 호흡치료사 콜", correct: true, hp: -3, rep: 22, log: "정답. 격리병동 삽관 = 팀 + 가족 정보 + 응급 준비 통합." },
@@ -4621,6 +4630,7 @@
                 },
                 {
                     time: "월 11:00", title: "Bed 3 박순영 — BiPAP 설정",
+                    image: "ausc:crackle-lower",
                     narration: "권태수님 삽관 정리가 끝나자마자 — Bed 3에서 박순영님이 마스크 가장자리를 자꾸 밀어내는 모습이 보이고 가까이 다가가 손을 잡아드립니다. Bed 3 박순영 (62세 당뇨·고혈압). BiPAP IPAP 12 EPAP 6, FiO2 50%. SpO2 91%, 의식 명료. \"숨이 차요... 마스크가 답답해서요\" 호소.",
                     choices: [
                         { text: "BiPAP 적응 코칭 (점진적 압력 + 휴식 시간)", correct: true, hp: -2, rep: 22, log: "정답. BiPAP = 환자 협력 + 압력 적정 + 정서 통합." },
@@ -4785,6 +4795,7 @@
                 },
                 {
                     time: "화 08:00", title: "Bed 1 정수민 — 노인 섬망 의심",
+                    image: "glasgow:low",
                     narration: "75세 고관절 ORIF 후. 마취 회복 1시간차 \"우리 손주 어디 갔어?\" 라며 시간·장소 혼란. 신체보호대 X. CAM-ICU positive.",
                     choices: [
                         { text: "비약물 (시계·달력·가족·조명·통증 조절) + 약물 (Haloperidol 검토 의사 협진)", correct: true, hp: -2, rep: 22, log: "정답. 노인 PACU 섬망 = 비약물 1차 + 약물 최후 + 가족 자원." },
@@ -4846,6 +4857,7 @@
                 },
                 {
                     time: "금 10:00", title: "응급 — 호흡 정지 알람",
+                    image: "skin:cyanosis",
                     narration: "금요일. Bed 4 신규 환자 (마취 회복 중) 알람 — 호흡 정지! SpO2 78%, 무호흡 + 진정 깊음. PCA 모르핀 사용 중.",
                     choices: [
                         { text: "즉시 자극 + 기도 개방 + 산소 마스크 100%", correct: true, hp: -3, rep: 22, log: "정답. 오피오이드 유발 호흡 정지 = Naloxone + ACLS 즉시." },
@@ -4948,6 +4960,7 @@
                 },
                 {
                     time: "13:30", title: "Call 2 — 도서 MI",
+                    image: "ecg:stemi",
                     narration: "콜! \"백령도 52세 여성, 흉통·식은땀·호흡곤란 — MI 의심.\" 이륙. 도착 후 환자 BP 95/60, P 110, 식은땀, 호흡 22.",
                     choices: [
                         { text: "12-lead ECG + IV + 산소", correct: true, hp: -3, rep: 22, log: "정답. STEMI 의심 = MONA + PCI 병원 결정." },
@@ -4979,6 +4992,7 @@
                 },
                 {
                     time: "19:00", title: "Call 3 — 시골 소아 외상",
+                    image: "skin:pallor",
                     narration: "콜! \"시골 교통사고 8세 남아 다발 외상. 의식 명료, 골반 통증·다리 부종.\" 이륙. 도착 후 환자 의식 명료, BP 95/60, P 120, 골반 압통 + open book fracture 의심.",
                     choices: [
                         { text: "ABCDE + 골반 binder + IV 두 개", correct: true, hp: -3, rep: 22, log: "정답. 소아 다발 외상 = ABCDE + 골반 binder + 부모 + 소아 외상." },
@@ -5361,7 +5375,7 @@
             ],
             cast: "주치의 임채영 · 인터벤션 펠로우 김태우 · 동료 신지호",
             steps: [
-                { time: "14:00", title: "PCI 후 인계", narration: "응급실 → CCU 이송. 우관상 근위부 100% 폐색 → DES 1개. Door-to-Balloon 58분. 시술 전 ST 4mm 상승 → 시술 후 1mm 잔존. 환자 호흡 곤란 없으나 흉부 압박감 NRS 3.",
+                { time: "14:00", title: "PCI 후 인계", image: "ecg:nsr", narration: "응급실 → CCU 이송. 우관상 근위부 100% 폐색 → DES 1개. Door-to-Balloon 58분. 시술 전 ST 4mm 상승 → 시술 후 1mm 잔존. 환자 호흡 곤란 없으나 흉부 압박감 NRS 3.",
                   choices: [
                     { text: "12-Lead ECG 재시행 + V/S 5분 간격", correct: true, hp: -3, rep: 12, log: "정답. PCI 후 4시간은 재폐색·출혈 모니터링이 핵심." },
                     { text: "환자가 안정적이니 30분 후에 V/S 측정", hp: -25, rep: -18, log: "PCI 직후 1시간은 가장 위험합니다." },
@@ -5382,7 +5396,7 @@
                     { text: "다음 회진 시간까지 추세 관찰한다", hp: -25, rep: -20, log: "PCI 후 24시간 내 DAPT 시작이 표준입니다." },
                     { text: "환자에게 약국 가서 직접 사 오라고 안내", hp: -30, rep: -25, log: "처방·관리 책임 위반입니다." },
                   ] },
-                { time: "15:10", title: "C1 — 서맥 + 저혈압 (하벽 MI 합병증)", narration: "DAPT 보고를 마치고 돌아서는 순간 — C1 모니터에서 HR 숫자가 빨갛게 깜빡이고 가슴이 한 번 철렁합니다. 조민철님(하벽 STEMI) HR 42 + BP 84/52 + 어지럼 호소. 모니터에 2도 방실차단(Mobitz II) 의심.",
+                { time: "15:10", title: "C1 — 서맥 + 저혈압 (하벽 MI 합병증)", image: "ecg:nsr", narration: "DAPT 보고를 마치고 돌아서는 순간 — C1 모니터에서 HR 숫자가 빨갛게 깜빡이고 가슴이 한 번 철렁합니다. 조민철님(하벽 STEMI) HR 42 + BP 84/52 + 어지럼 호소. 모니터에 2도 방실차단(Mobitz II) 의심.",
                   choices: [
                     { text: "12-Lead ECG + 의사 즉시 콜", correct: true, hp: -4, rep: 18, log: "정답. 하벽 MI 의 방실차단 — atropine + pacing 대비." },
                     { text: "수술 후 피로로 보고 관찰 + 다음 듀티 인계", hp: -32, rep: -25, log: "증상성 서맥 + 차단은 응급." },
@@ -5424,7 +5438,7 @@
                     { text: "분위기 어색해질까 봐 못 들은 척 인계만 마무리한다", hp: -15, rep: -12, log: "환자 존엄을 지키지 못합니다." },
                     { text: "보호자에게 \"저 사람 원래 저래요\" 험담", hp: -25, rep: -20, log: "전문가 윤리 위반입니다." },
                   ] },
-                { time: "22:00", title: "C1 — 야간 호흡곤란", narration: "밤 10시 — 데스크 너머로 C1 모니터의 호흡수 숫자가 두 칸 위로 올라가는 것이 눈에 먼저 들어옵니다. 조민철님이 \"숨이 차요\" 호소. SpO2 92%(이전 97%), RR 26, 양측 폐 하부 쇄설음. BP 138/86, HR 96.",
+                { time: "22:00", title: "C1 — 야간 호흡곤란", image: "ausc:crackle-lower", narration: "밤 10시 — 데스크 너머로 C1 모니터의 호흡수 숫자가 두 칸 위로 올라가는 것이 눈에 먼저 들어옵니다. 조민철님이 \"숨이 차요\" 호소. SpO2 92%(이전 97%), RR 26, 양측 폐 하부 쇄설음. BP 138/86, HR 96.",
                   choices: [
                     { text: "심부전 의심 — 침대 머리 거상 + 산소 + 의사 보고", correct: true, hp: -4, rep: 15, log: "정답. PCI 후 좌심실 부전의 전형적 양상." },
                     { text: "통증으로 인한 호흡 변화로 보고 모르핀 추가", hp: -28, rep: -22, log: "심부전 사정 없이 모르핀은 위험합니다." },
@@ -5486,7 +5500,7 @@
                     { text: "환자를 일어나 걸어 보게 한다", hp: -25, rep: -20, log: "낙상 + 뇌관류 악화 위험." },
                     { text: "수면제로 안정시킨다", hp: -28, rep: -22, log: "원인 평가가 우선." },
                   ] },
-                { time: "04:30", title: "N3 — ICP 상승 알람", narration: "정민호님 ICP 18 → 24mmHg 알람. CPP 65 → 58. 환자 자세는 우측위, 머리 굴곡.",
+                { time: "04:30", title: "N3 — ICP 상승 알람", image: "glasgow:low", narration: "정민호님 ICP 18 → 24mmHg 알람. CPP 65 → 58. 환자 자세는 우측위, 머리 굴곡.",
                   choices: [
                     { text: "머리 정중·30도 거상 + 자극 최소화", correct: true, hp: -3, rep: 15, log: "정답. 자세성 ICP 상승은 자세 교정으로 호전됩니다." },
                     { text: "즉시 만니톨 100ml IV push + 보호자 안내", hp: -22, rep: -16, log: "처방 없는 약물 투여 금지. 자세 교정 먼저." },

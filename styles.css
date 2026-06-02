@@ -2110,3 +2110,49 @@ body:has(.tab-bar) #game-area { padding-bottom: 90px; }
     font-size: 11px;
     color: var(--muted);
 }
+
+/* ===== 이미지 문제 모음 (Image Quiz) ===== */
+.quiz-progress {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    margin-bottom: 8px;
+}
+.image-quiz-feedback {
+    margin: 14px 0;
+    padding: 14px 16px;
+    border-radius: var(--radius-md);
+    background: var(--bg);
+    box-shadow: var(--shadow-in);
+}
+.image-quiz-feedback .feedback-good {
+    font-weight: 700;
+    color: var(--success);
+    margin-bottom: 6px;
+}
+.image-quiz-feedback .feedback-bad {
+    font-weight: 700;
+    color: var(--danger);
+    margin-bottom: 6px;
+}
+.image-quiz-feedback .feedback-log {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.5;
+}
+.quiz-summary-stats {
+    margin: 18px 0;
+    padding: 16px;
+    background: var(--primary-soft);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-in);
+}
+.quiz-stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+}
+.quiz-stat-row:last-child { border-bottom: none; }
+.quiz-stat-row strong { font-size: 18px; color: var(--primary-dark); }

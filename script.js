@@ -1924,6 +1924,215 @@ function renderQuizMenu() {
         </div>
       </div>`;
 }
+
+// =========================================================================
+// 이미지 문제 모음 — 모든 에피소드·시나리오에서 image 가 있는 step 만 추려서 퀴즈로
+// =========================================================================
+function collectImageScenes() {
+    const scenes = [];
+    const episodes = NC.EPISODES || [];
+    episodes.forEach(ep => {
+        (ep.steps || []).forEach((step, idx) => {
+            if (step.image && Array.isArray(step.choices) && step.choices.length >= 2) {
+                scenes.push({
+                    src: "episode",
+                    sourceId: ep.id,
+                    sourceTitle: ep.title,
+                    stepIdx: idx,
+                    image: step.image,
+                    prompt: step.prompt || step.narration || step.title || "",
+                    title: step.title || `${ep.title} — ${idx + 1}단계`,
+                    choices: step.choices,
+                });
+            }
+        });
+    });
+    const scenarios = NC.SCENARIOS || [];
+    scenarios.forEach(sc => {
+        (sc.steps || []).forEach((step, idx) => {
+            if (step.image && Array.isArray(step.choices) && step.choices.length >= 2) {
+                scenes.push({
+                    src: "scenario",
+                    sourceId: sc.id,
+                    sourceTitle: sc.title,
+                    stepIdx: idx,
+                    image: step.image,
+                    prompt: step.prompt || step.narration || "",
+                    title: step.title || sc.title,
+                    choices: step.choices,
+                });
+            }
+        });
+    });
+    return scenes;
+}
+
+function renderImageQuizMenu() {
+    gameState.mode = "image_quiz_menu";
+    resetStateForMode();
+    showCoreUI();
+    if (UI.logBar) UI.logBar.innerHTML = "";
+    updateStats();
+    const scenes = collectImageScenes();
+    if (scenes.length === 0) {
+        UI.gameArea.innerHTML = `
+          <div class="scene-card card">
+            <h2 class="scene-title">📷 이미지 문제 모음</h2>
+            <p class="scene-desc">아직 이미지 문제가 없어요.</p>
+            <button class="choice-btn center" data-action="returnToMenu">메인 메뉴</button>
+          </div>`;
+        return;
+    }
+    const buckets = { ECG: [], 청진: [], 산과: [], 신경: [], 화상상처: [], 영상: [], 기타: [] };
+    scenes.forEach(s => {
+        const k = s.image || "";
+        if (k.startsWith("ecg:")) buckets.ECG.push(s);
+        else if (k.startsWith("ausc:")) buckets.청진.push(s);
+        else if (k.startsWith("fhr:") || k.startsWith("fundal:")) buckets.산과.push(s);
+        else if (k.startsWith("pupil:") || k.startsWith("glasgow:")) buckets.신경.push(s);
+        else if (k.startsWith("wound:") || k === "rule-of-nines") buckets.화상상처.push(s);
+        else if (k.startsWith("cxr:") || k.startsWith("aed:")) buckets.영상.push(s);
+        else buckets.기타.push(s);
+    });
+    const bucketBtns = Object.entries(buckets)
+        .filter(([_, list]) => list.length > 0)
+        .map(([name, list]) => `
+          <button class="choice-btn primary" data-action="startImageQuiz" data-bucket="${escapeHtml(name)}">
+            ${name} (${list.length}문제)
+          </button>`).join("");
+    UI.gameArea.innerHTML = `
+      <div class="scene-card card">
+        <h2 class="scene-title">📷 이미지 문제 모음</h2>
+        <p class="scene-desc">에피소드·시나리오의 임상 이미지 문제 ${scenes.length}개를 모았어요. 카테고리를 선택하세요.</p>
+        <div class="choice-list">
+          <button class="choice-btn primary" data-action="startImageQuiz" data-bucket="__all__">🎯 전체 (${scenes.length}문제, 무작위)</button>
+          ${bucketBtns}
+          <button class="choice-btn center" data-action="returnToMenu">메인 메뉴</button>
+        </div>
+      </div>`;
+    try { track("image_quiz_menu_open", { total: scenes.length }); } catch {}
+}
+
+function startImageQuiz(t) {
+    const bucket = t && t.dataset ? t.dataset.bucket : "__all__";
+    const all = collectImageScenes();
+    let pool = all;
+    if (bucket !== "__all__") {
+        pool = all.filter(s => {
+            const k = s.image || "";
+            if (bucket === "ECG") return k.startsWith("ecg:");
+            if (bucket === "청진") return k.startsWith("ausc:");
+            if (bucket === "산과") return k.startsWith("fhr:") || k.startsWith("fundal:");
+            if (bucket === "신경") return k.startsWith("pupil:") || k.startsWith("glasgow:");
+            if (bucket === "화상상처") return k.startsWith("wound:") || k === "rule-of-nines";
+            if (bucket === "영상") return k.startsWith("cxr:") || k.startsWith("aed:");
+            return !["ecg:", "ausc:", "fhr:", "fundal:", "pupil:", "glasgow:", "wound:", "cxr:", "aed:"].some(p => k.startsWith(p)) && k !== "rule-of-nines";
+        });
+    }
+    if (pool.length === 0) {
+        addLog("해당 카테고리에 문제가 없습니다.", "log-bad");
+        renderImageQuizMenu();
+        return;
+    }
+    const shuffled = [...pool];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    gameState.mode = "image_quiz";
+    gameState.imageQuizPool = shuffled;
+    gameState.imageQuizIndex = 0;
+    gameState.imageQuizCorrect = 0;
+    gameState.imageQuizBucket = bucket;
+    renderImageQuizCard();
+    try { track("image_quiz_start", { bucket, count: shuffled.length }); } catch {}
+}
+
+function renderImageQuizCard() {
+    const pool = gameState.imageQuizPool || [];
+    const i = gameState.imageQuizIndex || 0;
+    if (i >= pool.length) { renderImageQuizSummary(); return; }
+    const scene = pool[i];
+    if (!scene._shuffled) {
+        const arr = [...scene.choices];
+        for (let k = arr.length - 1; k > 0; k--) {
+            const j = Math.floor(Math.random() * (k + 1));
+            [arr[k], arr[j]] = [arr[j], arr[k]];
+        }
+        scene._shuffled = arr;
+    }
+    showCoreUI();
+    updateStats();
+    const imgHtml = `<div class="scene-image">${renderClinicalImage(scene.image)}</div>`;
+    const choicesHtml = scene._shuffled.map((c, idx) => `
+        <button class="choice-btn" data-action="imageQuizAnswer" data-idx="${idx}">${escapeHtml(c.text)}</button>
+    `).join("");
+    UI.gameArea.innerHTML = `
+      <div class="scene-card card">
+        <div class="quiz-progress">📷 이미지 문제 ${i + 1}/${pool.length} · ${escapeHtml(scene.sourceTitle)}</div>
+        <h2 class="scene-title">${escapeHtml(scene.title)}</h2>
+        ${imgHtml}
+        ${scene.prompt ? `<p class="scene-desc">${escapeHtml(scene.prompt)}</p>` : ""}
+        <div class="choice-list" id="image-quiz-choices">${choicesHtml}</div>
+        <div id="image-quiz-feedback" class="image-quiz-feedback hidden"></div>
+        <button class="choice-btn subtle center hidden" id="image-quiz-next-btn" data-action="imageQuizNext">다음 →</button>
+        <button class="choice-btn center" data-action="returnToMenu">중단하고 메뉴로</button>
+      </div>`;
+}
+
+function imageQuizAnswer(t) {
+    const pool = gameState.imageQuizPool || [];
+    const i = gameState.imageQuizIndex || 0;
+    const scene = pool[i];
+    if (!scene) return;
+    const idx = parseInt(t.dataset.idx, 10);
+    const choice = scene._shuffled[idx];
+    if (!choice) return;
+    const isCorrect = !!choice.correct;
+    if (isCorrect) { gameState.imageQuizCorrect = (gameState.imageQuizCorrect || 0) + 1; Sound.correct(); }
+    else { Sound.wrong(); }
+    document.querySelectorAll("#image-quiz-choices .choice-btn").forEach((btn, bi) => {
+        btn.disabled = true;
+        const c = scene._shuffled[bi];
+        if (c && c.correct) btn.classList.add("correct-flash");
+        else if (bi === idx) btn.classList.add("wrong-flash");
+    });
+    const fb = document.getElementById("image-quiz-feedback");
+    if (fb) {
+        fb.innerHTML = `
+            <div class="${isCorrect ? "feedback-good" : "feedback-bad"}">${isCorrect ? "✅ 정답" : "❌ 오답"}</div>
+            <div class="feedback-log">${escapeHtml(choice.log || "")}</div>`;
+        fb.classList.remove("hidden");
+    }
+    const nextBtn = document.getElementById("image-quiz-next-btn");
+    if (nextBtn) nextBtn.classList.remove("hidden");
+    try { track("image_quiz_answer", { correct: isCorrect, image: scene.image }); } catch {}
+}
+
+function imageQuizNext() {
+    gameState.imageQuizIndex = (gameState.imageQuizIndex || 0) + 1;
+    renderImageQuizCard();
+}
+
+function renderImageQuizSummary() {
+    const total = (gameState.imageQuizPool || []).length;
+    const correct = gameState.imageQuizCorrect || 0;
+    const acc = total > 0 ? Math.round((correct / total) * 100) : 0;
+    UI.gameArea.innerHTML = `
+      <div class="scene-card card">
+        <h2 class="scene-title">📷 이미지 문제 완료</h2>
+        <div class="quiz-summary-stats">
+            <div class="quiz-stat-row"><span>총 문제</span><strong>${total}</strong></div>
+            <div class="quiz-stat-row"><span>정답</span><strong>${correct}</strong></div>
+            <div class="quiz-stat-row"><span>정답률</span><strong>${acc}%</strong></div>
+        </div>
+        <div class="choice-list">
+          <button class="choice-btn primary" data-action="renderImageQuizMenu">다시 풀기</button>
+          <button class="choice-btn center" data-action="returnToMenu">메인 메뉴</button>
+        </div>
+      </div>`;
+    try { track("image_quiz_complete", { total, correct, acc }); } catch {}
+}
 const QUIZ_SET_SIZE = 10; // 한 세트 = 10문제 (종결감 + 진행도)
 function startQuiz(category) {
     // "__random__" = 8과목 통합 랜덤 (category null → 전체 풀 출제)
@@ -4449,6 +4658,14 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
             </div>
             <div class="row-chev">›</div>
           </button>
+          <button class="row-card" data-action="renderImageQuizMenu">
+            <div class="row-icon">📷</div>
+            <div class="row-body">
+              <div class="row-title">이미지 문제 모음</div>
+              <div class="row-sub">ECG · 청진 · 산과 · 신경 · 화상 등 시각 자료 퀴즈</div>
+            </div>
+            <div class="row-chev">›</div>
+          </button>
         </div>
 
         <div class="section-label">임상 시나리오</div>
@@ -5515,6 +5732,10 @@ const DELEGATED_ACTIONS = {
     returnToMenu: () => returnToMenu(),
     initSurvival: () => initSurvival(),
     renderQuizMenu: () => renderQuizMenu(),
+    renderImageQuizMenu: () => renderImageQuizMenu(),
+    startImageQuiz: (t) => startImageQuiz(t),
+    imageQuizAnswer: (t) => imageQuizAnswer(t),
+    imageQuizNext: () => imageQuizNext(),
     startQuiz: (t) => startQuiz(t.dataset.arg),
     quizContinue: () => quizContinue(),
     startMockExam: () => startMockExam(),
