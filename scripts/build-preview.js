@@ -40,6 +40,36 @@ out = out.replace(/<meta http-equiv="Content-Security-Policy"[^>]*>\s*/, "");
 
 // 5. service worker 등록은 script.js 안에 try/catch 로 wrap 되어 있으므로 그대로
 
+// 6. PREVIEW 전용 부트스트랩 — 약관·온보딩 자동 스킵 (검토용)
+//    sessionStorage 가 아니라 localStorage 에 미리 LEGAL_VERSION + onboarded 시드
+const previewBoot = `
+<script>
+(function() {
+    try {
+        const KEY = "nurseSim:v1";
+        let data = {};
+        try { data = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch {}
+        const needsSeed = !data.accepted || !data.onboarded;
+        if (needsSeed) {
+            data.accepted = data.accepted || { version: "1.0", at: Date.now() };
+            data.onboarded = true;
+            data.previewSeeded = true;
+            try { localStorage.setItem(KEY, JSON.stringify(data)); } catch {}
+        }
+        // 미리보기 안내 — 우측 상단에 작은 배지
+        window.addEventListener("DOMContentLoaded", () => {
+            const badge = document.createElement("div");
+            badge.textContent = "PREVIEW";
+            badge.style.cssText = "position:fixed;top:8px;right:8px;background:#7fa881;color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;z-index:99998;letter-spacing:0.06em;font-family:system-ui,sans-serif;opacity:0.9;";
+            document.body.appendChild(badge);
+        });
+    } catch {}
+})();
+</script>
+`;
+// </head> 직전에 삽입
+out = out.replace("</head>", previewBoot + "</head>");
+
 const outputPath = path.join(root, "preview.html");
 fs.writeFileSync(outputPath, out);
 
