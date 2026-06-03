@@ -2035,7 +2035,7 @@ function renderSceneCard(ev, options = {}) {
         ${bookmarkBtnHtml}
         ${tag}${metaRow}
         ${stepProgressHtml}
-        <span class="scene-emoji" aria-hidden="true">${ev.emoji || "🩺"}</span>
+        
         <h2 class="scene-title">${questionIndex !== null ? `[Q${questionIndex}] ` : ""}${escapeHtml(ev.title)} ${ttsBtnHtml}</h2>
         ${imageHtml}
         <p class="scene-desc">${escapeHtml(ev.desc)}</p>
@@ -2191,8 +2191,51 @@ function resetStateForMode() {
     gameState.nclexSataPick = null;
 }
 function initSurvival() {
-    // v1.2: 듀티 시뮬레이션 = 랜덤 에피소드 자동 진입.
-    // 일반 문제 generator 절대 호출 X. 에피소드 step 만 이어서 진행 + 엔딩.
+    // 시프트 미선택 또는 이번 세션 첫 진입 시 → 시프트 선택 화면 (잡스: 진입 시점에 한 가지만 결정)
+    if (!gameState._shiftPicked) {
+        return renderShiftPicker();
+    }
+    return _initSurvivalReal();
+}
+
+function renderShiftPicker() {
+    gameState.mode = "shift_picker";
+    resetStateForMode();
+    showCoreUI();
+    if (UI.logBar) UI.logBar.innerHTML = "";
+    updateStats();
+    const cur = gameState.currentShift || "Day";
+    UI.gameArea.innerHTML = `
+      <div class="card">
+        <h2 class="page-title">시프트 선택</h2>
+        <p class="page-sub">난이도가 다릅니다.</p>
+        <div class="shift-picker-grid">
+          <button class="shift-picker-card ${cur === 'Day' ? 'active' : ''}" data-action="pickShift" data-shift="Day" data-mult="1.0">
+            <div class="shift-picker-name">Day</div>
+            <div class="shift-picker-mult">기본 난이도</div>
+          </button>
+          <button class="shift-picker-card ${cur === 'Evening' ? 'active' : ''}" data-action="pickShift" data-shift="Evening" data-mult="1.2">
+            <div class="shift-picker-name">Evening</div>
+            <div class="shift-picker-mult">× 1.2</div>
+          </button>
+          <button class="shift-picker-card ${cur === 'Night' ? 'active' : ''}" data-action="pickShift" data-shift="Night" data-mult="1.5">
+            <div class="shift-picker-name">Night</div>
+            <div class="shift-picker-mult">× 1.5</div>
+          </button>
+        </div>
+        <button class="choice-btn center" data-action="returnToMenu">메뉴</button>
+      </div>`;
+}
+
+function pickShift(t) {
+    const shift = t && t.dataset ? t.dataset.shift : "Day";
+    const mult = parseFloat(t && t.dataset ? t.dataset.mult : "1.0") || 1.0;
+    setShift(shift, mult, t);
+    gameState._shiftPicked = true;
+    _initSurvivalReal();
+}
+
+function _initSurvivalReal() {
     resetStateForMode();
     const episodes = NC.EPISODES || [];
     if (episodes.length === 0) {
@@ -2662,7 +2705,7 @@ function renderQuizSetSummary() {
     try { checkAndNotifyAchievements(); } catch {}
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
-        <span class="scene-emoji" aria-hidden="true">${emoji}</span>
+        
         <h2 class="scene-title">세트 ${setNum} 완료 — ${escapeHtml(catLabel)}</h2>
         <div class="dashboard-row" role="group" aria-label="세트 결과">
           <div class="dash-stat"><div class="ds-num">${setCorrect}/${QUIZ_SET_SIZE}</div><div class="ds-label">이번 세트</div></div>
@@ -2913,7 +2956,7 @@ function renderNclexSummary() {
     try { Storage.addHistory({ mode: "nclex", at: Date.now(), category: gameState.nclexCategory || "__random__", total, answered, correct, accuracy: acc }); } catch {}
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
-        <span class="scene-emoji" aria-hidden="true">${emoji}</span>
+        
         <h2 class="scene-title">NCLEX-RN — ${escapeHtml(catLabel)}</h2>
         <div class="dashboard-row" role="group" aria-label="session result">
           <div class="dash-stat"><div class="ds-num">${correct}/${total}</div><div class="ds-label">Score</div></div>
@@ -3196,7 +3239,7 @@ function endDailyChallenge() {
         : `🔥 연속 학습 시작! 내일 또 오면 2일째.`;
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
-        <span class="scene-emoji" aria-hidden="true">🎯</span>
+        
         <h2 class="scene-title">일일 챌린지 완료</h2>
         <p class="scene-desc">정답 ${correct}/${DAILY_CHALLENGE_TOTAL}\n${streakMsg}</p>
         <div class="choice-list">
@@ -3885,7 +3928,7 @@ function renderCampaign() {
         else finale = "🌿 묵묵한 헌신 — 화려하진 않았지만, 수많은 환자가 본인 덕분에 살았습니다. 그것으로 충분합니다.";
         UI.gameArea.innerHTML = `
           <div class="scene-card card">
-            <span class="scene-emoji" aria-hidden="true">📖</span>
+            
             <h2 class="scene-title">커리어 완주 — 한 사람의 이야기</h2>
             <p class="scene-desc">${escapeHtml(CAREER_CAMPAIGN.chapters[CAREER_CAMPAIGN.chapters.length - 1].outro)}</p>
             <hr class="dashboard-divider">
@@ -3977,7 +4020,7 @@ function renderCampaignInterlude(prevChapterIdx, chapterCleared, endingKey) {
     }
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
-        <span class="scene-emoji" aria-hidden="true">📖</span>
+        
         <h2 class="scene-title">${chapterCleared ? "막을 내리며" : "다음 이야기로"}</h2>
         ${bridgeHtml}
         <p class="about-meta">누적 평판 ${c.cumulativeRep} · ${campaignDoneCount(c)}/${campaignTotalEpisodes()}화 완주</p>
@@ -5390,13 +5433,8 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
         <button class="hero-card" data-action="initSurvival">
           <div class="hero-label">지금 시작</div>
           <div class="hero-title">오늘의 듀티</div>
-          <div class="hero-sub">${escapeHtml(gameState.currentShift)} 시프트 · 환자 관리하며 점수 쌓기</div>
+          <div class="hero-sub">환자 관리하며 점수 쌓기</div>
         </button>
-        <div class="shift-row-below" role="radiogroup" aria-label="시프트 선택">
-          <button class="shift-pill ${gameState.currentShift === 'Day' ? 'active' : ''}" data-action="setShift" data-shift="Day" data-mult="1.0">Day</button>
-          <button class="shift-pill ${gameState.currentShift === 'Evening' ? 'active' : ''}" data-action="setShift" data-shift="Evening" data-mult="1.2">Evening</button>
-          <button class="shift-pill ${gameState.currentShift === 'Night' ? 'active' : ''}" data-action="setShift" data-shift="Night" data-mult="1.5">Night</button>
-        </div>
 
         <div class="home-row">
           <button class="row-card ${dailyDone ? 'done' : ''}" data-action="startDailyChallenge">
@@ -5779,7 +5817,7 @@ function installErrorBoundary() {
             if (!area) return;
             area.innerHTML = `
               <div class="scene-card card">
-                <span class="scene-emoji" aria-hidden="true">🛠️</span>
+                
                 <h2 class="scene-title">일시적 오류가 발생했어요</h2>
                 <p class="scene-desc">화면을 복구했습니다. 학습 기록은 안전하게 저장되어 있어요.\n계속하려면 아래 버튼을 누르세요.</p>
                 <div class="choice-list">
@@ -6367,7 +6405,7 @@ function renderInviteScreen() {
     showCoreUI(); UI.logBar.innerHTML = "";
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
-        <span class="scene-emoji" aria-hidden="true">🎁</span>
+        
         <h2 class="scene-title">친구 초대</h2>
         <p class="scene-desc">친구가 내 코드로 가입하면 양쪽 모두에게 +10 평판 보너스! 코드를 공유해보세요.</p>
 
@@ -6411,7 +6449,7 @@ function renderWeaknessAnalysis() {
     if (startedEnough.length === 0) {
         UI.gameArea.innerHTML = `
           <div class="scene-card card">
-            <span class="scene-emoji" aria-hidden="true">🎯</span>
+            
             <h2 class="scene-title">약점 분석</h2>
             <p class="scene-desc">아직 데이터가 부족해요. 시뮬레이션을 더 진행해주세요.\n(시나리오를 3회 이상 진행해야 분석이 시작됩니다.)</p>
             <div class="choice-list">
@@ -6471,7 +6509,7 @@ function renderWeaknessAnalysis() {
 
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
-        <span class="scene-emoji" aria-hidden="true">🎯</span>
+        
         <h2 class="scene-title">약점 분석</h2>
         <p class="scene-desc">자주 진행하지만 정답률이 낮은 시나리오를 모아봤어요. 집중 복습으로 점수를 끌어올리세요.</p>
 
@@ -6494,6 +6532,8 @@ const DELEGATED_ACTIONS = {
     renderPracticeMenu: () => renderPracticeMenu(),
     renderSimMenu: () => renderSimMenu(),
     renderDrillMenu: () => renderDrillMenu(),
+    pickShift: (t) => pickShift(t),
+    renderShiftPicker: () => renderShiftPicker(),
     toggleHaptics: () => toggleHaptics(),
     toggleTts: () => TTS.toggle(),
     ttsSpeak: (t) => ttsSpeak(t),

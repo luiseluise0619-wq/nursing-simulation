@@ -200,13 +200,15 @@ describe("이벤트 위임 핸들러", () => {
 
     test("setShift data-shift/data-mult 가 정상 파싱된다", () => {
         loadScript();
-        const nightBtn = document.querySelector('[data-shift="Night"]');
+        // 잡스 컷: 시프트 선택은 듀티 진입 시 picker 1회만 노출
+        document.querySelector('[data-action="initSurvival"]').click();
+        const nightBtn = document.querySelector('[data-action="pickShift"][data-shift="Night"]');
         expect(nightBtn).not.toBeNull();
+        expect(nightBtn.dataset.shift).toBe("Night");
+        expect(nightBtn.dataset.mult).toBe("1.5");
         nightBtn.click();
-        const active = document.querySelector('.shift-pill.active');
-        expect(active).not.toBeNull();
-        expect(active.dataset.shift).toBe("Night");
-        expect(active.dataset.mult).toBe("1.5");
+        // 클릭 후 듀티 시뮬 시작 → scene-card 노출
+        expect(document.querySelector(".scene-card")).not.toBeNull();
     });
 
     test("renderQuizMenu 클릭으로 8과목 + 통합 랜덤 버튼이 노출된다", () => {
@@ -563,8 +565,14 @@ describe("임상 시나리오", () => {
 
     test("Night 시프트(난이도 1.5x) 가 시나리오 HP 손실을 증폭하지 않는다", () => {
         loadScript();
-        // 메인 메뉴에서 Night 시프트 선택 → 난이도 1.5 설정
-        document.querySelector('[data-shift="Night"]').click();
+        // 잡스 컷: setShift 액션을 직접 발화 (synthetic 이벤트) — picker 통과 없이 shift만 변경
+        const fakeBtn = document.createElement("button");
+        fakeBtn.setAttribute("data-action", "setShift");
+        fakeBtn.dataset.shift = "Night";
+        fakeBtn.dataset.mult = "1.5";
+        document.body.appendChild(fakeBtn);
+        fakeBtn.click();
+        fakeBtn.remove();
         goto("renderScenarioMenu");
         document.querySelector('[data-action="startScenario"]').click();
         const C = require("../content.js");
@@ -1334,8 +1342,9 @@ describe("P2 — AdMob 어댑터 (Capacitor 호환)", () => {
 
     test("듀티 시뮬레이션(initSurvival)은 에피소드 모드로 진입한다 — 일반 문제 generator 0건", () => {
         loadScript();
-        // 듀티 시뮬레이션 클릭 → 에피소드 step 화면이 나와야 함
+        // 듀티 시뮬레이션 → 시프트 선택 → 에피소드 step 화면
         goto("initSurvival");
+        document.querySelector('[data-action="pickShift"][data-shift="Day"]').click();
         const card = document.querySelector(".scene-card");
         expect(card).not.toBeNull();
         // 에피소드 카테고리 태그 (NC.EPISODES.title) 가 노출되어야 함
@@ -1392,12 +1401,17 @@ describe("P2 — AdMob 어댑터 (Capacitor 호환)", () => {
         const fs = require("fs");
         const path = require("path");
         const src = fs.readFileSync(path.join(__dirname, "..", "script.js"), "utf-8");
-        const m = src.match(/function\s+initSurvival\s*\([^)]*\)\s*\{([\s\S]*?)\n\}\n/);
-        expect(m).not.toBeNull();
-        // initSurvival 은 더 이상 일반 문제 generator 를 호출하지 않음
-        expect(m[1]).not.toMatch(/generateClinicalEventByCategory|NQ\.allGenerators/);
-        // 에피소드 진입 호출이 있어야 함
-        expect(m[1]).toMatch(/beginEpisode|renderEpisodeResumeChoice/);
+        // 잡스 컷 이후 initSurvival 은 시프트 picker 라우터 + _initSurvivalReal 위임
+        const initM = src.match(/function\s+initSurvival\s*\([^)]*\)\s*\{([\s\S]*?)\n\}\n/);
+        expect(initM).not.toBeNull();
+        // 실제 진입 로직은 _initSurvivalReal 에 있음
+        const realM = src.match(/function\s+_initSurvivalReal\s*\([^)]*\)\s*\{([\s\S]*?)\n\}\n/);
+        expect(realM).not.toBeNull();
+        // 일반 문제 generator 호출이 없어야 함 (init + real 둘 다)
+        expect(initM[1]).not.toMatch(/generateClinicalEventByCategory|NQ\.allGenerators/);
+        expect(realM[1]).not.toMatch(/generateClinicalEventByCategory|NQ\.allGenerators/);
+        // 에피소드 진입 호출은 _initSurvivalReal 에 있음
+        expect(realM[1]).toMatch(/beginEpisode|renderEpisodeResumeChoice/);
     });
 
     test("커리어 엔딩 시스템 (generateCareerOutcome) 이 존재한다", () => {
@@ -1502,6 +1516,9 @@ describe("P2 — AdMob 어댑터 (Capacitor 호환)", () => {
             freshDom();
             loadScript();
             goto("initSurvival");
+            // 잡스 컷: 시프트 픽커 → Day 선택 후 실제 진입
+            const dayBtn = document.querySelector('[data-action="pickShift"][data-shift="Day"]');
+            if (dayBtn) dayBtn.click();
             const tag = document.querySelector(".scene-card .category-tag");
             const title = document.querySelector(".scene-title")?.textContent || "";
             const tagTxt = tag?.textContent || "";
