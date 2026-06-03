@@ -2601,3 +2601,109 @@ body:has(.tab-bar) #game-area { padding-bottom: 90px; }
 .shift-picker-card.active .shift-picker-mult {
     color: var(--primary-dark);
 }
+
+/* ===== 케밥 메뉴 (top-bar 3 → 1) ===== */
+#top-bar { position: relative; }
+.kebab-menu {
+    position: absolute;
+    top: 56px;
+    right: 16px;
+    z-index: 100;
+    background: var(--card);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    padding: 6px;
+    min-width: 180px;
+    animation: kebabSlide 150ms ease;
+}
+@keyframes kebabSlide {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.kebab-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 14px;
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    text-align: left;
+    transition: background .12s;
+}
+.kebab-item:hover {
+    background: var(--soft);
+}
+.kebab-icon {
+    width: 22px;
+    text-align: center;
+    font-size: 14px;
+}
+#kebab-btn svg {
+    display: block;
+}
+
+/* ===== iOS-style 토글 스위치 ===== */
+.toggle-switch {
+    position: relative;
+    width: 44px;
+    height: 26px;
+    background: var(--border);
+    border-radius: 13px;
+    cursor: pointer;
+    transition: background .2s;
+    border: none;
+    padding: 0;
+    flex-shrink: 0;
+}
+.toggle-switch::after {
+    content: "";
+    position: absolute;
+    left: 2px;
+    top: 2px;
+    width: 22px;
+    height: 22px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    transition: transform .2s;
+}
+.toggle-switch.on {
+    background: var(--primary);
+}
+.toggle-switch.on::after {
+    transform: translateX(18px);
+}
+.toggle-switch:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+.settings-toggle-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+}
+.settings-toggle-row:last-of-type {
+    border-bottom: none;
+}
+.settings-toggle-label {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.settings-toggle-name {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text);
+}
+.settings-toggle-sub {
+    font-size: 12px;
+    color: var(--muted);
+}

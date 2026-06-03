@@ -1815,6 +1815,30 @@ function toggleSound() {
     if (UI.soundToggle) UI.soundToggle.textContent = Sound.enabled ? "🔊" : "🔇";
 }
 
+// ⋯ 케밥 메뉴 (top-bar 3 아이콘 통합)
+function toggleKebab() {
+    const menu = document.getElementById("kebab-menu");
+    const btn = document.getElementById("kebab-btn");
+    if (!menu || !btn) return;
+    const open = !menu.classList.contains("hidden");
+    if (open) closeKebab();
+    else {
+        menu.classList.remove("hidden");
+        btn.setAttribute("aria-expanded", "true");
+        _syncKebabSoundLabel();
+    }
+}
+function closeKebab() {
+    const menu = document.getElementById("kebab-menu");
+    const btn = document.getElementById("kebab-btn");
+    if (menu) menu.classList.add("hidden");
+    if (btn) btn.setAttribute("aria-expanded", "false");
+}
+function _syncKebabSoundLabel() {
+    const el = document.getElementById("kebab-sound-label");
+    if (el) el.textContent = Sound.enabled ? "사운드 끄기" : "사운드 켜기";
+}
+
 // =========================================================================
 // 로그 / UI 업데이트
 // =========================================================================
@@ -4373,24 +4397,29 @@ function openSettings() {
           <button class="choice-btn ${settings.theme === "dark" ? "primary" : ""}" data-action="setTheme" data-theme="dark">다크</button>
           <button class="choice-btn ${(!settings.theme || settings.theme === "auto") ? "primary" : ""}" data-action="setTheme" data-theme="auto">자동</button>
         </div>
-        <div class="settings-row">
-          <span>사운드</span>
-          <span class="settings-value">${settings.sound !== false ? "켜짐" : "꺼짐"}</span>
+        <div class="settings-toggle-row">
+          <div class="settings-toggle-label">
+            <span class="settings-toggle-name">사운드</span>
+            <span class="settings-toggle-sub">정답·오답 효과음</span>
+          </div>
+          <button class="toggle-switch ${settings.sound !== false ? 'on' : ''}" data-action="toggleSound" aria-pressed="${settings.sound !== false}"></button>
         </div>
-        <div class="settings-row">
-          <span>햅틱 (진동)</span>
-          <span class="settings-value">${settings.haptics !== false ? "켜짐" : "꺼짐"}</span>
+        <div class="settings-toggle-row">
+          <div class="settings-toggle-label">
+            <span class="settings-toggle-name">햅틱</span>
+            <span class="settings-toggle-sub">진동 피드백 (모바일)</span>
+          </div>
+          <button class="toggle-switch ${settings.haptics !== false ? 'on' : ''}" data-action="toggleHaptics" aria-pressed="${settings.haptics !== false}"></button>
+        </div>
+        <div class="settings-toggle-row">
+          <div class="settings-toggle-label">
+            <span class="settings-toggle-name">음성 읽기</span>
+            <span class="settings-toggle-sub">TTS 자동 읽기</span>
+          </div>
+          <button class="toggle-switch ${settings.tts === true ? 'on' : ''}" data-action="toggleTts" aria-pressed="${settings.tts === true}"></button>
         </div>
         <div class="choice-list">
-          <button class="choice-btn" data-action="toggleHaptics">${settings.haptics !== false ? "📳 햅틱 끄기" : "📳 햅틱 켜기"}</button>
-        </div>
-        <div class="settings-row">
-          <span>음성 읽기 (TTS)</span>
-          <span class="settings-value">${settings.tts === true ? "켜짐" : "꺼짐"}</span>
-        </div>
-        <div class="choice-list">
-          <button class="choice-btn" data-action="toggleTts">${settings.tts === true ? "🔇 TTS 끄기" : "🔊 TTS 켜기"}</button>
-          <button class="choice-btn" data-action="renderTtsSettings">🎙️ 음성 설정 (목소리·속도·톤)</button>
+          <button class="choice-btn" data-action="renderTtsSettings">음성 상세 설정</button>
         </div>
         <h3 class="settings-section">시험 모드 (Exam Mode)</h3>
         <div class="settings-row">
@@ -5856,6 +5885,13 @@ function boot() {
     if (UI.soundToggle) UI.soundToggle.addEventListener("click", toggleSound);
     document.addEventListener("keydown", handleKeydown);
     document.body.addEventListener("click", handleDelegatedAction);
+    // 케밥 메뉴 외부 클릭 시 닫기
+    document.addEventListener("click", (e) => {
+        const menu = document.getElementById("kebab-menu");
+        const btn = document.getElementById("kebab-btn");
+        if (!menu || menu.classList.contains("hidden")) return;
+        if (!menu.contains(e.target) && (!btn || !btn.contains(e.target))) closeKebab();
+    });
     // 시스템 다크모드 변경에 반응 (사용자가 명시적으로 라이트/다크를 선택하지 않은 경우)
     try {
         const mq = window.matchMedia("(prefers-color-scheme: dark)");
@@ -6534,6 +6570,9 @@ const DELEGATED_ACTIONS = {
     renderDrillMenu: () => renderDrillMenu(),
     pickShift: (t) => pickShift(t),
     renderShiftPicker: () => renderShiftPicker(),
+    toggleKebab: () => toggleKebab(),
+    toggleTheme: () => { toggleTheme(); closeKebab(); },
+    toggleSound: () => { toggleSound(); closeKebab(); _syncKebabSoundLabel(); },
     toggleHaptics: () => toggleHaptics(),
     toggleTts: () => TTS.toggle(),
     ttsSpeak: (t) => ttsSpeak(t),

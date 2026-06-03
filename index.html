@@ -41,9 +41,19 @@
             <span class="sg-bar"><span class="sg-fill" id="rep-fill" style="width:0%"></span></span>
         </div>
         <div class="top-actions">
-            <button class="icon-btn" id="theme-toggle" title="테마" aria-label="테마 전환">🌙</button>
-            <button class="icon-btn" id="sound-toggle" title="사운드" aria-label="사운드 전환">🔊</button>
-            <button class="icon-btn" id="settings-btn" data-action="openSettings" title="설정" aria-label="설정">⚙️</button>
+            <button class="icon-btn" id="theme-toggle" title="테마" aria-label="테마 전환" hidden>🌙</button>
+            <button class="icon-btn" id="sound-toggle" title="사운드" aria-label="사운드 전환" hidden>🔊</button>
+            <button class="icon-btn" id="kebab-btn" data-action="toggleKebab" title="메뉴" aria-label="메뉴" aria-haspopup="true" aria-expanded="false">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
+                    <circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/>
+                </svg>
+            </button>
+            <button class="icon-btn" id="settings-btn" data-action="openSettings" title="설정" aria-label="설정" hidden>⚙️</button>
+        </div>
+        <div id="kebab-menu" class="kebab-menu hidden" role="menu" aria-labelledby="kebab-btn">
+            <button class="kebab-item" data-action="toggleTheme" role="menuitem"><span class="kebab-icon">🌙</span><span>테마</span></button>
+            <button class="kebab-item" data-action="toggleSound" role="menuitem"><span class="kebab-icon">🔊</span><span id="kebab-sound-label">사운드</span></button>
+            <button class="kebab-item" data-action="openSettings" role="menuitem"><span class="kebab-icon">⚙️</span><span>설정</span></button>
         </div>
     </div>
 
@@ -88,7 +98,7 @@
                 <span>현재 점수: <span id="score" class="modal-score">0</span>점</span>
             </div>
         </div>
-        <button class="choice-btn center modal-close" data-action="returnToMenu">처음으로 돌아가기 (ESC)</button>
+        <button class="choice-btn center modal-close" data-action="returnToMenu" aria-label="닫기">닫기</button>
     </div>
 
     <script src="questions.js"></script>
