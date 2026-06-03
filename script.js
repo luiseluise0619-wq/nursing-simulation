@@ -5422,93 +5422,32 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
 
     const renderStudy = () => {
       const examMode = (typeof Storage !== "undefined" && Storage.getExamMode) ? Storage.getExamMode() : "korean";
-      const nclexTile = examMode === "nclex" ? `
-          <button class="row-card" data-action="renderNclexMenu">
-            <div class="row-icon" aria-hidden="true">🇺🇸</div>
-            <div class="row-body">
-              <div class="row-title">NCLEX-RN Practice</div>
-              <div class="row-sub">4 client need categories · MCQ + SATA + Priority</div>
-            </div>
-            <div class="row-chev">›</div>
-          </button>` : '';
       return `
       <div class="tab-section">
-        <div class="section-label">시험 대비</div>
-        <div class="home-row">
-          ${nclexTile}
-          <button class="row-card" data-action="renderQuizMenu">
-            <div class="row-icon">${ICONS.training}</div>
-            <div class="row-body">
-              <div class="row-title">과목별 풀이</div>
-              <div class="row-sub">국시 8과목 · 무한 랜덤</div>
-            </div>
-            <div class="row-chev">›</div>
-          </button>
-          <button class="row-card" data-action="startMockExam">
-            <div class="row-icon">${ICONS.mock}</div>
-            <div class="row-body">
-              <div class="row-title">모의고사</div>
-              <div class="row-sub">${MOCK_EXAM_TOTAL}문제 · ${MOCK_EXAM_SECONDS / 60}분</div>
-            </div>
-            <div class="row-chev">›</div>
-          </button>
-        </div>
-
-        <div class="section-label">시뮬레이션</div>
-        <div class="home-row">
-          <button class="row-card" data-action="renderEpisodeMenu">
-            <div class="row-icon">${ICONS.episode}</div>
-            <div class="row-body">
-              <div class="row-title">에피소드</div>
-              <div class="row-sub">한 듀티 전체 · 35편</div>
-            </div>
-            <div class="row-chev">›</div>
-          </button>
-          <button class="row-card" data-action="renderScenarioMenu">
-            <div class="row-icon">${ICONS.scenario}</div>
-            <div class="row-body">
-              <div class="row-title">짧은 시나리오</div>
-              <div class="row-sub">단편 임상 의사결정</div>
-            </div>
-            <div class="row-chev">›</div>
-          </button>
-        </div>
-
-        <div class="section-label">훈련</div>
-        <div class="home-row">
-          <button class="row-card" data-action="renderImageQuizMenu">
-            <div class="row-icon">${ICONS.scenario}</div>
-            <div class="row-body">
-              <div class="row-title">이미지 문제</div>
-              <div class="row-sub">ECG · 청진 · 산과 · 신경</div>
-            </div>
-            <div class="row-chev">›</div>
-          </button>
-          <button class="row-card" data-action="renderDrugDrill">
-            <div class="row-icon">${ICONS.training}</div>
-            <div class="row-body">
-              <div class="row-title">약물 드릴</div>
-              <div class="row-sub">핵심 약물 50종</div>
-            </div>
-            <div class="row-chev">›</div>
-          </button>
-          <button class="row-card" data-action="startHandoff">
-            <div class="row-icon">${ICONS.handoff}</div>
-            <div class="row-body">
-              <div class="row-title">인계 시뮬</div>
-              <div class="row-sub">100명 풀 셔플</div>
-            </div>
-            <div class="row-chev">›</div>
-          </button>
-          <button class="row-card" data-action="startTriage">
-            <div class="row-icon">${ICONS.triage}</div>
-            <div class="row-body">
-              <div class="row-title">트리아지</div>
-              <div class="row-sub">응급실 다중환자 분류</div>
-            </div>
-            <div class="row-chev">›</div>
-          </button>
-        </div>
+        <button class="row-card big" data-action="renderPracticeMenu">
+          <div class="row-icon big">${ICONS.practice}</div>
+          <div class="row-body">
+            <div class="row-title">풀이</div>
+            <div class="row-sub">${examMode === "nclex" ? "NCLEX · 과목별 · 모의고사" : "과목별 · 모의고사 · 일일"}</div>
+          </div>
+          <div class="row-chev">›</div>
+        </button>
+        <button class="row-card big" data-action="renderSimMenu">
+          <div class="row-icon big">${ICONS.sim}</div>
+          <div class="row-body">
+            <div class="row-title">시뮬레이션</div>
+            <div class="row-sub">에피소드 · 짧은 시나리오 · 듀티</div>
+          </div>
+          <div class="row-chev">›</div>
+        </button>
+        <button class="row-card big" data-action="renderDrillMenu">
+          <div class="row-icon big">${ICONS.drills}</div>
+          <div class="row-body">
+            <div class="row-title">훈련</div>
+            <div class="row-sub">이미지 · 약물 · 인계 · 트리아지</div>
+          </div>
+          <div class="row-chev">›</div>
+        </button>
       </div>`;
     };
 

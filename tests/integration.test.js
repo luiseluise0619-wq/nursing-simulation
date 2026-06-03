@@ -138,15 +138,55 @@ beforeEach(() => {
     freshDom();
 });
 
+// 잡스 컷 이후: 학습 모드는 진입 메뉴(풀이/시뮬/훈련) 거쳐 접근
+// 테스트 helper — 학습 진입 메뉴를 거치지 않고 액션 직접 호출
+function goto(action) {
+    // 학습 탭 → 진입 메뉴 자동 라우팅
+    const STUDY_ROUTES = {
+        renderQuizMenu: "renderPracticeMenu",
+        startMockExam: "renderPracticeMenu",
+        startDailyChallenge: "renderPracticeMenu",
+        renderNclexMenu: "renderPracticeMenu",
+        renderEpisodeMenu: "renderSimMenu",
+        renderScenarioMenu: "renderSimMenu",
+        initSurvival: "renderSimMenu",
+        renderImageQuizMenu: "renderDrillMenu",
+        renderDrugDrill: "renderDrillMenu",
+        startHandoff: "renderDrillMenu",
+        startTriage: "renderDrillMenu",
+    };
+    const entry = STUDY_ROUTES[action];
+    if (entry) {
+        // 학습 탭으로 이동 (이미 있을 수도 있지만 안전하게)
+        const studyTab = document.querySelector('[data-action="setMenuTab"][data-tab="study"]');
+        if (studyTab) studyTab.click();
+        const entryBtn = document.querySelector(`[data-action="${entry}"]`);
+        if (entryBtn) entryBtn.click();
+    }
+    const targetBtn = document.querySelector(`[data-action="${action}"]`);
+    if (targetBtn) {
+        targetBtn.click();
+        return targetBtn;
+    }
+    return null;
+}
+
 describe("부트 / 메뉴 렌더", () => {
     test("script.js 로드 시 메인 메뉴가 렌더된다", () => {
         loadScript();
         expect(document.querySelector('h1.menu-title-v2')).not.toBeNull();
+        // 잡스 컷: 학습 탭은 3 진입 메뉴(풀이/시뮬/훈련), 홈에서 듀티 직접 진입
         expect(document.querySelector('[data-action="initSurvival"]')).not.toBeNull();
+        expect(document.querySelector('[data-action="startDailyChallenge"]')).not.toBeNull();
+        // 학습 탭으로 가면 진입 메뉴 노출
+        document.querySelector('[data-action="setMenuTab"][data-tab="study"]').click();
+        expect(document.querySelector('[data-action="renderPracticeMenu"]')).not.toBeNull();
+        expect(document.querySelector('[data-action="renderSimMenu"]')).not.toBeNull();
+        expect(document.querySelector('[data-action="renderDrillMenu"]')).not.toBeNull();
+        // 풀이 메뉴 진입 → 과목별/모의고사 노출
+        document.querySelector('[data-action="renderPracticeMenu"]').click();
         expect(document.querySelector('[data-action="renderQuizMenu"]')).not.toBeNull();
         expect(document.querySelector('[data-action="startMockExam"]')).not.toBeNull();
-        expect(document.querySelector('[data-action="startDailyChallenge"]')).not.toBeNull();
-        expect(document.querySelector('[data-action="renderDashboard"]')).not.toBeNull();
     });
 });
 
@@ -171,7 +211,7 @@ describe("이벤트 위임 핸들러", () => {
 
     test("renderQuizMenu 클릭으로 8과목 + 통합 랜덤 버튼이 노출된다", () => {
         loadScript();
-        document.querySelector('[data-action="renderQuizMenu"]').click();
+        goto("renderQuizMenu");
         const cats = document.querySelectorAll('[data-action="startQuiz"]');
         // 8과목 + __random__ = 9
         expect(cats.length).toBe(9);
@@ -197,7 +237,7 @@ describe("CSP 정합성 — 인라인 onclick 부재", () => {
 describe("진행도 ARIA", () => {
     test("progressbar role 과 aria-valuenow 가 설정된다", () => {
         loadScript();
-        document.querySelector('[data-action="renderQuizMenu"]').click();
+        goto("renderQuizMenu");
         document.querySelector('[data-action="startQuiz"]').click();
         const wrap = document.getElementById("progress-wrap");
         expect(wrap.getAttribute("role")).toBe("progressbar");
@@ -208,7 +248,7 @@ describe("진행도 ARIA", () => {
 describe("키보드 단축키 — IME / 조합 가드", () => {
     test("isComposing=true 인 1키 입력은 보기 클릭으로 이어지지 않는다", () => {
         loadScript();
-        document.querySelector('[data-action="renderQuizMenu"]').click();
+        goto("renderQuizMenu");
         document.querySelector('[data-action="startQuiz"]').click();
         const before = document.getElementById("game-area").innerHTML;
         const ev = new KeyboardEvent("keydown", { key: "1", bubbles: true });
@@ -219,7 +259,7 @@ describe("키보드 단축키 — IME / 조합 가드", () => {
 
     test("keyCode=229 (한글 조합) 도 무시된다", () => {
         loadScript();
-        document.querySelector('[data-action="renderQuizMenu"]').click();
+        goto("renderQuizMenu");
         document.querySelector('[data-action="startQuiz"]').click();
         const before = document.getElementById("game-area").innerHTML;
         const ev = new KeyboardEvent("keydown", { key: "1", keyCode: 229, bubbles: true });
@@ -229,7 +269,7 @@ describe("키보드 단축키 — IME / 조합 가드", () => {
 
     test("일반 1키 입력은 첫 보기를 클릭한다", () => {
         loadScript();
-        document.querySelector('[data-action="renderQuizMenu"]').click();
+        goto("renderQuizMenu");
         document.querySelector('[data-action="startQuiz"]').click();
         // 보기가 화면에 노출된 상태
         const firstChoice = document.querySelector('#choice-list .choice-btn');
@@ -245,7 +285,7 @@ describe("키보드 단축키 — IME / 조합 가드", () => {
 describe("오답 큐 — 고유 id 기반 저장/제거", () => {
     test("오답 발생 시 wrongQueue 에 고유 id 가 부여되어 누적된다", () => {
         loadScript();
-        document.querySelector('[data-action="renderQuizMenu"]').click();
+        goto("renderQuizMenu");
         document.querySelector('[data-action="startQuiz"]').click();
         // 4개 보기 중 어떤 게 정답인지 모르므로 모두 클릭해 오답 큐 누적 검증
         // ev.choices 의 정답 인덱스를 모르므로, 보기 4개 중 첫 번째를 클릭하고
@@ -306,7 +346,7 @@ describe("Storage 스키마 검증", () => {
         loadScript();
         // 시나리오 메뉴를 다시 열어 보존 여부 확인 (data.scenarios[id] 가 undefined 면 crash)
         expect(() => {
-            document.querySelector('[data-action="renderScenarioMenu"]').click();
+            goto("renderScenarioMenu");
         }).not.toThrow();
         // 대시보드도 신규 필드를 표시
         document.querySelector('[data-action="returnToMenu"]').click();
@@ -341,16 +381,15 @@ describe("모달 접근성 속성", () => {
 describe("인계 시뮬레이터 (TTS)", () => {
     test("메인 메뉴에 인계 버튼이 있고 클릭하면 답변 textarea 가 노출된다", () => {
         loadScript();
-        const btn = document.querySelector('[data-action="startHandoff"]');
-        expect(btn).not.toBeNull();
-        btn.click();
+        // 잡스 컷: 학습 탭 → 훈련 메뉴 → 인계 시뮬
+        goto("startHandoff");
         expect(document.getElementById("handoff-answer")).not.toBeNull();
         expect(document.querySelector('[data-action="handoffPlay"]')).not.toBeNull();
     });
 
     test("정답 키워드를 모두 입력하면 정답률 100% 피드백이 표시된다", () => {
         loadScript();
-        document.querySelector('[data-action="startHandoff"]').click();
+        goto("startHandoff");
         // 100명 풀에서 셔플로 선정된 첫 환자의 ID 를 타이틀로 역추적
         const C = require("../content.js");
         const titleEl = document.querySelector(".scene-title");
@@ -366,7 +405,7 @@ describe("인계 시뮬레이터 (TTS)", () => {
 
     test("100명 풀에서 세션은 10명만 출제한다 (sessionSize)", () => {
         loadScript();
-        document.querySelector('[data-action="startHandoff"]').click();
+        goto("startHandoff");
         // 진행도 표시가 1/10 형식
         const titleEl = document.querySelector(".scene-title");
         expect(titleEl.textContent).toMatch(/1\/10/);
@@ -375,7 +414,7 @@ describe("인계 시뮬레이터 (TTS)", () => {
     test("연속 세션에서 본 환자 ID는 다음 세션 풀에서 제외 (cycle)", () => {
         loadScript();
         // 1회차 세션 시작 → 첫 환자 ID 기록
-        document.querySelector('[data-action="startHandoff"]').click();
+        goto("startHandoff");
         const C = require("../content.js");
         const firstTitle = document.querySelector(".scene-title").textContent;
         const firstPatient = C.HANDOFF_PATIENTS.find(p => firstTitle.includes(p.title));
@@ -387,14 +426,14 @@ describe("인계 시뮬레이터 (TTS)", () => {
 
     test("handoffPlay 가 speechSynthesis.speak 를 호출한다", () => {
         loadScript();
-        document.querySelector('[data-action="startHandoff"]').click();
+        goto("startHandoff");
         document.querySelector('[data-action="handoffPlay"]').click();
         expect(window.speechSynthesis.speak).toHaveBeenCalled();
     });
 
     test("handoffShow 가 본문을 노출시킨다", () => {
         loadScript();
-        document.querySelector('[data-action="startHandoff"]').click();
+        goto("startHandoff");
         document.querySelector('[data-action="handoffShow"]').click();
         const el = document.getElementById("handoff-narration");
         expect(el.classList.contains("hidden")).toBe(false);
@@ -405,7 +444,7 @@ describe("인계 시뮬레이터 (TTS)", () => {
 describe("트리아지 (다중환자 우선순위)", () => {
     test("5명 환자 카드와 각자 1~5 우선순위 버튼이 렌더된다", () => {
         loadScript();
-        document.querySelector('[data-action="startTriage"]').click();
+        goto("startTriage");
         const cards = document.querySelectorAll(".triage-card");
         expect(cards.length).toBe(5);
         cards.forEach(card => {
@@ -416,7 +455,7 @@ describe("트리아지 (다중환자 우선순위)", () => {
 
     test("순위 미배정 상태로 제출하면 에러 피드백을 보여준다", () => {
         loadScript();
-        document.querySelector('[data-action="startTriage"]').click();
+        goto("startTriage");
         document.querySelector('[data-action="triageSubmit"]').click();
         const fb = document.getElementById("triage-feedback");
         expect(fb.textContent).toMatch(/순위를 매겨주세요/);
@@ -424,7 +463,7 @@ describe("트리아지 (다중환자 우선순위)", () => {
 
     test("중복 번호로 제출하면 거부된다", () => {
         loadScript();
-        document.querySelector('[data-action="startTriage"]').click();
+        goto("startTriage");
         const cards = document.querySelectorAll(".triage-card");
         cards.forEach(card => {
             const btn1 = card.querySelector('.triage-num[data-num="1"]');
@@ -437,7 +476,7 @@ describe("트리아지 (다중환자 우선순위)", () => {
 
     test("정답 순위를 모두 매기면 5/5 피드백이 표시된다", () => {
         loadScript();
-        document.querySelector('[data-action="startTriage"]').click();
+        goto("startTriage");
         const C = require("../content.js");
         const case0 = C.TRIAGE_CASES[0];
         case0.patients.forEach(p => {
@@ -455,15 +494,14 @@ describe("트리아지 (다중환자 우선순위)", () => {
 describe("에피소드 (장편 스토리)", () => {
     test("메뉴에 에피소드 모드 카드가 노출되고 클릭 시 목록이 뜬다", () => {
         loadScript();
-        const btn = document.querySelector('[data-action="renderEpisodeMenu"]');
-        expect(btn).not.toBeNull();
-        btn.click();
+        // 잡스 컷: 학습 탭 → 시뮬레이션 메뉴 → 에피소드
+        goto("renderEpisodeMenu");
         const starts = document.querySelectorAll('[data-action="startEpisode"]');
         expect(starts.length).toBeGreaterThanOrEqual(1);
     });
     test("에피소드 시작 시 step 1 narration·choices 가 렌더된다", () => {
         loadScript();
-        document.querySelector('[data-action="renderEpisodeMenu"]').click();
+        goto("renderEpisodeMenu");
         document.querySelector('[data-action="startEpisode"]').click();
         expect(document.querySelector(".scene-title")).not.toBeNull();
         const choices = document.querySelectorAll("#choice-list .choice-btn");
@@ -471,7 +509,7 @@ describe("에피소드 (장편 스토리)", () => {
     });
     test("정답 클릭 후 다음 step 으로 진행한다", () => {
         loadScript();
-        document.querySelector('[data-action="renderEpisodeMenu"]').click();
+        goto("renderEpisodeMenu");
         // 그룹화 메뉴 — 첫 에피소드 버튼의 실제 id 로 정답 조회 (순서 무관)
         const startBtn = document.querySelector('[data-action="startEpisode"]');
         const epId = startBtn.dataset.arg;
@@ -493,14 +531,14 @@ describe("에피소드 (장편 스토리)", () => {
 describe("임상 시나리오", () => {
     test("시나리오 메뉴에서 시나리오 카드들이 노출된다", () => {
         loadScript();
-        document.querySelector('[data-action="renderScenarioMenu"]').click();
+        goto("renderScenarioMenu");
         const starts = document.querySelectorAll('[data-action="startScenario"]');
         expect(starts.length).toBeGreaterThanOrEqual(1);
     });
 
     test("시나리오 시작 시 첫 step 의 4개 선택지가 노출된다", () => {
         loadScript();
-        document.querySelector('[data-action="renderScenarioMenu"]').click();
+        goto("renderScenarioMenu");
         document.querySelector('[data-action="startScenario"]').click();
         const choices = document.querySelectorAll("#choice-list .choice-btn");
         expect(choices.length).toBeGreaterThanOrEqual(3);
@@ -508,7 +546,7 @@ describe("임상 시나리오", () => {
 
     test("정답 선택 시 HP 가 0 이하로 떨어지지 않는다", () => {
         loadScript();
-        document.querySelector('[data-action="renderScenarioMenu"]').click();
+        goto("renderScenarioMenu");
         document.querySelector('[data-action="startScenario"]').click();
         // 정답 선택지 (text가 정답 보기의 것)를 찾아 클릭
         const C = require("../content.js");
@@ -527,7 +565,7 @@ describe("임상 시나리오", () => {
         loadScript();
         // 메인 메뉴에서 Night 시프트 선택 → 난이도 1.5 설정
         document.querySelector('[data-shift="Night"]').click();
-        document.querySelector('[data-action="renderScenarioMenu"]').click();
+        goto("renderScenarioMenu");
         document.querySelector('[data-action="startScenario"]').click();
         const C = require("../content.js");
         const wrongChoice = C.SCENARIOS[0].steps[0].choices.find(c => !c.correct && c.hp < 0);
@@ -705,7 +743,7 @@ describe("v1.0 정식 출시 — 설정·백업/복원·About·Privacy", () => {
 describe("P0 신규 — 이어하기·SM-2·검색·출처 표시", () => {
     test("에피소드 진행 중 returnToMenu 시 자동 저장된다", () => {
         loadScript();
-        document.querySelector('[data-action="renderEpisodeMenu"]').click();
+        goto("renderEpisodeMenu");
         // 그룹화 메뉴 — 클릭한 버튼의 id 로 정답 조회 (순서 무관)
         const startBtn = document.querySelector('[data-action="startEpisode"]');
         const epId = startBtn.dataset.arg;
@@ -736,7 +774,7 @@ describe("P0 신규 — 이어하기·SM-2·검색·출처 표시", () => {
         };
         localStorage.setItem("nurseSim:v1", JSON.stringify(seed));
         loadScript();
-        document.querySelector('[data-action="renderEpisodeMenu"]').click();
+        goto("renderEpisodeMenu");
         document.querySelector(`[data-action="startEpisode"][data-arg="${ep.id}"]`).click();
         const resumeBtn = document.querySelector('[data-action="episodeResume"]');
         const restartBtn = document.querySelector('[data-action="episodeRestart"]');
@@ -765,7 +803,7 @@ describe("P0 신규 — 이어하기·SM-2·검색·출처 표시", () => {
 
     test("SM-2: 처음 오답 등록 시 nextDue·interval 필드가 부여된다", () => {
         loadScript();
-        document.querySelector('[data-action="renderQuizMenu"]').click();
+        goto("renderQuizMenu");
         document.querySelector('[data-action="startQuiz"]').click();
         // 모든 보기 클릭하여 최소 한 번은 오답
         for (let i = 0; i < 4; i++) {
@@ -785,7 +823,7 @@ describe("P0 신규 — 이어하기·SM-2·검색·출처 표시", () => {
 
     test("정답 해설에 출처가 매칭되면 .feedback-source 가 노출된다", () => {
         loadScript();
-        document.querySelector('[data-action="renderQuizMenu"]').click();
+        goto("renderQuizMenu");
         document.querySelector('[data-action="startQuiz"]').click();
         // 아무 보기 클릭 → 피드백 박스 등장
         const firstBtn = document.querySelector("#choice-list .choice-btn");
@@ -843,14 +881,14 @@ describe("뒤로가기 — top-bar 좌측 ← 버튼", () => {
     });
     test("트레이닝 진입 후엔 뒤로 버튼이 노출된다", () => {
         loadScript();
-        document.querySelector('[data-action="renderQuizMenu"]').click();
+        goto("renderQuizMenu");
         document.querySelector('[data-action="startQuiz"]').click();
         const back = document.getElementById("back-btn");
         expect(back.classList.contains("hidden")).toBe(false);
     });
     test("뒤로 버튼 클릭 시 메뉴로 복귀", () => {
         loadScript();
-        document.querySelector('[data-action="startTriage"]').click();
+        goto("startTriage");
         const back = document.getElementById("back-btn");
         expect(back.classList.contains("hidden")).toBe(false);
         back.click();
@@ -934,14 +972,14 @@ describe("일일 챌린지 시드 결정성 (jsdom 환경)", () => {
     test("같은 날 같은 카테고리 시퀀스를 보여준다", () => {
         // 1차: startDaily 호출 시 첫 문제의 카테고리 기록
         loadScript();
-        document.querySelector('[data-action="startDailyChallenge"]').click();
+        goto("startDailyChallenge");
         const firstCat = document.querySelector('.category-tag')?.textContent || "";
         expect(firstCat.length).toBeGreaterThan(0);
 
         // freshDom + loadScript 로 완전 재초기화 → 같은 시드로 startDaily
         freshDom();
         loadScript();
-        document.querySelector('[data-action="startDailyChallenge"]').click();
+        goto("startDailyChallenge");
         const secondCat = document.querySelector('.category-tag')?.textContent || "";
         // 같은 날짜 시드이므로 같은 generator (→ 같은 카테고리) 가 선택돼야 함
         expect(secondCat).toBe(firstCat);
@@ -984,7 +1022,7 @@ describe("P1 — 디자인 폴리시 (빈 상태 / 단계 진행 / fade-in / 콤
         };
         localStorage.setItem("nurseSim:v1", JSON.stringify(seed));
         loadScript();
-        document.querySelector('[data-action="startDailyChallenge"]').click();
+        goto("startDailyChallenge");
         const card = document.querySelector(".scene-card.empty-state");
         expect(card).not.toBeNull();
         expect(card.textContent).toMatch(/완료/);
@@ -999,7 +1037,7 @@ describe("P1 — 디자인 폴리시 (빈 상태 / 단계 진행 / fade-in / 콤
         };
         localStorage.setItem("nurseSim:v1", JSON.stringify(seed));
         loadScript();
-        document.querySelector('[data-action="startDailyChallenge"]').click();
+        goto("startDailyChallenge");
         document.querySelector('[data-action="startDailyChallengeForce"]').click();
         // 정상 출제 화면 진입 — 카테고리 태그가 있어야 함
         expect(document.querySelector('.category-tag')).not.toBeNull();
@@ -1007,7 +1045,7 @@ describe("P1 — 디자인 폴리시 (빈 상태 / 단계 진행 / fade-in / 콤
 
     test("에피소드 진행 시 .step-progress 세그먼티드 바가 렌더된다", () => {
         loadScript();
-        document.querySelector('[data-action="renderEpisodeMenu"]').click();
+        goto("renderEpisodeMenu");
         document.querySelector('[data-action="startEpisode"]').click();
         const bar = document.querySelector(".step-progress");
         expect(bar).not.toBeNull();
@@ -1054,7 +1092,7 @@ describe("P1 — 디자인 폴리시 (빈 상태 / 단계 진행 / fade-in / 콤
 describe("P2 — Leitner 5박스 SRS", () => {
     test("처음 오답 등록 시 box=1 이 부여된다 (SM-2 호환 필드 유지)", () => {
         loadScript();
-        document.querySelector('[data-action="renderQuizMenu"]').click();
+        goto("renderQuizMenu");
         document.querySelector('[data-action="startQuiz"]').click();
         // 모든 보기 클릭하여 오답 누적
         for (let i = 0; i < 4; i++) {
@@ -1116,7 +1154,7 @@ describe("P2 — Leitner 5박스 SRS", () => {
 describe("P2 — 북마크(즐겨찾기)", () => {
     test("문제 카드에 ⭐ 북마크 토글이 노출된다", () => {
         loadScript();
-        document.querySelector('[data-action="renderQuizMenu"]').click();
+        goto("renderQuizMenu");
         document.querySelector('[data-action="startQuiz"]').click();
         const star = document.querySelector('.bookmark-toggle[data-action="toggleSceneBookmark"]');
         expect(star).not.toBeNull();
@@ -1125,7 +1163,7 @@ describe("P2 — 북마크(즐겨찾기)", () => {
 
     test("⭐ 클릭 시 localStorage.bookmarks 에 저장된다", () => {
         loadScript();
-        document.querySelector('[data-action="renderQuizMenu"]').click();
+        goto("renderQuizMenu");
         document.querySelector('[data-action="startQuiz"]').click();
         const star = document.querySelector('.bookmark-toggle');
         star.click();
@@ -1237,7 +1275,7 @@ describe("P2 — 공유 (Canvas 결과 카드)", () => {
         };
         localStorage.setItem("nurseSim:v1", JSON.stringify(seed));
         loadScript();
-        document.querySelector('[data-action="startDailyChallenge"]').click();
+        goto("startDailyChallenge");
         // 10문제 모두 풀어 종료 화면 도달
         for (let i = 0; i < 12; i++) {
             const choices = document.querySelectorAll("#choice-list .choice-btn");
@@ -1273,7 +1311,7 @@ describe("P2 — AdMob 어댑터 (Capacitor 호환)", () => {
         // 웹/jsdom 환경엔 Capacitor 가 없으므로 Ads.* 호출은 안전해야 함
         expect(() => {
             // 모든 모드 종료가 Ads.showInterstitial 을 호출하므로 한 번 트리거
-            document.querySelector('[data-action="startTriage"]').click();
+            goto("startTriage");
             // 트리아지를 종료시키지 않아도 어댑터 자체가 안전한지가 핵심
         }).not.toThrow();
     });
@@ -1297,7 +1335,7 @@ describe("P2 — AdMob 어댑터 (Capacitor 호환)", () => {
     test("듀티 시뮬레이션(initSurvival)은 에피소드 모드로 진입한다 — 일반 문제 generator 0건", () => {
         loadScript();
         // 듀티 시뮬레이션 클릭 → 에피소드 step 화면이 나와야 함
-        document.querySelector('[data-action="initSurvival"]').click();
+        goto("initSurvival");
         const card = document.querySelector(".scene-card");
         expect(card).not.toBeNull();
         // 에피소드 카테고리 태그 (NC.EPISODES.title) 가 노출되어야 함
@@ -1325,7 +1363,7 @@ describe("P2 — AdMob 어댑터 (Capacitor 호환)", () => {
         for (let run = 0; run < 8; run++) {
             freshDom();
             loadScript();
-            document.querySelector('[data-action="initSurvival"]').click();
+            goto("initSurvival");
             let guard = 0;
             while (guard++ < 40) {
                 const tag = document.querySelector(".scene-card .category-tag");
@@ -1402,7 +1440,7 @@ describe("P2 — AdMob 어댑터 (Capacitor 호환)", () => {
 
     test("트레이닝 — 🎲 8과목 통합 랜덤 진입 (category null → 전체 풀)", () => {
         loadScript();
-        document.querySelector('[data-action="renderQuizMenu"]').click();
+        goto("renderQuizMenu");
         // __random__ 버튼 존재
         const randBtn = document.querySelector('[data-action="startQuiz"][data-arg="__random__"]');
         expect(randBtn).not.toBeNull();
@@ -1417,7 +1455,7 @@ describe("P2 — AdMob 어댑터 (Capacitor 호환)", () => {
 
     test("스토리 타이핑 효과 — 에피소드 진입 시 내레이션 타이핑 + 선택지 숨김, 탭하면 전체 노출", () => {
         loadScript();
-        document.querySelector('[data-action="renderEpisodeMenu"]').click();
+        goto("renderEpisodeMenu");
         document.querySelector('[data-action="startEpisode"]').click();
         const desc = document.querySelector(".scene-desc");
         const list = document.getElementById("choice-list");
@@ -1463,7 +1501,7 @@ describe("P2 — AdMob 어댑터 (Capacitor 호환)", () => {
         for (let i = 0; i < 60 && !sawLife; i++) {
             freshDom();
             loadScript();
-            document.querySelector('[data-action="initSurvival"]').click();
+            goto("initSurvival");
             const tag = document.querySelector(".scene-card .category-tag");
             const title = document.querySelector(".scene-title")?.textContent || "";
             const tagTxt = tag?.textContent || "";
@@ -1475,7 +1513,7 @@ describe("P2 — AdMob 어댑터 (Capacitor 호환)", () => {
 
     test("에피소드 메뉴 상단에 🎲 랜덤 에피소드 버튼이 있다", () => {
         loadScript();
-        document.querySelector('[data-action="renderEpisodeMenu"]').click();
+        goto("renderEpisodeMenu");
         const randEp = document.querySelector('[data-action="initSurvival"]');
         expect(randEp).not.toBeNull();
         expect(randEp.textContent).toMatch(/랜덤 에피소드/);
@@ -1483,7 +1521,7 @@ describe("P2 — AdMob 어댑터 (Capacitor 호환)", () => {
 
     test("커리어 캠페인 — 메뉴 진입 + 1막 인트로 + 이야기 시작 버튼", () => {
         loadScript();
-        document.querySelector('[data-action="renderEpisodeMenu"]').click();
+        goto("renderEpisodeMenu");
         const campBtn = document.querySelector('[data-action="renderCampaign"]');
         expect(campBtn).not.toBeNull();
         expect(campBtn.textContent).toMatch(/커리어 스토리/);
@@ -1496,7 +1534,7 @@ describe("P2 — AdMob 어댑터 (Capacitor 호환)", () => {
 
     test("커리어 캠페인 — 첫 에피소드 진입 시 캠페인 모드로 첫 화 시작", () => {
         loadScript();
-        document.querySelector('[data-action="renderEpisodeMenu"]').click();
+        goto("renderEpisodeMenu");
         document.querySelector('[data-action="renderCampaign"]').click();
         document.querySelector('[data-action="startCampaignEpisode"]').click();
         // 에피소드 step 화면 — 캠페인 1막 1화 = ep-newgrad-year
@@ -1513,7 +1551,7 @@ describe("P2 — AdMob 어댑터 (Capacitor 호환)", () => {
     test("커리어 캠페인 — 1화 정주행 후 전환 내레이션 → 다음 화로 이어진다 (누적 평판 carry)", () => {
         const C = require("../content.js");
         loadScript();
-        document.querySelector('[data-action="renderEpisodeMenu"]').click();
+        goto("renderEpisodeMenu");
         document.querySelector('[data-action="renderCampaign"]').click();
         document.querySelector('[data-action="startCampaignEpisode"]').click();
         // 1막 1화 (ep-newgrad-year) 를 끝까지 정주행
@@ -1547,7 +1585,7 @@ describe("P2 — AdMob 어댑터 (Capacitor 호환)", () => {
         };
         localStorage.setItem("nurseSim:v1", JSON.stringify(seed));
         loadScript();
-        document.querySelector('[data-action="renderEpisodeMenu"]').click();
+        goto("renderEpisodeMenu");
         document.querySelector('[data-action="renderCampaign"]').click();
         document.querySelector('[data-action="startCampaignEpisode"]').click();
         // 1막 마지막 화 정주행
@@ -1584,7 +1622,7 @@ describe("P2 — AdMob 어댑터 (Capacitor 호환)", () => {
         };
         localStorage.setItem("nurseSim:v1", JSON.stringify(seed));
         loadScript();
-        document.querySelector('[data-action="renderEpisodeMenu"]').click();
+        goto("renderEpisodeMenu");
         document.querySelector('[data-action="renderCampaign"]').click();
         expect(document.querySelector(".scene-title").textContent).toMatch(/커리어 완주/);
         expect(document.querySelector('[data-action="resetCampaignConfirm"]')).not.toBeNull();
@@ -1593,7 +1631,7 @@ describe("P2 — AdMob 어댑터 (Capacitor 호환)", () => {
 
     test("트레이닝 모드 — 10문제 세트 완료 시 세트 요약 카드가 뜬다", () => {
         loadScript();
-        document.querySelector('[data-action="renderQuizMenu"]').click();
+        goto("renderQuizMenu");
         document.querySelector('[data-action="startQuiz"]').click();
         // 10문제 풀이 (각 첫 보기 클릭 + 다음)
         for (let i = 0; i < 10; i++) {
@@ -1615,7 +1653,7 @@ describe("P2 — AdMob 어댑터 (Capacitor 호환)", () => {
     test("에피소드 메뉴가 임상 영역 그룹으로 분류되고 모든 에피소드가 노출된다", () => {
         const C = require("../content.js");
         loadScript();
-        document.querySelector('[data-action="renderEpisodeMenu"]').click();
+        goto("renderEpisodeMenu");
         // 그룹 라벨 존재
         const groupLabels = document.querySelectorAll(".episode-group-label");
         expect(groupLabels.length).toBeGreaterThanOrEqual(8);
@@ -1640,7 +1678,7 @@ describe("P2 — AdMob 어댑터 (Capacitor 호환)", () => {
         }
         // 에피소드 메뉴에서 라벨 표시
         loadScript();
-        document.querySelector('[data-action="renderEpisodeMenu"]').click();
+        goto("renderEpisodeMenu");
         const buttons = [...document.querySelectorAll('[data-action="startEpisode"]')];
         const hasSensitiveLabel = buttons.some(b => b.innerHTML.includes("⚠️"));
         expect(hasSensitiveLabel).toBe(true);
@@ -1658,7 +1696,7 @@ describe("P2 — AdMob 어댑터 (Capacitor 호환)", () => {
     test("12종 임상 SVG 시각자료가 실제 브라우저 DOM 에 렌더된다", () => {
         loadScript();
         // 트레이닝 모드 진입 — 무한 랜덤 출제로 이미지 generator 트리거
-        document.querySelector('[data-action="renderQuizMenu"]').click();
+        goto("renderQuizMenu");
         document.querySelector('[data-action="startQuiz"]').click();
         // 최대 100회 출제 시도 — 이미지 generator 13개가 한 번씩이라도 나오면 OK
         const seenTypes = new Set();
@@ -1724,7 +1762,7 @@ describe("P2 — AdMob 어댑터 (Capacitor 호환)", () => {
     test("이미지가 있는 generator 가 scene-image 슬롯을 렌더한다", () => {
         loadScript();
         // ECG strip 식별 generator 강제 트리거 — 트레이닝 모드 진입
-        document.querySelector('[data-action="renderQuizMenu"]').click();
+        goto("renderQuizMenu");
         document.querySelector('[data-action="startQuiz"]').click();
         // 80회 시도해 이미지 있는 문제 도달 (세트 요약 카드는 quizContinue 로 통과)
         let foundImage = false;
@@ -1776,7 +1814,7 @@ describe("P2 — AdMob 어댑터 (Capacitor 호환)", () => {
     test("rewarded unit ID 가 빈 문자열이면 부활 슬롯은 숨겨진다 (no-op)", () => {
         loadScript();
         // 게임 오버 강제 트리거: survival 시작 후 HP=0 만들기
-        document.querySelector('[data-action="initSurvival"]').click();
+        goto("initSurvival");
         // gameState 직접 접근 불가 — DOM 으로 모달 상태만 확인
         // unit ID 가 빈 문자열이므로 revive-slot 은 hidden 클래스를 유지해야 함
         const slot = document.getElementById("revive-slot");
@@ -1786,7 +1824,7 @@ describe("P2 — AdMob 어댑터 (Capacitor 호환)", () => {
 
     test("연속 학습일(streak) — 일일 챌린지 완료 시 카운트 + 홈 표시", () => {
         loadScript();
-        document.querySelector('[data-action="startDailyChallenge"]').click();
+        goto("startDailyChallenge");
         for (let i = 0; i < 12; i++) {
             const c = document.querySelectorAll("#choice-list .choice-btn")[0];
             if (!c) break;
@@ -1800,8 +1838,10 @@ describe("P2 — AdMob 어댑터 (Capacitor 호환)", () => {
         expect(stored.streak.count).toBe(1);
         // 완료 화면에 연속 학습 메시지
         expect(document.querySelector(".scene-desc").textContent).toMatch(/연속 학습|🔥/);
-        // 홈 탭에 streak 배너
+        // 홈 탭에 streak 배너 (goto()가 학습 탭으로 이동시켰으니 홈 탭으로 복귀)
         document.querySelector('[data-action="returnToMenu"]').click();
+        const homeTab = document.querySelector('[data-action="setMenuTab"][data-tab="home"]');
+        if (homeTab) homeTab.click();
         expect(document.querySelector(".streak-banner")).not.toBeNull();
     });
 
@@ -1817,7 +1857,7 @@ describe("P2 — AdMob 어댑터 (Capacitor 호환)", () => {
         };
         localStorage.setItem("nurseSim:v1", JSON.stringify(seed));
         loadScript();
-        document.querySelector('[data-action="startDailyChallenge"]').click();
+        goto("startDailyChallenge");
         for (let i = 0; i < 12; i++) {
             const c = document.querySelectorAll("#choice-list .choice-btn")[0];
             if (!c) break; c.click();
