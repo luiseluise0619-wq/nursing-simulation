@@ -316,6 +316,9 @@ const ICONS = {
     episode:    '<svg class="mc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5 a2 2 0 0 1 2 -2 h8 l4 4 v12 a2 2 0 0 1 -2 2 H6 a2 2 0 0 1 -2 -2 z"/><path d="M14 3 v4 h4"/><path d="M8 14 h8 M8 17 h6"/></svg>',
     wrong:      '<svg class="mc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3 h12 v18 l-6 -3 l-6 3 z"/></svg>',
     dash:       '<svg class="mc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20 V10 M10 20 V4 M16 20 V14"/><path d="M3 20 h18"/></svg>',
+    practice:   '<svg class="mc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9 10 l3 -3 l3 3 M12 7 v10"/></svg>',
+    sim:        '<svg class="mc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7 a2 2 0 0 1 2 -2 h14 a2 2 0 0 1 2 2 v10 a2 2 0 0 1 -2 2 H5 a2 2 0 0 1 -2 -2 z"/><path d="M10 10 l4 2 l-4 2 z" fill="currentColor"/></svg>',
+    drills:     '<svg class="mc-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7"/><path d="M12 2 v3 M12 19 v3 M2 12 h3 M19 12 h3"/></svg>',
 };
 
 // =========================================================================
@@ -2355,6 +2358,100 @@ function collectImageScenes() {
         });
     });
     return scenes;
+}
+
+// =========================================================================
+// 학습 진입 메뉴 — 잡스 컷 (9개 → 3개 → 세부)
+// =========================================================================
+function renderPracticeMenu() {
+    gameState.mode = "practice_menu"; resetStateForMode();
+    showCoreUI(); if (UI.logBar) UI.logBar.innerHTML = ""; updateStats();
+    const examMode = Storage.getExamMode();
+    const nclexBtn = examMode === "nclex"
+        ? `<button class="row-card" data-action="renderNclexMenu">
+              <div class="row-icon">${ICONS.training}</div>
+              <div class="row-body"><div class="row-title">NCLEX-RN</div><div class="row-sub">MCQ · SATA · Priority</div></div>
+              <div class="row-chev">›</div>
+           </button>` : "";
+    UI.gameArea.innerHTML = `
+      <div class="tab-section">
+        <h2 class="page-title">풀이</h2>
+        <p class="page-sub">빠른 풀이로 점수 만들기.</p>
+        ${nclexBtn}
+        <button class="row-card" data-action="renderQuizMenu">
+          <div class="row-icon">${ICONS.training}</div>
+          <div class="row-body"><div class="row-title">과목별 풀이</div><div class="row-sub">국시 8과목 · 무한 랜덤</div></div>
+          <div class="row-chev">›</div>
+        </button>
+        <button class="row-card" data-action="startMockExam">
+          <div class="row-icon">${ICONS.mock}</div>
+          <div class="row-body"><div class="row-title">모의고사</div><div class="row-sub">${MOCK_EXAM_TOTAL}문제 · ${MOCK_EXAM_SECONDS / 60}분</div></div>
+          <div class="row-chev">›</div>
+        </button>
+        <button class="row-card" data-action="startDailyChallenge">
+          <div class="row-icon">${ICONS.daily}</div>
+          <div class="row-body"><div class="row-title">일일 챌린지</div><div class="row-sub">매일 ${DAILY_CHALLENGE_TOTAL}문제</div></div>
+          <div class="row-chev">›</div>
+        </button>
+        <button class="choice-btn center" data-action="returnToMenu">메뉴</button>
+      </div>`;
+}
+
+function renderSimMenu() {
+    gameState.mode = "sim_menu"; resetStateForMode();
+    showCoreUI(); if (UI.logBar) UI.logBar.innerHTML = ""; updateStats();
+    UI.gameArea.innerHTML = `
+      <div class="tab-section">
+        <h2 class="page-title">시뮬레이션</h2>
+        <p class="page-sub">실제 듀티처럼 한 사례를 끝까지.</p>
+        <button class="row-card" data-action="renderEpisodeMenu">
+          <div class="row-icon">${ICONS.episode}</div>
+          <div class="row-body"><div class="row-title">에피소드</div><div class="row-sub">한 듀티 전체 · 35편</div></div>
+          <div class="row-chev">›</div>
+        </button>
+        <button class="row-card" data-action="renderScenarioMenu">
+          <div class="row-icon">${ICONS.scenario}</div>
+          <div class="row-body"><div class="row-title">짧은 시나리오</div><div class="row-sub">단편 임상 의사결정</div></div>
+          <div class="row-chev">›</div>
+        </button>
+        <button class="row-card" data-action="initSurvival">
+          <div class="row-icon">${ICONS.survival}</div>
+          <div class="row-body"><div class="row-title">듀티 (서바이벌)</div><div class="row-sub">HP · 평판 · 랜덤 이벤트</div></div>
+          <div class="row-chev">›</div>
+        </button>
+        <button class="choice-btn center" data-action="returnToMenu">메뉴</button>
+      </div>`;
+}
+
+function renderDrillMenu() {
+    gameState.mode = "drill_menu"; resetStateForMode();
+    showCoreUI(); if (UI.logBar) UI.logBar.innerHTML = ""; updateStats();
+    UI.gameArea.innerHTML = `
+      <div class="tab-section">
+        <h2 class="page-title">훈련</h2>
+        <p class="page-sub">한 가지를 깊이.</p>
+        <button class="row-card" data-action="renderImageQuizMenu">
+          <div class="row-icon">${ICONS.scenario}</div>
+          <div class="row-body"><div class="row-title">이미지 문제</div><div class="row-sub">ECG · 청진 · 산과 · 신경</div></div>
+          <div class="row-chev">›</div>
+        </button>
+        <button class="row-card" data-action="renderDrugDrill">
+          <div class="row-icon">${ICONS.training}</div>
+          <div class="row-body"><div class="row-title">약물 드릴</div><div class="row-sub">핵심 약물 50종</div></div>
+          <div class="row-chev">›</div>
+        </button>
+        <button class="row-card" data-action="startHandoff">
+          <div class="row-icon">${ICONS.handoff}</div>
+          <div class="row-body"><div class="row-title">인계 시뮬</div><div class="row-sub">100명 풀 셔플</div></div>
+          <div class="row-chev">›</div>
+        </button>
+        <button class="row-card" data-action="startTriage">
+          <div class="row-icon">${ICONS.triage}</div>
+          <div class="row-body"><div class="row-title">트리아지</div><div class="row-sub">응급실 다중환자 분류</div></div>
+          <div class="row-chev">›</div>
+        </button>
+        <button class="choice-btn center" data-action="returnToMenu">메뉴</button>
+      </div>`;
 }
 
 function renderImageQuizMenu() {
@@ -5291,22 +5388,22 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
           </button>` : ''}
 
         <button class="hero-card" data-action="initSurvival">
-          <div class="hero-label">오늘의 듀티</div>
-          <div class="hero-title">듀티 시뮬레이션 시작</div>
-          <div class="hero-sub">${escapeHtml(gameState.currentShift)} 시프트 · 랜덤 에피소드 자동 진행 · HP · 평판 · 엔딩</div>
-          <div class="shift-row-inline" role="radiogroup" aria-label="시프트 난이도">
-            <button class="shift-pill ${gameState.currentShift === 'Day' ? 'active' : ''}" data-action="setShift" data-shift="Day" data-mult="1.0">Day</button>
-            <button class="shift-pill ${gameState.currentShift === 'Evening' ? 'active' : ''}" data-action="setShift" data-shift="Evening" data-mult="1.2">Evening</button>
-            <button class="shift-pill ${gameState.currentShift === 'Night' ? 'active' : ''}" data-action="setShift" data-shift="Night" data-mult="1.5">Night</button>
-          </div>
+          <div class="hero-label">지금 시작</div>
+          <div class="hero-title">오늘의 듀티</div>
+          <div class="hero-sub">${escapeHtml(gameState.currentShift)} 시프트 · 환자 관리하며 점수 쌓기</div>
         </button>
+        <div class="shift-row-below" role="radiogroup" aria-label="시프트 선택">
+          <button class="shift-pill ${gameState.currentShift === 'Day' ? 'active' : ''}" data-action="setShift" data-shift="Day" data-mult="1.0">Day</button>
+          <button class="shift-pill ${gameState.currentShift === 'Evening' ? 'active' : ''}" data-action="setShift" data-shift="Evening" data-mult="1.2">Evening</button>
+          <button class="shift-pill ${gameState.currentShift === 'Night' ? 'active' : ''}" data-action="setShift" data-shift="Night" data-mult="1.5">Night</button>
+        </div>
 
         <div class="home-row">
           <button class="row-card ${dailyDone ? 'done' : ''}" data-action="startDailyChallenge">
             <div class="row-icon">${ICONS.daily}</div>
             <div class="row-body">
               <div class="row-title">일일 챌린지 ${dailyDone ? '<span class="row-pill done">완료</span>' : ''}</div>
-              <div class="row-sub">${dailyDone ? `오늘 ${dailyCorrect}/${DAILY_CHALLENGE_TOTAL} 정답` : `매일 ${DAILY_CHALLENGE_TOTAL}문제 · 시드 고정`}</div>
+              <div class="row-sub">${dailyDone ? `오늘 ${dailyCorrect}/${DAILY_CHALLENGE_TOTAL} 정답` : `매일 ${DAILY_CHALLENGE_TOTAL}문제`}</div>
             </div>
             <div class="row-chev">›</div>
           </button>
@@ -5377,9 +5474,10 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
           </button>
         </div>
 
-        <div class="section-label">특화 학습</div>
+        <div class="section-label">훈련</div>
         <div class="home-row">
           <button class="row-card" data-action="renderImageQuizMenu">
+            <div class="row-icon">${ICONS.scenario}</div>
             <div class="row-body">
               <div class="row-title">이미지 문제</div>
               <div class="row-sub">ECG · 청진 · 산과 · 신경</div>
@@ -5387,6 +5485,7 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
             <div class="row-chev">›</div>
           </button>
           <button class="row-card" data-action="renderDrugDrill">
+            <div class="row-icon">${ICONS.training}</div>
             <div class="row-body">
               <div class="row-title">약물 드릴</div>
               <div class="row-sub">핵심 약물 50종</div>
@@ -5394,6 +5493,7 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
             <div class="row-chev">›</div>
           </button>
           <button class="row-card" data-action="startHandoff">
+            <div class="row-icon">${ICONS.handoff}</div>
             <div class="row-body">
               <div class="row-title">인계 시뮬</div>
               <div class="row-sub">100명 풀 셔플</div>
@@ -5401,6 +5501,7 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
             <div class="row-chev">›</div>
           </button>
           <button class="row-card" data-action="startTriage">
+            <div class="row-icon">${ICONS.triage}</div>
             <div class="row-body">
               <div class="row-title">트리아지</div>
               <div class="row-sub">응급실 다중환자 분류</div>
@@ -6451,6 +6552,9 @@ const DELEGATED_ACTIONS = {
     initSurvival: () => initSurvival(),
     renderQuizMenu: () => renderQuizMenu(),
     renderImageQuizMenu: () => renderImageQuizMenu(),
+    renderPracticeMenu: () => renderPracticeMenu(),
+    renderSimMenu: () => renderSimMenu(),
+    renderDrillMenu: () => renderDrillMenu(),
     toggleHaptics: () => toggleHaptics(),
     toggleTts: () => TTS.toggle(),
     ttsSpeak: (t) => ttsSpeak(t),

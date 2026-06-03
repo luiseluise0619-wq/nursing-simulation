@@ -2514,3 +2514,47 @@ body:has(.tab-bar) #game-area { padding-bottom: 90px; }
     font-weight: 600;
     margin-bottom: 16px;
 }
+
+/* ===== 학습 진입 메뉴 페이지 타이틀 (잡스 컷) ===== */
+.page-title {
+    font-size: 24px;
+    font-weight: 800;
+    margin: 8px 0 4px;
+    letter-spacing: -0.02em;
+    color: var(--text);
+}
+.page-sub {
+    font-size: 14px;
+    color: var(--muted);
+    margin: 0 0 20px;
+}
+
+/* ===== 시프트 선택 (hero 카드 밖으로 분리) ===== */
+.shift-row-below {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    margin: -8px 0 18px;
+    padding: 0 4px;
+}
+.shift-row-below .shift-pill {
+    flex: 1;
+    padding: 8px 4px;
+    font-size: 12px;
+    background: var(--bg);
+    color: var(--muted);
+    border: none;
+    border-radius: var(--radius-pill);
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    font-weight: 600;
+    transition: box-shadow .15s, color .15s;
+}
+.shift-row-below .shift-pill.active {
+    background: var(--primary);
+    color: #fff;
+    box-shadow: var(--shadow-press);
+}
+[data-theme="dark"] .shift-row-below .shift-pill.active {
+    color: #1a1f2b;
+}
