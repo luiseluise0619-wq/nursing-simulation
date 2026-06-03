@@ -5406,6 +5406,22 @@ function returnToMenu() {
 
     UI.gameArea.innerHTML = renderMenuTabs(data, dailyDone, wrongCount);
 
+    // 스크롤 복원 — 메뉴 탭별로 마지막 위치 기억 (잡스: "Continuity")
+    requestAnimationFrame(() => {
+        try {
+            const key = `nurseSim:scroll:${gameState.menuTab || "home"}`;
+            const saved = parseInt(sessionStorage.getItem(key) || "0", 10);
+            if (Number.isFinite(saved) && saved > 0) window.scrollTo(0, saved);
+            // 이후 스크롤은 새로 추적 (탭 전환마다 다시 저장)
+            const onScroll = () => {
+                try { sessionStorage.setItem(key, String(window.scrollY || 0)); } catch {}
+            };
+            window.removeEventListener("scroll", window.__menuScrollSave || (()=>{}));
+            window.__menuScrollSave = onScroll;
+            window.addEventListener("scroll", onScroll, { passive: true });
+        } catch {}
+    });
+
     // 메인 메뉴에서도 상단 헤더는 표시(테마/사운드 토글 위해)
     UI.topBar.classList.remove("hidden");
 }
@@ -6483,16 +6499,13 @@ function renderWeaknessAnalysis() {
     // 데이터 부족 시
     const startedEnough = keys.filter(k => (starts[k]?.count || 0) >= 3);
     if (startedEnough.length === 0) {
-        UI.gameArea.innerHTML = `
-          <div class="scene-card card">
-            
-            <h2 class="scene-title">약점 분석</h2>
-            <p class="scene-desc">아직 데이터가 부족해요. 시뮬레이션을 더 진행해주세요.\n(시나리오를 3회 이상 진행해야 분석이 시작됩니다.)</p>
-            <div class="choice-list">
-              <button class="choice-btn primary" data-action="initSurvival">듀티 시뮬레이션 시작</button>
-              <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
-            </div>
-          </div>`;
+        UI.gameArea.innerHTML = renderEmptyState({
+            illust: "searchEmpty",
+            title: "약점 분석 데이터 부족",
+            desc: "시나리오를 3회 이상 진행하면 자주 틀리는 패턴을 분석해드려요.",
+            primaryAction: "initSurvival", primaryLabel: "듀티 시작",
+            secondaryAction: "returnToMenu", secondaryLabel: "메뉴",
+        });
         return;
     }
 

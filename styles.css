@@ -33,24 +33,24 @@ body.app-hidden *::after {
 }
 
 [data-theme="dark"] {
-    /* === Sage Neumorphic — Dark === */
-    --primary:       #a3c4a5;
-    --primary-dark:  #8eb190;
-    --primary-soft:  #2d3a30;
-    --danger:  #d99494;
-    --warning: #d9b87a;
-    --success: #a3c4a5;
-    --bg:        #1a1f2b;
-    --text:      #e8eaed;
-    --card:      #232a38;
-    --muted:     #94a3b8;
-    --border:    #2a3340;
+    /* === Sage Neumorphic — Dark (보정) === */
+    --primary:       #aacaa9;       /* 약간 밝게 — contrast 강화 */
+    --primary-dark:  #91b690;
+    --primary-soft:  #2e3f33;       /* 살짝 채도 ↑ */
+    --danger:  #df9a9a;
+    --warning: #dcbb7d;
+    --success: #aacaa9;
+    --bg:        #161b27;           /* 더 깊게 (1a1f2b → 161b27) */
+    --text:      #ecedf0;           /* 살짝 더 밝게 */
+    --card:      #232b3a;           /* card vs bg contrast 강화 */
+    --muted:     #9aa5b8;
+    --border:    #2c3543;
     --soft:      #2a3340;
-    --softer:    #1f2532;
-    --log-bg:     #0f131c;
-    --log-text:   #e2e8f0;
-    --log-border: #1f2532;
-    --modal-bg: rgba(10, 14, 22, 0.97);
+    --softer:    #1d2330;
+    --log-bg:     #0c1019;
+    --log-text:   #e5eaf0;
+    --log-border: #1d2330;
+    --modal-bg: rgba(8, 12, 20, 0.97);
 }
 
 body {
@@ -1763,12 +1763,12 @@ body {
     text-align: left;
     cursor: pointer;
     box-shadow: var(--shadow-sm);
-    transition: box-shadow .15s;
+    transition: box-shadow .15s, transform .15s;
     font-family: inherit;
     min-height: 64px;
 }
-.row-card:hover { box-shadow: var(--shadow-md); }
-.row-card:active { box-shadow: var(--shadow-press); }
+.row-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+.row-card:active { box-shadow: var(--shadow-press); transform: translateY(0); }
 .row-card.done { opacity: 0.78; }
 .row-card.big { padding: 18px 18px; min-height: 76px; }
 .row-icon {
@@ -1806,10 +1806,13 @@ body {
 }
 .row-chev {
     color: var(--muted);
-    font-size: 22px;
-    font-weight: 400;
+    font-size: 17px;
+    font-weight: 300;
     flex-shrink: 0;
+    opacity: 0.55;
+    transition: opacity .15s, transform .15s;
 }
+.row-card:hover .row-chev { opacity: 0.85; transform: translateX(2px); }
 .row-pill {
     display: inline-block;
     padding: 2px 8px;
