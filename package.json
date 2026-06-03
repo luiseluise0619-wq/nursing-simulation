@@ -11,6 +11,7 @@
     "lint": "eslint . --ext .js --ignore-pattern node_modules --ignore-pattern dist --ignore-pattern build",
     "icons": "node scripts/generate-icons.js",
     "build:web": "node scripts/build-www.js",
+    "build:preview": "node scripts/build-preview.js",
     "sync:android": "npm run build:web && npx cap sync android",
     "open:android": "npx cap open android",
     "pack:mac": "electron-builder --mac --x64 --arm64",
