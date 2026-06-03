@@ -5748,6 +5748,17 @@ function showGameOver(title, desc) {
         row.appendChild(sp);
         statsEl.appendChild(row);
     });
+    // 모달의 정적 텍스트는 진입 시점에 채움 (HTML 에는 빈 컨테이너만 두어 FOUC 방지)
+    const _secTitle = document.getElementById("modal-section-title");
+    if (_secTitle) _secTitle.textContent = "📚 승급 심사 (무한 랜덤 문제풀이)";
+    const _leftWrap = document.getElementById("modal-quiz-left-wrap");
+    if (_leftWrap) _leftWrap.classList.remove("hidden");
+    const _rankWrap = document.getElementById("modal-quiz-rank-wrap");
+    if (_rankWrap) _rankWrap.classList.remove("hidden");
+    const _scoreWrap = document.getElementById("modal-score-wrap");
+    if (_scoreWrap) _scoreWrap.classList.remove("hidden");
+    const _rankEl = document.getElementById("rank");
+    if (_rankEl) _rankEl.textContent = "신규";
     UI.modal.classList.add("active");
     renderReviveSlot();
 
@@ -5950,16 +5961,30 @@ function boot() {
         window.addEventListener("appinstalled", () => track("pwa_installed"));
     } catch {}
     // 첫 실행 → 약관 동의 → 온보딩 → 메뉴 → (단축키 URL 처리)
+    const removeLoader = () => {
+        requestAnimationFrame(() => {
+            const loader = document.getElementById("app-loader");
+            if (loader) {
+                loader.classList.add("fade-out");
+                setTimeout(() => { try { loader.remove(); } catch {} }, 350);
+            }
+        });
+    };
     const afterReady = () => {
         handleShortcutUrl();
+        const disclaimer = document.getElementById("app-disclaimer");
+        if (disclaimer && Storage.isAccepted(LEGAL_VERSION)) disclaimer.classList.remove("hidden");
+        removeLoader();
     };
     if (!Storage.isAccepted(LEGAL_VERSION)) {
         renderLegalGate(() => {
             if (!Storage.isOnboarded()) renderOnboarding(0);
             else { returnToMenu(); afterReady(); }
         });
+        removeLoader();
     } else if (!Storage.isOnboarded()) {
         renderOnboarding(0);
+        removeLoader();
     } else {
         returnToMenu();
         afterReady();

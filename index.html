@@ -15,12 +15,61 @@
     <link rel="apple-touch-icon" sizes="152x152" href="build/icon-152.png">
     <link rel="apple-touch-icon" sizes="192x192" href="build/icon-192.png">
     <link rel="manifest" href="manifest.json">
-    <meta name="description" content="한국 간호사 국가시험 학습 + 임상 시뮬레이션. 듀티처럼 돌면서 공부.">
+    <meta name="description" content="간호 국시 + 임상 시뮬레이션 학습 앱 — 듀티처럼 돌면서 공부.">
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+    <style>
+        /* 앱 로더 — JS 로드 전 노출 (FOUC 방지) */
+        #app-loader {
+            position: fixed;
+            inset: 0;
+            background: #eef2f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 99999;
+            transition: opacity .3s;
+        }
+        @media (prefers-color-scheme: dark) {
+            #app-loader { background: #161b27; }
+            #app-loader .loader-title { color: #ecedf0; }
+        }
+        #app-loader.fade-out { opacity: 0; pointer-events: none; }
+        .loader-mark {
+            width: 64px; height: 64px;
+            border-radius: 18px;
+            background: #7fa881;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: 800;
+            color: #fff;
+            box-shadow: 0 8px 24px rgba(127,168,129,.35);
+            animation: loaderPulse 1.6s ease-in-out infinite;
+        }
+        .loader-title {
+            margin-top: 18px;
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 15px;
+            font-weight: 700;
+            color: #1e293b;
+            letter-spacing: -0.01em;
+        }
+        @keyframes loaderPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(0.95); opacity: 0.85; }
+        }
+    </style>
 </head>
 <body>
+    <!-- JS 로드 전 노출되는 스플래시. boot() 완료 시 fade-out + 제거 -->
+    <div id="app-loader" aria-hidden="true">
+        <div class="loader-mark">🩺</div>
+        <div class="loader-title">간호사 시뮬레이터</div>
+    </div>
 
     <div id="app-disclaimer" class="app-disclaimer hidden" role="note">
         교육 목적 · 임상 적용 금지 · <button class="disclaimer-link" data-action="openErrorReport">오류 신고</button>
@@ -32,11 +81,11 @@
                 <path d="M15 18l-6-6 6-6"/>
             </svg>
         </button>
-        <div class="stat-gauge hp" id="hp-gauge" data-level="hi">
+        <div class="stat-gauge hp hidden" id="hp-gauge" data-level="hi">
             <span id="hp">100</span>
             <span class="sg-bar"><span class="sg-fill" id="hp-fill" style="width:100%"></span></span>
         </div>
-        <div class="stat-gauge rep" id="rep-gauge">
+        <div class="stat-gauge rep hidden" id="rep-gauge">
             <span id="rep">0</span>
             <span class="sg-bar"><span class="sg-fill" id="rep-fill" style="width:0%"></span></span>
         </div>
@@ -62,14 +111,14 @@
         <div id="progress-fill"></div>
     </div>
     <div id="progress-info" class="hidden">
-        <span id="progress-text">진행도</span>
-        <span id="progress-percent">0%</span>
+        <span id="progress-text"></span>
+        <span id="progress-percent"></span>
     </div>
 
     <div id="inventory-bar" class="hidden"></div>
 
     <div id="game-area" role="main">
-        <!-- 메인 메뉴는 script.js의 returnToMenu()에서 렌더링 -->
+        <!-- JS 가 채움 -->
     </div>
 
     <div id="log-bar" class="hidden" role="log" aria-live="polite" aria-atomic="false"></div>
@@ -83,18 +132,18 @@
 
         <hr class="modal-divider">
 
-        <h3 class="modal-section-title">📚 승급 심사 (무한 랜덤 문제풀이)</h3>
+        <h3 class="modal-section-title" id="modal-section-title"></h3>
         <div class="modal-quiz-card">
             <div class="modal-quiz-header">
-                <span>회차: <strong id="left"></strong></span>
-                <span>랭크: <strong id="rank">신규</strong></span>
+                <span id="modal-quiz-left-wrap" class="hidden">회차: <strong id="left"></strong></span>
+                <span id="modal-quiz-rank-wrap" class="hidden">랭크: <strong id="rank"></strong></span>
             </div>
 
             <div id="question-box" class="modal-question" aria-live="polite"></div>
             <div id="choices"></div>
 
             <div id="result" class="modal-result" aria-live="assertive"></div>
-            <div class="modal-score-row">
+            <div class="modal-score-row hidden" id="modal-score-wrap">
                 <span>현재 점수: <span id="score" class="modal-score">0</span>점</span>
             </div>
         </div>
