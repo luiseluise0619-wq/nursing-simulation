@@ -756,6 +756,19 @@ const CLINICAL_SVG = {
 //       "fhr:late", "pupil:3,5"
 function renderClinicalImage(key) {
     if (!key) return "";
+    // AI 생성 비트맵 이미지 우선 — images/ 폴더에 매칭 파일 있으면 사용
+    // 매핑: "ecg:vtach" → "images/ecg-vtach.webp" (없으면 자동 SVG 폴백)
+    if (typeof CLINICAL_IMAGE_MAP !== "undefined" && CLINICAL_IMAGE_MAP[key]) {
+        const src = CLINICAL_IMAGE_MAP[key];
+        const alt = (CLINICAL_IMAGE_ALT && CLINICAL_IMAGE_ALT[key]) || key;
+        return `<img class="clinical-img" src="${escapeHtml(src)}" alt="${escapeHtml(alt)}" loading="lazy" onerror="this.outerHTML=window._renderSvgFallback('${escapeHtml(key)}')">`;
+    }
+    return _renderSvgFallback(key);
+}
+
+// SVG 폴백 — 비트맵 없거나 로드 실패 시 자체 제작 SVG 렌더
+function _renderSvgFallback(key) {
+    if (!key) return "";
     if (key === "rule-of-nines") return CLINICAL_SVG.ruleOfNines();
     const [type, arg] = key.split(":");
     if (type === "ecg") return CLINICAL_SVG.ecg(arg);
@@ -770,7 +783,6 @@ function renderClinicalImage(key) {
     if (type === "aed") return CLINICAL_SVG.aedPad(arg);
     if (type === "fundal") return CLINICAL_SVG.fundalHeight(Number(arg));
     if (type === "apgar") {
-        // 형식: "apgar:appearance=1,pulse=2,grimace=1,activity=2,respiration=2"
         const scores = {};
         arg.split(",").forEach(p => {
             const [k, v] = p.split("=");
@@ -781,6 +793,10 @@ function renderClinicalImage(key) {
     if (type === "ausc") return CLINICAL_SVG.auscultation(arg);
     if (type === "kramer") return CLINICAL_SVG.kramer(Number(arg));
     return "";
+}
+// onerror 핸들러에서 호출 가능하도록 글로벌 노출
+if (typeof window !== "undefined") {
+    window._renderSvgFallback = _renderSvgFallback;
 }
 
 // 빈 상태 일러스트 — 세이지 톤 단색 SVG (외부 자원 0)

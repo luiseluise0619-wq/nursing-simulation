@@ -9,7 +9,7 @@ const FILES = [
     "index.html", "styles.css", "script.js", "questions.js", "nclex-content.js", "content.js",
     "manifest.json", "sw.js", "icon.svg", "privacy.html", "terms.html",
 ];
-const DIRS = ["build"];
+const DIRS = ["build", "images"];
 
 if (!fs.existsSync(WWW)) fs.mkdirSync(WWW, { recursive: true });
 

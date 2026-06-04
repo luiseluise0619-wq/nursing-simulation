@@ -2935,3 +2935,20 @@ img, svg {
 .tts-btn { min-width: 32px; }  /* 단일 아이콘은 예외 */
 .toggle-switch { min-height: 26px; }  /* 토글은 native 26px */
 
+
+/* ===== 임상 비트맵 이미지 (AI 생성) ===== */
+.clinical-img {
+    display: block;
+    width: 100%;
+    max-width: 600px;
+    height: auto;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: var(--radius-sm);
+    object-fit: contain;
+    aspect-ratio: 4 / 3;
+}
+[data-theme="dark"] .clinical-img,
+[data-theme="amoled"] .clinical-img {
+    background: #ebeef0;
+}

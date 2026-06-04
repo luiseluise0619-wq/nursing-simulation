@@ -10,6 +10,8 @@ const styles = fs.readFileSync(path.join(root, "styles.css"), "utf-8");
 const questions = fs.readFileSync(path.join(root, "questions.js"), "utf-8");
 const nclex = fs.readFileSync(path.join(root, "nclex-content.js"), "utf-8");
 const content = fs.readFileSync(path.join(root, "content.js"), "utf-8");
+const imageMapPath = path.join(root, "images", "image-map.js");
+const imageMap = fs.existsSync(imageMapPath) ? fs.readFileSync(imageMapPath, "utf-8") : "";
 const script = fs.readFileSync(path.join(root, "script.js"), "utf-8");
 
 let out = indexHtml;
@@ -24,6 +26,7 @@ out = out.replace(
 out = out.replace(/<script src="questions\.js"><\/script>/, `<script>${questions}</script>`);
 out = out.replace(/<script src="nclex-content\.js"><\/script>/, `<script>${nclex}</script>`);
 out = out.replace(/<script src="content\.js"><\/script>/, `<script>${content}</script>`);
+out = out.replace(/<script src="images\/image-map\.js"><\/script>/, imageMap ? `<script>${imageMap}</script>` : "");
 out = out.replace(/<script src="script\.js"><\/script>/, `<script>${script}</script>`);
 
 // 3. 외부 리소스 모두 제거 (file:// 호환 + 오프라인 안전):

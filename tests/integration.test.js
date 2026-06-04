@@ -1751,16 +1751,19 @@ describe("P2 — AdMob 어댑터 (Capacitor 호환)", () => {
         const fs = require("fs");
         const path = require("path");
         const src = fs.readFileSync(path.join(__dirname, "..", "script.js"), "utf-8");
-        // renderClinicalImage 본문에 모든 type 분기 존재
-        const m = src.match(/function\s+renderClinicalImage\s*\([^)]*\)\s*\{([\s\S]*?)\n\}/);
+        // 비트맵 이미지 시스템 도입 후 SVG 폴백은 _renderSvgFallback 에 있음
+        const m = src.match(/function\s+_renderSvgFallback\s*\([^)]*\)\s*\{([\s\S]*?)\n\}/);
         expect(m).not.toBeNull();
         const body = m[1];
         for (const type of ["ecg", "ulcer", "position", "fhr", "pupil",
             "gcs", "aed", "fundal", "apgar", "ausc", "kramer"]) {
             expect(body).toMatch(new RegExp(`type\\s*===\\s*"${type}"`));
         }
-        // rule-of-nines 는 별도 key
         expect(body).toMatch(/key\s*===\s*"rule-of-nines"/);
+        // renderClinicalImage 는 비트맵 우선 + 폴백 위임
+        expect(src).toMatch(/function\s+renderClinicalImage/);
+        expect(src).toMatch(/CLINICAL_IMAGE_MAP/);
+        expect(src).toMatch(/_renderSvgFallback/);
     });
 
     test("CLINICAL_SVG 이미지 시스템 — 6종 시각자료 모두 SVG 반환", () => {
