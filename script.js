@@ -758,9 +758,11 @@ function renderClinicalImage(key) {
     if (!key) return "";
     // AI 생성 비트맵 이미지 우선 — images/ 폴더에 매칭 파일 있으면 사용
     // 매핑: "ecg:vtach" → "images/ecg-vtach.webp" (없으면 자동 SVG 폴백)
-    if (typeof CLINICAL_IMAGE_MAP !== "undefined" && CLINICAL_IMAGE_MAP[key]) {
-        const src = CLINICAL_IMAGE_MAP[key];
-        const alt = (CLINICAL_IMAGE_ALT && CLINICAL_IMAGE_ALT[key]) || key;
+    const imgMap = (typeof window !== "undefined") ? window.CLINICAL_IMAGE_MAP : null;
+    const altMap = (typeof window !== "undefined") ? window.CLINICAL_IMAGE_ALT : null;
+    if (imgMap && imgMap[key]) {
+        const src = imgMap[key];
+        const alt = (altMap && altMap[key]) || key;
         return `<img class="clinical-img" src="${escapeHtml(src)}" alt="${escapeHtml(alt)}" loading="lazy" onerror="this.outerHTML=window._renderSvgFallback('${escapeHtml(key)}')">`;
     }
     return _renderSvgFallback(key);
@@ -4548,8 +4550,18 @@ function renderDashboard() {
         </div>
       </div>`;
 }
+// safeConfirm — Capacitor 일부 iOS 빌드에서 confirm() 비신뢰. 폴백 형식으로 보장.
+function safeConfirm(message) {
+    try {
+        // 표준 window.confirm — 일반 환경 (Android/PWA/Electron) 모두 안정적
+        if (typeof window !== "undefined" && typeof window.confirm === "function") {
+            return window.confirm(message);
+        }
+    } catch {}
+    return false; // 폴백: 확인 불가 → 안전하게 거부
+}
 function confirmClearStats() {
-    if (!confirm("모든 통계/오답/기록을 초기화합니다. 계속하시겠습니까?")) return;
+    if (!safeConfirm("모든 통계/오답/기록을 초기화합니다. 계속하시겠습니까?")) return;
     localStorage.removeItem(STORAGE_KEY);
     addLog("저장된 데이터를 초기화했습니다.", "log-important");
     renderDashboard();
@@ -4715,7 +4727,7 @@ function handleImportFile(e) {
             const parsed = JSON.parse(ev.target.result);
             const payload = parsed.data || parsed; // 둘 다 허용
             if (!payload || typeof payload !== "object") throw new Error("유효하지 않은 파일");
-            if (!confirm("기존 데이터가 모두 덮어쓰여집니다. 계속하시겠습니까?")) return;
+            if (!safeConfirm("기존 데이터가 모두 덮어쓰여집니다. 계속하시겠습니까?")) return;
             const validated = Storage.validate(payload);
             Storage.save(validated);
             addLog("데이터가 복원됐습니다.", "log-good");
