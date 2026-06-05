@@ -905,9 +905,9 @@ const Storage = {
                 invitedBy: (typeof raw.referral.invitedBy === "string" && /^[A-Z0-9]{6}$/.test(raw.referral.invitedBy)) ? raw.referral.invitedBy : null,
                 invitesSent: Number.isFinite(raw.referral.invitesSent) ? raw.referral.invitesSent : 0,
                 bonusGranted: raw.referral.bonusGranted === true,
-                bonusAwardedToday: raw.referral.bonusAwardedToday === true ? raw.referral.bonusAwardedToday : false,
+                bonusAwardedOnce: raw.referral.bonusAwardedOnce === true,
                 bonusAwardedDate: typeof raw.referral.bonusAwardedDate === "string" ? raw.referral.bonusAwardedDate : null,
-            } : { myCode: null, invitedBy: null, invitesSent: 0, bonusGranted: false },
+            } : { myCode: null, invitedBy: null, invitesSent: 0, bonusGranted: false, bonusAwardedOnce: false, bonusAwardedDate: null },
             funnel: (raw.funnel && typeof raw.funnel === "object" && !Array.isArray(raw.funnel)) ? {
                 sceneStarts: (raw.funnel.sceneStarts && typeof raw.funnel.sceneStarts === "object" && !Array.isArray(raw.funnel.sceneStarts)) ? raw.funnel.sceneStarts : {},
                 sceneWrongs: (raw.funnel.sceneWrongs && typeof raw.funnel.sceneWrongs === "object" && !Array.isArray(raw.funnel.sceneWrongs)) ? raw.funnel.sceneWrongs : {},
@@ -1118,6 +1118,10 @@ const Storage = {
     setTriageBest(acc) {
         const data = Storage.load();
         if (!Number.isFinite(data.triageBest) || acc > data.triageBest) { data.triageBest = acc; Storage.save(data); }
+    },
+    setHandoffBest(acc) {
+        const data = Storage.load();
+        if (!Number.isFinite(data.handoffBest) || acc > data.handoffBest) { data.handoffBest = acc; Storage.save(data); }
     },
     setScenarioResult(id, hp, rep, completed) {
         const data = Storage.load();
@@ -1614,7 +1618,10 @@ const TTS = {
         try {
             window.speechSynthesis.cancel();
             const cleanText = String(text).slice(0, 800);
-            const v = TTS.voice || TTS.pickVoice();
+            // 텍스트에 한글이 없으면 영어 (NCLEX 영문 모드 약물명 발음 정확도)
+            const hasKorean = /[가-힣]/.test(cleanText);
+            const ttsLang = hasKorean ? "ko-KR" : "en-US";
+            const v = (hasKorean ? (TTS.voice || TTS.pickVoice()) : null);
             // 긴 텍스트는 문장 단위로 끊어 자연스러운 호흡 (마침표/물음표/느낌표 기준)
             const sentences = cleanText
                 .split(/(?<=[.!?。!?])\s+/)
@@ -1625,7 +1632,7 @@ const TTS = {
             sentences.forEach((sentence, i) => {
                 const u = new SpeechSynthesisUtterance(sentence);
                 if (v) u.voice = v;
-                u.lang = "ko-KR";
+                u.lang = ttsLang;
                 u.rate = TTS.rate;
                 u.pitch = TTS.pitch;
                 u.volume = 1.0;
@@ -1991,6 +1998,8 @@ function generateClinicalEventByCategory(category = null) {
         }
     }
     const selected = pick(pool);
+    // 빈 풀 방어 — 알 수 없는 카테고리(URL 변조 등)로 인한 undefined.baseId crash 차단
+    if (!selected) return null;
     rememberQuestion(selected.baseId);
     return selected;
 }
@@ -2010,6 +2019,12 @@ function bookmarkIdFor(ev) {
 const BOOKMARKABLE_MODES = new Set(["survival", "quiz", "mock", "daily", "wrong_review"]);
 
 function renderSceneCard(ev, options = {}) {
+    // 방어 — generateClinicalEventByCategory 가 빈 풀로 null 반환 시
+    if (!ev) {
+        addLog("문제를 불러올 수 없습니다. 메뉴로 돌아갑니다.", "log-bad");
+        returnToMenu();
+        return;
+    }
     const { mode = "survival", questionIndex = null, meta = [], totalSteps = null } = options;
     const tag = ev.category ? `<div class="category-tag">[${escapeHtml(ev.category)}] ${escapeHtml(ev.part || "")}</div>` : "";
     const metaRow = meta.length ? `<div class="meta-row">${meta.map(m => `<div class="meta-chip">${escapeHtml(m)}</div>`).join("")}</div>` : "";
@@ -4790,6 +4805,11 @@ async function toggleDailyNotify() {
     if (data.notifyOptIn) {
         data.notifyOptIn = false;
         Storage.save(data);
+        // 예약된 일일 알림 취소 (Capacitor)
+        try {
+            const LN = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications;
+            if (LN) await LN.cancel({ notifications: [{ id: 7001 }] });
+        } catch {}
         addLog("🔕 알림 꺼졌습니다. 설정에서 다시 켤 수 있어요.", "log-good");
         openSettings();
         return;
@@ -4804,8 +4824,11 @@ async function toggleDailyNotify() {
         if (perm === "granted") {
             data.notifyOptIn = true;
             Storage.save(data);
-            addLog("🔔 매일 일일 챌린지 알림이 켜졌습니다.", "log-good");
-            // 즉시 환영 알림 1회
+            // Capacitor 모바일: 매일 반복 로컬 알림 실제 스케줄
+            const scheduled = await scheduleDailyNotification();
+            addLog(scheduled
+                ? "🔔 매일 오전 9시 일일 챌린지 알림이 예약되었습니다."
+                : "🔔 알림이 켜졌습니다. (웹에서는 앱 방문 시 안내로 표시됩니다)", "log-good");
             try { new Notification("간호사 시뮬레이터", { body: "알림이 켜졌어요. 매일 한 듀티씩 ✨", icon: "icon.svg" }); } catch {}
         } else {
             addLog("알림 권한이 거부되었습니다. 브라우저 설정에서 허용해주세요.", "log-bad");
@@ -4814,6 +4837,36 @@ async function toggleDailyNotify() {
         addLog("알림 권한 요청 실패: " + (e && e.message ? e.message : "unknown"), "log-bad");
     }
     openSettings();
+}
+
+// Capacitor LocalNotifications — 매일 오전 9시 반복 알림 예약 (모바일 빌드 전용)
+// 웹/PWA 에서는 플러그인 부재로 false 반환 (no-op, 앱 방문 시 인앱 안내로 대체)
+async function scheduleDailyNotification() {
+    try {
+        const LN = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications;
+        if (!LN) return false;
+        // 권한 확인/요청
+        try {
+            const p = await LN.requestPermissions();
+            if (p && p.display && p.display !== "granted") return false;
+        } catch {}
+        // 기존 예약 제거 후 재등록 (중복 방지)
+        try { await LN.cancel({ notifications: [{ id: 7001 }] }); } catch {}
+        await LN.schedule({
+            notifications: [{
+                id: 7001,
+                title: "간호사 시뮬레이터",
+                body: "오늘의 일일 챌린지가 기다려요. 한 듀티 돌고 가실래요? ✨",
+                schedule: { on: { hour: 9, minute: 0 }, repeats: true, every: "day", allowWhileIdle: true },
+                smallIcon: "ic_stat_icon_config_sample",
+            }],
+        });
+        track("daily_notify_scheduled");
+        return true;
+    } catch (e) {
+        try { track("daily_notify_schedule_fail"); } catch {}
+        return false;
+    }
 }
 
 // 시험 모드 전환 — 한국 국시 ↔ NCLEX-RN (영어)
@@ -5141,7 +5194,7 @@ function renderPrivacy() {
 
         <section class="legal-section">
           <h3 class="legal-h">1. 수집·이용하는 정보</h3>
-          <p>본 앱은 <strong>외부 서버로 어떤 개인정보도 전송하지 않습니다.</strong> 다음 항목만 사용자 기기의 브라우저 localStorage 에 저장됩니다:</p>
+          <p>본 앱은 <strong>학습 데이터·개인 식별정보를 외부 서버로 전송하지 않습니다.</strong> 다음 항목만 사용자 기기의 브라우저 localStorage 에 저장됩니다:</p>
           <ul class="legal-list">
             <li>학습 통계 (과목별 정답률·콤보 최고점)</li>
             <li>오답 노트 (틀린 문제 + spaced repetition 메타데이터)</li>
@@ -5165,8 +5218,8 @@ function renderPrivacy() {
         <section class="legal-section">
           <h3 class="legal-h">4. 정보 보호 조치</h3>
           <ul class="legal-list">
-            <li><strong>네트워크 통신 0</strong> — Electron 로컬 실행 또는 PWA cache-first</li>
-            <li>CSP <code>script-src 'self'</code> — 외부 스크립트 차단</li>
+            <li><strong>학습 데이터는 기기 내에만 저장</strong> — 외부 서버로 전송하지 않음 (PWA cache-first)</li>
+            <li>광고(Google AdMob)·익명 사용 통계(Plausible) 는 모바일 빌드에서 작동할 수 있으며, 개인 식별정보는 수집하지 않습니다</li>
             <li>Storage 스키마 검증 — 변조 시 안전 복구</li>
           </ul>
         </section>
@@ -5277,7 +5330,11 @@ function closeErrorReport() {
     const ret = gameState._reportReturn;
     gameState._reportContext = null;
     gameState._reportReturn = null;
-    if (ret && ret.html && ret.mode && ret.mode !== "menu") {
+    // 게임 카드 모드(quiz/survival/episode 등)는 보기 버튼이 onclick 으로 바인딩되어
+    // innerHTML 스냅샷 복원 시 리스너가 죽어 클릭 불능 → 안전하게 메뉴로 복귀.
+    // 정적 페이지(메뉴/설정 등)만 스냅샷 복원 허용.
+    const RESTORABLE = new Set(["settings", "dashboard", "leaderboard", "bookmarks", "premium", "weekly", "about", "privacy"]);
+    if (ret && ret.html && ret.mode && RESTORABLE.has(ret.mode)) {
         UI.gameArea.innerHTML = ret.html;
         gameState.mode = ret.mode;
         showCoreUI(); updateStats();
@@ -5311,9 +5368,9 @@ function renderLegalGate(onAccept) {
         <section class="legal-section">
           <h2 class="legal-h">🔒 개인정보 처리방침 (요약)</h2>
           <ul class="legal-list">
-            <li>이 앱은 <strong>네트워크 통신을 하지 않습니다.</strong> 모든 데이터는 사용자의 기기 안에서만 처리됩니다.</li>
-            <li>저장되는 항목: 학습 통계, 오답 노트, 사운드/테마 설정, 일일 챌린지 기록 (브라우저 localStorage).</li>
-            <li>외부 서버로 전송되는 개인정보·식별정보는 <strong>없습니다.</strong></li>
+            <li>학습 데이터는 <strong>모두 사용자 기기 안에서만 처리</strong>됩니다 (브라우저 localStorage).</li>
+            <li>저장되는 항목: 학습 통계, 오답 노트, 사운드/테마 설정, 일일 챌린지 기록.</li>
+            <li>모바일 빌드에서는 광고(Google AdMob)·익명 사용 통계가 작동할 수 있으나, <strong>개인 식별정보는 외부로 전송되지 않습니다.</strong></li>
             <li>대시보드 "통계 초기화" 버튼으로 언제든 전체 데이터를 삭제할 수 있습니다.</li>
           </ul>
         </section>
@@ -5535,6 +5592,8 @@ function choosePersona(discipline) {
 // 메인 메뉴 (returnToMenu)
 // =========================================================================
 function returnToMenu() {
+    // 타자기 효과 타이머 정리 — 모드 전환 시 누수 방지 (orphan DOM 대상 interval)
+    try { if (_typewriterTimer) { clearInterval(_typewriterTimer); _typewriterTimer = null; } } catch {}
     // 진행 중인 모의고사 → abort 로 일관 처리 (endMockExam이 history/timer 정리)
     if (gameState.mode === "mock" && !gameState._mockEnded) {
         gameState._mockEnded = true;
@@ -6212,28 +6271,36 @@ function promptPwaInstall() {
     }).catch(() => {});
 }
 
-// 법적 문서 외부 열기 — Capacitor 환경에선 로컬 파일이 가장 안정적 (asset 동봉)
-// 웹/PWA 에선 새 탭. popup blocker 차단 시 같은 탭으로 폴백.
+// 법적 문서 열기 — 새 탭 시도 후 실패 시 인앱 화면으로 폴백 (state 손실 방지)
+// popup blocker / Capacitor WebView 에서 location.href 로 문서를 덮으면 게임 state 소실되므로
+// 인앱 렌더(renderPrivacy / showLegal)를 우선 폴백으로 사용.
 function openExternalLegal(type) {
-    const PAGES = {
-        privacy: "privacy.html",
-        terms: "terms.html",
-    };
+    const PAGES = { privacy: "privacy.html", terms: "terms.html" };
     const page = PAGES[type];
     if (!page) return;
+
+    // 인앱 폴백 — state 보존
+    const inAppFallback = () => {
+        try {
+            if (type === "privacy" && typeof renderPrivacy === "function") { renderPrivacy(); return true; }
+            if (type === "terms") { renderLegalGate(() => returnToMenu()); return true; }
+        } catch {}
+        return false;
+    };
 
     try {
         const isNative = !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === "function" && window.Capacitor.isNativePlatform());
         if (isNative) {
-            // Capacitor: 로컬 자산 사용 — 인앱 라우팅 (앱 내 화면으로 전환되지 않음)
-            location.href = page;
+            // Capacitor: 외부 문서로 이동하면 state 소실 → 인앱 렌더 우선
+            if (!inAppFallback()) location.href = page;
         } else {
             const w = window.open(page, "_blank", "noopener,noreferrer");
-            if (!w) location.href = page;  // popup blocker 폴백
+            // popup blocker 차단 시: location.href 로 덮지 않고 인앱 렌더 (state 보존)
+            if (!w && !inAppFallback()) location.href = page;
         }
         try { track("legal_open", { type }); } catch {}
     } catch {
-        location.href = page;
+        if (!inAppFallback()) location.href = page;
     }
 }
 

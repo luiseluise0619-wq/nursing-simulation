@@ -43,7 +43,7 @@ body.app-hidden *::after {
     --bg:        #161b27;           /* 더 깊게 (1a1f2b → 161b27) */
     --text:      #ecedf0;           /* 살짝 더 밝게 */
     --card:      #232b3a;           /* card vs bg contrast 강화 */
-    --muted:     #9aa5b8;
+    --muted:     #aab4c4;
     --border:    #2c3543;
     --soft:      #2a3340;
     --softer:    #1d2330;
@@ -2932,6 +2932,8 @@ img, svg {
 .icon-btn, .back-btn, .row-card, .choice-btn, .toggle-switch, .tts-btn {
     min-height: 44px;
 }
+/* 원형 아이콘 버튼 — 가로도 44px 보장 (이전 40px 고정 → HIG 미달) */
+.icon-btn, .back-btn { min-width: 44px; width: 44px; height: 44px; }
 .tts-btn { min-width: 32px; }  /* 단일 아이콘은 예외 */
 .toggle-switch { min-height: 26px; }  /* 토글은 native 26px */
 
