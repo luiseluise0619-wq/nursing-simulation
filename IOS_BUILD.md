@@ -57,7 +57,7 @@ npx cap open ios
   - 수집 데이터: 없음 (모두 로컬 저장) — 또는 사용 분석(Plausible) 추가 시 명시
   - 추적 데이터: AdMob 사용 시 광고용 ID 명시
 - [ ] **연령 등급**: 4+ (의료/교육 콘텐츠는 일반 콘텐츠로 분류)
-- [ ] **다국어 마케팅 노트**: NCLEX-RN English mode (60+ items, MCQ/SATA/Priority) is available — surface in US/global listing copy and English keywords
+- [ ] **다국어 마케팅 노트**: NCLEX-RN English mode (**2,200 questions** — MCQ/SATA/Priority, UWorld 100% 도달 무료) — surface in US/global listing copy and English keywords (e.g., "NCLEX prep, NCLEX-RN practice, free NCLEX questions, SATA, nursing student exam")
 - [ ] In-App Purchase / 광고 사용 여부 신고
 - [ ] 심사용 데모 계정 (필요 시) — 본 앱은 로컬만 사용하므로 불필요
 
