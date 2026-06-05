@@ -6902,7 +6902,14 @@ function handleDelegatedAction(e) {
     if (!target) return;
     const handler = DELEGATED_ACTIONS[target.dataset.action];
     if (!handler) return;
-    handler(target);
+    try {
+        handler(target);
+    } catch (err) {
+        // 핸들러 에러 격리 — 한 액션 실패가 앱 전체 죽이지 않게
+        try { track("delegated_action_error", { action: target.dataset.action, msg: String(err && err.message || err).slice(0, 60) }); } catch {}
+        try { console.error("[action error]", target.dataset.action, err); } catch {}
+        try { addLog("작업 처리 중 오류가 발생했어요. 다시 시도해 주세요.", "log-bad"); } catch {}
+    }
 }
 
 if (typeof window !== "undefined") {
