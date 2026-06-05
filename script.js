@@ -2453,7 +2453,14 @@ function renderPracticeMenu() {
     const nclexBtn = examMode === "nclex"
         ? `<button class="row-card" data-action="renderNclexMenu">
               <div class="row-icon">${ICONS.training}</div>
-              <div class="row-body"><div class="row-title">NCLEX-RN</div><div class="row-sub">MCQ · SATA · Priority</div></div>
+              <div class="row-body"><div class="row-title">NCLEX-RN</div><div class="row-sub">2,200 문제 · MCQ · SATA · Priority</div></div>
+              <div class="row-chev">›</div>
+           </button>` : "";
+    // 한국 국시 정적 240 문제 — 정식 5지선다 (kor-content.js)
+    const korBtn = (typeof window !== "undefined" && window.KOR_QUESTIONS && Array.isArray(window.KOR_QUESTIONS) && window.KOR_QUESTIONS.length > 0)
+        ? `<button class="row-card" data-action="renderKorMenu">
+              <div class="row-icon">${ICONS.training}</div>
+              <div class="row-body"><div class="row-title">한국 국시 정적 문제</div><div class="row-sub">${window.KOR_QUESTIONS.length}문제 · 8과목 · 5지선다</div></div>
               <div class="row-chev">›</div>
            </button>` : "";
     UI.gameArea.innerHTML = `
@@ -2461,9 +2468,10 @@ function renderPracticeMenu() {
         <h2 class="page-title">풀이</h2>
         <p class="page-sub">빠른 풀이로 점수 만들기.</p>
         ${nclexBtn}
+        ${korBtn}
         <button class="row-card" data-action="renderQuizMenu">
           <div class="row-icon">${ICONS.training}</div>
-          <div class="row-body"><div class="row-title">과목별 풀이</div><div class="row-sub">국시 8과목 · 무한 랜덤</div></div>
+          <div class="row-body"><div class="row-title">과목별 풀이 (랜덤 생성)</div><div class="row-sub">국시 8과목 · 무한 변형</div></div>
           <div class="row-chev">›</div>
         </button>
         <button class="row-card" data-action="startMockExam">
@@ -2535,6 +2543,152 @@ function renderDrillMenu() {
         </button>
         <button class="choice-btn center" data-action="returnToMenu">메뉴</button>
       </div>`;
+}
+
+// =========================================================================
+// 한국 국시 정적 문제 (kor-content.js) — 5지선다, 8과목 × 30
+// =========================================================================
+function renderKorMenu() {
+    gameState.mode = "kor_menu";
+    resetStateForMode();
+    showCoreUI();
+    if (UI.logBar) UI.logBar.innerHTML = "";
+    updateStats();
+    const qs = (typeof window !== "undefined" && window.KOR_QUESTIONS) || [];
+    if (qs.length === 0) {
+        UI.gameArea.innerHTML = `
+          <div class="scene-card card">
+            <h2 class="scene-title">한국 국시 정적 문제</h2>
+            <p class="scene-desc">문제 데이터를 불러올 수 없습니다.</p>
+            <button class="choice-btn center" data-action="returnToMenu">메뉴</button>
+          </div>`;
+        return;
+    }
+    const cats = (window.KOR_CATEGORIES || []).slice();
+    const counts = {};
+    qs.forEach(q => counts[q.category] = (counts[q.category] || 0) + 1);
+    const catBtns = cats.map(c => `
+      <button class="choice-btn primary" data-action="startKorQuiz" data-arg="${escapeHtml(c)}">
+        ${escapeHtml(c)} (${counts[c] || 0})
+      </button>`).join("");
+    UI.gameArea.innerHTML = `
+      <div class="scene-card card">
+        <h2 class="scene-title">한국 국시 정적 문제</h2>
+        <p class="scene-desc">정식 5지선다 ${qs.length}문제. 출처 인용 포함 (KNCA / 대한○○학회 / 의료법). 카테고리 또는 무작위 선택.</p>
+        <div class="choice-list">
+          <button class="choice-btn primary" data-action="startKorQuiz" data-arg="__all__">🎯 전체 무작위 (${qs.length})</button>
+          ${catBtns}
+          <button class="choice-btn center" data-action="returnToMenu">메뉴</button>
+        </div>
+      </div>`;
+    try { track("kor_menu_open", { total: qs.length }); } catch {}
+}
+
+function startKorQuiz(t) {
+    const arg = (t && t.dataset && t.dataset.arg) || "__all__";
+    const all = (window.KOR_QUESTIONS || []).slice();
+    let pool = arg === "__all__" ? all : all.filter(q => q.category === arg);
+    if (pool.length === 0) { addLog("선택한 과목에 문제가 없습니다.", "log-bad"); renderKorMenu(); return; }
+    // Fisher-Yates 셔플
+    for (let i = pool.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+    gameState.mode = "kor_quiz";
+    gameState.korPool = pool;
+    gameState.korIndex = 0;
+    gameState.korCorrect = 0;
+    gameState.korCategory = arg === "__all__" ? null : arg;
+    try { Storage.markModeUsed("kor_quiz"); } catch {}
+    renderKorCard();
+    try { track("kor_quiz_start", { category: arg, count: pool.length }); } catch {}
+}
+
+function renderKorCard() {
+    const pool = gameState.korPool || [];
+    const i = gameState.korIndex || 0;
+    if (i >= pool.length) { renderKorSummary(); return; }
+    const q = pool[i];
+    // 보기 셔플 (정답 위치 랜덤)
+    if (!q._shuffled) {
+        const arr = q.choices.slice();
+        for (let k = arr.length - 1; k > 0; k--) {
+            const j = Math.floor(Math.random() * (k + 1));
+            [arr[k], arr[j]] = [arr[j], arr[k]];
+        }
+        q._shuffled = arr;
+    }
+    const choicesHtml = q._shuffled.map((c, idx) => `
+      <button class="choice-btn" data-action="korQuizAnswer" data-idx="${idx}">${escapeHtml(c.text)}</button>
+    `).join("");
+    UI.gameArea.innerHTML = `
+      <div class="scene-card card">
+        <div class="quiz-progress">한국 국시 ${i + 1}/${pool.length} · ${escapeHtml(q.category)}</div>
+        <h2 class="scene-title">${escapeHtml(q.title)}</h2>
+        <p class="scene-desc">${escapeHtml(q.desc)}</p>
+        <div class="choice-list" id="kor-choices">${choicesHtml}</div>
+        <div id="kor-feedback" class="image-quiz-feedback hidden"></div>
+        <button class="choice-btn subtle center hidden" id="kor-next-btn" data-action="korQuizNext">다음 →</button>
+        <button class="choice-btn center" data-action="returnToMenu">중단하고 메뉴로</button>
+      </div>`;
+}
+
+function korQuizAnswer(t) {
+    const pool = gameState.korPool || [];
+    const i = gameState.korIndex || 0;
+    const q = pool[i];
+    if (!q) return;
+    const idx = parseInt(t.dataset.idx, 10);
+    const choice = q._shuffled[idx];
+    if (!choice) return;
+    const isCorrect = !!choice.correct;
+    if (isCorrect) { gameState.korCorrect = (gameState.korCorrect || 0) + 1; Sound.correct(); }
+    else { Sound.wrong(); }
+    document.querySelectorAll("#kor-choices .choice-btn").forEach((btn, bi) => {
+        btn.disabled = true;
+        const c = q._shuffled[bi];
+        if (c && c.correct) btn.classList.add("correct-flash");
+        else if (bi === idx) btn.classList.add("wrong-flash");
+    });
+    const fb = document.getElementById("kor-feedback");
+    if (fb) {
+        fb.innerHTML = `
+          <div class="${isCorrect ? "feedback-good" : "feedback-bad"}">${isCorrect ? "✅ 정답" : "❌ 오답"}</div>
+          <div class="feedback-log">${escapeHtml(choice.log || "")}</div>`;
+        fb.classList.remove("hidden");
+    }
+    const nextBtn = document.getElementById("kor-next-btn");
+    if (nextBtn) nextBtn.classList.remove("hidden");
+    try { track("kor_quiz_answer", { correct: isCorrect, category: q.category }); } catch {}
+}
+
+function korQuizNext() {
+    gameState.korIndex = (gameState.korIndex || 0) + 1;
+    renderKorCard();
+}
+
+function renderKorSummary() {
+    const total = (gameState.korPool || []).length;
+    const correct = gameState.korCorrect || 0;
+    const acc = total > 0 ? Math.round((correct / total) * 100) : 0;
+    try {
+        Storage.recordSetScore("한국 국시 — " + (gameState.korCategory || "전체"), correct, total);
+        checkAndNotifyAchievements();
+    } catch {}
+    UI.gameArea.innerHTML = `
+      <div class="scene-card card">
+        <h2 class="scene-title">한국 국시 완료</h2>
+        <div class="quiz-summary-stats">
+          <div class="quiz-stat-row"><span>총 문제</span><strong>${total}</strong></div>
+          <div class="quiz-stat-row"><span>정답</span><strong>${correct}</strong></div>
+          <div class="quiz-stat-row"><span>정답률</span><strong>${acc}%</strong></div>
+        </div>
+        <div class="choice-list">
+          <button class="choice-btn primary" data-action="renderKorMenu">다시 풀기</button>
+          <button class="choice-btn center" data-action="returnToMenu">메뉴</button>
+        </div>
+      </div>`;
+    try { track("kor_quiz_complete", { total, correct, acc }); } catch {}
 }
 
 function renderImageQuizMenu() {
@@ -6619,6 +6773,10 @@ const DELEGATED_ACTIONS = {
     initSurvival: () => initSurvival(),
     renderQuizMenu: () => renderQuizMenu(),
     renderImageQuizMenu: () => renderImageQuizMenu(),
+    renderKorMenu: () => renderKorMenu(),
+    startKorQuiz: (t) => startKorQuiz(t),
+    korQuizAnswer: (t) => korQuizAnswer(t),
+    korQuizNext: () => korQuizNext(),
     renderPracticeMenu: () => renderPracticeMenu(),
     renderSimMenu: () => renderSimMenu(),
     renderDrillMenu: () => renderDrillMenu(),
