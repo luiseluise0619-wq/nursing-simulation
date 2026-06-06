@@ -161,6 +161,19 @@ function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
 
+/** 스크린리더 announcer — 상태 전환 시 호출 (접근성 WCAG 4.1.3)
+ * @param {string} message
+ */
+function srAnnounce(message) {
+    try {
+        const el = document.getElementById("sr-announcer");
+        if (!el) return;
+        // 같은 메시지가 연속이면 빈 칸 → 다시 (aria-live 재발화)
+        el.textContent = "";
+        setTimeout(() => { el.textContent = String(message).slice(0, 200); }, 50);
+    } catch {}
+}
+
 // 검증된 의료 사실 출처 맵 (CONTENT_VERIFICATION.md 의 30건)
 // 정답 해설에 키워드가 매칭되면 자동 출처 표시
 const KNOWN_SOURCES = [
@@ -2269,6 +2282,8 @@ function dispatchChoice(choice, ev, idx, mode) {
             if (sceneId) Storage.recordSceneWrong(sceneId, ev.category || null);
         }
     } catch {}
+    // 스크린리더 announcer — 접근성 (WCAG 4.1.3)
+    try { srAnnounce(isCorrectChoice(choice) ? "정답입니다" : "오답입니다. " + (choice.log || "").slice(0, 80)); } catch {}
     if (mode === "survival") handleSurvivalChoice(choice);
     else if (mode === "mock") handleMockChoice(choice, ev);
     else if (mode === "daily") handleDailyChoice(choice, ev);
@@ -5075,15 +5090,45 @@ function renderPremiumPage() {
 
         <div class="tip-jar-card">
             <h3>💚 응원하기</h3>
-            <p>결제는 출시 1.5 부터. 지금은 모두 무료입니다.<br>그 전에 응원해주시려면 알림 신청을 남겨주세요.</p>
-            <div class="choice-list">
-                <button class="choice-btn primary" data-action="notifyPremium">출시 알림 받기</button>
+            <p>구독은 준비 중. 지금 응원하고 싶으시면 작은 후원으로 도움 가능합니다.<br><small>모든 후원은 콘텐츠 검수·서버·디자인에 100% 사용됩니다.</small></p>
+            <div class="tip-jar-amounts">
+                <button class="choice-btn" data-action="donate" data-amount="3000" data-method="toss">☕ 3,000원 (커피)</button>
+                <button class="choice-btn" data-action="donate" data-amount="5000" data-method="toss">🍱 5,000원 (점심)</button>
+                <button class="choice-btn" data-action="donate" data-amount="10000" data-method="toss">📚 10,000원 (책)</button>
+            </div>
+            <div class="choice-list" style="margin-top: 12px;">
+                <button class="choice-btn" data-action="donate" data-amount="0" data-method="toss">💚 자유 금액 (Toss)</button>
+                <button class="choice-btn" data-action="notifyPremium">📬 출시 알림 받기</button>
             </div>
         </div>
 
         <button class="choice-btn center" data-action="returnToMenu">메인 메뉴</button>
       </div>`;
     try { track("premium_view"); } catch {}
+}
+
+// Toss/KakaoPay 후원 — 백엔드 없이 작동 (본인 toss.me 핸들만 설정)
+// 본인 작업: 아래 TOSS_HANDLE 을 본인 Toss 핸들로 교체 (예: "nursesim" → toss.me/nursesim)
+const TOSS_HANDLE = "nursesim"; // ← 본인 Toss 핸들로 교체
+
+function donate(t) {
+    const amount = parseInt((t && t.dataset && t.dataset.amount) || "0", 10);
+    const method = (t && t.dataset && t.dataset.method) || "toss";
+    try { track("donation_click", { amount, method }); } catch {}
+
+    if (method === "toss") {
+        // toss.me 링크 형식: https://toss.me/{handle}/{amount}  (amount 0 = 자유)
+        const url = amount > 0
+            ? `https://toss.me/${encodeURIComponent(TOSS_HANDLE)}/${amount}`
+            : `https://toss.me/${encodeURIComponent(TOSS_HANDLE)}`;
+        try {
+            window.open(url, "_blank", "noopener,noreferrer");
+            addLog(`💚 ${amount > 0 ? amount.toLocaleString() + "원 " : ""}후원 페이지로 이동했어요. 감사합니다!`, "log-good");
+            try { Storage.markSupporter(); checkAndNotifyAchievements(); } catch {}
+        } catch {
+            addLog(`Toss 페이지: toss.me/${TOSS_HANDLE}`, "");
+        }
+    }
 }
 
 function notifyPremium() {
@@ -6244,26 +6289,58 @@ function showGameOver(title, desc) {
 // 키보드 단축키
 // =========================================================================
 function handleKeydown(e) {
-    // 한국어 IME 조합 중 입력 무시 (1~4, t, m 등이 잘못 발동되지 않도록)
     if (e.isComposing || e.keyCode === 229) return;
-    // 모달 활성 시 ESC 로 닫기 + 단축키 차단
     if (UI.modal.classList.contains("active")) {
         if (e.key === "Escape") { returnToMenu(); e.preventDefault(); }
         return;
     }
     if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")) return;
+
+    // Esc — 메뉴로 (접근성 — 사용자가 어디서든 안전하게 나감)
+    if (e.key === "Escape") {
+        const inGame = ["survival", "episode", "scenario", "quiz", "mock", "daily",
+            "wrong_review", "handoff", "triage", "image_quiz", "drug_drill",
+            "nclex_quiz", "kor_quiz"].includes(gameState.mode);
+        if (inGame) { returnToMenu(); e.preventDefault(); }
+        return;
+    }
+
+    // 1-5 보기 단축키 (5지선다 한국 국시 대응)
     const num = parseInt(e.key, 10);
-    if (num >= 1 && num <= 4) {
-        const btns = document.querySelectorAll("#choice-list .choice-btn");
+    if (num >= 1 && num <= 5) {
+        const btns = document.querySelectorAll("#choice-list .choice-btn, #image-quiz-choices .choice-btn, #drug-drill-choices .choice-btn, #kor-choices .choice-btn");
         const btn = btns[num - 1];
         if (btn && !btn.disabled) { btn.click(); e.preventDefault(); }
-    } else if (e.key === " " || e.key === "Enter") {
-        const next = document.querySelector("#feedback-zone .choice-btn.primary");
+        return;
+    }
+
+    // 화살표 키 — 메뉴 row-card 네비게이션 (접근성 표준)
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        const cards = Array.from(document.querySelectorAll("#game-area .row-card, #game-area .hero-card, #game-area .choice-btn.primary"));
+        if (cards.length > 0) {
+            const focused = document.activeElement;
+            let idx = cards.indexOf(focused);
+            if (idx === -1) idx = 0;
+            else idx = e.key === "ArrowDown" ? Math.min(idx + 1, cards.length - 1) : Math.max(idx - 1, 0);
+            cards[idx].focus();
+            e.preventDefault();
+        }
+        return;
+    }
+
+    // Space/Enter — 다음 또는 선택
+    if (e.key === " " || e.key === "Enter") {
+        const next = document.querySelector("#feedback-zone .choice-btn.primary, #image-quiz-next-btn:not(.hidden), #kor-next-btn:not(.hidden), #drug-drill-next-btn:not(.hidden)");
         if (next && !next.disabled) { next.click(); e.preventDefault(); }
-    } else if (e.key.toLowerCase() === "t") {
-        toggleTheme();
-    } else if (e.key.toLowerCase() === "m") {
-        toggleSound();
+        return;
+    }
+
+    // 단축키
+    if (e.key.toLowerCase() === "t") toggleTheme();
+    else if (e.key.toLowerCase() === "m") toggleSound();
+    else if (e.key === "?") {
+        // 도움말 토스트
+        addLog("⌨️ 단축키: 1-5 선택 / ↑↓ 네비 / Enter 다음 / Esc 메뉴 / T 테마 / M 사운드", "log-good");
     }
 }
 
@@ -7082,6 +7159,7 @@ const DELEGATED_ACTIONS = {
     ttsPreview: () => ttsPreview(),
     renderPremiumPage: () => renderPremiumPage(),
     notifyPremium: () => notifyPremium(),
+    donate: (t) => donate(t),
     renderLeaderboard: () => renderLeaderboard(),
     renderDrugDrill: () => renderDrugDrill(),
     startDrugDrill: () => startDrugDrill(),
