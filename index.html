@@ -16,6 +16,20 @@
     <link rel="apple-touch-icon" sizes="192x192" href="build/icon-192.png">
     <link rel="manifest" href="manifest.json">
     <meta name="description" content="간호 국시 + 임상 시뮬레이션 학습 앱 — 듀티처럼 돌면서 공부.">
+    <meta name="keywords" content="간호사 국가고시,국시,NCLEX,NCLEX-RN,간호학과,임상 시뮬레이션,간호 학습 앱,무료 간호 앱,nursing exam,Korean nursing">
+    <meta name="author" content="간호사 시뮬레이터">
+    <!-- Open Graph (Facebook/KakaoTalk/LINE) -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="간호사 시뮬레이터 — 국시 + NCLEX 무료 학습">
+    <meta property="og:description" content="35편 임상 시뮬레이션 + NCLEX 2,200문제 + 한국 국시 320문제. 무료, 회원가입 없음.">
+    <meta property="og:image" content="icon.svg">
+    <meta property="og:locale" content="ko_KR">
+    <meta property="og:locale:alternate" content="en_US">
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="간호사 시뮬레이터 — 국시 + NCLEX 무료">
+    <meta name="twitter:description" content="35편 임상 시뮬레이션 + NCLEX 2,200문제. 무료.">
+    <meta name="twitter:image" content="icon.svg">
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
@@ -65,6 +79,9 @@
     </style>
 </head>
 <body>
+    <!-- 접근성 — 스크린리더/키보드 사용자가 본문으로 바로 이동 (WCAG 2.4.1) -->
+    <a href="#game-area" class="skip-link">본문으로 건너뛰기</a>
+
     <!-- JS 로드 전 노출되는 스플래시. boot() 완료 시 fade-out + 제거 -->
     <div id="app-loader" aria-hidden="true">
         <div class="loader-mark" aria-hidden="true">
@@ -111,6 +128,7 @@
         <div id="kebab-menu" class="kebab-menu hidden" role="menu" aria-labelledby="kebab-btn">
             <button class="kebab-item" data-action="toggleTheme" role="menuitem"><span class="kebab-icon">🌙</span><span>테마</span></button>
             <button class="kebab-item" data-action="toggleSound" role="menuitem"><span class="kebab-icon">🔊</span><span id="kebab-sound-label">사운드</span></button>
+            <button class="kebab-item" data-action="toggleLang" role="menuitem"><span class="kebab-icon">🌐</span><span id="kebab-lang-label">언어 / Language</span></button>
             <button class="kebab-item" data-action="openSettings" role="menuitem"><span class="kebab-icon">⚙️</span><span>설정</span></button>
         </div>
     </div>
@@ -126,9 +144,9 @@
 
     <div id="inventory-bar" class="hidden"></div>
 
-    <div id="game-area" role="main">
+    <main id="game-area" role="main" aria-label="학습 영역" tabindex="-1">
         <!-- JS 가 채움 -->
-    </div>
+    </main>
 
     <div id="log-bar" class="hidden" role="log" aria-live="polite" aria-atomic="false"></div>
 

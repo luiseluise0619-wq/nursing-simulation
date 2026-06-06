@@ -849,7 +849,7 @@ const Storage = {
         const stats = {};
         CATEGORIES.forEach(c => stats[c] = { solved: 0, correct: 0 });
         return {
-            settings: { theme: "auto", sound: true, haptics: true, tts: false, examMode: "korean" },
+            settings: { theme: "auto", sound: true, haptics: true, tts: false, examMode: "korean", lang: "ko" },
             stats,
             wrongQueue: [],
             bookmarks: {},     // { contentId: { type, label, ts } } — 즐겨찾기
@@ -1685,6 +1685,32 @@ const TTS = {
     },
 };
 
+// PWA 설치 권유 토스트 — 5회 이상 방문 시 1회만
+function showInstallToast() {
+    if (document.getElementById("install-toast")) return;
+    const el = document.createElement("div");
+    el.id = "install-toast";
+    el.setAttribute("role", "status");
+    el.innerHTML = `
+        <span style="margin-right:12px;">📱 홈 화면에 설치하시겠어요?</span>
+        <button id="install-toast-yes" style="background:#fff;color:#7fa881;border:none;padding:6px 12px;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px;">설치</button>
+        <button id="install-toast-no" style="background:transparent;color:#fff;border:none;padding:6px 8px;cursor:pointer;font-family:inherit;font-size:13px;opacity:0.8;margin-left:4px;">나중에</button>`;
+    el.style.cssText = "position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#7fa881;color:#fff;padding:12px 18px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.3);z-index:99996;font-size:13px;font-family:inherit;display:flex;align-items:center;animation:badgePop 400ms ease;max-width:calc(100vw - 32px);";
+    document.body.appendChild(el);
+    document.getElementById("install-toast-yes")?.addEventListener("click", async () => {
+        try {
+            const ev = window.__pwaInstallPrompt;
+            if (ev) { ev.prompt(); await ev.userChoice; window.__pwaInstallPrompt = null; }
+            track("pwa_install_toast_yes");
+        } catch {}
+        el.remove();
+    });
+    document.getElementById("install-toast-no")?.addEventListener("click", () => {
+        track("pwa_install_toast_no");
+        el.remove();
+    });
+}
+
 // 새 버전 배포 토스트 — SW activate 후 호출됨
 function showUpdateToast() {
     if (document.getElementById("update-toast")) return;
@@ -1854,6 +1880,19 @@ function toggleSound() {
     Sound.enabled = !Sound.enabled;
     Storage.setSettings({ sound: Sound.enabled });
     if (UI.soundToggle) UI.soundToggle.textContent = Sound.enabled ? "🔊" : "🔇";
+}
+
+// 언어 전환 (한국어 ↔ English)
+function toggleLang() {
+    if (typeof window === "undefined" || !window.I18N) return;
+    const cur = window.I18N.getLang();
+    const next = cur === "en" ? "ko" : "en";
+    window.I18N.setLang(next);
+    Storage.setSettings({ lang: next });
+    document.documentElement.lang = next;
+    addLog(next === "en" ? "🌐 Language: English" : "🌐 언어: 한국어", "log-good");
+    // 메뉴 다시 그려 즉시 반영
+    try { returnToMenu(); } catch {}
 }
 
 // ⋯ 케밥 메뉴 (top-bar 3 아이콘 통합)
@@ -5833,29 +5872,32 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
 
     const renderStudy = () => {
       const examMode = (typeof Storage !== "undefined" && Storage.getExamMode) ? Storage.getExamMode() : "korean";
+      // i18n: 언어 설정에 따라 자동 번역 (한국/영어)
+      const _t = (k, fb) => (typeof window !== "undefined" && window.I18N) ? window.I18N.t(k, fb) : fb;
+      const practiceSub = examMode === "nclex" ? _t("study.nclex.sub", "NCLEX · 과목별 · 모의고사") : _t("study.practice.sub", "과목별 · 모의고사 · 일일");
       return `
       <div class="tab-section">
         <button class="row-card big" data-action="renderPracticeMenu">
           <div class="row-icon big">${ICONS.practice}</div>
           <div class="row-body">
-            <div class="row-title">풀이</div>
-            <div class="row-sub">${examMode === "nclex" ? "NCLEX · 과목별 · 모의고사" : "과목별 · 모의고사 · 일일"}</div>
+            <div class="row-title">${_t("study.practice", "풀이")}</div>
+            <div class="row-sub">${practiceSub}</div>
           </div>
           <div class="row-chev">›</div>
         </button>
         <button class="row-card big" data-action="renderSimMenu">
           <div class="row-icon big">${ICONS.sim}</div>
           <div class="row-body">
-            <div class="row-title">시뮬레이션</div>
-            <div class="row-sub">에피소드 · 짧은 시나리오 · 듀티</div>
+            <div class="row-title">${_t("study.simulation", "시뮬레이션")}</div>
+            <div class="row-sub">${_t("study.simulation.sub", "에피소드 · 짧은 시나리오 · 듀티")}</div>
           </div>
           <div class="row-chev">›</div>
         </button>
         <button class="row-card big" data-action="renderDrillMenu">
           <div class="row-icon big">${ICONS.drills}</div>
           <div class="row-body">
-            <div class="row-title">훈련</div>
-            <div class="row-sub">이미지 · 약물 · 인계 · 트리아지</div>
+            <div class="row-title">${_t("study.drills", "훈련")}</div>
+            <div class="row-sub">${_t("study.drills.sub", "이미지 · 약물 · 인계 · 트리아지")}</div>
           </div>
           <div class="row-chev">›</div>
         </button>
@@ -6195,24 +6237,42 @@ function handleKeydown(e) {
 // 사용자 데이터는 localStorage 에 안전하므로 메뉴 복귀만으로 회복 가능.
 function installErrorBoundary() {
     if (typeof window === "undefined") return;
-    const handler = (msg) => {
+    // 로컬 에러 로그 — 사용자가 오류 신고 시 첨부 가능
+    const logError = (msg, source) => {
+        try {
+            const KEY = "nurseSim:errLog";
+            let log = [];
+            try { log = JSON.parse(localStorage.getItem(KEY) || "[]"); } catch {}
+            log.unshift({
+                msg: String(msg).slice(0, 300),
+                source: String(source || "").slice(0, 50),
+                at: Date.now(),
+                ua: (navigator.userAgent || "").slice(0, 100),
+                url: (location.pathname || "") + (location.search || ""),
+            });
+            log = log.slice(0, 20); // 최근 20건만
+            localStorage.setItem(KEY, JSON.stringify(log));
+        } catch {}
+    };
+    const handler = (msg, source) => {
+        logError(msg, source);
         try {
             const area = document.getElementById("game-area");
             if (!area) return;
             area.innerHTML = `
               <div class="scene-card card">
-                
                 <h2 class="scene-title">일시적 오류가 발생했어요</h2>
                 <p class="scene-desc">화면을 복구했습니다. 학습 기록은 안전하게 저장되어 있어요.\n계속하려면 아래 버튼을 누르세요.</p>
                 <div class="choice-list">
                   <button class="choice-btn primary" data-action="returnToMenu">메인 메뉴로</button>
+                  <button class="choice-btn" data-action="openErrorReport">오류 신고 (자동 첨부)</button>
                 </div>
               </div>`;
-            track("error_recovered", { msg: String(msg).slice(0, 60) });
+            track("error_recovered", { msg: String(msg).slice(0, 60), source: String(source || "").slice(0, 30) });
         } catch { /* 복구 실패 시에도 앱 크래시 방지 */ }
     };
-    window.addEventListener("error", (e) => handler(e.message || "error"));
-    window.addEventListener("unhandledrejection", (e) => handler((e.reason && e.reason.message) || "promise"));
+    window.addEventListener("error", (e) => handler(e.message || "error", "window"));
+    window.addEventListener("unhandledrejection", (e) => handler((e.reason && e.reason.message) || "promise", "promise"));
 }
 
 function boot() {
@@ -6225,6 +6285,14 @@ function boot() {
     Sound.enabled = settings.sound !== false;
     Haptics.enabled = settings.haptics !== false;
     TTS.enabled = settings.tts === true;
+    // i18n 초기화 — 저장된 lang 또는 브라우저 기본
+    try {
+        if (typeof window !== "undefined" && window.I18N) {
+            const lang = settings.lang || window.I18N.detectLang();
+            window.I18N.setLang(lang);
+            document.documentElement.lang = lang;
+        }
+    } catch {}
     if (settings.ttsVoice) TTS.selectedVoiceName = settings.ttsVoice;
     if (Number.isFinite(settings.ttsRate)) TTS.rate = settings.ttsRate;
     if (Number.isFinite(settings.ttsPitch)) TTS.pitch = settings.ttsPitch;
@@ -6285,12 +6353,23 @@ function boot() {
             });
         }
     } catch {}
-    // PWA 설치 프롬프트 — 가능할 때 holding 해서 사용자 액션 후에만 노출
+    // PWA 설치 프롬프트 — 5번 이상 방문 + 1회 한정 토스트
     try {
         window.addEventListener("beforeinstallprompt", (e) => {
             e.preventDefault();
             window.__pwaInstallPrompt = e;
             track("pwa_install_prompt_available");
+            // 방문 횟수 추적
+            try {
+                const KEY = "nurseSim:visitCount";
+                const cnt = (parseInt(localStorage.getItem(KEY) || "0", 10) || 0) + 1;
+                localStorage.setItem(KEY, String(cnt));
+                const SHOWN_KEY = "nurseSim:installToastShown";
+                if (cnt >= 5 && !localStorage.getItem(SHOWN_KEY)) {
+                    localStorage.setItem(SHOWN_KEY, "1");
+                    setTimeout(() => { try { showInstallToast(); } catch {} }, 3000);
+                }
+            } catch {}
         });
         window.addEventListener("appinstalled", () => track("pwa_installed"));
     } catch {}
@@ -6956,6 +7035,7 @@ const DELEGATED_ACTIONS = {
     renderShiftPicker: () => renderShiftPicker(),
     toggleKebab: () => toggleKebab(),
     toggleTheme: () => { toggleTheme(); closeKebab(); },
+    toggleLang: () => { toggleLang(); closeKebab(); },
     toggleSound: () => { toggleSound(); closeKebab(); _syncKebabSoundLabel(); },
     toggleHaptics: () => toggleHaptics(),
     toggleTts: () => TTS.toggle(),

@@ -8,6 +8,7 @@ const WWW = path.join(ROOT, "www");
 const FILES = [
     "index.html", "styles.css", "script.js", "questions.js", "nclex-content.js", "kor-content.js", "content.js", "i18n.js",
     "manifest.json", "sw.js", "icon.svg", "privacy.html", "terms.html",
+    "robots.txt", "sitemap.xml",
 ];
 const DIRS = ["build", "images"];
 
