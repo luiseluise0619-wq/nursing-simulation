@@ -1685,6 +1685,22 @@ const TTS = {
     },
 };
 
+// 새 버전 배포 토스트 — SW activate 후 호출됨
+function showUpdateToast() {
+    if (document.getElementById("update-toast")) return;
+    const el = document.createElement("div");
+    el.id = "update-toast";
+    el.setAttribute("role", "status");
+    el.innerHTML = `
+        <span style="margin-right:12px;">🔄 새 버전이 준비되었어요</span>
+        <button id="update-toast-reload" style="background:#fff;color:#7fa881;border:none;padding:6px 12px;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px;">새로고침</button>
+        <button id="update-toast-dismiss" style="background:transparent;color:#fff;border:none;padding:6px 8px;cursor:pointer;font-family:inherit;font-size:13px;opacity:0.8;margin-left:4px;">나중에</button>`;
+    el.style.cssText = "position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#7fa881;color:#fff;padding:12px 18px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.3);z-index:99996;font-size:13px;font-family:inherit;display:flex;align-items:center;animation:badgePop 400ms ease;";
+    document.body.appendChild(el);
+    document.getElementById("update-toast-reload")?.addEventListener("click", () => { location.reload(); });
+    document.getElementById("update-toast-dismiss")?.addEventListener("click", () => { el.remove(); });
+}
+
 function ttsSpeak(t) {
     const text = t && t.dataset ? t.dataset.text : "";
     if (!TTS.enabled) {
@@ -2468,7 +2484,7 @@ function renderPracticeMenu() {
     showCoreUI(); if (UI.logBar) UI.logBar.innerHTML = ""; updateStats();
     const examMode = Storage.getExamMode();
     const nclexBtn = examMode === "nclex"
-        ? `<button class="row-card" data-action="renderNclexMenu">
+        ? `<button class="row-card" data-action="renderNclexMenuLazy">
               <div class="row-icon">${ICONS.training}</div>
               <div class="row-body"><div class="row-title">NCLEX-RN</div><div class="row-sub">2,200 문제 · MCQ · SATA · Priority</div></div>
               <div class="row-chev">›</div>
@@ -2944,6 +2960,50 @@ function quizContinue() {
 // 데이터: window.NCLEX_CATEGORIES, window.NCLEX_QUESTIONS (nclex-content.js)
 // 한국 국시 퀴즈 흐름과 별도 — 무한 랜덤이 아닌 카테고리별 풀 셔플 1세트
 // =========================================================================
+// NCLEX 동적 로더 — 첫 진입 시에만 nclex-content.js 다운로드 (2MB)
+// 초기 부팅 시간 단축: 4-10s 절약 (3G/저사양 안드로이드)
+let _nclexLoadPromise = null;
+function loadNclexContent() {
+    if (_nclexAvailable()) return Promise.resolve(true);
+    if (_nclexLoadPromise) return _nclexLoadPromise;
+    _nclexLoadPromise = new Promise((resolve) => {
+        try {
+            const s = document.createElement("script");
+            s.src = "nclex-content.js";
+            s.async = true;
+            s.onload = () => { try { track("nclex_loaded"); } catch {} resolve(_nclexAvailable()); };
+            s.onerror = () => { try { track("nclex_load_fail"); } catch {} resolve(false); };
+            document.head.appendChild(s);
+        } catch { resolve(false); }
+    });
+    return _nclexLoadPromise;
+}
+
+// NCLEX 메뉴 진입 — 로딩 중이면 스피너 표시
+async function renderNclexMenuLazy() {
+    if (_nclexAvailable()) return renderNclexMenu();
+    gameState.mode = "nclex_loading"; resetStateForMode(); showCoreUI();
+    UI.gameArea.innerHTML = `
+      <div class="scene-card card" style="text-align:center;padding:48px 24px;">
+        <div class="loader-mark" style="margin: 0 auto 16px;">🇺🇸</div>
+        <h2 class="scene-title">NCLEX-RN 콘텐츠 로딩 중...</h2>
+        <p class="scene-desc">2,200 문제 준비 중 (첫 진입 시 1회만)</p>
+      </div>`;
+    const ok = await loadNclexContent();
+    if (ok) renderNclexMenu();
+    else {
+        UI.gameArea.innerHTML = `
+          <div class="scene-card card">
+            <h2 class="scene-title">NCLEX-RN Practice</h2>
+            <p class="scene-desc">NCLEX content failed to load. Check internet connection or reinstall.</p>
+            <div class="choice-list">
+              <button class="choice-btn primary" data-action="renderNclexMenuLazy">Retry</button>
+              <button class="choice-btn" data-action="returnToMenu">Back to Menu</button>
+            </div>
+          </div>`;
+    }
+}
+
 function _nclexAvailable() {
     return typeof window !== "undefined"
         && Array.isArray(window.NCLEX_CATEGORIES)
@@ -4910,17 +4970,44 @@ function renderPremiumPage() {
     UI.gameArea.innerHTML = `
       <div class="card">
         <div class="premium-hero">
-            <h2>프리미엄 준비 중</h2>
+            <h2>프리미엄</h2>
             <p>광고 없이, 더 깊게.</p>
         </div>
-        <p class="scene-desc" style="text-align:center; margin: 24px 0;">
-            지금은 모든 기능이 무료입니다. 준비되면 알려드릴게요.
-        </p>
-        <div class="choice-list">
-            <button class="choice-btn primary" data-action="notifyPremium">알림 받기</button>
-            <button class="choice-btn center" data-action="returnToMenu">메인 메뉴</button>
+
+        <div class="premium-pricing">
+            <div class="premium-plan">
+                <div class="premium-plan-label">월간</div>
+                <div class="premium-plan-price">₩4,900<span>/월</span></div>
+                <div class="premium-plan-desc">언제든 해지</div>
+            </div>
+            <div class="premium-plan recommended">
+                <div class="premium-plan-badge">2개월 무료</div>
+                <div class="premium-plan-label">연간</div>
+                <div class="premium-plan-price">₩49,000<span>/년</span></div>
+                <div class="premium-plan-desc">월 ₩4,083 효과</div>
+            </div>
         </div>
+
+        <div class="premium-features">
+            <div class="premium-feature"><div class="premium-feature-icon">🚫</div><div class="premium-feature-body"><div class="premium-feature-title">광고 0</div><div class="premium-feature-sub">힌트·부활 광고 없이 즉시 사용</div></div></div>
+            <div class="premium-feature"><div class="premium-feature-icon">📚</div><div class="premium-feature-body"><div class="premium-feature-title">독점 에피소드</div><div class="premium-feature-sub">신규 임상 시뮬 매월 +2편</div></div></div>
+            <div class="premium-feature"><div class="premium-feature-icon">🎯</div><div class="premium-feature-body"><div class="premium-feature-title">AI 약점 코칭</div><div class="premium-feature-sub">개인 맞춤 학습 계획 자동 생성</div></div></div>
+            <div class="premium-feature"><div class="premium-feature-icon">☁️</div><div class="premium-feature-body"><div class="premium-feature-title">기기 간 동기화</div><div class="premium-feature-sub">폰·태블릿·PC 진도 이어가기</div></div></div>
+            <div class="premium-feature"><div class="premium-feature-icon">📝</div><div class="premium-feature-body"><div class="premium-feature-title">기출 라이선스</div><div class="premium-feature-sub">5년치 국시 + NCLEX 풀이</div></div></div>
+            <div class="premium-feature"><div class="premium-feature-icon">💎</div><div class="premium-feature-body"><div class="premium-feature-title">RN 검수 우선</div><div class="premium-feature-sub">현직 간호사 검수 콘텐츠 우선 공개</div></div></div>
+        </div>
+
+        <div class="tip-jar-card">
+            <h3>💚 응원하기</h3>
+            <p>결제는 출시 1.5 부터. 지금은 모두 무료입니다.<br>그 전에 응원해주시려면 알림 신청을 남겨주세요.</p>
+            <div class="choice-list">
+                <button class="choice-btn primary" data-action="notifyPremium">출시 알림 받기</button>
+            </div>
+        </div>
+
+        <button class="choice-btn center" data-action="returnToMenu">메인 메뉴</button>
       </div>`;
+    try { track("premium_view"); } catch {}
 }
 
 function notifyPremium() {
@@ -6190,6 +6277,12 @@ function boot() {
     try {
         if (navigator.serviceWorker && location.protocol !== "file:") {
             navigator.serviceWorker.register("./sw.js").catch(() => {});
+            // 새 버전 배포 시 토스트 (배포 성숙도)
+            navigator.serviceWorker.addEventListener("message", (e) => {
+                if (e.data && e.data.type === "NEW_VERSION") {
+                    try { showUpdateToast(); } catch {}
+                }
+            });
         }
     } catch {}
     // PWA 설치 프롬프트 — 가능할 때 holding 해서 사용자 액션 후에만 노출
@@ -6933,6 +7026,7 @@ const DELEGATED_ACTIONS = {
     openSettings: () => openSettings(),
     setExamMode: (t) => setExamMode(t),
     renderNclexMenu: () => renderNclexMenu(),
+    renderNclexMenuLazy: () => renderNclexMenuLazy(),
     startNclexQuiz: (t) => startNclexQuiz(t.dataset.arg),
     nclexAnswer: (t) => nclexAnswer(t),
     nclexSataToggle: (t) => nclexSataToggle(t),

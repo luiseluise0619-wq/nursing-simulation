@@ -1,7 +1,7 @@
 // 간호사 시뮬레이터 서비스 워커 — 오프라인 우선 (cache-first)
 // Electron 환경(file://)에서는 등록되지 않으며, PWA 호스팅 시에만 동작.
 // 버전 변경 시 활성화·재캐싱 발생 — 배포 때마다 v숫자 올려야 사용자에게 업데이트 전달됨.
-const CACHE = "nurse-sim-v3";
+const CACHE = "nurse-sim-v4";
 const ASSETS = [
     "./",
     "./index.html",
@@ -25,7 +25,12 @@ self.addEventListener("activate", (e) => {
     e.waitUntil(
         caches.keys().then((keys) =>
             Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))
-        ).then(() => self.clients.claim())
+        ).then(() => self.clients.claim()).then(() => {
+            // 활성 클라이언트에 새 버전 알림 (앱 측에서 토스트 표시)
+            return self.clients.matchAll({ type: "window" }).then((clients) => {
+                clients.forEach((c) => c.postMessage({ type: "NEW_VERSION", cache: CACHE }));
+            });
+        })
     );
 });
 self.addEventListener("fetch", (e) => {

@@ -67,7 +67,16 @@
 <body>
     <!-- JS 로드 전 노출되는 스플래시. boot() 완료 시 fade-out + 제거 -->
     <div id="app-loader" aria-hidden="true">
-        <div class="loader-mark">🩺</div>
+        <div class="loader-mark" aria-hidden="true">
+          <svg viewBox="0 0 64 64" width="40" height="40" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+            <!-- 청진기 + 임상 그래프 = 학습+시뮬 = 브랜드 정체성 -->
+            <path d="M16 12 v14 a8 8 0 0 0 16 0 v-14"/>
+            <path d="M24 34 a3 3 0 0 0 3 3 a3 3 0 0 0 3 -3 v-2"/>
+            <circle cx="44" cy="20" r="3.5"/>
+            <path d="M30 32 v6 q0 6 6 6 h2 q6 0 6 -6 v-14"/>
+            <path d="M10 50 l5 -6 l5 4 l6 -10 l4 8 l6 -4 l5 3" stroke-width="2.5" opacity="0.7"/>
+          </svg>
+        </div>
         <div class="loader-title">간호사 시뮬레이터</div>
     </div>
 
@@ -151,7 +160,7 @@
     </div>
 
     <script src="questions.js"></script>
-    <script src="nclex-content.js"></script>
+    <!-- nclex-content.js (2MB) 는 NCLEX 메뉴 진입 시 동적 로드 (lazy) - 초기 로드 시간 단축 -->
     <script src="kor-content.js"></script>
     <script src="content.js"></script>
     <script src="images/image-map.js"></script>
