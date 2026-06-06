@@ -103,8 +103,29 @@ function updateBackButton() {
 // =========================================================================
 // 유틸리티
 // =========================================================================
+/**
+ * 숫자 범위 제한 (low ≤ n ≤ high)
+ * @param {number} n
+ * @param {number} lo
+ * @param {number} hi
+ * @returns {number}
+ */
 function clamp(n, lo, hi) { return Math.min(Math.max(n, lo), hi); }
+
+/**
+ * 배열에서 무작위 요소 선택 (빈 배열 시 undefined)
+ * @template T
+ * @param {T[]} arr
+ * @returns {T|undefined}
+ */
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+/**
+ * Fisher-Yates 셔플 (원본 보존, 새 배열 반환)
+ * @template T
+ * @param {T[]} arr
+ * @returns {T[]}
+ */
 function shuffle(arr) {
     const a = [...arr];
     for (let i = a.length - 1; i > 0; i--) {
@@ -113,15 +134,29 @@ function shuffle(arr) {
     }
     return a;
 }
+
+/** 오늘 날짜 키 (YYYY-MM-DD)
+ * @returns {string}
+ */
 function todayKey() {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
+
+/** N일 offset 날짜 키
+ * @param {number} days
+ * @returns {string}
+ */
 function dateKeyOffset(days) {
     const d = new Date();
     d.setDate(d.getDate() + days);
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
+
+/** HTML 안전 이스케이프 (XSS 방지)
+ * @param {string|number|null|undefined} s
+ * @returns {string}
+ */
 function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
@@ -1882,16 +1917,18 @@ function toggleSound() {
     if (UI.soundToggle) UI.soundToggle.textContent = Sound.enabled ? "🔊" : "🔇";
 }
 
-// 언어 전환 (한국어 ↔ English)
+// 언어 순환 전환 (한국어 → English → Filipino → Español → 한국어)
 function toggleLang() {
     if (typeof window === "undefined" || !window.I18N) return;
+    const ORDER = ["ko", "en", "fil", "es"];
     const cur = window.I18N.getLang();
-    const next = cur === "en" ? "ko" : "en";
+    const idx = ORDER.indexOf(cur);
+    const next = ORDER[(idx + 1) % ORDER.length];
     window.I18N.setLang(next);
     Storage.setSettings({ lang: next });
     document.documentElement.lang = next;
-    addLog(next === "en" ? "🌐 Language: English" : "🌐 언어: 한국어", "log-good");
-    // 메뉴 다시 그려 즉시 반영
+    const LABELS = { ko: "🇰🇷 한국어", en: "🇺🇸 English", fil: "🇵🇭 Filipino", es: "🇪🇸 Español" };
+    addLog("🌐 " + LABELS[next], "log-good");
     try { returnToMenu(); } catch {}
 }
 

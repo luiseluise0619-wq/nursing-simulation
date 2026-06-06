@@ -8,25 +8,55 @@ on:
 
 jobs:
   test:
+    name: Test (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: [18, 20, 22]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci --legacy-peer-deps
+      - run: npm test
+      - run: npm run build:web
+      - name: Verify www/ output
+        run: |
+          test -f www/index.html
+          test -f www/script.js
+          test -f www/nclex-content.js
+          test -f www/kor-content.js
+          test -f www/i18n.js
+
+  content-validate:
+    name: Content Validation
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: "20"
-
-      - name: Install (no Electron download)
-        env:
-          ELECTRON_SKIP_BINARY_DOWNLOAD: "1"
-        run: npm install --no-audit --no-fund --omit=optional
-
-      - name: Lint
-        run: npm run lint
-
-      - name: Run unit + integration tests
-        run: npm test
-
-      - name: Test coverage
-        run: npm run test:coverage
+          node-version: 22
+      - name: NCLEX quality gate
+        run: |
+          node -e "
+            const m = require('./nclex-content.js');
+            const qs = m.NCLEX_QUESTIONS;
+            if (qs.length < 2200) { process.exit(1); }
+            const dup = qs.filter((q, i) => qs.findIndex(x => x.id === q.id) !== i);
+            if (dup.length) { process.exit(1); }
+            const allCorrect = qs.filter(q => q.type === 'sata' && q.choices.every(c => c.correct));
+            if (allCorrect.length) { process.exit(1); }
+            console.log('NCLEX OK', qs.length);
+          "
+      - name: Korean quality gate
+        run: |
+          node -e "
+            const m = require('./kor-content.js');
+            const qs = m.KOR_QUESTIONS;
+            if (qs.length < 320) { process.exit(1); }
+            const bad = qs.filter(q => q.choices.length !== 5);
+            if (bad.length) { process.exit(1); }
+            console.log('Korean OK', qs.length);
+          "

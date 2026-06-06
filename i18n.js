@@ -67,10 +67,72 @@
             "wrong.review": "Review Mistakes",
             "wrong.review.sub": "Re-attempt missed questions",
         },
+        // Filipino (Tagalog) — NCLEX 큰 시장 (필리핀 간호사 미국 진출 다수)
+        fil: {
+            "menu.home": "Tahanan",
+            "menu.study": "Pag-aaral",
+            "menu.my": "Aking Tala",
+            "study.practice": "Sanayan",
+            "study.practice.sub": "Asignatura · Mock · Araw-araw",
+            "study.simulation": "Simulasyon",
+            "study.simulation.sub": "Episode · Senaryo · Duty",
+            "study.drills": "Drills",
+            "study.drills.sub": "Larawan · Gamot · Handoff · Triage",
+            "study.nclex.sub": "NCLEX · Asignatura · Mock",
+            "action.back": "Menu",
+            "action.next": "Susunod →",
+            "action.close": "Isara",
+            "action.retry": "Subukan muli",
+            "action.start": "Simulan",
+            "action.continue": "Magpatuloy",
+            "common.loading": "Naglo-load...",
+            "common.error": "May naganap na error.",
+            "common.correct": "✅ Tama",
+            "common.wrong": "❌ Mali",
+            "duty.start": "Simulan ngayon",
+            "duty.title": "Duty Ngayon",
+            "duty.sub": "Pangasiwaan ang mga pasyente",
+            "daily.title": "Araw-araw na Hamon",
+            "daily.done": "Tapos na",
+            "wrong.review": "I-review ang Mali",
+            "wrong.review.sub": "Subukan muli ang mga nakaligtaan",
+        },
+        // Español — NCLEX hispano + Latin nursing market
+        es: {
+            "menu.home": "Inicio",
+            "menu.study": "Estudio",
+            "menu.my": "Mi Registro",
+            "study.practice": "Práctica",
+            "study.practice.sub": "Materia · Examen · Diario",
+            "study.simulation": "Simulación",
+            "study.simulation.sub": "Episodios · Escenarios · Turno",
+            "study.drills": "Ejercicios",
+            "study.drills.sub": "Imágenes · Fármacos · Pase · Triaje",
+            "study.nclex.sub": "NCLEX · Materias · Examen",
+            "action.back": "Menú",
+            "action.next": "Siguiente →",
+            "action.close": "Cerrar",
+            "action.retry": "Reintentar",
+            "action.start": "Empezar",
+            "action.continue": "Continuar",
+            "common.loading": "Cargando...",
+            "common.error": "Ocurrió un error.",
+            "common.correct": "✅ Correcto",
+            "common.wrong": "❌ Incorrecto",
+            "duty.start": "Empezar ahora",
+            "duty.title": "Turno de hoy",
+            "duty.sub": "Gestiona pacientes, gana puntos",
+            "daily.title": "Reto Diario",
+            "daily.done": "Hecho",
+            "wrong.review": "Revisar Errores",
+            "wrong.review.sub": "Volver a intentar las erradas",
+        },
     };
 
     // 현재 언어 — Storage settings.lang 또는 NCLEX 모드 시 자동 en
     let _lang = "ko";
+
+    const SUPPORTED = ["ko", "en", "fil", "es"];
 
     function detectLang() {
         try {
@@ -78,19 +140,22 @@
                 const raw = window.localStorage.getItem("nurseSim:v1");
                 if (raw) {
                     const data = JSON.parse(raw);
-                    if (data && data.settings && data.settings.lang === "en") return "en";
-                    // 자동: NCLEX 모드면 영어 UI 옵션
-                    // (사용자가 명시 설정 안 했어도 NCLEX 진입 시 자동 영어로 안내 가능)
+                    if (data && data.settings && SUPPORTED.includes(data.settings.lang)) {
+                        return data.settings.lang;
+                    }
                 }
             }
-            // 브라우저 기본 언어
-            const nav = (typeof navigator !== "undefined" && navigator.language) || "ko";
-            return nav.startsWith("en") ? "en" : "ko";
+            // 브라우저 기본 언어 — 4개 중 매칭
+            const nav = ((typeof navigator !== "undefined" && navigator.language) || "ko").toLowerCase();
+            if (nav.startsWith("en")) return "en";
+            if (nav.startsWith("fil") || nav.startsWith("tl")) return "fil";
+            if (nav.startsWith("es")) return "es";
+            return "ko";
         } catch { return "ko"; }
     }
 
     function setLang(lang) {
-        if (lang === "ko" || lang === "en") _lang = lang;
+        if (SUPPORTED.includes(lang)) _lang = lang;
     }
 
     function t(key, fallback) {
