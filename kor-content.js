@@ -3424,6 +3424,506 @@
                 { text: "영구 보존", log: "환자 동의·법적 분쟁 시 별도." },
             ],
         },
+
+        // ============================================================
+        // 확장 batch 2 (kor-281 ~ kor-320) — 8과목 × 5문제 추가
+        // ============================================================
+
+        // ===== 성인간호학 (kor-281 ~ kor-285) =====
+        {
+            id: "kor-281", category: "성인간호학", type: "mcq",
+            title: "ARDS — 인공호흡기 setting",
+            desc: "ARDS 환자 PaO2/FiO2 150. 폐 보호 환기 전략으로 가장 적절한 setting 은?",
+            choices: [
+                { text: "Tidal Volume 6 mL/kg 이상체중 + PEEP 적정 + Plateau < 30 cmH2O", correct: true, log: "정답. ARDSNet 폐 보호 환기. 출처: ARDSNet 2000, Berlin definition 2012" },
+                { text: "Tidal Volume 12 mL/kg + PEEP 0", log: "고용량은 barotrauma 위험. 폐 보호 위반." },
+                { text: "FiO2 100% 지속 + PEEP 0", log: "산소 독성 + atelectasis 위험." },
+                { text: "Pressure Support 만 단독 사용", log: "ARDS 급성기엔 부적절. — 한국 임상 표준." },
+                { text: "Tidal Volume 4 mL/kg + PEEP 30", log: "PEEP 과도. 혈역학 손상." },
+            ],
+        },
+        {
+            id: "kor-282", category: "성인간호학", type: "mcq",
+            title: "간성혼수 — 우선 중재",
+            desc: "간경변 환자 의식 혼탁, asterixis +, 암모니아 180. 가장 우선되는 약물·간호는?",
+            choices: [
+                { text: "Lactulose 경구·관장 + 단백질 제한 + 변 횟수 2-3회/일 목표", correct: true, log: "정답. 암모니아 배설 = 락툴로스 1차. 출처: AASLD 간성혼수 가이드라인" },
+                { text: "고단백 식이로 영양 보충", log: "단백질 = 암모니아 원. 일시 제한." },
+                { text: "이뇨제 furosemide 단독", log: "원인 해결 아님. — 한국 임상 표준." },
+                { text: "수면제 투여", log: "의식 저하 가중. 금기. — 한국 임상 표준." },
+                { text: "수분 섭취 제한만", log: "약물 치료가 핵심. — 한국 임상 표준." },
+            ],
+        },
+        {
+            id: "kor-283", category: "성인간호학", type: "mcq",
+            title: "갑상선 위기 (Thyroid Storm)",
+            desc: "Graves 환자 갑자기 체온 40.2, HR 160, 의식 혼탁. 가장 적절한 약물 순서는?",
+            choices: [
+                { text: "PTU → 1시간 후 Iodine → β-차단제(propranolol) + 해열·수액", correct: true, log: "정답. PTU 먼저 → 1시간 후 Iodine (Wolff-Chaikoff). 출처: ATA 갑상선 위기 가이드라인" },
+                { text: "Iodine 먼저 → PTU 나중", log: "Iodine 먼저 = 호르몬 합성 증가. 금기." },
+                { text: "수분만 보충", log: "약물 치료가 필수. — 한국 임상 표준." },
+                { text: "아스피린 해열", log: "T4 결합단백 분리 = 악화. 금기." },
+                { text: "냉찜질만 시행", log: "약물 병행 필수. — 한국 임상 표준." },
+            ],
+        },
+        {
+            id: "kor-284", category: "성인간호학", type: "mcq",
+            title: "자율신경 반사이상 (Autonomic Dysreflexia)",
+            desc: "T6 척수손상 환자 갑자기 BP 200/110, 두통, 발한. 가장 우선되는 간호는?",
+            choices: [
+                { text: "침대 머리 올리기 + 유발 요인(꼬인 카테터, 변비) 제거 + BP 모니터링", correct: true, log: "정답. T6 이상 손상 응급. 자세 + 원인 제거. 출처: 대한재활의학회" },
+                { text: "앙와위로 평평하게 눕힘", log: "BP 더 상승. 정반대. — 한국 임상 표준." },
+                { text: "체위만 변경하고 관찰", log: "유발 요인 평가·제거 필수." },
+                { text: "수분 섭취 증가", log: "BP 상승 가중. — 한국 임상 표준." },
+                { text: "이뇨제 즉시 투여", log: "원인 제거가 1차. — 한국 임상 표준." },
+            ],
+        },
+        {
+            id: "kor-285", category: "성인간호학", type: "mcq",
+            title: "화상 — Parkland 공식",
+            desc: "체중 70kg 환자 25% 화상. 첫 24시간 수액 총량은?",
+            choices: [
+                { text: "7000 mL (4 × 70 × 25), 첫 8시간에 절반(3500), 다음 16시간에 나머지", correct: true, log: "정답. Parkland: 4 mL/kg/%. 출처: ABA 화상 응급처치 표준" },
+                { text: "1750 mL", log: "공식 미적용. — 한국 임상 표준." },
+                { text: "14000 mL", log: "과량. 폐부종. — 한국 임상 표준." },
+                { text: "3500 mL 일률 분할", log: "시간 분할 비율 틀림. — 한국 임상 표준." },
+                { text: "수액 불필요", log: "25% 화상 = 쇼크 위험. 필수." },
+            ],
+        },
+
+        // ===== 모성간호학 (kor-286 ~ kor-290) =====
+        {
+            id: "kor-286", category: "모성간호학", type: "mcq",
+            title: "HELLP 증후군 — 진단 검사",
+            desc: "임신 32주 산모 우상복부 통증·두통. 가장 의심되는 진단의 핵심 검사 3가지는?",
+            choices: [
+                { text: "용혈(haptoglobin↓, LDH↑) + 간효소↑(AST/ALT) + 혈소판 감소(<100K)", correct: true, log: "정답. HELLP 진단 triad. 출처: ACOG 전자간증·HELLP 가이드라인" },
+                { text: "혈당, 콜레스테롤, 백혈구", log: "관련 없음. — 한국 임상 표준." },
+                { text: "TSH, T4, calcium", log: "갑상선·전해질 검사. HELLP 아님." },
+                { text: "INR, aPTT, 피브리노겐", log: "응고는 보조. 진단 triad 는 H/EL/LP." },
+                { text: "ABG, 젖산", log: "쇼크 평가용. 진단 아님. — 한국 임상 표준." },
+            ],
+        },
+        {
+            id: "kor-287", category: "모성간호학", type: "mcq",
+            title: "자간증 발작 — 응급 간호",
+            desc: "전자간증 산모 갑자기 전신 강직간대 발작. 가장 우선되는 간호는?",
+            choices: [
+                { text: "측위 + 기도 확보 + MgSO4 IV + 외상 방지", correct: true, log: "정답. 측위 = 흡인 방지, Mg = 항경련. 출처: ACOG 자간증 응급 가이드라인" },
+                { text: "구강 내 손가락으로 혀 보호", log: "물림 위험. 절대 금기. — 한국 임상 표준." },
+                { text: "강제 사지 고정", log: "골절·근육 손상. — 한국 임상 표준." },
+                { text: "앙와위로 평평하게", log: "흡인 위험. 측위가 표준. — 한국 임상 표준." },
+                { text: "발작 멈출 때까지 관찰만", log: "Mg·기도 보호가 필수. — 한국 임상 표준." },
+            ],
+        },
+        {
+            id: "kor-288", category: "모성간호학", type: "mcq",
+            title: "견갑난산 (Shoulder Dystocia) — 1차 술기",
+            desc: "분만 중 견갑난산 발생. 가장 먼저 시도할 술기는?",
+            choices: [
+                { text: "McRoberts 자세 (산모 무릎 가슴쪽) + 치골 상부 압박", correct: true, log: "정답. ALSO HELPERR 알고리즘 1단계. 출처: ACOG 견갑난산 가이드라인" },
+                { text: "Fundal pressure (자궁 저부 압박)", log: "어깨 더 끼임 + 자궁파열 위험. 절대 금기." },
+                { text: "옥시토신 증량", log: "수축 강화는 도움 안 됨. — 한국 임상 표준." },
+                { text: "응급제왕절개로 즉시 전환", log: "이미 머리 만출. 다른 술기 우선." },
+                { text: "산모 앙와위 강제", log: "McRoberts 가 표준." },
+            ],
+        },
+        {
+            id: "kor-289", category: "모성간호학", type: "mcq",
+            title: "산후 DVT — 위험인자",
+            desc: "산후 산모 DVT 발생 위험이 가장 높은 시기와 이유는?",
+            choices: [
+                { text: "산후 첫 6주 — 응고인자 증가 + 정맥 정체 + 외상", correct: true, log: "정답. Virchow's triad 모두 충족. 출처: ACOG 산후 정맥혈전증" },
+                { text: "임신 1삼분기", log: "위험은 산후가 가장 높음. — 한국 임상 표준." },
+                { text: "분만 직전 며칠만", log: "산후 6주까지 지속. — 한국 임상 표준." },
+                { text: "산후 6개월 이후", log: "위험 시기 지남. — 한국 임상 표준." },
+                { text: "위험 없음", log: "비임신 대비 5배 위험. — 한국 임상 표준." },
+            ],
+        },
+        {
+            id: "kor-290", category: "모성간호학", type: "mcq",
+            title: "유방염 vs 울혈 감별",
+            desc: "산후 3주 산모 한쪽 유방 발적·열감·압통·발열 38.5. 가장 의심되는 진단·간호는?",
+            choices: [
+                { text: "유방염(mastitis) — 항생제 + 수유 지속 + 따뜻한 찜질 + 휴식", correct: true, log: "정답. 일측·발열·국소 = mastitis. 수유 중단은 악화. 출처: 대한모유수유협회" },
+                { text: "유방 울혈(engorgement) — 양측 + 발열 없음", log: "양측·발열 X 가 울혈. 일측·발열 = mastitis." },
+                { text: "수유 즉시 중단", log: "오히려 우유 정체 = 악화. 지속이 표준." },
+                { text: "유방 절개 배농만", log: "농양 형성 시에만. 1차는 항생제." },
+                { text: "차가운 찜질만", log: "Mastitis 엔 따뜻한 찜질." },
+            ],
+        },
+
+        // ===== 아동간호학 (kor-291 ~ kor-295) =====
+        {
+            id: "kor-291", category: "아동간호학", type: "mcq",
+            title: "소아 DKA — 인슐린·수액 순서",
+            desc: "10세 1형 DM 아동 DKA 진단. 가장 적절한 초기 관리 순서는?",
+            choices: [
+                { text: "생리식염수 bolus → 1시간 후 인슐린 0.1 U/kg/hr 시작 → K+ 추적", correct: true, log: "정답. 수액 먼저 → 인슐린. 출처: 대한소아내분비학회 DKA" },
+                { text: "인슐린 즉시 IV bolus", log: "뇌부종 위험. 수액 선행. — 한국 임상 표준." },
+                { text: "베타카보네이트 즉시", log: "pH 7.0 이상은 보통 사용 X." },
+                { text: "포도당 수액 즉시", log: "혈당 매우 높음. 생리식염수가 1차." },
+                { text: "수분 섭취만 격려", log: "응급. IV 필수. — 한국 임상 표준." },
+            ],
+        },
+        {
+            id: "kor-292", category: "아동간호학", type: "mcq",
+            title: "겸상적혈구 위기 (Vaso-occlusive Crisis)",
+            desc: "겸상적혈구병 8세 아동 심한 사지·복부 통증. 우선 간호는?",
+            choices: [
+                { text: "수액(생리식염수) IV + 강한 통증 관리(opioid) + 산소 + 따뜻한 찜질", correct: true, log: "정답. 탈수·저산소 = 겸상화 가중. 따뜻함이 표준. 출처: NHLBI 겸상적혈구 관리" },
+                { text: "찬 찜질로 통증 완화", log: "혈관 수축 = 겸상화 악화." },
+                { text: "수분 섭취 제한", log: "탈수 = 위기 악화. 적극 보충." },
+                { text: "비스테로이드성 진통제만", log: "통증 매우 심함. opioid 필요." },
+                { text: "운동 격려", log: "휴식·통증 관리가 우선. — 한국 임상 표준." },
+            ],
+        },
+        {
+            id: "kor-293", category: "아동간호학", type: "mcq",
+            title: "급성 사구체신염 (PSGN)",
+            desc: "5세 아동 인후염 2주 후 부종·콜라색 소변·고혈압. 가장 의심되는 진단의 간호는?",
+            choices: [
+                { text: "수분·염분 제한 + BP 모니터링 + 단백질 적정 제한 + ASO·C3 검사", correct: true, log: "정답. PSGN. 자가 회복 위주, 수액 관리 핵심. 출처: 대한소아신장학회" },
+                { text: "수분 섭취 격려", log: "부종·고혈압 악화. — 한국 임상 표준." },
+                { text: "고염식 권장", log: "부종 가중. — 한국 임상 표준." },
+                { text: "이뇨제만 단독", log: "수분·염분 제한이 우선. — 한국 임상 표준." },
+                { text: "장기 스테로이드", log: "PSGN 은 스테로이드 일반적 적응증 아님." },
+            ],
+        },
+        {
+            id: "kor-294", category: "아동간호학", type: "mcq",
+            title: "낭포성 섬유증 (CF) — 췌장효소",
+            desc: "CF 아동 췌장효소 보충제 복용 시 가장 적절한 교육은?",
+            choices: [
+                { text: "식사 직전·간식 직전 매번 복용. 캡슐 씹지 않고 그대로", correct: true, log: "정답. 효소는 음식과 함께. 캡슐 분쇄 X. 출처: CFF 가이드라인" },
+                { text: "공복 시 복용", log: "음식 없이는 효과 없음. — 한국 임상 표준." },
+                { text: "식후 1시간에 복용", log: "타이밍 맞지 않음. 식사 직전." },
+                { text: "캡슐을 으깨서 우유에 타서", log: "장용성 분해. 효과 소실. — 한국 임상 표준." },
+                { text: "하루 1회만 복용", log: "매 식사마다 필요. — 한국 임상 표준." },
+            ],
+        },
+        {
+            id: "kor-295", category: "아동간호학", type: "mcq",
+            title: "Apgar 점수 — 5분 점수 5점",
+            desc: "신생아 5분 Apgar 5점 (심박 90, 호흡 약, 약간 굴곡, 약한 자극 반응, 사지 청색). 우선 중재는?",
+            choices: [
+                { text: "양압 환기(PPV) + 산소 + 보온 + 재평가", correct: true, log: "정답. 5분에 5점 미만 = 적극 소생. 출처: 대한신생아학회 NRP" },
+                { text: "정상이므로 모체 즉시 접촉", log: "정상은 7-10 점. — 한국 임상 표준." },
+                { text: "10분만 더 관찰", log: "즉각 중재 필요. — 한국 임상 표준." },
+                { text: "재 청결만 시행", log: "환기·산소가 우선. — 한국 임상 표준." },
+                { text: "수액만 IV", log: "호흡 우선. — 한국 임상 표준." },
+            ],
+        },
+
+        // ===== 정신간호학 (kor-296 ~ kor-300) =====
+        {
+            id: "kor-296", category: "정신간호학", type: "mcq",
+            title: "신경성 식욕부진 — 재섭취 증후군 예방",
+            desc: "극심한 영양 결핍 anorexia 환자 영양 재시작. 가장 위험한 합병증과 모니터링은?",
+            choices: [
+                { text: "재섭취 증후군 — P·K·Mg·phosphate 매일 모니터링 + 천천히 칼로리 증량", correct: true, log: "정답. 인 급강하 → 심부전. 출처: NICE 재섭취 증후군 가이드라인" },
+                { text: "빠른 정상 칼로리 회복", log: "재섭취 증후군 = 치명적. — 한국 임상 표준." },
+                { text: "고단백 식이 즉시", log: "급격 증량 위험. — 한국 임상 표준." },
+                { text: "장기 NPO 유지", log: "오히려 영양 보충 필요. 점진." },
+                { text: "이뇨제 병용", log: "전해질 추가 손실. 금기. — 한국 임상 표준." },
+            ],
+        },
+        {
+            id: "kor-297", category: "정신간호학", type: "mcq",
+            title: "경계성 인격장애 — 한계 설정",
+            desc: "BPD 환자 자해 후 \"선생님만 저를 이해해주세요\" 호소. 가장 치료적 반응은?",
+            choices: [
+                { text: "팀 전체 일관된 한계 설정 + 자해 시 응급 평가 + 분열(splitting) 방지", correct: true, log: "정답. 분열은 BPD 특징. 팀 일관성이 핵심. 출처: 정신간호학 표준" },
+                { text: "특별 대우로 신뢰 형성", log: "분열 강화. 팀 분열 야기." },
+                { text: "자해 행동 무시", log: "안전 평가가 우선. — 한국 임상 표준." },
+                { text: "즉시 격리 처분", log: "한계 설정 후 단계적. — 한국 임상 표준." },
+                { text: "수면제 투여", log: "약물 의존 위험. 치료적 X." },
+            ],
+        },
+        {
+            id: "kor-298", category: "정신간호학", type: "mcq",
+            title: "PTSD — 1차 권장 치료",
+            desc: "PTSD 환자 1차 권장 심리치료는?",
+            choices: [
+                { text: "Trauma-focused CBT (TF-CBT) 또는 EMDR", correct: true, log: "정답. APA·VA/DoD 1차 권장. 출처: APA PTSD 가이드라인 2017" },
+                { text: "자유연상 정신분석", log: "1차 권장 X. — 한국 임상 표준." },
+                { text: "그룹 카타르시스", log: "재외상화 위험. — 한국 임상 표준." },
+                { text: "약물 단독 (벤조다이아제핀)", log: "BZD 는 회피적이지 권장 X." },
+                { text: "최면치료", log: "표준 1차 아님. — 한국 임상 표준." },
+            ],
+        },
+        {
+            id: "kor-299", category: "정신간호학", type: "mcq",
+            title: "오피오이드 금단 — COWS 적용",
+            desc: "오피오이드 의존 환자 금단 증상 사정 시 사용하는 표준 도구·치료는?",
+            choices: [
+                { text: "COWS 점수 + 부프레노르핀 또는 메타돈으로 MAT", correct: true, log: "정답. COWS = Clinical Opiate Withdrawal Scale. 출처: SAMHSA TIP 63" },
+                { text: "CIWA-Ar 점수", log: "CIWA 는 알코올 금단용." },
+                { text: "Glasgow Coma Scale", log: "의식 평가. 금단과 무관. — 한국 임상 표준." },
+                { text: "강제 단약 후 관찰만", log: "위험·재발 높음. — 한국 임상 표준." },
+                { text: "BZD 만 사용", log: "주 치료는 MAT (bupe/methadone)." },
+            ],
+        },
+        {
+            id: "kor-300", category: "정신간호학", type: "mcq",
+            title: "신체 억제 — 적용 기준·모니터링",
+            desc: "정신과 환자 신체 억제대 적용 시 법적·임상 표준은?",
+            choices: [
+                { text: "최후 수단 + 의사 처방 + 15-30분마다 사정 + 가능한 빨리 해제", correct: true, log: "정답. CMS·정신건강복지법 기준. 출처: 대한정신간호학회" },
+                { text: "야간에 일률적 적용", log: "예방적 적용 금지. — 한국 임상 표준." },
+                { text: "8시간 단위 1회 사정", log: "15-30분이 표준. — 한국 임상 표준." },
+                { text: "환자 동의 없이 24시간", log: "최소 시간 + 사정 의무. — 한국 임상 표준." },
+                { text: "가족 동의만으로 가능", log: "의사 처방 필수. — 한국 임상 표준." },
+            ],
+        },
+
+        // ===== 지역사회간호학 (kor-301 ~ kor-305) =====
+        {
+            id: "kor-301", category: "지역사회간호학", type: "mcq",
+            title: "재난 분류 — START 시스템",
+            desc: "다수 사상자 사고 START triage 에서 \"즉시(red)\" 분류 기준은?",
+            choices: [
+                { text: "호흡 30회/분 이상 또는 모세혈관 재충혈 2초 초과 또는 명령 불응", correct: true, log: "정답. START RPM(Respiration-Perfusion-Mental). 출처: NDMS 재난 의료" },
+                { text: "걸을 수 있는 환자", log: "걸을 수 있음 = 경증(green)." },
+                { text: "호흡 없음 + 기도 개방 후 무반응", log: "사망(black). — 한국 임상 표준." },
+                { text: "걷지 못하고 호흡 정상", log: "지연(yellow). — 한국 임상 표준." },
+                { text: "의식 명료 + 보행 가능", log: "경증(green). — 한국 임상 표준." },
+            ],
+        },
+        {
+            id: "kor-302", category: "지역사회간호학", type: "mcq",
+            title: "역학 연구 — 코호트 vs 환자대조군",
+            desc: "흡연과 폐암 인과관계 연구. 흡연자/비흡연자를 10년간 추적해 폐암 발생률 비교. 이 연구 설계는?",
+            choices: [
+                { text: "전향적 코호트 연구 (prospective cohort)", correct: true, log: "정답. 노출 → 시간 → 결과. 출처: 역학 표준" },
+                { text: "환자대조군 연구 (case-control)", log: "결과 → 노출 후향 비교. — 한국 임상 표준." },
+                { text: "단면 연구 (cross-sectional)", log: "한 시점만 측정. — 한국 임상 표준." },
+                { text: "무작위 대조 시험 (RCT)", log: "흡연 무작위 배정 불가. — 한국 임상 표준." },
+                { text: "사례 보고", log: "단일 환자 기술. 비교 없음." },
+            ],
+        },
+        {
+            id: "kor-303", category: "지역사회간호학", type: "mcq",
+            title: "WHO 손위생 — 5 moments",
+            desc: "WHO 손위생 5 moments 중 \"환자 환경 접촉 후\" 시점에 해당하는 것은?",
+            choices: [
+                { text: "환자가 만진 침대난간·기구 만진 후 → 손위생", correct: true, log: "정답. Moment 5 = After touching patient surroundings. 출처: WHO Hand Hygiene" },
+                { text: "환자 접촉 전", log: "Moment 1. — 한국 임상 표준." },
+                { text: "무균 시술 전", log: "Moment 2. — 한국 임상 표준." },
+                { text: "체액 노출 후", log: "Moment 3. — 한국 임상 표준." },
+                { text: "환자 직접 접촉 후", log: "Moment 4. — 한국 임상 표준." },
+            ],
+        },
+        {
+            id: "kor-304", category: "지역사회간호학", type: "mcq",
+            title: "백신 콜드체인 — 보관 온도",
+            desc: "냉장 백신(MMR, Hib, IPV 등) 표준 보관 온도는?",
+            choices: [
+                { text: "2 ~ 8℃ (냉장 보관, 동결 절대 금지)", correct: true, log: "정답. 동결 시 효능 소실. 출처: WHO·질병관리청 콜드체인 지침" },
+                { text: "-20℃ 이하 냉동", log: "수두·MMR 일부 제외하면 동결 금기." },
+                { text: "실온 15-25℃", log: "효능 소실. — 한국 임상 표준." },
+                { text: "37℃ 항온", log: "변성. — 한국 임상 표준." },
+                { text: "온도 무관 보관", log: "콜드체인 위반. — 한국 임상 표준." },
+            ],
+        },
+        {
+            id: "kor-305", category: "지역사회간호학", type: "mcq",
+            title: "HIV 노출 후 예방 (PEP)",
+            desc: "주사기 자상으로 HIV 환자 혈액 노출. 가장 적절한 PEP 시작 시기와 기간은?",
+            choices: [
+                { text: "노출 후 가능한 빨리(2시간 내 이상적) + 28일 복용", correct: true, log: "정답. CDC: 72시간 내 시작, 28일. 출처: CDC PEP 가이드라인" },
+                { text: "노출 후 1주 후 시작", log: "효과 없음. — 한국 임상 표준." },
+                { text: "7일만 복용", log: "28일 표준. — 한국 임상 표준." },
+                { text: "HIV 확진 후 시작", log: "예방 목적 = 즉시. — 한국 임상 표준." },
+                { text: "PEP 불필요 — 노출만으로는 감염 X", log: "위험 1/300. 예방 필수." },
+            ],
+        },
+
+        // ===== 간호관리학 (kor-306 ~ kor-310) =====
+        {
+            id: "kor-306", category: "간호관리학", type: "mcq",
+            title: "SBAR — 의사소통 핵심",
+            desc: "환자 상태 악화로 의사 호출 시 SBAR 의 \"R\" 에 해당하는 내용은?",
+            choices: [
+                { text: "Recommendation — 본인이 권고하는 조치(예: \"바로 진찰 요청\")", correct: true, log: "정답. S/B/A/R = Situation, Background, Assessment, Recommendation. 출처: IHI SBAR" },
+                { text: "Risk — 위험 평가", log: "R 은 Recommendation." },
+                { text: "Result — 검사 결과", log: "검사는 Assessment 영역." },
+                { text: "Response — 환자 반응", log: "R 정의 X. — 한국 임상 표준." },
+                { text: "Recall — 회상", log: "관련 없음. — 한국 임상 표준." },
+            ],
+        },
+        {
+            id: "kor-307", category: "간호관리학", type: "mcq",
+            title: "직장 내 폭력 — 예방",
+            desc: "정신과 병동 직장 내 폭력 위험 평가에서 가장 적절한 1차 예방은?",
+            choices: [
+                { text: "환경 평가(탈출구·도움 호출) + 직원 훈련(de-escalation) + 위험 환자 사전 식별", correct: true, log: "정답. 환경·교육·예측이 1차. 출처: OSHA 직장 폭력 예방" },
+                { text: "전 환자 신체 억제 사전 적용", log: "비윤리적·법적 문제. — 한국 임상 표준." },
+                { text: "폭력 발생 후 대응만", log: "사후 대응은 2차. — 한국 임상 표준." },
+                { text: "근무 시간 단축", log: "예방 수단 아님. — 한국 임상 표준." },
+                { text: "직원 개인 무기 휴대", log: "절대 금기. — 한국 임상 표준." },
+            ],
+        },
+        {
+            id: "kor-308", category: "간호관리학", type: "mcq",
+            title: "갈등 해결 — Thomas-Kilmann",
+            desc: "Thomas-Kilmann 갈등 모드 중 \"양측 모두 만족\" 을 추구하는 방식은?",
+            choices: [
+                { text: "협력(Collaborating) — 양측 win-win 추구", correct: true, log: "정답. 5 mode 중 협력만 win-win. 출처: 간호관리학 표준" },
+                { text: "경쟁(Competing) — 본인 입장 관철", log: "한쪽만 이김. — 한국 임상 표준." },
+                { text: "회피(Avoiding) — 갈등 자체 회피", log: "해결 안 됨. — 한국 임상 표준." },
+                { text: "수용(Accommodating) — 상대에 양보", log: "한쪽 양보. — 한국 임상 표준." },
+                { text: "타협(Compromising) — 절반씩 양보", log: "각자 일부 손해. 협력과 다름." },
+            ],
+        },
+        {
+            id: "kor-309", category: "간호관리학", type: "mcq",
+            title: "Bedside Shift Report — 핵심 원칙",
+            desc: "환자 침상 옆 인계(BSR) 의 가장 큰 장점은?",
+            choices: [
+                { text: "환자 참여·안전 향상 + 인계 정확성 + 임상 흐름 가시화", correct: true, log: "정답. AHRQ·IHI 권장. 출처: AHRQ BSR Toolkit" },
+                { text: "인계 시간 단축이 유일한 목적", log: "안전·참여가 핵심. — 한국 임상 표준." },
+                { text: "환자 모르게 정보 공유", log: "BSR 핵심에 위배. — 한국 임상 표준." },
+                { text: "의사 결정 권한 이양", log: "관련 없음. — 한국 임상 표준." },
+                { text: "가족 면담 대체", log: "BSR 목적 아님. — 한국 임상 표준." },
+            ],
+        },
+        {
+            id: "kor-310", category: "간호관리학", type: "mcq",
+            title: "고충 처리 — 단계",
+            desc: "직원 고충 처리 절차의 일반적 1단계는?",
+            choices: [
+                { text: "직속 상사와 비공식 면담 → 해결 안 되면 공식 절차", correct: true, log: "정답. 비공식 → 공식 단계. 출처: 노동법 고충 처리" },
+                { text: "외부 노동위원회 직접 신고", log: "마지막 단계. — 한국 임상 표준." },
+                { text: "익명 게시판 게시", log: "공식 절차 아님. — 한국 임상 표준." },
+                { text: "법원 소송 즉시 제기", log: "최후 수단. — 한국 임상 표준." },
+                { text: "다른 직원에게만 토로", log: "처리 절차 X. — 한국 임상 표준." },
+            ],
+        },
+
+        // ===== 기본간호학 (kor-311 ~ kor-315) =====
+        {
+            id: "kor-311", category: "기본간호학", type: "mcq",
+            title: "NG tube — 위치 확인 표준",
+            desc: "비위관(NG tube) 삽입 후 위치 확인의 가장 신뢰할 표준은?",
+            choices: [
+                { text: "X-ray 영상 확인 (gold standard)", correct: true, log: "정답. 모든 표준의 최종 확인. 출처: AACN NG tube placement" },
+                { text: "위 내용물 흡인 후 pH 측정", log: "보조 수단. X-ray 가 1차 표준." },
+                { text: "복부 청진(공기 주입음)", log: "비신뢰적. 단독 사용 금기." },
+                { text: "환자 기침 여부 확인", log: "주관적. — 한국 임상 표준." },
+                { text: "환자가 \"내려갔다\"고 말함", log: "확인 불가. — 한국 임상 표준." },
+            ],
+        },
+        {
+            id: "kor-312", category: "기본간호학", type: "mcq",
+            title: "외과적 무균 — 멸균 장갑 착용",
+            desc: "멸균 장갑 (sterile glove) 단독 착용 절차에서 첫 단계는?",
+            choices: [
+                { text: "손위생 + 멸균 영역 펼치고 그 위에 장갑 포장 열기", correct: true, log: "정답. 멸균 영역 확보가 1단계. 출처: 기본간호학 표준" },
+                { text: "장갑 바로 끼우기", log: "멸균 영역 확보 필수. — 한국 임상 표준." },
+                { text: "장갑 끼고 손위생", log: "순서 반대. — 한국 임상 표준." },
+                { text: "장갑 한 짝 입에 물기", log: "오염. 절대 금기. — 한국 임상 표준." },
+                { text: "장갑 외부에 접촉", log: "외부는 멸균 면. 손은 내부만." },
+            ],
+        },
+        {
+            id: "kor-313", category: "기본간호학", type: "mcq",
+            title: "헤파린 피하 주사 — 부위",
+            desc: "헤파린 피하 주사의 가장 적절한 부위·각도는?",
+            choices: [
+                { text: "복부 (배꼽 5cm 외측) + 90도 + 흡인 X + 비비지 않음", correct: true, log: "정답. 표준 SQ. 출처: ISMP 헤파린 투여" },
+                { text: "상완 외측 + 흡인 후 주입", log: "복부가 표준. 헤파린은 흡인 금기." },
+                { text: "둔근 IM", log: "SQ 약물이 IM 으로 잘못 주입." },
+                { text: "주사 후 마사지", log: "혈종 위험. 절대 금기. — 한국 임상 표준." },
+                { text: "45도로 주입", log: "복부는 90도. — 한국 임상 표준." },
+            ],
+        },
+        {
+            id: "kor-314", category: "기본간호학", type: "mcq",
+            title: "상처 치유 단계",
+            desc: "상처 치유 4 단계 중 \"증식기(proliferative phase)\" 의 특징은?",
+            choices: [
+                { text: "육아조직 형성 + 신생혈관 + 상피화 (3일-3주)", correct: true, log: "정답. 단계: 지혈 → 염증 → 증식 → 재형성. 출처: NPIAP 상처 치유" },
+                { text: "혈관 수축·혈소판 응집", log: "지혈기. — 한국 임상 표준." },
+                { text: "호중구·대식세포 이동", log: "염증기. — 한국 임상 표준." },
+                { text: "콜라겐 재배열·반흔 성숙", log: "재형성기 (수개월-수년). — 한국 임상 표준." },
+                { text: "감염·괴사 진행", log: "치유 단계 X. 합병증. — 한국 임상 표준." },
+            ],
+        },
+        {
+            id: "kor-315", category: "기본간호학", type: "mcq",
+            title: "이동 보조 — gait belt",
+            desc: "보행이 불안정한 환자를 침대→의자로 이동 시 gait belt 사용의 가장 중요한 원칙은?",
+            choices: [
+                { text: "환자 허리에 단단히 고정 + 간호사 무릎 굽혀 들어올리지 말고 잡아당기기 X", correct: true, log: "정답. 안전 이동 표준. 출처: 기본간호학 표준" },
+                { text: "옷 위 느슨하게 둘러둠", log: "고정력 부족. 떨어짐. — 한국 임상 표준." },
+                { text: "환자 목에 걸침", log: "질식 위험. 절대 금기. — 한국 임상 표준." },
+                { text: "허리 굽혀 들어올림", log: "본인 척추 손상 위험. — 한국 임상 표준." },
+                { text: "환자 팔 잡아당김", log: "탈구·통증 위험. — 한국 임상 표준." },
+            ],
+        },
+
+        // ===== 보건의약관계법규 (kor-316 ~ kor-320) =====
+        {
+            id: "kor-316", category: "보건의약관계법규", type: "mcq",
+            title: "사전연명의료의향서 — 핵심",
+            desc: "사전연명의료의향서(advance directive) 의 법적 의미로 옳은 것은?",
+            choices: [
+                { text: "본인이 미리 작성 + 임종기 연명의료 중단 선택 명시 + 본인 의사 능력 상실 시 효력", correct: true, log: "정답. 연명의료결정법(2018). 출처: 보건복지부" },
+                { text: "가족이 대신 작성한 문서", log: "본인 자율 결정이 핵심. — 한국 임상 표준." },
+                { text: "의사가 작성하는 처방", log: "환자 본인 의향서. — 한국 임상 표준." },
+                { text: "법적 효력 없음", log: "법적 구속력 있음. — 한국 임상 표준." },
+                { text: "응급 시에도 적용", log: "임종기에만. — 한국 임상 표준." },
+            ],
+        },
+        {
+            id: "kor-317", category: "보건의약관계법규", type: "mcq",
+            title: "공익신고자 보호",
+            desc: "의료기관 내 부정행위(허위 청구 등)를 신고한 직원 보호 법은?",
+            choices: [
+                { text: "공익신고자 보호법 — 신고자 신원 보호 + 불이익 처분 금지", correct: true, log: "정답. 공익신고자보호법. 출처: 국민권익위원회" },
+                { text: "민사소송법으로 처리", log: "공익신고자보호법 별도. — 한국 임상 표준." },
+                { text: "신고자 처벌 가능", log: "보호 대상. — 한국 임상 표준." },
+                { text: "비공개 신고만 보호", log: "공개 신고도 보호. — 한국 임상 표준." },
+                { text: "보호 규정 없음", log: "명시적 법 존재. — 한국 임상 표준." },
+            ],
+        },
+        {
+            id: "kor-318", category: "보건의약관계법규", type: "mcq",
+            title: "진료기록 정정 — 올바른 방법",
+            desc: "기록 오류 발견 시 의료법상 올바른 정정 방법은?",
+            choices: [
+                { text: "오류 부분 한 줄 긋고 정정자 서명 + 날짜 + 정정 사유 명시", correct: true, log: "정답. 의료법 시행규칙. 원본 식별 가능해야 함." },
+                { text: "수정액으로 완전 가림", log: "원본 확인 불가. 위변조 의심." },
+                { text: "찢고 다시 작성", log: "변조. 절대 금기. — 한국 임상 표준." },
+                { text: "그대로 두기", log: "정정 의무 위반. — 한국 임상 표준." },
+                { text: "전산 기록만 수정", log: "정정 이력·서명 필요. — 한국 임상 표준." },
+            ],
+        },
+        {
+            id: "kor-319", category: "보건의약관계법규", type: "mcq",
+            title: "사망진단서 — 작성자 자격",
+            desc: "한국 의료법상 사망진단서 작성 자격이 있는 자는?",
+            choices: [
+                { text: "의사 또는 한의사 (직접 진료한 환자에 한함)", correct: true, log: "정답. 의료법 17조. 출처: 의료법" },
+                { text: "간호사", log: "사망진단서 발급 권한 없음." },
+                { text: "응급구조사", log: "권한 없음. — 한국 임상 표준." },
+                { text: "약사", log: "권한 없음. — 한국 임상 표준." },
+                { text: "가족 누구나", log: "의료인만 가능. — 한국 임상 표준." },
+            ],
+        },
+        {
+            id: "kor-320", category: "보건의약관계법규", type: "mcq",
+            title: "의료대리인 — 결정 권한",
+            desc: "환자가 의식 불명일 때 의료 결정 대리권자 우선순위 1순위는?",
+            choices: [
+                { text: "환자가 미리 지정한 의료대리인(healthcare proxy)", correct: true, log: "정답. 환자 자율 결정 우선. 출처: 연명의료결정법" },
+                { text: "장남(자녀)", log: "법정 대리인은 후순위. — 한국 임상 표준." },
+                { text: "주치의", log: "결정자 X. 권고만. — 한국 임상 표준." },
+                { text: "병원장", log: "권한 없음. — 한국 임상 표준." },
+                { text: "보호자 누구나", log: "지정 대리인 우선. — 한국 임상 표준." },
+            ],
+        },
     ];
 
     if (typeof window !== "undefined") {
