@@ -10,6 +10,8 @@ const styles = fs.readFileSync(path.join(root, "styles.css"), "utf-8");
 const questions = fs.readFileSync(path.join(root, "questions.js"), "utf-8");
 const nclex = fs.readFileSync(path.join(root, "nclex-content.js"), "utf-8");
 const content = fs.readFileSync(path.join(root, "content.js"), "utf-8");
+const i18nPath = path.join(root, "i18n.js");
+const i18n = fs.existsSync(i18nPath) ? fs.readFileSync(i18nPath, "utf-8") : "";
 const korPath = path.join(root, "kor-content.js");
 const kor = fs.existsSync(korPath) ? fs.readFileSync(korPath, "utf-8") : "";
 const imageMapPath = path.join(root, "images", "image-map.js");
@@ -25,6 +27,7 @@ out = out.replace(
 );
 
 // 2. 외부 script src → 인라인 <script>
+out = out.replace(/<script src="i18n\.js"><\/script>/, i18n ? `<script>${i18n}</script>` : "");
 out = out.replace(/<script src="questions\.js"><\/script>/, `<script>${questions}</script>`);
 out = out.replace(/<script src="nclex-content\.js"><\/script>/, `<script>${nclex}</script>`);
 out = out.replace(/<script src="kor-content\.js"><\/script>/, kor ? `<script>${kor}</script>` : "");
