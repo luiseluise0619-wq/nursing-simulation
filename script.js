@@ -1760,6 +1760,63 @@ function showInstallToast() {
 }
 
 // 새 버전 배포 토스트 — SW activate 후 호출됨
+// 인앱 리뷰 프롬프트 — 사용자 7일+ 학습 + 100문제+ 풀이 시점에 1회만
+// Play Store / App Store 리뷰 유도 (실 사용자 만족 시점에 자연스럽게 노출)
+function maybeShowReviewPrompt() {
+    try {
+        const SHOWN_KEY = "nurseSim:reviewPromptShown";
+        if (localStorage.getItem(SHOWN_KEY)) return;
+        const data = Storage.load();
+        const stats = data.stats || {};
+        const totalSolved = Object.values(stats).reduce((s, v) => s + (v.solved || 0), 0);
+        if (totalSolved < 100) return;
+        // 약관 동의일 기준 7일 경과 체크
+        const accepted = data.accepted && data.accepted.at;
+        if (!accepted || (Date.now() - accepted) < 7 * 24 * 60 * 60 * 1000) return;
+        // 정답률 60% 이상에만 (이탈 사용자에게 리뷰 요청 X)
+        const totalCorrect = Object.values(stats).reduce((s, v) => s + (v.correct || 0), 0);
+        const acc = totalSolved > 0 ? totalCorrect / totalSolved : 0;
+        if (acc < 0.6) return;
+        // 마킹 후 노출
+        localStorage.setItem(SHOWN_KEY, String(Date.now()));
+        setTimeout(() => { try { showReviewToast(); } catch {} }, 2500);
+    } catch {}
+}
+
+function showReviewToast() {
+    if (document.getElementById("review-toast")) return;
+    const el = document.createElement("div");
+    el.id = "review-toast";
+    el.setAttribute("role", "status");
+    el.innerHTML = `
+        <div style="margin-bottom:10px;font-weight:700;">⭐ 100문제 돌파! 어떠셨나요?</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;">
+          <button id="review-toast-yes" style="background:#fff;color:#7fa881;border:none;padding:8px 14px;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px;">⭐⭐⭐⭐⭐ 좋아요</button>
+          <button id="review-toast-no" style="background:transparent;color:#fff;border:1px solid rgba(255,255,255,0.5);padding:8px 14px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:13px;">개선 의견</button>
+          <button id="review-toast-dismiss" style="background:transparent;color:#fff;border:none;padding:8px;cursor:pointer;font-family:inherit;font-size:12px;opacity:0.7;">나중에</button>
+        </div>`;
+    el.style.cssText = "position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#7fa881,#6a9170);color:#fff;padding:18px 24px;border-radius:14px;box-shadow:0 10px 32px rgba(0,0,0,0.35);z-index:99996;font-family:inherit;text-align:center;max-width:calc(100vw - 32px);animation:badgePop 500ms ease;";
+    document.body.appendChild(el);
+    document.getElementById("review-toast-yes")?.addEventListener("click", () => {
+        try { track("review_prompt_positive"); } catch {}
+        // Play Store 리뷰 페이지로 이동 (본인 출시 후 패키지명 교체)
+        const PACKAGE_ID = "com.luiseluise0619.nursingsim";
+        const url = `https://play.google.com/store/apps/details?id=${PACKAGE_ID}&showAllReviews=true`;
+        try { window.open(url, "_blank", "noopener,noreferrer"); } catch {}
+        addLog("⭐ 리뷰 페이지로 이동했어요. 감사합니다!", "log-good");
+        el.remove();
+    });
+    document.getElementById("review-toast-no")?.addEventListener("click", () => {
+        try { track("review_prompt_feedback"); } catch {}
+        try { openFeedback(); } catch {}
+        el.remove();
+    });
+    document.getElementById("review-toast-dismiss")?.addEventListener("click", () => {
+        try { track("review_prompt_dismiss"); } catch {}
+        el.remove();
+    });
+}
+
 function showUpdateToast() {
     if (document.getElementById("update-toast")) return;
     const el = document.createElement("div");
@@ -3024,6 +3081,7 @@ function renderQuizSetSummary() {
     Storage.addHistory({ mode: "quiz", at: Date.now(), category: gameState.quizCategory, total: QUIZ_SET_SIZE, correct: setCorrect, accuracy: acc, set: setNum });
     try { Storage.recordSetScore(catLabel, setCorrect, QUIZ_SET_SIZE); Storage.markModeUsed("quiz"); } catch {}
     try { checkAndNotifyAchievements(); } catch {}
+    try { maybeShowReviewPrompt(); } catch {}
     // 완벽 세트 (10/10) 셀레브레이션 — confetti + 진동
     if (setCorrect === QUIZ_SET_SIZE) {
         try { launchConfetti(); } catch {}
@@ -4824,7 +4882,8 @@ function openSettings() {
         </div>
 
         <div class="choice-list">
-          <button class="choice-btn" data-action="exportData">📦 데이터 백업 (JSON 다운로드)</button>
+          <button class="choice-btn primary" data-action="renderDataControl">📋 내 데이터 (백업·내보내기·삭제)</button>
+          <button class="choice-btn" data-action="exportData">📦 빠른 백업 (JSON 다운로드)</button>
           <button class="choice-btn" data-action="triggerImportData">📥 데이터 복원 (JSON 업로드)</button>
           <input type="file" id="import-file-input" accept="application/json" style="display:none">
           <button class="choice-btn" data-action="confirmClearStats">🗑 전체 데이터 초기화</button>
@@ -4850,6 +4909,75 @@ function openSettings() {
     if (fileInput) {
         fileInput.addEventListener("change", handleImportFile);
     }
+}
+
+// GDPR 데이터 컨트롤 — 사용자 권리 (열람·이전·삭제)
+function renderDataControl() {
+    gameState.mode = "data_control";
+    showCoreUI(); updateStats();
+    const data = Storage.load();
+    const errLog = (() => {
+        try { return JSON.parse(localStorage.getItem("nurseSim:errLog") || "[]"); } catch { return []; }
+    })();
+    const lsSize = (() => {
+        try {
+            let total = 0;
+            for (let k in localStorage) if (k.startsWith("nurseSim")) total += (localStorage[k] || "").length;
+            return Math.round(total / 1024 * 10) / 10;
+        } catch { return 0; }
+    })();
+    UI.gameArea.innerHTML = `
+      <div class="card">
+        <h2 class="scene-title">내 데이터</h2>
+        <p class="scene-desc">모든 학습 데이터는 사용자 기기 내에만 저장됩니다. 언제든 백업·이전·삭제 가능.</p>
+
+        <h3 class="settings-section">현재 저장량</h3>
+        <div class="settings-row"><span>localStorage 사용</span><span class="settings-value">${lsSize} KB</span></div>
+        <div class="settings-row"><span>오답 노트</span><span class="settings-value">${(data.wrongQueue || []).length}개</span></div>
+        <div class="settings-row"><span>학습 히스토리</span><span class="settings-value">${(data.history || []).length}건</span></div>
+        <div class="settings-row"><span>북마크</span><span class="settings-value">${Object.keys(data.bookmarks || {}).length}개</span></div>
+        <div class="settings-row"><span>최근 에러 로그</span><span class="settings-value">${errLog.length}건</span></div>
+
+        <h3 class="settings-section">권리 행사 (GDPR / PIPA)</h3>
+        <div class="choice-list">
+          <button class="choice-btn primary" data-action="exportData">📦 전체 데이터 백업 (JSON)</button>
+          <button class="choice-btn" data-action="triggerImportData">📥 백업에서 복원</button>
+          <button class="choice-btn" data-action="exportErrLog">🐛 에러 로그 다운로드 (오류 신고용)</button>
+          <button class="choice-btn" data-action="confirmClearErrLog">🧹 에러 로그만 삭제</button>
+          <button class="choice-btn" data-action="confirmClearStats">⚠️ 전체 데이터 영구 삭제</button>
+        </div>
+        <p class="scene-desc" style="font-size: 12px; color: var(--muted); margin-top: 16px;">
+          ℹ️ 본 앱은 학습 데이터를 외부 서버로 전송하지 않습니다.<br>
+          광고(AdMob)와 익명 사용 통계(Plausible)는 모바일 빌드에서만 작동하며, 개인 식별정보는 수집하지 않습니다.<br>
+          자세한 내용: <button class="text-link" data-action="renderPrivacy">개인정보 처리방침</button>
+        </p>
+        <button class="choice-btn center" data-action="returnToMenu">메뉴</button>
+      </div>`;
+}
+
+function exportErrLog() {
+    try {
+        const log = localStorage.getItem("nurseSim:errLog") || "[]";
+        const blob = new Blob([log], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `nurseSim-errlog-${todayKey()}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        addLog("에러 로그 파일이 다운로드됐어요. 오류 신고 시 첨부하시면 도움됩니다.", "log-good");
+    } catch (e) {
+        addLog("에러 로그 다운로드 실패: " + e.message, "log-bad");
+    }
+}
+
+function confirmClearErrLog() {
+    if (!safeConfirm("에러 로그만 삭제합니다 (학습 데이터는 유지). 계속하시겠습니까?")) return;
+    try { localStorage.removeItem("nurseSim:errLog"); } catch {}
+    addLog("에러 로그가 삭제됐어요.", "log-good");
+    renderDataControl();
 }
 
 function exportData() {
@@ -7200,6 +7328,9 @@ const DELEGATED_ACTIONS = {
     renderPremiumPage: () => renderPremiumPage(),
     notifyPremium: () => notifyPremium(),
     donate: (t) => donate(t),
+    renderDataControl: () => renderDataControl(),
+    exportErrLog: () => exportErrLog(),
+    confirmClearErrLog: () => confirmClearErrLog(),
     renderLeaderboard: () => renderLeaderboard(),
     renderDrugDrill: () => renderDrugDrill(),
     startDrugDrill: () => startDrugDrill(),

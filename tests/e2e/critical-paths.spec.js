@@ -88,3 +88,92 @@ test.describe("이미지 문제 모음 (학습 가치)", () => {
         await expect(page.locator("#image-quiz-choices")).toBeVisible({ timeout: 5000 });
     });
 });
+
+test.describe("한국 국시 정적 문제 (320+)", () => {
+    test.beforeEach(async ({ page }) => {
+        await seedLegalAccepted(page);
+        await page.goto("/");
+        await page.waitForSelector("h1.menu-title-v2", { timeout: 8000 });
+    });
+
+    test("한국 국시 메뉴 진입 → 8과목 노출 + 시작 가능", async ({ page }) => {
+        await page.click('[data-action="setMenuTab"][data-tab="study"]');
+        await page.click('[data-action="renderPracticeMenu"]');
+        await page.click('[data-action="renderKorMenu"]');
+        await expect(page.locator('[data-action="startKorQuiz"][data-arg="__all__"]')).toBeVisible();
+        // 8 카테고리 버튼 노출 (전체 + 8 = 9)
+        const cats = page.locator('[data-action="startKorQuiz"]');
+        await expect(cats).toHaveCount(9);
+        // 5지선다 시작
+        await page.click('[data-action="startKorQuiz"][data-arg="__all__"]');
+        const choices = page.locator("#kor-choices .choice-btn");
+        await expect(choices).toHaveCount(5);
+    });
+});
+
+test.describe("약물 드릴 (50종)", () => {
+    test.beforeEach(async ({ page }) => {
+        await seedLegalAccepted(page);
+        await page.goto("/");
+        await page.waitForSelector("h1.menu-title-v2", { timeout: 8000 });
+    });
+
+    test("약물 드릴 시작 → 4지선다 보기 노출", async ({ page }) => {
+        await page.click('[data-action="setMenuTab"][data-tab="study"]');
+        await page.click('[data-action="renderDrillMenu"]');
+        await page.click('[data-action="renderDrugDrill"]');
+        await page.click('[data-action="startDrugDrill"]');
+        const choices = page.locator("#drug-drill-choices .choice-btn");
+        await expect(choices).toHaveCount(4);
+    });
+});
+
+test.describe("케밥 메뉴 (UX)", () => {
+    test.beforeEach(async ({ page }) => {
+        await seedLegalAccepted(page);
+        await page.goto("/");
+        await page.waitForSelector("h1.menu-title-v2", { timeout: 8000 });
+    });
+
+    test("케밥 → 4 옵션 (테마/사운드/언어/설정)", async ({ page }) => {
+        await page.click("#kebab-btn");
+        const menu = page.locator("#kebab-menu");
+        await expect(menu).toBeVisible();
+        await expect(menu.locator('[data-action="toggleTheme"]')).toBeVisible();
+        await expect(menu.locator('[data-action="toggleSound"]')).toBeVisible();
+        await expect(menu.locator('[data-action="toggleLang"]')).toBeVisible();
+        await expect(menu.locator('[data-action="openSettings"]')).toBeVisible();
+    });
+
+    test("언어 토글 → 영어로 변경 + 다시 한국어 복귀", async ({ page }) => {
+        await page.click("#kebab-btn");
+        await page.click('[data-action="toggleLang"]');
+        // 영어 라벨 일부 노출 확인 (학습 탭)
+        await page.click('[data-action="setMenuTab"][data-tab="study"]');
+        await expect(page.locator(".row-title").first()).toContainText("Practice");
+        // 다시 한국어로
+        await page.click("#kebab-btn");
+        await page.click('[data-action="toggleLang"]');
+        await page.click('[data-action="toggleLang"]');
+        await page.click('[data-action="toggleLang"]');
+        await page.click('[data-action="setMenuTab"][data-tab="study"]');
+        await expect(page.locator(".row-title").first()).toContainText("풀이");
+    });
+});
+
+test.describe("데이터 컨트롤 (GDPR)", () => {
+    test.beforeEach(async ({ page }) => {
+        await seedLegalAccepted(page);
+        await page.goto("/");
+        await page.waitForSelector("h1.menu-title-v2", { timeout: 8000 });
+    });
+
+    test("설정 → 내 데이터 페이지 진입 + 백업 버튼 노출", async ({ page }) => {
+        await page.click("#kebab-btn");
+        await page.click('[data-action="openSettings"]');
+        await page.click('[data-action="renderDataControl"]');
+        await expect(page.locator(".scene-title")).toContainText("내 데이터");
+        await expect(page.locator('[data-action="exportData"]')).toBeVisible();
+        await expect(page.locator('[data-action="exportErrLog"]')).toBeVisible();
+    });
+});
