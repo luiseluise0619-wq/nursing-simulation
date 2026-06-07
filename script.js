@@ -2228,7 +2228,7 @@ function renderSceneCard(ev, options = {}) {
     // 힌트 버튼 — 보기 ≥3 + 광고 unit 세팅 + 보상 가능 모드. 1회만 노출.
     const HINT_MODES = new Set(["survival", "episode", "scenario", "quiz", "daily", "wrong_review"]);
     const choicesLen = Array.isArray(ev.choices) ? ev.choices.length : 0;
-    const hintEligible = HINT_MODES.has(mode) && choicesLen >= 3 && !!ADS_UNITS.rewarded;
+    const hintEligible = HINT_MODES.has(mode) && choicesLen >= 3 && !!(ADS_UNITS.hint || ADS_UNITS.rewarded);
     const hintUsed = !!ev._hintUsed;
     const hintBtnHtml = hintEligible
         ? `<button class="choice-btn hint-btn" data-action="useHint" data-hint-used="${hintUsed ? '1' : '0'}"${hintUsed ? ' disabled' : ''}>💡 광고 보고 힌트 — 오답 1개 제거 (1회만)</button>`
@@ -6258,12 +6258,14 @@ async function useHint() {
     }
     const hintBtn = document.querySelector(".hint-btn");
     if (hintBtn) { hintBtn.disabled = true; hintBtn.classList.add("loading"); }
-    if (!ADS_UNITS.rewarded) {
+    // 힌트 광고 — 별도 단위 ID (analytics 분리)
+    const adUnit = ADS_UNITS.hint || ADS_UNITS.rewarded;
+    if (!adUnit) {
         addLog("광고가 준비되지 않았습니다.", "log-bad");
         if (hintBtn) { hintBtn.disabled = false; hintBtn.classList.remove("loading"); }
         return;
     }
-    const ok = await Ads.showRewarded(ADS_UNITS.rewarded);
+    const ok = await Ads.showRewarded(adUnit);
     if (!ok) {
         if (hintBtn) { hintBtn.disabled = false; hintBtn.classList.remove("loading"); }
         addLog("광고 시청이 완료되지 않았습니다.", "log-bad");
@@ -6784,13 +6786,15 @@ const Ads = {
         }
     },
 };
-// AdMob unit IDs — 부활(rewarded)만 사용. 전면/배너는 정책상 노출 안 함.
-// 기본값은 Google 공식 테스트 ID — 정식 출시 전에 실 광고 단위 ID 로 교체.
-// 테스트 ID 그대로 두고 출시하면 정책 위반으로 계정 정지될 수 있음 (개발 시에만 사용).
-// 실 ID 발급: https://admob.google.com → 앱 만들기 → 광고 단위 만들기 → 보상형
+// AdMob unit IDs — 보상형 광고 2종 (부활 + 힌트). 전면/배너 없음.
+// App ID: ca-app-pub-3894575898077880~9738094108 (capacitor.config.json + AndroidManifest.xml)
+// 정책: 사용자가 명시적으로 "광고 보고 부활" / "광고 보고 힌트" 선택 시에만 표시
+// (Incentivized reward, AdMob 정책 준수)
 const ADS_UNITS = {
-    // Google 공식 보상형 테스트 ID (Android) — 출시 전 본인 단위 ID 로 교체
-    rewarded: "ca-app-pub-3940256099942544/5224354917",
+    // 부활 (HP 60 회복) — 게임 오버 모달에서 사용자 선택 시
+    rewarded: "ca-app-pub-3894575898077880/6895318664",
+    // 힌트 (오답 1개 제거) — 시나리오 카드에서 사용자 선택 시
+    hint: "ca-app-pub-3894575898077880/5934580467",
 };
 
 // 부활(revive) 설정 — 게임 오버 시 보상형 광고로 HP 회복
