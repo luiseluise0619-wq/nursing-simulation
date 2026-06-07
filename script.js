@@ -2799,6 +2799,8 @@ function renderKorSummary() {
         Storage.recordSetScore("한국 국시 — " + (gameState.korCategory || "전체"), correct, total);
         checkAndNotifyAchievements();
     } catch {}
+    // 100% 셀레브레이션
+    if (total > 0 && correct === total) { try { launchConfetti(); Haptics.heavy(); } catch {} }
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
         <h2 class="scene-title">한국 국시 완료</h2>
@@ -2969,6 +2971,7 @@ function renderImageQuizSummary() {
     const total = (gameState.imageQuizPool || []).length;
     const correct = gameState.imageQuizCorrect || 0;
     const acc = total > 0 ? Math.round((correct / total) * 100) : 0;
+    if (total > 0 && correct === total) { try { launchConfetti(); Haptics.heavy(); } catch {} }
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
         <h2 class="scene-title">완료</h2>
@@ -3021,6 +3024,12 @@ function renderQuizSetSummary() {
     Storage.addHistory({ mode: "quiz", at: Date.now(), category: gameState.quizCategory, total: QUIZ_SET_SIZE, correct: setCorrect, accuracy: acc, set: setNum });
     try { Storage.recordSetScore(catLabel, setCorrect, QUIZ_SET_SIZE); Storage.markModeUsed("quiz"); } catch {}
     try { checkAndNotifyAchievements(); } catch {}
+    // 완벽 세트 (10/10) 셀레브레이션 — confetti + 진동
+    if (setCorrect === QUIZ_SET_SIZE) {
+        try { launchConfetti(); } catch {}
+        try { Haptics.heavy(); } catch {}
+        try { srAnnounce("완벽한 세트입니다. 10문제 모두 정답입니다."); } catch {}
+    }
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
         
@@ -6815,7 +6824,38 @@ function showBadgeUnlockBanner(badge) {
         <div class="badge-unlock-name">${escapeHtml(badge.name || "")}</div>
     `;
     document.body.appendChild(el);
+    // 셀레브레이션 confetti — 모션 감소 선호 시 생략
+    try {
+        if (!window.matchMedia || !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+            launchConfetti();
+        }
+    } catch {}
     setTimeout(() => { try { el.remove(); } catch {} }, 3200);
+}
+
+/** Confetti 셀레브레이션 — 배지 획득·완벽 세트 시
+ * 외부 라이브러리 없음, CSS + DOM 직접
+ */
+function launchConfetti() {
+    if (document.getElementById("confetti-layer")) return;
+    const layer = document.createElement("div");
+    layer.id = "confetti-layer";
+    layer.style.cssText = "position:fixed;inset:0;pointer-events:none;z-index:99997;overflow:hidden;";
+    const colors = ["#7fa881", "#aacaa9", "#c9a25b", "#d99494", "#9aa5b8", "#7fa881"];
+    const count = 60;
+    for (let i = 0; i < count; i++) {
+        const piece = document.createElement("div");
+        const size = 6 + Math.random() * 8;
+        const left = Math.random() * 100;
+        const delay = Math.random() * 0.4;
+        const duration = 1.5 + Math.random() * 1.2;
+        const rotation = Math.random() * 720;
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        piece.style.cssText = `position:absolute;top:-20px;left:${left}%;width:${size}px;height:${size}px;background:${color};border-radius:${Math.random() > 0.5 ? "50%" : "2px"};opacity:0.9;animation:confettiFall ${duration}s cubic-bezier(.22,.61,.36,1) ${delay}s forwards;transform:rotate(${rotation}deg);`;
+        layer.appendChild(piece);
+    }
+    document.body.appendChild(layer);
+    setTimeout(() => { try { layer.remove(); } catch {} }, 3500);
 }
 
 function renderAchievements() {
