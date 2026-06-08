@@ -387,9 +387,11 @@ body {
 }
 .streak-banner strong { color: var(--warning); font-size: 16px; }
 
-/* D-day 카운트다운 — 국시 / NCLEX 콜아웃 */
+/* D-day 카운트다운 — 국시 / NCLEX 콜아웃 (좌측 SVG 아이콘 + 우측 본문) */
 .countdown-card {
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: 14px;
     width: 100%;
     margin: 0 0 12px;
     padding: 14px 18px;
@@ -401,12 +403,44 @@ body {
     cursor: pointer;
     transition: transform 0.1s ease, box-shadow 0.15s ease;
 }
-.countdown-card:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
-.countdown-card:active { transform: translateY(0); }
+.countdown-card:not(button) { cursor: default; }
+.countdown-card:hover:is(button) { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.countdown-card:active:is(button) { transform: translateY(0); }
 .countdown-card.cool   { border-left: 4px solid var(--info, #6b8db7); }
 .countdown-card.normal { border-left: 4px solid var(--primary); }
 .countdown-card.warm   { border-left: 4px solid #d68945; }
 .countdown-card.hot    { border-left: 4px solid var(--danger, #c25450); background: linear-gradient(90deg, var(--card), var(--danger-soft, var(--card))); }
+
+/* SVG 아이콘 — 단계별 색상 다름 */
+.countdown-card .cd-icon-wrap {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.countdown-card .cd-icon {
+    width: 44px;
+    height: 44px;
+    color: var(--muted);
+    transition: transform 0.3s ease;
+}
+.countdown-card.cool   .cd-icon { color: var(--info, #6b8db7); }
+.countdown-card.normal .cd-icon { color: var(--primary); }
+.countdown-card.warm   .cd-icon { color: #d68945; }
+.countdown-card.hot    .cd-icon { color: var(--danger, #c25450); }
+
+/* 핫 단계 = 펄스 애니메이션 (긴급 느낌) */
+.countdown-card.cd-stage-final .cd-icon,
+.countdown-card.cd-stage-dday  .cd-icon { animation: cdPulse 1.4s ease-in-out infinite; }
+.countdown-card.cd-stage-sprint .cd-icon { animation: cdPulse 2s ease-in-out infinite; }
+@keyframes cdPulse {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.08); }
+}
+
+.countdown-card .cd-body { flex: 1; min-width: 0; }
 .countdown-card .cd-label {
     font-size: 12px;
     color: var(--muted);
@@ -427,6 +461,10 @@ body {
     font-size: 13px;
     color: var(--muted);
     line-height: 1.3;
+}
+/* 모션 줄이기 환경 — 펄스 비활성 */
+@media (prefers-reduced-motion: reduce) {
+    .countdown-card .cd-icon { animation: none !important; }
 }
 
 /* 위클리 리포트 — 일요일 홈 탭 상단 카드 */

@@ -6038,39 +6038,75 @@ function getDaysUntil(dateStr) {
     return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 }
 
+// 카운트다운 단계별 SVG 아이콘 — 기간에 따라 모양이 진화
+// 7단계: 달력 → 책 → 근육 → 로켓 → 번개 → 불꽃 → 트로피
+const COUNTDOWN_ICONS = {
+    // 달력 + 햇살 (여유) — D-200+
+    calendar: '<svg class="cd-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="12" width="32" height="28" rx="3"/><path d="M8 20h32"/><path d="M16 8v6 M32 8v6" stroke-width="2.5"/><circle cx="24" cy="30" r="3.5" fill="currentColor" opacity="0.3"/><path d="M24 23 v2 M24 35 v2 M17 30 h2 M29 30 h2 M19 25 l1.5 1.5 M28.5 33.5 l-1.5 -1.5 M19 35 l1.5 -1.5 M28.5 26.5 l-1.5 1.5" opacity="0.6"/></svg>',
+    // 펼친 책 (장기 학습) — D-100~200
+    book: '<svg class="cd-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 10 L24 14 L42 10 V36 L24 40 L6 36 Z" fill="currentColor" fill-opacity="0.12"/><path d="M24 14 V40" stroke-width="2"/><path d="M10 16 h10 M10 22 h10 M10 28 h10 M28 16 h10 M28 22 h10 M28 28 h8" stroke-width="1.5" opacity="0.7"/></svg>',
+    // 근육 / 화이팅 — D-30~100
+    muscle: '<svg class="cd-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 28 Q14 18 22 16 Q30 14 36 20 Q40 24 38 30 Q34 36 28 36 L22 38 Q16 38 14 32 Z" fill="currentColor" fill-opacity="0.15"/><path d="M22 22 Q26 24 28 28" opacity="0.6"/><path d="M30 14 L34 8 M36 16 L42 14 M34 22 L42 22" stroke-width="2" stroke-linecap="round"/></svg>',
+    // 로켓 (스프린트 시작) — D-7~30
+    rocket: '<svg class="cd-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M24 4 Q34 12 34 26 L34 34 L14 34 L14 26 Q14 12 24 4 Z" fill="currentColor" fill-opacity="0.15"/><circle cx="24" cy="20" r="4"/><path d="M14 30 L8 38 L14 36 Z M34 30 L40 38 L34 36 Z" fill="currentColor" fill-opacity="0.2"/><path d="M20 38 L22 44 M28 38 L26 44 M24 38 V46" stroke="#d68945" stroke-width="2.5" opacity="0.85"/></svg>',
+    // 번개 (1주 스프린트) — D-3~7
+    bolt: '<svg class="cd-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M26 4 L10 26 L22 26 L18 44 L38 20 L26 20 Z" fill="currentColor" fill-opacity="0.25"/></svg>',
+    // 불꽃 (최종 점검) — D-0~3
+    fire: '<svg class="cd-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M24 4 Q26 14 32 18 Q40 26 36 36 Q32 44 24 44 Q16 44 12 36 Q8 28 14 22 Q18 18 18 12 Q22 14 24 4 Z" fill="currentColor" fill-opacity="0.25"/><path d="M24 24 Q26 30 28 34 Q26 38 24 38 Q22 38 20 34 Q22 30 24 24 Z" fill="currentColor" fill-opacity="0.4"/></svg>',
+    // 트로피 (D-day / 응원) — D-day
+    trophy: '<svg class="cd-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 8 H34 V18 Q34 28 24 30 Q14 28 14 18 Z" fill="currentColor" fill-opacity="0.2"/><path d="M14 12 H8 Q8 18 14 20 M34 12 H40 Q40 18 34 20"/><path d="M20 30 V36 H28 V30 M18 40 H30 V44 H18 Z" fill="currentColor" fill-opacity="0.15"/><circle cx="24" cy="18" r="3" fill="currentColor" opacity="0.5"/></svg>',
+};
+
+function getCountdownStage(days) {
+    if (days < -3) return { stage: "after", tone: "cool", icon: "calendar", label: "다음 국시", sub: "긴 호흡으로 차근차근" };
+    if (days < 0)  return { stage: "post", tone: "hot",  icon: "trophy",   label: "국시 응원",   sub: "결과 발표를 기다려요" };
+    if (days === 0) return { stage: "dday", tone: "hot",  icon: "trophy",  label: "D-day",       sub: "침착하게 평소처럼 — 화이팅!" };
+    if (days <= 3)   return { stage: "final",   tone: "hot",    icon: "fire",     label: "최종 점검",     sub: "오답·핵심 약물·우선순위 정리" };
+    if (days <= 7)   return { stage: "sprint",  tone: "hot",    icon: "bolt",     label: "1주 스프린트",  sub: "고빈도 키워드 + 모의고사 1회" };
+    if (days <= 30)  return { stage: "intense", tone: "warm",   icon: "rocket",   label: "D-30 집중기",   sub: "매일 5문제 + 오답 복습" };
+    if (days <= 100) return { stage: "focus",   tone: "warm",   icon: "muscle",   label: "D-100 시작",    sub: "지금부터 매일 1시간이면 충분" };
+    if (days <= 200) return { stage: "long",    tone: "normal", icon: "book",     label: "장기 학습",     sub: "기초 다지기 좋은 시기" };
+    return                  { stage: "early",   tone: "cool",   icon: "calendar", label: "국시까지",      sub: "여유 있게 — 천천히 누적" };
+}
+
 function renderExamCountdown() {
-    const days = getDaysUntil(KOREAN_EXAM_DATE);
+    let days = getDaysUntil(KOREAN_EXAM_DATE);
+    let displayDays = days;
     // 시험 이후 → 다음 시험까지 (대략 +365일)
     if (days < -3) {
         const next = new Date(KOREAN_EXAM_DATE);
         next.setFullYear(next.getFullYear() + 1);
-        const nextDays = getDaysUntil(next.toISOString().slice(0, 10));
-        return `<div class="countdown-card cool"><div class="cd-label">📅 다음 국시</div><div class="cd-days">D-${nextDays}</div><div class="cd-sub">긴 호흡으로 차근차근</div></div>`;
+        displayDays = getDaysUntil(next.toISOString().slice(0, 10));
     }
-    if (days < 0) return `<div class="countdown-card hot"><div class="cd-label">🎉 국시 응원</div><div class="cd-days">고생했어요!</div><div class="cd-sub">결과 발표를 기다려요</div></div>`;
-    if (days === 0) return `<div class="countdown-card hot"><div class="cd-label">🔥 D-day</div><div class="cd-days">오늘이 시험일</div><div class="cd-sub">침착하게 평소처럼 — 화이팅!</div></div>`;
-    // 단계별 메시지 (모티베이션 + 학습 강도 안내)
-    let tone, label, sub;
-    if (days <= 3)        { tone = "hot";    label = "🔥 최종 점검"; sub = "오답·핵심 약물·우선순위 정리"; }
-    else if (days <= 7)   { tone = "hot";    label = "⚡ 1주 스프린트"; sub = "고빈도 키워드 + 모의고사 1회"; }
-    else if (days <= 30)  { tone = "warm";   label = "🚀 D-30 집중기"; sub = "매일 5문제 + 오답 복습"; }
-    else if (days <= 100) { tone = "warm";   label = "💪 D-100 시작"; sub = "지금부터 매일 1시간이면 충분"; }
-    else if (days <= 200) { tone = "normal"; label = "📚 장기 학습"; sub = "기초 다지기 좋은 시기"; }
-    else                  { tone = "cool";   label = "📅 국시까지"; sub = "여유 있게 — 천천히 누적"; }
-    return `<button class="countdown-card ${tone}" data-action="setMenuTab" data-tab="study" aria-label="학습 탭으로 이동">
-        <div class="cd-label">${label}</div>
-        <div class="cd-days">D-${days}</div>
-        <div class="cd-sub">${sub}</div>
-    </button>`;
+    const st = getCountdownStage(days);
+    const iconSvg = COUNTDOWN_ICONS[st.icon] || COUNTDOWN_ICONS.calendar;
+    const daysText = (days < 0 && days >= -3) ? "고생했어요!" : (days === 0) ? "오늘이 시험일" : `D-${displayDays}`;
+    // 시험 후 3일간은 응원, 그 외엔 학습 탭 이동
+    const isInteractive = days > 0;
+    const tag = isInteractive ? "button" : "div";
+    const interactiveAttrs = isInteractive ? `data-action="setMenuTab" data-tab="study" aria-label="학습 탭으로 이동 — ${st.label}"` : "";
+    return `<${tag} class="countdown-card ${st.tone} cd-stage-${st.stage}" ${interactiveAttrs}>
+        <div class="cd-icon-wrap">${iconSvg}</div>
+        <div class="cd-body">
+            <div class="cd-label">${st.label}</div>
+            <div class="cd-days">${daysText}</div>
+            <div class="cd-sub">${st.sub}</div>
+        </div>
+    </${tag}>`;
 }
 
 // NCLEX 모드 — 한국인 해외 진출 / 영어권 학습자용 콜아웃
 function renderNclexCallout() {
     const _t = (k, fb) => (typeof window !== "undefined" && window.I18N) ? window.I18N.t(k, fb) : fb;
+    // 지구본 아이콘 (글로벌 NCLEX)
+    const globeIcon = '<svg class="cd-icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="24" cy="24" r="18" fill="currentColor" fill-opacity="0.12"/><ellipse cx="24" cy="24" rx="9" ry="18"/><path d="M6 24 h36 M6 16 h36 M6 32 h36" opacity="0.6"/></svg>';
     return `<div class="countdown-card warm">
-        <div class="cd-label">🌎 ${_t("nclex.callout.label", "NCLEX-RN")}</div>
-        <div class="cd-days">2,200 ${_t("nclex.callout.questions", "문항")}</div>
-        <div class="cd-sub">${_t("nclex.callout.sub", "100% 무료 · MCQ + SATA + 우선순위")}</div>
+        <div class="cd-icon-wrap">${globeIcon}</div>
+        <div class="cd-body">
+            <div class="cd-label">${_t("nclex.callout.label", "NCLEX-RN")}</div>
+            <div class="cd-days">2,200 ${_t("nclex.callout.questions", "문항")}</div>
+            <div class="cd-sub">${_t("nclex.callout.sub", "100% 무료 · MCQ + SATA + 우선순위")}</div>
+        </div>
     </div>`;
 }
 
