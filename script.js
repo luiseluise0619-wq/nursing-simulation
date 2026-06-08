@@ -849,14 +849,24 @@ if (typeof window !== "undefined") {
     window._renderSvgFallback = _renderSvgFallback;
 }
 
-// 빈 상태 일러스트 — 세이지 톤 단색 SVG (외부 자원 0)
+// 빈 상태 일러스트 — Claude 디자인 SVG (images/) + 기존 인라인 (폴백)
 const EMPTY_ILLUST = {
     // 오답노트 0건 — 체크된 노트
     wrongDone: '<svg viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="32" y="22" width="56" height="76" rx="6"/><path d="M44 40 h32 M44 54 h32 M44 68 h22"/><circle cx="86" cy="80" r="16" fill="var(--primary-soft)" stroke="var(--primary)"/><path d="M78 80 l6 6 l12 -12" stroke="var(--primary)" stroke-width="3"/></svg>',
     // 일일 챌린지 완료 — 체크 동그라미
     dailyDone: '<svg viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="60" cy="60" r="42" fill="var(--primary-soft)" stroke="currentColor"/><path d="M40 60 l14 14 l28 -28" stroke="var(--primary)" stroke-width="4"/><path d="M60 18 v6 M60 96 v6 M18 60 h6 M96 60 h6" stroke="var(--primary)" opacity="0.6"/></svg>',
-    // 검색 결과 0건 — 돋보기 + 점선 원
-    searchEmpty: '<svg viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="50" cy="50" r="26" stroke-dasharray="3 4"/><path d="M70 70 l22 22" stroke-width="4" stroke-linecap="round"/><path d="M40 50 h20" stroke="var(--primary)"/></svg>',
+    // 검색 결과 0건 — Claude 디자인
+    searchEmpty: '<img src="images/empty-no-search.svg" alt="" aria-hidden="true">',
+    // 북마크 0건 — Claude 디자인
+    bookmarkEmpty: '<img src="images/empty-no-bookmarks.svg" alt="" aria-hidden="true">',
+    // 데이터 부족 — Claude 디자인
+    dataEmpty: '<img src="images/empty-no-data.svg" alt="" aria-hidden="true">',
+    // 기록 없음 — Claude 디자인
+    recordsEmpty: '<img src="images/empty-no-records.svg" alt="" aria-hidden="true">',
+    // 이미지 없음 — Claude 디자인
+    imagesEmpty: '<img src="images/empty-no-images.svg" alt="" aria-hidden="true">',
+    // 오답 0건 (학습 완료) — Claude 디자인
+    wrongEmpty: '<img src="images/empty-no-wrong.svg" alt="" aria-hidden="true">',
 };
 
 function renderEmptyState({ illust, title, desc, primaryAction, primaryLabel = "메인 메뉴", secondaryAction, secondaryLabel }) {
@@ -3706,7 +3716,7 @@ function reviewWrongAnswers() {
     }
     if (gameState.wrongQueue.length === 0) {
         UI.gameArea.innerHTML = renderEmptyState({
-            illust: "wrongDone",
+            illust: "wrongEmpty",
             title: "오답노트가 비었습니다",
             desc: "아직 저장된 오답이 없어요. 트레이닝/모의고사에서 문제를 풀면 자동으로 쌓입니다.",
             primaryAction: "returnToMenu", primaryLabel: "메인 메뉴",
@@ -5773,63 +5783,24 @@ function legalAccept() {
 // =========================================================================
 // 온보딩 (첫 실행 튜토리얼 — 5 슬라이드)
 // =========================================================================
-// 온보딩 SVG 일러스트 — 외부 자원 0, currentColor stroke 로 테마 따라가도록
+// 온보딩 일러스트 — Claude 디자인 SVG 5종 (images/onboard-*.svg)
 const ONBOARDING_ILLUSTRATIONS = [
-    // 0: 환영 — 건물 + 십자
-    `<svg class="onboard-svg" viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <rect x="20" y="30" width="80" height="70" rx="4"/>
-        <path d="M55 50 v20 M45 60 h20" stroke-width="4" stroke="var(--primary)"/>
-        <rect x="30" y="80" width="14" height="20" stroke-width="1.5"/>
-        <rect x="76" y="80" width="14" height="20" stroke-width="1.5"/>
-        <path d="M20 30 L60 10 L100 30" stroke="var(--primary)"/>
-    </svg>`,
-    // 1: 9개 모드 — 3x3 그리드
-    `<svg class="onboard-svg" viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <rect x="20" y="20" width="22" height="22" rx="4" fill="var(--primary)" stroke="none"/>
-        <rect x="49" y="20" width="22" height="22" rx="4"/>
-        <rect x="78" y="20" width="22" height="22" rx="4"/>
-        <rect x="20" y="49" width="22" height="22" rx="4"/>
-        <rect x="49" y="49" width="22" height="22" rx="4" fill="var(--primary)" stroke="none"/>
-        <rect x="78" y="49" width="22" height="22" rx="4"/>
-        <rect x="20" y="78" width="22" height="22" rx="4"/>
-        <rect x="49" y="78" width="22" height="22" rx="4"/>
-        <rect x="78" y="78" width="22" height="22" rx="4" fill="var(--primary)" stroke="none"/>
-    </svg>`,
-    // 2: 오답노트 — 책갈피 + 화살표 루프
-    `<svg class="onboard-svg" viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <rect x="35" y="20" width="50" height="80" rx="3"/>
-        <path d="M45 35 h30 M45 50 h30 M45 65 h20" stroke-width="1.5"/>
-        <path d="M65 75 l8 8 l-8 8" stroke="var(--primary)"/>
-        <path d="M45 91 q-8 -10 0 -20" stroke="var(--primary)" fill="none"/>
-    </svg>`,
-    // 3: 키보드
-    `<svg class="onboard-svg" viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <rect x="15" y="40" width="90" height="50" rx="6"/>
-        <rect x="24" y="50" width="10" height="10" rx="2"/>
-        <rect x="38" y="50" width="10" height="10" rx="2"/>
-        <rect x="52" y="50" width="10" height="10" rx="2"/>
-        <rect x="66" y="50" width="10" height="10" rx="2"/>
-        <rect x="80" y="50" width="16" height="10" rx="2" fill="var(--primary)" stroke="none"/>
-        <rect x="24" y="65" width="58" height="10" rx="2"/>
-        <rect x="86" y="65" width="10" height="10" rx="2"/>
-        <path d="M40 90 v8 M80 90 v8 M40 98 h40" stroke-width="1.5"/>
-    </svg>`,
-    // 4: 면책 — 방패 + 십자
-    `<svg class="onboard-svg" viewBox="0 0 120 120" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M60 15 L95 25 V60 Q95 90 60 105 Q25 90 25 60 V25 Z"/>
-        <path d="M60 45 v25 M48 57 h24" stroke="var(--primary)" stroke-width="3.5"/>
-    </svg>`,
+    '<img class="onboard-svg" src="images/onboard-1-welcome.svg" alt="" aria-hidden="true">',
+    '<img class="onboard-svg" src="images/onboard-2-simulation.svg" alt="" aria-hidden="true">',
+    '<img class="onboard-svg" src="images/onboard-3-nclex.svg" alt="" aria-hidden="true">',
+    '<img class="onboard-svg" src="images/onboard-4-analytics.svg" alt="" aria-hidden="true">',
+    '<img class="onboard-svg" src="images/onboard-5-start.svg" alt="" aria-hidden="true">',
 ];
 
 const ONBOARDING_SLIDES = [
     { illust: 0, title: "간호사 시뮬레이터에 오신 것을 환영합니다",
-      body: "국시 8과목 + 임상 시뮬레이션을 하나의 앱에서 연습할 수 있어요.\n시프트 난이도(Day/Evening/Night)에 따라 HP 손실이 달라집니다." },
-    { illust: 1, title: "9개 모드를 활용하세요",
-      body: "실전 듀티 · 트레이닝 · 모의고사 · 일일 챌린지 · 인계 시뮬 · 트리아지 · 시나리오 · 오답노트 · 대시보드.\n메인 메뉴에서 카드를 탭하면 바로 시작합니다." },
-    { illust: 2, title: "오답은 자동으로 쌓입니다",
-      body: "틀린 문제는 오답노트에 저장되어, 정답을 맞힐 때까지 다시 출제됩니다.\n과목별 정답률은 대시보드에서 막대 그래프로 확인하세요." },
-    { illust: 3, title: "키보드 단축키",
-      body: "1~4 보기 선택 · Space 다음 문제 · T 테마 전환 · M 사운드 토글 · ESC 모달 닫기.\n모바일에서는 카드를 그냥 탭하시면 됩니다." },
+      body: "한국 국시 320문항 + NCLEX-RN 2,200문항 + 실전 듀티 시뮬레이션을 하나의 앱에서.\n완전 무료, 가입 없음, 광고는 보상형만 사용합니다." },
+    { illust: 1, title: "실전 듀티 시뮬레이션",
+      body: "Day · Evening · Night 3교대 시프트로 임상 상황을 체험하세요.\n시프트에 따라 HP 손실과 난이도가 달라집니다." },
+    { illust: 2, title: "NCLEX-RN 2,200 문제",
+      body: "MCQ + SATA + 우선순위까지 미국 간호사 시험 전 범위를 무료로.\n해외 취업 준비도 한 앱에서 가능합니다." },
+    { illust: 3, title: "통계로 약점 파악",
+      body: "과목별 정답률 막대 그래프 · 오답 자동 저장 · 14일 연속 배지.\n키보드 단축키(1~5, ↑↓, T, M, ESC)도 지원합니다." },
     { illust: 4, title: "학습 도구로만 사용하세요",
       body: "본 앱은 교육 목적이며, 실제 임상 의사결정을 대체하지 않습니다.\n공식 가이드라인과 의료기관 프로토콜을 항상 우선하세요." },
 ];
@@ -6895,7 +6866,7 @@ function renderBookmarks() {
     const ids = Object.keys(bm).sort((a, b) => (bm[b].ts || 0) - (bm[a].ts || 0));
     if (ids.length === 0) {
         UI.gameArea.innerHTML = renderEmptyState({
-            illust: "wrongDone",
+            illust: "bookmarkEmpty",
             title: "북마크가 비었습니다",
             desc: "문제 카드 우측 상단 ⭐ 버튼으로 즐겨찾기 추가할 수 있어요.",
             primaryAction: "returnToMenu", primaryLabel: "메인 메뉴",
@@ -7232,7 +7203,7 @@ function renderWeaknessAnalysis() {
     const startedEnough = keys.filter(k => (starts[k]?.count || 0) >= 3);
     if (startedEnough.length === 0) {
         UI.gameArea.innerHTML = renderEmptyState({
-            illust: "searchEmpty",
+            illust: "dataEmpty",
             title: "약점 분석 데이터 부족",
             desc: "시나리오를 3회 이상 진행하면 자주 틀리는 패턴을 분석해드려요.",
             primaryAction: "initSurvival", primaryLabel: "듀티 시작",

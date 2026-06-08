@@ -946,23 +946,22 @@ describe("뒤로가기 — top-bar 좌측 ← 버튼", () => {
     });
 });
 
-describe("온보딩 — SVG 일러스트 사용 (이모지 제거 회귀 방지)", () => {
+describe("온보딩 — 일러스트 사용 (이모지 제거 회귀 방지)", () => {
     test("온보딩 슬라이드에 .onboard-svg 요소가 렌더된다", () => {
         loadScript({ legal: true, onboarded: false });
-        const svg = document.querySelector(".onboard-illust .onboard-svg");
-        expect(svg).not.toBeNull();
-        expect(svg.tagName.toLowerCase()).toBe("svg");
+        const illust = document.querySelector(".onboard-illust .onboard-svg");
+        expect(illust).not.toBeNull();
+        expect(["svg", "img"]).toContain(illust.tagName.toLowerCase());
     });
-    test("5개 슬라이드 모두 SVG 일러스트를 가진다", () => {
+    test("5개 슬라이드 모두 일러스트를 가진다", () => {
         loadScript({ legal: true, onboarded: false });
         for (let i = 0; i < 4; i++) {
-            const svg = document.querySelector(".onboard-illust .onboard-svg");
-            expect(svg).not.toBeNull();
+            const illust = document.querySelector(".onboard-illust .onboard-svg");
+            expect(illust).not.toBeNull();
             document.querySelector('[data-action="onboardNext"]').click();
         }
-        // 마지막 슬라이드
-        const lastSvg = document.querySelector(".onboard-illust .onboard-svg");
-        expect(lastSvg).not.toBeNull();
+        const lastIllust = document.querySelector(".onboard-illust .onboard-svg");
+        expect(lastIllust).not.toBeNull();
     });
 });
 
@@ -1043,17 +1042,17 @@ describe("P1 — 디자인 폴리시 (빈 상태 / 단계 진행 / fade-in / 콤
         return `${d.getFullYear()}-${z(d.getMonth() + 1)}-${z(d.getDate())}`;
     }
 
-    test("오답노트가 비었을 때 .empty-state SVG 일러스트가 노출된다", () => {
+    test("오답노트가 비었을 때 .empty-state 일러스트가 노출된다", () => {
         loadScript();
         document.querySelector('[data-action="reviewWrongAnswers"]').click();
         const card = document.querySelector(".scene-card.empty-state");
         expect(card).not.toBeNull();
-        const illust = card.querySelector(".empty-state-illust svg");
+        const illust = card.querySelector(".empty-state-illust svg, .empty-state-illust img");
         expect(illust).not.toBeNull();
         expect(card.textContent).toMatch(/오답노트/);
     });
 
-    test("검색 결과 0건일 때 .search-empty 안에 SVG 일러스트가 노출된다", () => {
+    test("검색 결과 0건일 때 .search-empty 안에 일러스트가 노출된다", () => {
         loadScript();
         document.querySelector('[data-action="openSearch"]').click();
         const input = document.getElementById("search-input");
@@ -1061,7 +1060,7 @@ describe("P1 — 디자인 폴리시 (빈 상태 / 단계 진행 / fade-in / 콤
         input.dispatchEvent(new Event("input"));
         const empty = document.querySelector(".search-empty");
         expect(empty).not.toBeNull();
-        const illust = empty.querySelector(".empty-state-illust svg");
+        const illust = empty.querySelector(".empty-state-illust svg, .empty-state-illust img");
         expect(illust).not.toBeNull();
     });
 
