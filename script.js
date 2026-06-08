@@ -849,6 +849,42 @@ if (typeof window !== "undefined") {
     window._renderSvgFallback = _renderSvgFallback;
 }
 
+// 환자 아바타 선택 — id + desc 기반 결정적 매칭
+// 성별/연령 힌트가 desc에 있으면 그에 맞는 아바타를, 없으면 id 해시로 결정
+const _AVATAR_MALE = ["young-m", "bald-m", "grey-m", "buzz-m"];
+const _AVATAR_FEMALE = ["senior-f", "bun-f", "hijab-f", "long-f"];
+function pickAvatarForPatient(id, desc) {
+    const d = String(desc || "");
+    // 연령 + 성별 힌트
+    const isOld = /노인|70세|80세|90세|7\d세|8\d세|9\d세/.test(d);
+    const isMale = /\b남\b|남자|남성|할아버지/.test(d);
+    const isFemale = /\b여\b|여자|여성|임신|산모|임산부|할머니/.test(d);
+    let pool;
+    if (isOld && isFemale) pool = ["senior-f"];
+    else if (isOld && isMale) pool = ["grey-m"];
+    else if (isFemale) pool = _AVATAR_FEMALE.filter(a => a !== "senior-f");
+    else if (isMale) pool = _AVATAR_MALE.filter(a => a !== "grey-m");
+    else pool = [..._AVATAR_MALE, ..._AVATAR_FEMALE];
+    // id 해시로 결정적 선택 (같은 환자 = 항상 같은 아바타)
+    const key = String(id || "");
+    let h = 0;
+    for (let i = 0; i < key.length; i++) h = ((h << 5) - h + key.charCodeAt(i)) | 0;
+    return pool[Math.abs(h) % pool.length];
+}
+function renderPatientAvatar(id, desc, opts = {}) {
+    const avatar = pickAvatarForPatient(id, desc);
+    const cls = opts.cls || "patient-avatar";
+    return `<img class="${cls}" src="images/avatar-${_avatarIndex(avatar)}-${avatar}.svg" alt="" aria-hidden="true" loading="lazy">`;
+}
+function _avatarIndex(name) {
+    const order = ["senior-f", "young-m", "bun-f", "bald-m", "hijab-f", "long-f", "grey-m", "buzz-m"];
+    return (order.indexOf(name) + 1) || 1;
+}
+if (typeof window !== "undefined") {
+    window.pickAvatarForPatient = pickAvatarForPatient;
+    window.renderPatientAvatar = renderPatientAvatar;
+}
+
 // 빈 상태 일러스트 — Claude 디자인 SVG (images/) + 기존 인라인 (폴백)
 const EMPTY_ILLUST = {
     // 오답노트 0건 — 체크된 노트
@@ -3838,7 +3874,10 @@ function renderHandoffPatient() {
     const ttsHint = Speech.supported() ? "" : "\n⚠ 이 환경은 음성합성을 지원하지 않습니다. '본문 보기' 로 학습하세요.";
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
-        <h2 class="scene-title">[인계 ${gameState.handoffIndex + 1}/${gameState.handoffPool.length}] ${escapeHtml(p.title)}</h2>
+        <div class="handoff-header">
+          ${renderPatientAvatar(p.id, p.title, { cls: "handoff-avatar" })}
+          <h2 class="scene-title">[인계 ${gameState.handoffIndex + 1}/${gameState.handoffPool.length}] ${escapeHtml(p.title)}</h2>
+        </div>
         <p class="scene-desc">음성 인계를 듣고 핵심 키워드 ${p.keywords.length}개를 떠올려 답변창에 쉼표/공백으로 구분해 입력하세요.
 힌트: ${escapeHtml(p.hint)}${ttsHint}</p>
         <div class="handoff-controls">
@@ -3951,6 +3990,7 @@ function renderTriageCase() {
     const cards = c.patients.map(p => `
         <div class="triage-card" data-patient="${escapeHtml(p.id)}">
           <div class="triage-card-head">
+            ${renderPatientAvatar(p.id, p.desc, { cls: "triage-avatar" })}
             <span class="triage-emoji" aria-hidden="true">${p.emoji}</span>
             <span class="triage-desc">${escapeHtml(p.desc)}</span>
           </div>
