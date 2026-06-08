@@ -15,20 +15,28 @@
     <link rel="apple-touch-icon" sizes="152x152" href="build/icon-152.png">
     <link rel="apple-touch-icon" sizes="192x192" href="build/icon-192.png">
     <link rel="manifest" href="manifest.json">
-    <meta name="description" content="간호 국시 + 임상 시뮬레이션 학습 앱 — 듀티처럼 돌면서 공부.">
-    <meta name="keywords" content="간호사 국가고시,국시,NCLEX,NCLEX-RN,간호학과,임상 시뮬레이션,간호 학습 앱,무료 간호 앱,nursing exam,Korean nursing">
-    <meta name="author" content="간호사 시뮬레이터">
-    <!-- Open Graph (Facebook/KakaoTalk/LINE) -->
+    <meta name="description" content="Free NCLEX-RN 2,200 questions + Korean nursing exam. 간호 국시 + NCLEX 무료. No signup, no paywall.">
+    <meta name="keywords" content="NCLEX,NCLEX-RN,NCLEX-RN free,NCLEX practice questions,Korean nursing exam,간호사 국가고시,국시,간호학과,SATA,priority questions,client need,Filipino nurse,Hispanic nurse,nursing exam,free nursing app,임상 시뮬레이션,간호 학습 앱,무료 간호 앱">
+    <meta name="author" content="간호사 시뮬레이터 · Nurse Simulator">
+    <!-- 다국어 hreflang — 검색엔진 다언어 인덱싱 (NCLEX 영어권 SEO 핵심) -->
+    <link rel="alternate" hreflang="ko" href="https://luiseluise0619-wq.github.io/nursing-simulation/?lang=ko">
+    <link rel="alternate" hreflang="en" href="https://luiseluise0619-wq.github.io/nursing-simulation/?lang=en">
+    <link rel="alternate" hreflang="fil" href="https://luiseluise0619-wq.github.io/nursing-simulation/?lang=fil">
+    <link rel="alternate" hreflang="es" href="https://luiseluise0619-wq.github.io/nursing-simulation/?lang=es">
+    <link rel="alternate" hreflang="x-default" href="https://luiseluise0619-wq.github.io/nursing-simulation/">
+    <!-- Open Graph (Facebook/KakaoTalk/LINE) — 영어 우선 (NCLEX 글로벌 시장) -->
     <meta property="og:type" content="website">
-    <meta property="og:title" content="간호사 시뮬레이터 — 국시 + NCLEX 무료 학습">
-    <meta property="og:description" content="35편 임상 시뮬레이션 + NCLEX 2,200문제 + 한국 국시 320문제. 무료, 회원가입 없음.">
+    <meta property="og:title" content="Free NCLEX-RN 2,200 Questions + Korean 국시 — Nurse Simulator">
+    <meta property="og:description" content="2,200 NCLEX-RN questions (MCQ + SATA + Priority) + 320 Korean nursing exam + 35 clinical simulations. Free, no signup, no paywall.">
     <meta property="og:image" content="icon.svg">
     <meta property="og:locale" content="ko_KR">
     <meta property="og:locale:alternate" content="en_US">
+    <meta property="og:locale:alternate" content="fil_PH">
+    <meta property="og:locale:alternate" content="es_US">
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="간호사 시뮬레이터 — 국시 + NCLEX 무료">
-    <meta name="twitter:description" content="35편 임상 시뮬레이션 + NCLEX 2,200문제. 무료.">
+    <meta name="twitter:title" content="Free NCLEX-RN 2,200 Questions + Korean 국시">
+    <meta name="twitter:description" content="2,200 NCLEX-RN + Korean nursing exam. 100% free, no signup, no paywall.">
     <meta name="twitter:image" content="icon.svg">
     <!-- JSON-LD 구조화 데이터 (Google Rich Results) -->
     <script type="application/ld+json">
@@ -54,11 +62,39 @@
         },
         {
           "@type": "Course",
-          "name": "NCLEX-RN Practice — 2,200 Questions",
-          "description": "Free NCLEX-RN preparation with MCQ, SATA, and Priority questions across 4 client need categories.",
-          "provider": { "@type": "Organization", "name": "간호사 시뮬레이터" },
-          "inLanguage": "en-US",
-          "isAccessibleForFree": true
+          "name": "NCLEX-RN Practice — 2,200 Questions Free",
+          "description": "Free NCLEX-RN preparation: 2,200 questions covering Safe & Effective Care, Health Promotion, Psychosocial Integrity, and Physiological Integrity. Includes MCQ, SATA (select all that apply), and Priority questions. For US, Filipino, and Hispanic nurses preparing for licensure.",
+          "provider": { "@type": "Organization", "name": "Nurse Simulator" },
+          "inLanguage": ["en-US", "fil-PH", "es-US"],
+          "isAccessibleForFree": true,
+          "educationalCredentialAwarded": "NCLEX-RN exam preparation",
+          "audience": { "@type": "EducationalAudience", "educationalRole": "registered nurse candidate" },
+          "courseMode": "online",
+          "hasCourseInstance": {
+            "@type": "CourseInstance",
+            "courseMode": "online",
+            "courseWorkload": "PT100H"
+          }
+        },
+        {
+          "@type": "FAQPage",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "Is this NCLEX-RN app really free?",
+              "acceptedAnswer": { "@type": "Answer", "text": "Yes. All 2,200 NCLEX-RN questions are 100% free. No paywall, no signup. Optional rewarded ads only — users choose to watch for in-game bonuses." }
+            },
+            {
+              "@type": "Question",
+              "name": "Does it work offline for NCLEX study?",
+              "acceptedAnswer": { "@type": "Answer", "text": "Yes. It is a Progressive Web App (PWA) — once loaded, all 2,200 questions work offline." }
+            },
+            {
+              "@type": "Question",
+              "name": "Korean 국시도 같이 준비할 수 있나요?",
+              "acceptedAnswer": { "@type": "Answer", "text": "네. 한국 간호사 국가고시 320문항(8과목 5지선다)과 NCLEX-RN 2,200문항을 동시에 무료로 제공합니다." }
+            }
+          ]
         },
         {
           "@type": "Course",

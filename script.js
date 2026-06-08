@@ -6023,6 +6023,63 @@ function returnToMenu() {
     UI.topBar.classList.remove("hidden");
 }
 
+// =========================================================================
+// D-day 카운트다운 (한국 국시 / NCLEX) — 9~12월 트래픽 폭증 유도
+// =========================================================================
+// 한국 간호사 국가시험 — 매년 1월 셋째주 수요일 (대략)
+// 2027년 예상: 2027-01-20 (수)  / 변경 시 KNCA 공식 발표 따라 업데이트
+const KOREAN_EXAM_DATE = "2027-01-20";
+
+function getDaysUntil(dateStr) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const target = new Date(dateStr + "T00:00:00");
+    const diffMs = target.getTime() - today.getTime();
+    return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+}
+
+function renderExamCountdown() {
+    const days = getDaysUntil(KOREAN_EXAM_DATE);
+    // 시험 이후 → 다음 시험까지 (대략 +365일)
+    if (days < -3) {
+        const next = new Date(KOREAN_EXAM_DATE);
+        next.setFullYear(next.getFullYear() + 1);
+        const nextDays = getDaysUntil(next.toISOString().slice(0, 10));
+        return `<div class="countdown-card cool"><div class="cd-label">📅 다음 국시</div><div class="cd-days">D-${nextDays}</div><div class="cd-sub">긴 호흡으로 차근차근</div></div>`;
+    }
+    if (days < 0) return `<div class="countdown-card hot"><div class="cd-label">🎉 국시 응원</div><div class="cd-days">고생했어요!</div><div class="cd-sub">결과 발표를 기다려요</div></div>`;
+    if (days === 0) return `<div class="countdown-card hot"><div class="cd-label">🔥 D-day</div><div class="cd-days">오늘이 시험일</div><div class="cd-sub">침착하게 평소처럼 — 화이팅!</div></div>`;
+    // 단계별 메시지 (모티베이션 + 학습 강도 안내)
+    let tone, label, sub;
+    if (days <= 3)        { tone = "hot";    label = "🔥 최종 점검"; sub = "오답·핵심 약물·우선순위 정리"; }
+    else if (days <= 7)   { tone = "hot";    label = "⚡ 1주 스프린트"; sub = "고빈도 키워드 + 모의고사 1회"; }
+    else if (days <= 30)  { tone = "warm";   label = "🚀 D-30 집중기"; sub = "매일 5문제 + 오답 복습"; }
+    else if (days <= 100) { tone = "warm";   label = "💪 D-100 시작"; sub = "지금부터 매일 1시간이면 충분"; }
+    else if (days <= 200) { tone = "normal"; label = "📚 장기 학습"; sub = "기초 다지기 좋은 시기"; }
+    else                  { tone = "cool";   label = "📅 국시까지"; sub = "여유 있게 — 천천히 누적"; }
+    return `<button class="countdown-card ${tone}" data-action="setMenuTab" data-tab="study" aria-label="학습 탭으로 이동">
+        <div class="cd-label">${label}</div>
+        <div class="cd-days">D-${days}</div>
+        <div class="cd-sub">${sub}</div>
+    </button>`;
+}
+
+// NCLEX 모드 — 한국인 해외 진출 / 영어권 학습자용 콜아웃
+function renderNclexCallout() {
+    const _t = (k, fb) => (typeof window !== "undefined" && window.I18N) ? window.I18N.t(k, fb) : fb;
+    return `<div class="countdown-card warm">
+        <div class="cd-label">🌎 ${_t("nclex.callout.label", "NCLEX-RN")}</div>
+        <div class="cd-days">2,200 ${_t("nclex.callout.questions", "문항")}</div>
+        <div class="cd-sub">${_t("nclex.callout.sub", "100% 무료 · MCQ + SATA + 우선순위")}</div>
+    </div>`;
+}
+
+if (typeof window !== "undefined") {
+    window.KOREAN_EXAM_DATE = KOREAN_EXAM_DATE;
+    window.getDaysUntil = getDaysUntil;
+    window.renderExamCountdown = renderExamCountdown;
+}
+
 // 3탭 메뉴 시스템
 function renderMenuTabs(data, dailyDone, wrongCount) {
     if (!gameState.menuTab) gameState.menuTab = "home";
@@ -6038,6 +6095,10 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
     const streakHtml = streakCount >= 1
         ? `<div class="streak-banner" title="연속 학습일">🔥 <strong>${streakCount}일</strong> 연속 학습 중${streak.best > streakCount ? ` · 최고 ${streak.best}일` : ""}</div>`
         : "";
+
+    // D-day 카운트다운 — 한국 국시 (1월) / NCLEX 모드 시 비활성
+    const examModeForCountdown = (typeof Storage !== "undefined" && Storage.getExamMode) ? Storage.getExamMode() : "korean";
+    const countdownHtml = examModeForCountdown === "korean" ? renderExamCountdown() : renderNclexCallout();
 
     // 활성 에피소드(이어하기) 탐지
     let resumeEp = null;
@@ -6063,6 +6124,7 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
 
     const renderHome = () => `
       <div class="tab-section">
+        ${countdownHtml}
         ${streakHtml}
         ${weeklyHtml}
         ${resumeEp ? `

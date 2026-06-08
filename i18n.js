@@ -37,6 +37,15 @@
             // 오답
             "wrong.review": "오답 복습",
             "wrong.review.sub": "틀렸던 문제 다시 풀기",
+            // NCLEX 콜아웃 (한국 모드)
+            "nclex.callout.label": "NCLEX-RN",
+            "nclex.callout.questions": "문항",
+            "nclex.callout.sub": "100% 무료 · MCQ + SATA + 우선순위",
+            // D-day 카운트다운 (참고)
+            "countdown.exam": "국시까지",
+            "countdown.dday": "D-day",
+            "countdown.cheer": "고생했어요!",
+            "countdown.afterExam": "결과 발표를 기다려요",
         },
         en: {
             "menu.home": "Home",
@@ -66,6 +75,21 @@
             "daily.done": "Done",
             "wrong.review": "Review Mistakes",
             "wrong.review.sub": "Re-attempt missed questions",
+            // NCLEX marketing — primary user segment for English mode
+            "nclex.callout.label": "NCLEX-RN",
+            "nclex.callout.questions": "Questions",
+            "nclex.callout.sub": "100% Free · MCQ + SATA + Priority",
+            "nclex.hero.title": "2,200 NCLEX-RN Questions — Free",
+            "nclex.hero.sub": "Study anywhere · No signup · No paywall",
+            // Marketing taglines (visible in NCLEX mode)
+            "marketing.usp.free": "Completely Free",
+            "marketing.usp.noads": "Rewarded ads only (optional)",
+            "marketing.usp.offline": "Works offline (PWA)",
+            // D-day
+            "countdown.exam": "Until Exam",
+            "countdown.dday": "Exam day",
+            "countdown.cheer": "Great job!",
+            "countdown.afterExam": "Waiting for results",
         },
         // Filipino (Tagalog) — NCLEX 큰 시장 (필리핀 간호사 미국 진출 다수)
         fil: {
@@ -96,6 +120,19 @@
             "daily.done": "Tapos na",
             "wrong.review": "I-review ang Mali",
             "wrong.review.sub": "Subukan muli ang mga nakaligtaan",
+            // NCLEX marketing — for Filipino nurses preparing for US migration
+            "nclex.callout.label": "NCLEX-RN",
+            "nclex.callout.questions": "Tanong",
+            "nclex.callout.sub": "100% Libre · MCQ + SATA + Priority",
+            "nclex.hero.title": "2,200 NCLEX-RN Tanong — Libre",
+            "nclex.hero.sub": "Mag-aral kahit saan · Walang signup",
+            "marketing.usp.free": "Ganap na Libre",
+            "marketing.usp.noads": "Boluntaryong reklamo lamang",
+            "marketing.usp.offline": "Gumagana offline (PWA)",
+            "countdown.exam": "Hanggang sa Pagsusulit",
+            "countdown.dday": "Araw ng Pagsusulit",
+            "countdown.cheer": "Magaling!",
+            "countdown.afterExam": "Hinihintay ang resulta",
         },
         // Español — NCLEX hispano + Latin nursing market
         es: {
@@ -126,6 +163,19 @@
             "daily.done": "Hecho",
             "wrong.review": "Revisar Errores",
             "wrong.review.sub": "Volver a intentar las erradas",
+            // NCLEX marketing — Hispanic nurses preparing for NCLEX
+            "nclex.callout.label": "NCLEX-RN",
+            "nclex.callout.questions": "Preguntas",
+            "nclex.callout.sub": "100% Gratis · MCQ + SATA + Prioridad",
+            "nclex.hero.title": "2,200 Preguntas NCLEX-RN — Gratis",
+            "nclex.hero.sub": "Estudia donde sea · Sin registro",
+            "marketing.usp.free": "Totalmente Gratis",
+            "marketing.usp.noads": "Solo anuncios con recompensa",
+            "marketing.usp.offline": "Funciona sin conexión (PWA)",
+            "countdown.exam": "Hasta el examen",
+            "countdown.dday": "Día del examen",
+            "countdown.cheer": "¡Buen trabajo!",
+            "countdown.afterExam": "Esperando resultados",
         },
     };
 
