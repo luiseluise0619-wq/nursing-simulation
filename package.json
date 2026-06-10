@@ -16,6 +16,8 @@
     "build:preview": "node scripts/build-preview.js",
     "sync:android": "npm run build:web && npx cap sync android",
     "open:android": "npx cap open android",
+    "launch:check": "node scripts/launch-check.js",
+    "launch:ready": "npm run build:web && npm test -- --testPathIgnorePatterns=critical-paths\\|e2e && npm run launch:check",
     "pack:mac": "electron-builder --mac --x64 --arm64",
     "pack:win": "electron-builder --win --x64",
     "pack:linux": "electron-builder --linux AppImage"

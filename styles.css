@@ -1773,6 +1773,52 @@ img.onboard-svg { display: block; }
 .hero-card:hover { box-shadow: var(--shadow-lg); }
 .hero-card:active { box-shadow: var(--shadow-press); }
 [data-theme="dark"] .hero-card { color: #1a1f2b; }
+
+/* 첫 사용자 — 듀티 시작 hero-card 펄스 + 툴팁 */
+.hero-card-first {
+    position: relative;
+    animation: heroFirstPulse 2.4s ease-in-out infinite;
+}
+@keyframes heroFirstPulse {
+    0%, 100% { box-shadow: var(--shadow-md); }
+    50%      { box-shadow: 0 0 0 6px rgba(127, 168, 129, 0.35), var(--shadow-lg); }
+}
+.hero-tooltip {
+    position: absolute;
+    top: -36px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--text);
+    color: var(--bg);
+    padding: 6px 14px;
+    border-radius: 18px;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    box-shadow: var(--shadow-md);
+    animation: heroTooltipBounce 1.8s ease-in-out infinite;
+    pointer-events: none;
+}
+.hero-tooltip::after {
+    content: "";
+    position: absolute;
+    bottom: -5px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 6px solid var(--text);
+}
+@keyframes heroTooltipBounce {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50%      { transform: translateX(-50%) translateY(-4px); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .hero-card-first { animation: none; box-shadow: 0 0 0 4px rgba(127, 168, 129, 0.35), var(--shadow-md); }
+    .hero-tooltip { animation: none; }
+}
 .hero-label {
     font-size: 11px;
     font-weight: 700;

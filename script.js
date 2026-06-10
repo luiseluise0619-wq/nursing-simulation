@@ -980,6 +980,7 @@ const Storage = {
             triageBest: Number.isFinite(raw.triageBest) ? raw.triageBest : 0,
             accepted: (raw.accepted && typeof raw.accepted === "object") ? raw.accepted : null,
             onboarded: raw.onboarded === true,
+            firstActionDone: raw.firstActionDone === true,
             scenarios: (raw.scenarios && typeof raw.scenarios === "object" && !Array.isArray(raw.scenarios)) ? raw.scenarios : {},
             episodes: (raw.episodes && typeof raw.episodes === "object" && !Array.isArray(raw.episodes)) ? raw.episodes : {},
             campaign: (raw.campaign && typeof raw.campaign === "object" && !Array.isArray(raw.campaign)) ? raw.campaign : { started: false, chapter: 0, episode: 0, cumulativeRep: 0, log: [] },
@@ -1165,6 +1166,18 @@ const Storage = {
     setOnboarded() {
         const data = Storage.load();
         data.onboarded = true;
+        Storage.save(data);
+    },
+    // 신규 사용자가 첫 액션(듀티 시작/문제 풀이/일일 챌린지)을 한 적 있는지
+    // → 없으면 메인 메뉴에 첫 진입 시 hero-card에 onboarding pulse + tooltip 표시
+    isFirstAction() {
+        const data = Storage.load();
+        return data.firstActionDone !== true;
+    },
+    setFirstActionDone() {
+        const data = Storage.load();
+        if (data.firstActionDone === true) return;
+        data.firstActionDone = true;
         Storage.save(data);
     },
     setPersona(discipline, year) {
@@ -2460,6 +2473,8 @@ function resetStateForMode() {
     gameState.nclexSataPick = null;
 }
 function initSurvival() {
+    // 첫 액션 완료 (메인 메뉴 hero-card tooltip 제거)
+    try { Storage.setFirstActionDone(); } catch {}
     // 시프트 미선택 또는 이번 세션 첫 진입 시 → 시프트 선택 화면 (잡스: 진입 시점에 한 가지만 결정)
     if (!gameState._shiftPicked) {
         return renderShiftPicker();
@@ -3637,6 +3652,8 @@ function pickDailyGenerators(seed, count) {
     return out;
 }
 function startDailyChallenge() {
+    // 첫 액션 완료 (메인 메뉴 hero-card tooltip 제거)
+    try { Storage.setFirstActionDone(); } catch {}
     // 이미 오늘 완료한 경우 → 빈 상태 (재도전은 명시적 선택)
     const data = Storage.load();
     const today = data.daily?.[todayKey()];
@@ -6174,7 +6191,8 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
             <div class="resume-sub">${resumeEp.progress.step} / ${resumeEp.ep.steps.length} 단계 · HP ${resumeEp.progress.hp} · REP ${resumeEp.progress.rep}</div>
           </button>` : ''}
 
-        <button class="hero-card" data-action="initSurvival">
+        <button class="hero-card ${Storage.isFirstAction() ? 'hero-card-first' : ''}" data-action="initSurvival">
+          ${Storage.isFirstAction() ? '<div class="hero-tooltip" aria-hidden="true">👇 여기 먼저 눌러보세요</div>' : ''}
           <div class="hero-label">지금 시작</div>
           <div class="hero-title">오늘의 듀티</div>
           <div class="hero-sub">환자 관리하며 점수 쌓기</div>
