@@ -1,7 +1,7 @@
 // 간호사 시뮬레이터 서비스 워커 — 오프라인 우선 (cache-first)
 // Electron 환경(file://)에서는 등록되지 않으며, PWA 호스팅 시에만 동작.
 // 버전 변경 시 활성화·재캐싱 발생 — 배포 때마다 v숫자 올려야 사용자에게 업데이트 전달됨.
-const CACHE = "nurse-sim-v4";
+const CACHE = "nurse-sim-v5";
 const ASSETS = [
     "./",
     "./index.html",
@@ -11,11 +11,23 @@ const ASSETS = [
     "./nclex-content.js",
     "./kor-content.js",
     "./content.js",
+    "./i18n.js",
     "./images/image-map.js",
     "./manifest.json",
     "./icon.svg",
     "./privacy.html",
     "./terms.html",
+    // 임상 SVG 일러스트 (Claude 디자인) — 자주 보는 UI 일러스트만 precache
+    "./images/onboard-1-welcome.svg",
+    "./images/onboard-2-simulation.svg",
+    "./images/onboard-3-nclex.svg",
+    "./images/onboard-4-analytics.svg",
+    "./images/onboard-5-start.svg",
+    "./images/empty-no-bookmarks.svg",
+    "./images/empty-no-data.svg",
+    "./images/empty-no-records.svg",
+    "./images/empty-no-search.svg",
+    "./images/empty-no-wrong.svg",
 ];
 
 self.addEventListener("install", (e) => {
