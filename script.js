@@ -2189,6 +2189,8 @@ function hideCoreUI() {
     UI.inventory.classList.add("hidden");
     UI.progressWrap.classList.add("hidden");
     UI.progressInfo.classList.add("hidden");
+    // 메뉴 외 화면에서는 has-tabbar 폴백 클래스 제거 (탭바 없을 때 padding-bottom 회수)
+    try { document.body.classList.remove("has-tabbar"); } catch {}
 }
 
 // =========================================================================
@@ -6002,6 +6004,8 @@ function returnToMenu() {
     const wrongCount = data.wrongQueue.length;
 
     UI.gameArea.innerHTML = renderMenuTabs(data, dailyDone, wrongCount);
+    // CSS :has() 호환 폴백 — body에 has-tabbar 클래스 부여
+    try { document.body.classList.add("has-tabbar"); } catch {}
 
     // 스크롤 복원 — 메뉴 탭별로 마지막 위치 기억 (잡스: "Continuity")
     requestAnimationFrame(() => {

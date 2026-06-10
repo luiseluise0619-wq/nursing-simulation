@@ -8,7 +8,7 @@ const ASSETS = [
     "./styles.css",
     "./script.js",
     "./questions.js",
-    "./nclex-content.js",
+    // nclex-content.js (2MB) — lazy load 시 자동 캐시 (precache 제외하여 초기 로딩 빠르게)
     "./kor-content.js",
     "./content.js",
     "./i18n.js",

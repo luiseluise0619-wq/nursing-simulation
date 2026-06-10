@@ -404,8 +404,8 @@ body {
     transition: transform 0.1s ease, box-shadow 0.15s ease;
 }
 .countdown-card:not(button) { cursor: default; }
-.countdown-card:hover:is(button) { transform: translateY(-1px); box-shadow: var(--shadow-md); }
-.countdown-card:active:is(button) { transform: translateY(0); }
+button.countdown-card:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+button.countdown-card:active { transform: translateY(0); }
 .countdown-card.cool   { border-left: 4px solid var(--info, #6b8db7); }
 .countdown-card.normal { border-left: 4px solid var(--primary); }
 .countdown-card.warm   { border-left: 4px solid #d68945; }
@@ -2005,7 +2005,8 @@ img.onboard-svg { display: block; }
 /* Hide old menu-grid styles when using tabs */
 .menu-shell #game-area { padding-bottom: 90px; }
 
-/* When tabs are visible, push game-area padding */
+/* When tabs are visible, push game-area padding (older WebView 폴백 포함) */
+body.has-tabbar #game-area,
 body:has(.tab-bar) #game-area { padding-bottom: 90px; }
 
 /* =========================================================================
