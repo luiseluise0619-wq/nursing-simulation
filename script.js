@@ -6574,8 +6574,6 @@ function handleKeydown(e) {
         if (inGame) { returnToMenu(); e.preventDefault(); }
         return;
     }
-    load();
-}
 
     // 1-5 보기 단축키 (5지선다 한국 국시 대응)
     const num = parseInt(e.key, 10);
