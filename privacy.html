@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#7fa881">
+    <title>개인정보 처리방침 — 간호사 시뮬레이터</title>
+    <style>
+        :root { --primary:#7fa881; --bg:#eef2f5; --card:#fff; --text:#1e293b; --muted:#64748b; }
+        @media (prefers-color-scheme: dark) {
+            :root { --primary:#a3c4a5; --bg:#1a1f2b; --card:#232a38; --text:#e8eaed; --muted:#94a3b8; }
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0; padding: 24px;
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+            background: var(--bg); color: var(--text);
+            letter-spacing: -0.01em; line-height: 1.6;
+        }
+        .wrap { max-width: 720px; margin: 0 auto; }
+        .card {
+            background: var(--card); border-radius: 18px; padding: 28px;
+            box-shadow: 8px 8px 20px rgba(0,0,0,.06), -8px -8px 20px rgba(255,255,255,.5);
+        }
+        h1 { font-size: 1.5rem; margin: 0 0 4px; }
+        .meta { color: var(--muted); font-size: 0.85rem; margin-bottom: 20px; }
+        h2 { font-size: 1.05rem; color: var(--primary); margin: 24px 0 8px; }
+        ul { padding-left: 20px; }
+        li { margin: 4px 0; }
+        code { background: var(--bg); padding: 1px 6px; border-radius: 6px; font-size: 0.85em; }
+        .notice { background: var(--bg); border-radius: 12px; padding: 14px; margin: 16px 0; font-size: 0.9rem; }
+        a { color: var(--primary); }
+        footer { margin-top: 28px; color: var(--muted); font-size: 0.8rem; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <div class="card">
+            <h1>개인정보 처리방침</h1>
+            <p class="meta">간호사 시뮬레이터 (베타) · 최종 갱신: 2026-05-26 · 버전 1.1</p>
+
+            <div class="notice">
+                <strong>요약:</strong> 본 앱은 학습 데이터를 <strong>사용자 기기 안에만</strong> 저장합니다.
+                외부 서버로 개인정보를 전송하지 않으며, 회원가입·로그인이 없습니다.
+            </div>
+
+            <h2>1. 수집·이용하는 정보</h2>
+            <p>다음 항목만 사용자 기기의 브라우저 <code>localStorage</code> 에 저장됩니다. 외부 서버 전송은 없습니다.</p>
+            <ul>
+                <li>학습 통계 (과목별 정답률·콤보 최고점·세트 기록)</li>
+                <li>오답 노트 (틀린 문제 + Leitner 간격 반복 메타데이터)</li>
+                <li>북마크 (즐겨찾기한 문제)</li>
+                <li>에피소드 진행 상태 (이어하기용) + 커리어 기록</li>
+                <li>사운드·테마 설정</li>
+                <li>약관 동의 일시</li>
+                <li>오류 신고 로컬 기록</li>
+            </ul>
+
+            <h2>2. 보유·이용 기간</h2>
+            <p>모든 데이터는 사용자가 직접 삭제하거나 브라우저 데이터를 초기화할 때까지 보유됩니다.
+            외부로 자동 전송·동기화되지 않습니다.</p>
+
+            <h2>3. 익명 사용 통계 (선택, 활성화 시에만)</h2>
+            <p>운영자가 서비스 개선을 위해 <strong>Plausible Analytics</strong> 를 활성화한 경우,
+            다음과 같은 <strong>익명·비식별</strong> 통계만 수집됩니다:</p>
+            <ul>
+                <li>페이지 방문 수, 익명 방문자 수 (개인 식별 불가)</li>
+                <li>주요 기능 사용 이벤트 (예: 일일 챌린지 완료 — 개인 식별 정보 없음)</li>
+            </ul>
+            <p>Plausible 은 <strong>쿠키를 사용하지 않으며</strong>, IP·기기 지문 등 개인정보를 저장하지 않습니다 (GDPR·PIPA 준수).
+            현재 베타 버전에서는 기본 비활성화 상태입니다.</p>
+
+            <h2>4. 광고 (Google AdMob)</h2>
+            <p>Android 앱에는 <strong>Google AdMob 보상형 광고</strong>가 포함됩니다 (배너·전면 광고는 없음). 사용자가 명시적으로 광고 시청 버튼을 탭한 경우에만 광고가 재생되며, 시청 후 게임 내 보상(부활 / 힌트)을 받습니다.</p>
+            <ul>
+                <li>광고 시청은 <strong>완전 선택</strong>입니다. 광고를 보지 않아도 모든 학습 기능을 이용할 수 있습니다.</li>
+                <li>광고 ID(AD_ID)는 Android 13+ 에서 광고 개인화에 사용될 수 있으며, <strong>설정 → Google → 광고</strong>에서 끌 수 있습니다.</li>
+                <li>AdMob의 데이터 처리에는 Google의 <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">개인정보 처리방침</a>이 적용됩니다.</li>
+                <li>한국·EEA·UK 사용자에게는 별도 동의 화면이 표시될 수 있습니다 (Google UMP SDK).</li>
+                <li>웹(PWA)·데스크톱 버전에는 광고가 없습니다.</li>
+            </ul>
+
+            <h2>5. 정보 보호 조치</h2>
+            <ul>
+                <li>네트워크 통신 최소화 — PWA cache-first / 로컬 실행</li>
+                <li>CSP <code>script-src 'self'</code> — 외부 스크립트 차단 (분석 활성화 시 plausible.io 만 예외)</li>
+                <li>Storage 스키마 검증 — 변조 시 안전 복구</li>
+            </ul>
+
+            <h2>6. 이용자 권리</h2>
+            <p>설정 → 데이터 백업으로 본인 데이터를 JSON 으로 내보낼 수 있습니다.
+            설정 → 전체 데이터 초기화로 모든 데이터를 영구 삭제할 수 있습니다.</p>
+
+            <h2>7. 아동 개인정보</h2>
+            <p>본 앱은 만 14세 이상 간호학과 학생·간호사 대상 교육 도구입니다. 만 14세 미만의 개인정보를 의도적으로 수집하지 않습니다.</p>
+
+            <h2>8. 의료 면책</h2>
+            <p>본 앱의 모든 컨텐츠는 <strong>국가시험 학습·교육 목적</strong>이며, 실제 임상 진단·치료·의료 행위의 근거로 사용할 수 없습니다.
+            정식 RN/MD 감수 전 베타 버전이며, 실제 임상 판단은 최신 가이드라인과 면허 의료인을 따라야 합니다.</p>
+
+            <h2>9. 문의</h2>
+            <p>본 앱은 오픈소스 (MIT License) 입니다. 문의·오류 신고:
+            <a href="https://github.com/luiseluise0619-wq/nursing-simulation/issues">GitHub Issues</a></p>
+
+            <footer>© 2026 간호사 시뮬레이터 · 교육 목적 베타</footer>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,12 +1,23 @@
 {
   "name": "nurse-simulator",
-  "version": "1.1.0",
+  "version": "1.0.0",
   "description": "간호 국시 시뮬레이터 — 임상 의사결정 + 8과목 트레이닝 + 모의고사",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
     "test": "jest",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
     "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "lint": "eslint . --ext .js --ignore-pattern node_modules --ignore-pattern dist --ignore-pattern build",
+    "icons": "node scripts/generate-icons.js",
+    "build:web": "node scripts/build-www.js",
+    "build:preview": "node scripts/build-preview.js",
+    "sync:android": "npm run build:web && npx cap sync android",
+    "open:android": "npx cap open android",
+    "launch:check": "node scripts/launch-check.js",
+    "launch:ready": "npm run build:web && npm test -- --testPathIgnorePatterns=critical-paths\\|e2e && npm run launch:check",
     "pack:mac": "electron-builder --mac --x64 --arm64",
     "pack:win": "electron-builder --win --x64",
     "pack:linux": "electron-builder --linux AppImage"
@@ -23,27 +34,46 @@
   "build": {
     "appId": "com.nursesim.app",
     "productName": "간호사 시뮬레이터",
-    "directories": { "output": "dist" },
+    "directories": {
+      "output": "dist"
+    },
     "files": [
       "main.js",
       "index.html",
       "styles.css",
       "script.js",
       "questions.js",
+      "nclex-content.js",
       "content.js",
       "manifest.json",
       "sw.js",
       "package.json",
       "LICENSE"
     ],
-    "mac":   { "category": "public.app-category.education", "target": ["dmg"] },
-    "win":   { "target": ["nsis"] },
-    "linux": { "category": "Education", "target": ["AppImage"] }
+    "mac": {
+      "category": "public.app-category.education",
+      "target": [
+        "dmg"
+      ]
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    },
+    "linux": {
+      "category": "Education",
+      "target": [
+        "AppImage"
+      ]
+    }
   },
   "devDependencies": {
     "electron": "^41.3.0",
+    "eslint": "^8.57.1",
     "jest": "^29.7.0",
-    "jest-environment-jsdom": "^30.4.1"
+    "jest-environment-jsdom": "^30.4.1",
+    "sharp": "^0.34.5"
   },
   "jest": {
     "projects": [
@@ -58,8 +88,21 @@
       {
         "displayName": "integration",
         "testEnvironment": "jsdom",
-        "testMatch": ["<rootDir>/tests/integration.test.js"]
+        "testMatch": [
+          "<rootDir>/tests/integration.test.js"
+        ]
       }
     ]
+  },
+  "dependencies": {
+    "@capacitor-community/admob": "^7.2.0",
+    "@capacitor/android": "^7.6.5",
+    "@capacitor/app": "^7.1.2",
+    "@capacitor/cli": "^7.6.5",
+    "@capacitor/core": "^7.6.5",
+    "@capacitor/haptics": "^8.0.2",
+    "@capacitor/local-notifications": "^7.0.6",
+    "@capacitor/splash-screen": "^7.0.5",
+    "@capacitor/status-bar": "^7.0.6"
   }
 }

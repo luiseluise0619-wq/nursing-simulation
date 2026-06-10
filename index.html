@@ -3,30 +3,212 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=5">
-    <meta name="theme-color" content="#3b82f6">
+    <meta name="theme-color" content="#7fa881">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; manifest-src 'self'; base-uri 'none'; form-action 'none';">
+    <meta name="apple-mobile-web-app-title" content="간호사 시뮬레이터">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://plausible.io https://*.googlesyndication.com https://*.doubleclick.net https://*.google.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net; img-src 'self' data: https: ; connect-src 'self' https://plausible.io https://*.googlesyndication.com https://*.doubleclick.net https://*.google.com; frame-src https://googleads.g.doubleclick.net https://tpc.googlesyndication.com; manifest-src 'self'; base-uri 'none'; form-action 'none';">
     <title>간호사 시뮬레이터</title>
     <link rel="icon" type="image/svg+xml" href="icon.svg">
     <link rel="apple-touch-icon" href="icon.svg">
+    <link rel="apple-touch-icon" sizes="180x180" href="build/icon-180.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="build/icon-152.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="build/icon-192.png">
     <link rel="manifest" href="manifest.json">
+    <meta name="description" content="Free NCLEX-RN 2,200 questions + Korean nursing exam. 간호 국시 + NCLEX 무료. No signup, no paywall.">
+    <meta name="keywords" content="NCLEX,NCLEX-RN,NCLEX-RN free,NCLEX practice questions,Korean nursing exam,간호사 국가고시,국시,간호학과,SATA,priority questions,client need,Filipino nurse,Hispanic nurse,nursing exam,free nursing app,임상 시뮬레이션,간호 학습 앱,무료 간호 앱">
+    <meta name="author" content="간호사 시뮬레이터 · Nurse Simulator">
+    <!-- 다국어 hreflang — 검색엔진 다언어 인덱싱 (NCLEX 영어권 SEO 핵심) -->
+    <link rel="alternate" hreflang="ko" href="https://luiseluise0619-wq.github.io/nursing-simulation/?lang=ko">
+    <link rel="alternate" hreflang="en" href="https://luiseluise0619-wq.github.io/nursing-simulation/?lang=en">
+    <link rel="alternate" hreflang="fil" href="https://luiseluise0619-wq.github.io/nursing-simulation/?lang=fil">
+    <link rel="alternate" hreflang="es" href="https://luiseluise0619-wq.github.io/nursing-simulation/?lang=es">
+    <link rel="alternate" hreflang="x-default" href="https://luiseluise0619-wq.github.io/nursing-simulation/">
+    <!-- Open Graph (Facebook/KakaoTalk/LINE) — 영어 우선 (NCLEX 글로벌 시장) -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Free NCLEX-RN 2,200 Questions + Korean 국시 — Nurse Simulator">
+    <meta property="og:description" content="2,200 NCLEX-RN questions (MCQ + SATA + Priority) + 320 Korean nursing exam + 35 clinical simulations. Free, no signup, no paywall.">
+    <meta property="og:image" content="icon.svg">
+    <meta property="og:locale" content="ko_KR">
+    <meta property="og:locale:alternate" content="en_US">
+    <meta property="og:locale:alternate" content="fil_PH">
+    <meta property="og:locale:alternate" content="es_US">
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Free NCLEX-RN 2,200 Questions + Korean 국시">
+    <meta name="twitter:description" content="2,200 NCLEX-RN + Korean nursing exam. 100% free, no signup, no paywall.">
+    <meta name="twitter:image" content="icon.svg">
+    <!-- JSON-LD 구조화 데이터 (Google Rich Results) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "MobileApplication",
+          "name": "간호사 시뮬레이터",
+          "operatingSystem": "ANDROID, iOS, Web",
+          "applicationCategory": "EducationalApplication",
+          "applicationSubCategory": "MedicalEducation",
+          "offers": { "@type": "Offer", "price": "0", "priceCurrency": "KRW" },
+          "aggregateRating": { "@type": "AggregateRating", "ratingValue": "4.8", "ratingCount": "1" },
+          "description": "한국 간호사 국가고시 + NCLEX-RN 무료 학습 앱. 35편 임상 시뮬레이션 + 2,520 정적 문제.",
+          "inLanguage": ["ko-KR", "en-US"],
+          "audience": { "@type": "EducationalAudience", "educationalRole": "student" }
+        },
+        {
+          "@type": "EducationalOrganization",
+          "name": "간호사 시뮬레이터",
+          "description": "간호 학습 자기주도 시뮬레이션 플랫폼"
+        },
+        {
+          "@type": "Course",
+          "name": "NCLEX-RN Practice — 2,200 Questions Free",
+          "description": "Free NCLEX-RN preparation: 2,200 questions covering Safe & Effective Care, Health Promotion, Psychosocial Integrity, and Physiological Integrity. Includes MCQ, SATA (select all that apply), and Priority questions. For US, Filipino, and Hispanic nurses preparing for licensure.",
+          "provider": { "@type": "Organization", "name": "Nurse Simulator" },
+          "inLanguage": ["en-US", "fil-PH", "es-US"],
+          "isAccessibleForFree": true,
+          "educationalCredentialAwarded": "NCLEX-RN exam preparation",
+          "audience": { "@type": "EducationalAudience", "educationalRole": "registered nurse candidate" },
+          "courseMode": "online",
+          "hasCourseInstance": {
+            "@type": "CourseInstance",
+            "courseMode": "online",
+            "courseWorkload": "PT100H"
+          }
+        },
+        {
+          "@type": "FAQPage",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "Is this NCLEX-RN app really free?",
+              "acceptedAnswer": { "@type": "Answer", "text": "Yes. All 2,200 NCLEX-RN questions are 100% free. No paywall, no signup. Optional rewarded ads only — users choose to watch for in-game bonuses." }
+            },
+            {
+              "@type": "Question",
+              "name": "Does it work offline for NCLEX study?",
+              "acceptedAnswer": { "@type": "Answer", "text": "Yes. It is a Progressive Web App (PWA) — once loaded, all 2,200 questions work offline." }
+            },
+            {
+              "@type": "Question",
+              "name": "Korean 국시도 같이 준비할 수 있나요?",
+              "acceptedAnswer": { "@type": "Answer", "text": "네. 한국 간호사 국가고시 320문항(8과목 5지선다)과 NCLEX-RN 2,200문항을 동시에 무료로 제공합니다." }
+            }
+          ]
+        },
+        {
+          "@type": "Course",
+          "name": "한국 간호사 국가고시 — 320+ 정적 문제",
+          "description": "한국 간호사 국가시험 8과목 정적 문제 + 무한 생성 문제 + 35편 임상 시뮬레이션",
+          "provider": { "@type": "Organization", "name": "간호사 시뮬레이터" },
+          "inLanguage": "ko-KR",
+          "isAccessibleForFree": true
+        }
+      ]
+    }
+    </script>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <!-- Pretendard 폰트: defer 로드 (시스템 폰트 폴백 사용, FOUT 허용) -->
+    <link rel="preload" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" rel="stylesheet"></noscript>
     <link rel="stylesheet" href="styles.css">
+    <style>
+        /* 앱 로더 — JS 로드 전 노출 (FOUC 방지) */
+        #app-loader {
+            position: fixed;
+            inset: 0;
+            background: #eef2f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 99999;
+            transition: opacity .3s;
+        }
+        @media (prefers-color-scheme: dark) {
+            #app-loader { background: #161b27; }
+            #app-loader .loader-title { color: #ecedf0; }
+        }
+        #app-loader.fade-out { opacity: 0; pointer-events: none; }
+        .loader-mark {
+            width: 64px; height: 64px;
+            border-radius: 18px;
+            background: #7fa881;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: 800;
+            color: #fff;
+            box-shadow: 0 8px 24px rgba(127,168,129,.35);
+            animation: loaderPulse 1.6s ease-in-out infinite;
+        }
+        .loader-title {
+            margin-top: 18px;
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 15px;
+            font-weight: 700;
+            color: #1e293b;
+            letter-spacing: -0.01em;
+        }
+        @keyframes loaderPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(0.95); opacity: 0.85; }
+        }
+    </style>
 </head>
 <body>
+    <!-- 접근성 — 스크린리더/키보드 사용자가 본문으로 바로 이동 (WCAG 2.4.1) -->
+    <a href="#game-area" class="skip-link">본문으로 건너뛰기</a>
+
+    <!-- JS 로드 전 노출되는 스플래시. boot() 완료 시 fade-out + 제거 -->
+    <div id="app-loader" aria-hidden="true">
+        <div class="loader-mark" aria-hidden="true">
+          <svg viewBox="0 0 64 64" width="40" height="40" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+            <!-- 청진기 + 임상 그래프 = 학습+시뮬 = 브랜드 정체성 -->
+            <path d="M16 12 v14 a8 8 0 0 0 16 0 v-14"/>
+            <path d="M24 34 a3 3 0 0 0 3 3 a3 3 0 0 0 3 -3 v-2"/>
+            <circle cx="44" cy="20" r="3.5"/>
+            <path d="M30 32 v6 q0 6 6 6 h2 q6 0 6 -6 v-14"/>
+            <path d="M10 50 l5 -6 l5 4 l6 -10 l4 8 l6 -4 l5 3" stroke-width="2.5" opacity="0.7"/>
+          </svg>
+        </div>
+        <div class="loader-title">간호사 시뮬레이터</div>
+    </div>
+
+    <div id="app-disclaimer" class="app-disclaimer hidden" role="note">
+        교육 목적 · 임상 적용 금지 · <button class="disclaimer-link" data-action="openErrorReport">오류 신고</button>
+    </div>
 
     <div id="top-bar" class="hidden">
-        <div class="stat-gauge hp" id="hp-gauge" data-level="hi">
-            ❤️ <span id="hp">100</span>
+        <button class="back-btn hidden" id="back-btn" data-action="returnToMenu" aria-label="메인 메뉴로 돌아가기">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M15 18l-6-6 6-6"/>
+            </svg>
+        </button>
+        <div class="stat-gauge hp hidden" id="hp-gauge" data-level="hi">
+            <span id="hp">100</span>
             <span class="sg-bar"><span class="sg-fill" id="hp-fill" style="width:100%"></span></span>
         </div>
-        <div class="stat-gauge rep" id="rep-gauge">
-            ⭐ <span id="rep">0</span>
+        <div class="stat-gauge rep hidden" id="rep-gauge">
+            <span id="rep">0</span>
             <span class="sg-bar"><span class="sg-fill" id="rep-fill" style="width:0%"></span></span>
         </div>
         <div class="top-actions">
-            <button class="icon-btn" id="theme-toggle" title="테마" aria-label="테마 전환">🌙</button>
-            <button class="icon-btn" id="sound-toggle" title="사운드" aria-label="사운드 전환">🔊</button>
+            <button class="icon-btn" id="theme-toggle" title="테마" aria-label="테마 전환" hidden>🌙</button>
+            <button class="icon-btn" id="sound-toggle" title="사운드" aria-label="사운드 전환" hidden>🔊</button>
+            <button class="icon-btn" id="kebab-btn" data-action="toggleKebab" title="메뉴" aria-label="메뉴" aria-haspopup="true" aria-expanded="false">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true">
+                    <circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/>
+                </svg>
+            </button>
+            <button class="icon-btn" id="settings-btn" data-action="openSettings" title="설정" aria-label="설정" hidden>⚙️</button>
+        </div>
+        <div id="kebab-menu" class="kebab-menu hidden" role="menu" aria-labelledby="kebab-btn">
+            <button class="kebab-item" data-action="toggleTheme" role="menuitem"><span class="kebab-icon">🌙</span><span>테마</span></button>
+            <button class="kebab-item" data-action="toggleSound" role="menuitem"><span class="kebab-icon">🔊</span><span id="kebab-sound-label">사운드</span></button>
+            <button class="kebab-item" data-action="toggleLang" role="menuitem"><span class="kebab-icon">🌐</span><span id="kebab-lang-label">언어 / Language</span></button>
+            <button class="kebab-item" data-action="openSettings" role="menuitem"><span class="kebab-icon">⚙️</span><span>설정</span></button>
         </div>
     </div>
 
@@ -35,45 +217,53 @@
         <div id="progress-fill"></div>
     </div>
     <div id="progress-info" class="hidden">
-        <span id="progress-text">진행도</span>
-        <span id="progress-percent">0%</span>
+        <span id="progress-text"></span>
+        <span id="progress-percent"></span>
     </div>
 
     <div id="inventory-bar" class="hidden"></div>
 
-    <div id="game-area" role="main">
-        <!-- 메인 메뉴는 script.js의 returnToMenu()에서 렌더링 -->
-    </div>
+    <main id="game-area" role="main" aria-label="학습 영역" tabindex="-1">
+        <!-- JS 가 채움 -->
+    </main>
 
     <div id="log-bar" class="hidden" role="log" aria-live="polite" aria-atomic="false"></div>
+    <!-- 시각 사용자에게 안 보이는 스크린리더 전용 announcer (정답/오답·상태 전환) -->
+    <div id="sr-announcer" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
 
     <div id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-desc">
         <h2 id="modal-title" class="modal-heading"></h2>
         <p id="modal-desc" class="modal-subdesc"></p>
         <div id="modal-stats" class="modal-stats-card"></div>
 
+        <div id="revive-slot" class="revive-slot hidden"></div>
+
         <hr class="modal-divider">
 
-        <h3 class="modal-section-title">📚 승급 심사 (무한 랜덤 문제풀이)</h3>
+        <h3 class="modal-section-title" id="modal-section-title"></h3>
         <div class="modal-quiz-card">
             <div class="modal-quiz-header">
-                <span>회차: <strong id="left"></strong></span>
-                <span>랭크: <strong id="rank">신규</strong></span>
+                <span id="modal-quiz-left-wrap" class="hidden">회차: <strong id="left"></strong></span>
+                <span id="modal-quiz-rank-wrap" class="hidden">랭크: <strong id="rank"></strong></span>
             </div>
 
             <div id="question-box" class="modal-question" aria-live="polite"></div>
             <div id="choices"></div>
 
             <div id="result" class="modal-result" aria-live="assertive"></div>
-            <div class="modal-score-row">
+            <div class="modal-score-row hidden" id="modal-score-wrap">
                 <span>현재 점수: <span id="score" class="modal-score">0</span>점</span>
             </div>
         </div>
-        <button class="choice-btn center modal-close" data-action="returnToMenu">처음으로 돌아가기 (ESC)</button>
+        <button class="choice-btn center modal-close" data-action="returnToMenu" aria-label="닫기">닫기</button>
     </div>
 
+    <script src="i18n.js"></script>
     <script src="questions.js"></script>
+    <!-- nclex-content.js (2MB) 는 NCLEX 메뉴 진입 시 동적 로드 (lazy) - 초기 로드 시간 단축 -->
+    <script src="kor-content.js"></script>
     <script src="content.js"></script>
+    <script src="images/image-map.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

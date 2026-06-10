@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- 출시용: HTTPS 만 허용. Cleartext HTTP 차단으로 Play Store 보안 정책 충족.
+         로컬 자산(file://, content://) 은 자동 예외. -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

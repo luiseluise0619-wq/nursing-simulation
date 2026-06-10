@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#7fa881">
+    <title>이용약관 — 간호사 시뮬레이터</title>
+    <style>
+        :root { --primary:#7fa881; --bg:#eef2f5; --card:#fff; --text:#1e293b; --muted:#64748b; }
+        @media (prefers-color-scheme: dark) {
+            :root { --primary:#a3c4a5; --bg:#1a1f2b; --card:#232a38; --text:#e8eaed; --muted:#94a3b8; }
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0; padding: 24px;
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+            background: var(--bg); color: var(--text);
+            letter-spacing: -0.01em; line-height: 1.6;
+        }
+        .wrap { max-width: 720px; margin: 0 auto; }
+        .card {
+            background: var(--card); border-radius: 18px; padding: 28px;
+            box-shadow: 8px 8px 20px rgba(0,0,0,.06), -8px -8px 20px rgba(255,255,255,.5);
+        }
+        h1 { font-size: 1.5rem; margin: 0 0 4px; }
+        .meta { color: var(--muted); font-size: 0.85rem; margin-bottom: 20px; }
+        h2 { font-size: 1.05rem; color: var(--primary); margin: 24px 0 8px; }
+        ul { padding-left: 20px; }
+        li { margin: 4px 0; }
+        code { background: var(--bg); padding: 1px 6px; border-radius: 6px; font-size: 0.85em; }
+        .notice { background: var(--bg); border-radius: 12px; padding: 14px; margin: 16px 0; font-size: 0.9rem; }
+        .danger { border-left: 3px solid #c97070; }
+        a { color: var(--primary); }
+        footer { margin-top: 28px; color: var(--muted); font-size: 0.8rem; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="wrap">
+        <div class="card">
+            <h1>이용약관</h1>
+            <p class="meta">간호사 시뮬레이터 (베타) · 최종 갱신: 2026-05-29 · 버전 1.0</p>
+
+            <div class="notice">
+                <strong>요약:</strong> 본 앱은 한국 간호사 국가시험 학습 도구입니다.
+                실제 임상 진단·치료의 근거로 사용할 수 없습니다.
+                만 15세 이상 이용 가능.
+            </div>
+
+            <h2>제1조 (목적)</h2>
+            <p>본 약관은 "간호사 시뮬레이터" (이하 "서비스")의 이용 조건과 운영자(이하 "회사")와 이용자의 권리·의무·책임 사항을 규정합니다.</p>
+
+            <h2>제2조 (용어 정의)</h2>
+            <ul>
+                <li>"서비스": 모바일 앱·웹 PWA 형태로 제공되는 간호사 국시 학습 시뮬레이터</li>
+                <li>"이용자": 본 약관에 동의하고 서비스를 이용하는 자</li>
+                <li>"콘텐츠": 문제·해설·시나리오·에피소드·이미지 등 서비스 내 모든 자료</li>
+            </ul>
+
+            <h2>제3조 (서비스 이용 자격)</h2>
+            <ul>
+                <li>본 서비스는 <strong>만 15세 이상</strong>의 간호학과 학생·간호사·관련 교육자를 대상으로 합니다.</li>
+                <li>만 15세 미만은 보호자 동의 후에도 이용을 권장하지 않습니다.</li>
+                <li>이용자는 본 약관에 동의함으로써 위 자격을 갖추었음을 확인합니다.</li>
+            </ul>
+
+            <h2>제4조 (서비스 제공 내용)</h2>
+            <ul>
+                <li>국시 8과목 객관식 문제 풀이·해설</li>
+                <li>임상 시뮬레이션 (에피소드·시나리오·트리아지·인계)</li>
+                <li>오답 노트·북마크·통계 대시보드</li>
+                <li>커리어 캠페인 (선택적 4막 14화 서사 모드)</li>
+            </ul>
+
+            <h2>제5조 (의료 면책) <span style="color:#c97070;">★ 중요</span></h2>
+            <div class="notice danger">
+                <strong>본 서비스의 모든 콘텐츠는 교육·학습 목적으로만 제공됩니다.</strong>
+                <ul>
+                    <li>실제 환자에 대한 진단·치료·간호 행위의 직접 근거로 사용할 수 없습니다.</li>
+                    <li>임상 판단은 반드시 면허 의료인과 최신 가이드라인(KMA·대한간호협회·WHO 등)을 따라야 합니다.</li>
+                    <li>콘텐츠는 현재 베타 단계이며, 일부 항목은 외부 RN 감수가 진행 중입니다.</li>
+                    <li>회사는 본 서비스의 정확성·완전성을 보증하지 않으며, 임상 적용으로 인한 어떠한 결과에도 책임지지 않습니다.</li>
+                </ul>
+            </div>
+
+            <h2>제6조 (이용자의 의무)</h2>
+            <ul>
+                <li>본 약관 및 관련 법령을 준수해야 합니다.</li>
+                <li>다음 행위는 금지됩니다:
+                    <ul>
+                        <li>서비스의 콘텐츠를 무단 복제·배포·상업적 이용</li>
+                        <li>서비스 운영 방해·정보 변조</li>
+                        <li>본인 외 타인 명의로 부정 이용</li>
+                        <li>학교·기관의 학사 부정에 활용 (시험 부정행위 등)</li>
+                    </ul>
+                </li>
+                <li>의료 면책에 명시된 바와 같이, 본 서비스 내용을 임상 의사결정의 단일 근거로 사용하지 않아야 합니다.</li>
+            </ul>
+
+            <h2>제7조 (지적 재산권)</h2>
+            <ul>
+                <li>서비스의 소스 코드는 <strong>MIT 라이선스</strong>로 공개되어 있습니다.</li>
+                <li>문제·해설·시나리오 등 콘텐츠 저작권은 회사 또는 원저작자에게 귀속됩니다.</li>
+                <li>이용자가 학습 목적으로 화면을 캡처·공유하는 것은 허용됩니다.</li>
+                <li>상업적 재배포·교육 자료 무단 사용은 금지됩니다.</li>
+            </ul>
+
+            <h2>제8조 (서비스 변경·중단)</h2>
+            <ul>
+                <li>회사는 운영상·기술상 필요 시 서비스 내용을 변경할 수 있습니다.</li>
+                <li>중대한 변경 사항은 앱 내 공지 또는 GitHub Repository를 통해 사전 안내합니다.</li>
+                <li>천재지변·시스템 장애 등 불가항력 사유로 서비스가 중단될 수 있으며, 이에 대해 회사는 책임지지 않습니다.</li>
+            </ul>
+
+            <h2>제9조 (광고 — 모바일 앱)</h2>
+            <ul>
+                <li>모바일 앱 버전에는 <strong>Google AdMob 보상형 광고(부활용)</strong>가 포함됩니다.</li>
+                <li>광고는 시뮬레이션 HP 소진 시 1회 부활을 위해서만 표시됩니다.</li>
+                <li>전면 광고·배너 광고는 운영하지 않습니다 (학습 집중 보호).</li>
+                <li>광고 시청 여부는 이용자 선택이며, 광고 시청을 거부해도 핵심 기능을 모두 사용할 수 있습니다.</li>
+            </ul>
+
+            <h2>제10조 (책임 제한)</h2>
+            <ul>
+                <li>회사는 무료로 제공되는 본 서비스 이용으로 발생한 손해에 대해 고의·중과실이 없는 한 책임지지 않습니다.</li>
+                <li>이용자의 기기 분실·고장으로 인한 로컬 데이터(학습 기록) 손실에 대해 회사는 책임지지 않습니다 (현재 클라우드 동기화 미지원).</li>
+                <li>외부 링크·서드파티 서비스(AdMob 등)의 운영·내용에 대해 회사는 책임지지 않습니다.</li>
+            </ul>
+
+            <h2>제11조 (개인정보 보호)</h2>
+            <p>이용자의 개인정보 처리에 관한 사항은 <a href="privacy.html">개인정보 처리방침</a>을 따릅니다.
+            본 서비스는 회원가입·로그인이 없으며, 학습 데이터는 이용자 기기 내에만 저장됩니다.</p>
+
+            <h2>제12조 (약관 변경)</h2>
+            <ul>
+                <li>회사는 필요 시 본 약관을 변경할 수 있습니다.</li>
+                <li>변경 시 앱 내 공지로 사전 안내합니다 (중대 변경 시 7일 전).</li>
+                <li>변경 후에도 서비스를 계속 이용하면 변경된 약관에 동의한 것으로 간주됩니다.</li>
+            </ul>
+
+            <h2>제13조 (분쟁 해결)</h2>
+            <ul>
+                <li>본 약관은 대한민국 법령을 준거법으로 합니다.</li>
+                <li>서비스 이용 관련 분쟁은 대한민국 법원을 관할로 합니다.</li>
+                <li>이용자는 분쟁 발생 시 우선 <a href="https://github.com/luiseluise0619-wq/nursing-simulation/issues">GitHub Issues</a>를 통해 회사에 문의할 수 있습니다.</li>
+            </ul>
+
+            <h2>제14조 (문의처)</h2>
+            <p>본 서비스에 관한 문의·오류 신고:
+            <a href="https://github.com/luiseluise0619-wq/nursing-simulation/issues">GitHub Issues</a></p>
+
+            <footer>
+                © 2026 간호사 시뮬레이터 · 교육 목적 베타<br>
+                본 약관은 2026년 5월 29일부터 적용됩니다.
+            </footer>
+        </div>
+    </div>
+</body>
+</html>
