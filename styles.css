@@ -386,6 +386,16 @@ body {
     border-left: 3px solid var(--warning);
 }
 .streak-banner strong { color: var(--warning); font-size: 16px; }
+.streak-grace {
+    display: inline-block;
+    margin-left: 10px;
+    padding: 2px 10px;
+    background: var(--primary-soft, rgba(127, 168, 129, 0.18));
+    color: var(--primary);
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+}
 
 /* D-day 카운트다운 — 국시 / NCLEX 콜아웃 (좌측 SVG 아이콘 + 우측 본문) */
 .countdown-card {

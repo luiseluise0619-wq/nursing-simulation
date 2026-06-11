@@ -984,7 +984,7 @@ const Storage = {
             scenarios: (raw.scenarios && typeof raw.scenarios === "object" && !Array.isArray(raw.scenarios)) ? raw.scenarios : {},
             episodes: (raw.episodes && typeof raw.episodes === "object" && !Array.isArray(raw.episodes)) ? raw.episodes : {},
             campaign: (raw.campaign && typeof raw.campaign === "object" && !Array.isArray(raw.campaign)) ? raw.campaign : { started: false, chapter: 0, episode: 0, cumulativeRep: 0, log: [] },
-            streak: (raw.streak && typeof raw.streak === "object" && !Array.isArray(raw.streak)) ? raw.streak : { count: 0, best: 0, lastDate: null },
+            streak: (raw.streak && typeof raw.streak === "object" && !Array.isArray(raw.streak)) ? raw.streak : { count: 0, best: 0, lastDate: null, freezeUsedAt: null },
             errorReports: Array.isArray(raw.errorReports) ? raw.errorReports.filter(e => e && typeof e === "object") : [],
             episodeProgress: (raw.episodeProgress && typeof raw.episodeProgress === "object" && !Array.isArray(raw.episodeProgress)) ? raw.episodeProgress : {},
             daily: (raw.daily && typeof raw.daily === "object") ? raw.daily : {},
@@ -1321,11 +1321,26 @@ const Storage = {
     },
     bumpStreak() {
         const data = Storage.load();
-        const s = (data.streak && typeof data.streak === "object") ? data.streak : { count: 0, best: 0, lastDate: null };
+        const s = (data.streak && typeof data.streak === "object") ? data.streak : { count: 0, best: 0, lastDate: null, freezeUsedAt: null };
         const today = todayKey();
         if (s.lastDate === today) return s; // 오늘 이미 카운트됨
-        if (s.lastDate === dateKeyOffset(-1)) s.count = (s.count || 0) + 1; // 어제 이어서
-        else s.count = 1; // 끊김 → 새로 시작
+        if (s.lastDate === dateKeyOffset(-1)) {
+            // 어제 이어서 — 정상 +1
+            s.count = (s.count || 0) + 1;
+        } else if (s.lastDate === dateKeyOffset(-2)) {
+            // 2일 전 — 그레이스 (스트릭 보호) 검사
+            // 최근 7일 이내 그레이스 미사용 시 한 번 봐주고 +1
+            const freezeRecent = s.freezeUsedAt && s.freezeUsedAt >= dateKeyOffset(-6);
+            if (!freezeRecent) {
+                s.count = (s.count || 0) + 1;
+                s.freezeUsedAt = today;
+                s._lastGraceLog = today; // UI 표시용 (한 번만 안내)
+            } else {
+                s.count = 1; // 두 번째 빠짐 → 리셋
+            }
+        } else {
+            s.count = 1; // 3일+ 끊김 → 새로 시작
+        }
         s.lastDate = today;
         s.best = Math.max(s.best || 0, s.count);
         data.streak = s;
@@ -6147,10 +6162,20 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
     const weekly = computeWeeklyReport(Date.now(), data);
     const streak = (data.streak && typeof data.streak === "object") ? data.streak : { count: 0, best: 0, lastDate: null };
     // 오늘 또는 어제 학습했으면 streak 유효, 아니면 끊긴 것으로 표시
-    const streakAlive = streak.lastDate === todayKey() || streak.lastDate === dateKeyOffset(-1);
+    // streakAlive — 오늘/어제/그저께(그레이스 1회 보유 시) 모두 유효 처리
+    const _todayK = todayKey();
+    const _yK = dateKeyOffset(-1);
+    const _2K = dateKeyOffset(-2);
+    const _freezeRecent = streak.freezeUsedAt && streak.freezeUsedAt >= dateKeyOffset(-6);
+    const streakAlive = streak.lastDate === _todayK
+        || streak.lastDate === _yK
+        || (streak.lastDate === _2K && !_freezeRecent);
     const streakCount = streakAlive ? streak.count : 0;
+    // 그레이스 사용 안내 — 오늘 처음 메뉴 진입 시 한 번
+    const showedGrace = streak._lastGraceLog === _todayK;
+    const graceHint = showedGrace ? '<span class="streak-grace">🧊 1회 보호 사용됨</span>' : "";
     const streakHtml = streakCount >= 1
-        ? `<div class="streak-banner" title="연속 학습일">🔥 <strong>${streakCount}일</strong> 연속 학습 중${streak.best > streakCount ? ` · 최고 ${streak.best}일` : ""}</div>`
+        ? `<div class="streak-banner" title="연속 학습일">🔥 <strong>${streakCount}일</strong> 연속 학습 중${streak.best > streakCount ? ` · 최고 ${streak.best}일` : ""}${graceHint}</div>`
         : "";
 
     // D-day 카운트다운 — 한국 국시 (1월) / NCLEX 모드 시 비활성
