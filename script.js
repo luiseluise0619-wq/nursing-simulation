@@ -6152,6 +6152,56 @@ if (typeof window !== "undefined") {
     window.renderExamCountdown = renderExamCountdown;
 }
 
+// 30일 학습 캘린더 — GitHub contribution graph 형식 (7×5 그리드)
+// 활동 = daily 챌린지 완료 OR history 엔트리 있음
+function _getActiveDaySet(data) {
+    const active = new Set();
+    // daily 챌린지 — 날짜 키 직접
+    if (data && data.daily && typeof data.daily === "object") {
+        for (const k of Object.keys(data.daily)) {
+            const d = data.daily[k];
+            if (d && (d.solved > 0 || d.completed)) active.add(k);
+        }
+    }
+    // history — 모든 모드 완료 (timestamp → dateKey 변환)
+    if (data && Array.isArray(data.history)) {
+        for (const h of data.history) {
+            if (!h || !h.at) continue;
+            const dt = new Date(h.at);
+            const key = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
+            active.add(key);
+        }
+    }
+    // streak lastDate
+    if (data && data.streak && data.streak.lastDate) active.add(data.streak.lastDate);
+    return active;
+}
+
+function renderStudyCalendar(data) {
+    const active = _getActiveDaySet(data);
+    // 빈 캘린더는 카드 안 그림 (신규 사용자 노이즈 방지)
+    if (active.size === 0) return "";
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const cells = [];
+    let activeCount = 0;
+    for (let i = 29; i >= 0; i--) {
+        const d = new Date(today);
+        d.setDate(d.getDate() - i);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+        const isActive = active.has(key);
+        const isToday = i === 0;
+        if (isActive) activeCount++;
+        cells.push(`<span class="cal-cell${isActive ? " on" : ""}${isToday ? " today" : ""}" title="${key}${isActive ? " · 학습" : ""}" aria-label="${key}${isActive ? " 학습함" : " 미학습"}"></span>`);
+    }
+    return `<div class="study-calendar" aria-label="최근 30일 학습 캘린더">
+        <div class="cal-header">
+            <span class="cal-title">최근 30일</span>
+            <span class="cal-meta">${activeCount}/30일 학습</span>
+        </div>
+        <div class="cal-grid" role="grid">${cells.join("")}</div>
+    </div>`;
+}
+
 // 3탭 메뉴 시스템
 function renderMenuTabs(data, dailyDone, wrongCount) {
     if (!gameState.menuTab) gameState.menuTab = "home";
@@ -6182,6 +6232,9 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
     const examModeForCountdown = (typeof Storage !== "undefined" && Storage.getExamMode) ? Storage.getExamMode() : "korean";
     const countdownHtml = examModeForCountdown === "korean" ? renderExamCountdown() : renderNclexCallout();
 
+    // 30일 학습 캘린더 — 활동 일자 시각화 (GitHub contribution graph 형식)
+    const calendarHtml = renderStudyCalendar(data);
+
     // 활성 에피소드(이어하기) 탐지
     let resumeEp = null;
     if (NC && NC.EPISODES) {
@@ -6208,6 +6261,7 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
       <div class="tab-section">
         ${countdownHtml}
         ${streakHtml}
+        ${calendarHtml}
         ${weeklyHtml}
         ${resumeEp ? `
           <button class="resume-card" data-action="startEpisode" data-arg="${escapeHtml(resumeEp.ep.id)}">

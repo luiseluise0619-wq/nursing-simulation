@@ -397,6 +397,56 @@ body {
     font-weight: 600;
 }
 
+/* 30일 학습 캘린더 — GitHub contribution graph 스타일 */
+.study-calendar {
+    margin: 0 0 12px;
+    padding: 14px 18px;
+    background: var(--card);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+}
+.study-calendar .cal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 10px;
+}
+.study-calendar .cal-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+}
+.study-calendar .cal-meta {
+    font-size: 12px;
+    color: var(--muted);
+}
+.study-calendar .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(15, 1fr);
+    gap: 4px;
+}
+.study-calendar .cal-cell {
+    aspect-ratio: 1;
+    border-radius: 4px;
+    background: var(--bg);
+    border: 1px solid transparent;
+    transition: transform 0.1s;
+}
+.study-calendar .cal-cell.on {
+    background: var(--primary);
+    opacity: 0.85;
+}
+.study-calendar .cal-cell.today {
+    border-color: var(--primary);
+}
+.study-calendar .cal-cell.today.on {
+    opacity: 1;
+    box-shadow: 0 0 0 2px var(--primary-soft, rgba(127, 168, 129, 0.3));
+}
+@media (max-width: 360px) {
+    .study-calendar .cal-grid { grid-template-columns: repeat(10, 1fr); }
+}
+
 /* D-day 카운트다운 — 국시 / NCLEX 콜아웃 (좌측 SVG 아이콘 + 우측 본문) */
 .countdown-card {
     display: flex;
