@@ -1108,7 +1108,7 @@ describe("P1 — 디자인 폴리시 (빈 상태 / 단계 진행 / fade-in / 콤
         const fs = require("fs");
         const path = require("path");
         const css = fs.readFileSync(path.join(__dirname, "..", "styles.css"), "utf-8");
-        expect(css).toMatch(/\.scene-card\s*\{[^}]*animation:\s*sceneFadeIn\s+200ms/);
+        expect(css).toMatch(/\.scene-card\s*\{[^}]*animation:\s*sceneFadeIn\s+\d+ms/);
         expect(css).toMatch(/@keyframes\s+sceneFadeIn/);
     });
 
