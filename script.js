@@ -5,7 +5,7 @@
 
 const MAX_PROGRESS_EVENTS = 20;
 const MAX_LOG_ENTRIES = 50;
-const RECENT_HISTORY_SIZE = 15;
+const RECENT_HISTORY_SIZE = 50;
 const MOCK_EXAM_TOTAL = 30;
 const MOCK_EXAM_SECONDS = 30 * 60;
 const DAILY_CHALLENGE_TOTAL = 10;
@@ -2224,21 +2224,62 @@ function hideCoreUI() {
 // =========================================================================
 // 문제 풀기
 // =========================================================================
+// 이미지 보유 시나리오 풀 — NC.EPISODES 의 image-keyed step을 1회성 듀티 문제로 재활용
+// 첫 호출 시 캐시, 이후 재사용 (78개 정도)
+let _IMAGED_SCENE_POOL = null;
+function _buildImagedScenePool() {
+    const out = [];
+    if (!NC || !NC.EPISODES) return out;
+    for (const ep of NC.EPISODES) {
+        if (!ep || !Array.isArray(ep.steps)) continue;
+        ep.steps.forEach((s, idx) => {
+            if (!s || !s.image) return;
+            if (!Array.isArray(s.choices) || s.choices.length < 2) return;
+            // 정답 보장
+            if (!s.choices.some(c => c && c.correct === true)) return;
+            const desc = s.prompt || s.narration || s.title || "";
+            if (!desc) return;
+            out.push({
+                baseId: `scene-${ep.id || "ep"}-${idx}`,
+                category: ep.category || "스토리",
+                part: s.title || "임상 시각자료",
+                emoji: ep.emoji || "🩺",
+                title: s.title || ep.title || "임상 사례",
+                desc,
+                image: s.image,
+                choices: s.choices.map(c => ({ ...c })),
+            });
+        });
+    }
+    return out;
+}
+
 function generateClinicalEventByCategory(category = null) {
     const pool = [];
+    // 1. 절차적 generator (questions.js)
     for (const gen of NQ.allGenerators) {
         const ev = gen();
         if ((!category || ev.category === category) && !recentlyUsed(ev.baseId)) pool.push(ev);
     }
+    // 2. 이미지 보유 시나리오 (content.js EPISODES) — 카테고리 필터 없을 때만 (듀티 mode)
+    if (!category) {
+        if (_IMAGED_SCENE_POOL == null) _IMAGED_SCENE_POOL = _buildImagedScenePool();
+        for (const ev of _IMAGED_SCENE_POOL) {
+            if (!recentlyUsed(ev.baseId)) pool.push(ev);
+        }
+    }
     if (pool.length === 0) {
+        // 모든 후보 소진 → 최근 기록 리셋 후 재충전
         gameState.recentIds = [];
         for (const gen of NQ.allGenerators) {
             const ev = gen();
             if (!category || ev.category === category) pool.push(ev);
         }
+        if (!category && _IMAGED_SCENE_POOL) {
+            for (const ev of _IMAGED_SCENE_POOL) pool.push(ev);
+        }
     }
     const selected = pick(pool);
-    // 빈 풀 방어 — 알 수 없는 카테고리(URL 변조 등)로 인한 undefined.baseId crash 차단
     if (!selected) return null;
     rememberQuestion(selected.baseId);
     return selected;
