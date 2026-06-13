@@ -2756,22 +2756,14 @@ function renderPracticeMenu() {
               <div class="row-body"><div class="row-title">NCLEX-RN</div><div class="row-sub">2,200 문제 · MCQ · SATA · Priority</div></div>
               <div class="row-chev">›</div>
            </button>` : "";
-    // 한국 국시 정적 240 문제 — 정식 5지선다 (kor-content.js)
-    const korBtn = (typeof window !== "undefined" && window.KOR_QUESTIONS && Array.isArray(window.KOR_QUESTIONS) && window.KOR_QUESTIONS.length > 0)
-        ? `<button class="row-card" data-action="renderKorMenu">
-              <div class="row-icon">${ICONS.training}</div>
-              <div class="row-body"><div class="row-title">한국 국시 정적 문제</div><div class="row-sub">${window.KOR_QUESTIONS.length}문제 · 8과목 · 5지선다</div></div>
-              <div class="row-chev">›</div>
-           </button>` : "";
     UI.gameArea.innerHTML = `
       <div class="tab-section">
         <h2 class="page-title">풀이</h2>
         <p class="page-sub">빠른 풀이로 점수 만들기.</p>
         ${nclexBtn}
-        ${korBtn}
-        <button class="row-card" data-action="renderQuizMenu">
+        <button class="row-card" data-action="renderSubjectStudyMenu">
           <div class="row-icon">${ICONS.training}</div>
-          <div class="row-body"><div class="row-title">과목별 풀이 (랜덤 생성)</div><div class="row-sub">국시 8과목 · 무한 변형</div></div>
+          <div class="row-body"><div class="row-title">과목별 학습</div><div class="row-sub">국시 8과목 · 정식 5지선다 + 무한 변형</div></div>
           <div class="row-chev">›</div>
         </button>
         <button class="row-card" data-action="startMockExam">
@@ -2788,6 +2780,31 @@ function renderPracticeMenu() {
       </div>`;
 }
 
+// 통합: 한국 국시 정적(5지선다) + 과목별 변형 연습(generator)
+function renderSubjectStudyMenu() {
+    gameState.mode = "subject_study_menu"; resetStateForMode();
+    showCoreUI(); if (UI.logBar) UI.logBar.innerHTML = ""; updateStats();
+    const korCount = (typeof window !== "undefined" && window.KOR_QUESTIONS && Array.isArray(window.KOR_QUESTIONS)) ? window.KOR_QUESTIONS.length : 0;
+    const korBtn = korCount > 0
+        ? `<button class="row-card" data-action="renderKorMenu">
+             <div class="row-icon">${ICONS.training}</div>
+             <div class="row-body"><div class="row-title">정식 국시 (5지선다)</div><div class="row-sub">${korCount}문제 · 8과목 · KNCA 출제기준</div></div>
+             <div class="row-chev">›</div>
+           </button>` : "";
+    UI.gameArea.innerHTML = `
+      <div class="tab-section">
+        <h2 class="page-title">과목별 학습</h2>
+        <p class="page-sub">시험 그대로 vs 무한 변형 연습.</p>
+        ${korBtn}
+        <button class="row-card" data-action="renderQuizMenu">
+          <div class="row-icon">${ICONS.training}</div>
+          <div class="row-body"><div class="row-title">변형 연습 (무한 랜덤)</div><div class="row-sub">국시 8과목 · 같은 유형 다른 숫자/임상</div></div>
+          <div class="row-chev">›</div>
+        </button>
+        <button class="choice-btn center" data-action="renderPracticeMenu">뒤로</button>
+      </div>`;
+}
+
 function renderSimMenu() {
     gameState.mode = "sim_menu"; resetStateForMode();
     showCoreUI(); if (UI.logBar) UI.logBar.innerHTML = ""; updateStats();
@@ -2795,22 +2812,34 @@ function renderSimMenu() {
       <div class="tab-section">
         <h2 class="page-title">시뮬레이션</h2>
         <p class="page-sub">실제 듀티처럼 한 사례를 끝까지.</p>
+        <button class="row-card" data-action="renderCaseMenu">
+          <div class="row-icon">${ICONS.episode}</div>
+          <div class="row-body"><div class="row-title">사례 학습</div><div class="row-sub">에피소드 35편 + 짧은 시나리오</div></div>
+          <div class="row-chev">›</div>
+        </button>
+        <button class="choice-btn center" data-action="returnToMenu">메뉴</button>
+      </div>`;
+}
+
+// 통합: 에피소드(35편 장편) + 짧은 시나리오(단편)
+function renderCaseMenu() {
+    gameState.mode = "case_menu"; resetStateForMode();
+    showCoreUI(); if (UI.logBar) UI.logBar.innerHTML = ""; updateStats();
+    UI.gameArea.innerHTML = `
+      <div class="tab-section">
+        <h2 class="page-title">사례 학습</h2>
+        <p class="page-sub">시간 여유에 맞춰 골라.</p>
         <button class="row-card" data-action="renderEpisodeMenu">
           <div class="row-icon">${ICONS.episode}</div>
-          <div class="row-body"><div class="row-title">에피소드</div><div class="row-sub">한 듀티 전체 · 35편</div></div>
+          <div class="row-body"><div class="row-title">에피소드 (장편)</div><div class="row-sub">한 듀티 전체 · 35편 · 30-60분</div></div>
           <div class="row-chev">›</div>
         </button>
         <button class="row-card" data-action="renderScenarioMenu">
           <div class="row-icon">${ICONS.scenario}</div>
-          <div class="row-body"><div class="row-title">짧은 시나리오</div><div class="row-sub">단편 임상 의사결정</div></div>
+          <div class="row-body"><div class="row-title">짧은 시나리오 (단편)</div><div class="row-sub">단편 임상 의사결정 · 10분 내</div></div>
           <div class="row-chev">›</div>
         </button>
-        <button class="row-card" data-action="initSurvival">
-          <div class="row-icon">${ICONS.survival}</div>
-          <div class="row-body"><div class="row-title">듀티 (서바이벌)</div><div class="row-sub">HP · 평판 · 랜덤 이벤트</div></div>
-          <div class="row-chev">›</div>
-        </button>
-        <button class="choice-btn center" data-action="returnToMenu">메뉴</button>
+        <button class="choice-btn center" data-action="renderSimMenu">뒤로</button>
       </div>`;
 }
 
@@ -7584,7 +7613,9 @@ const DELEGATED_ACTIONS = {
     korQuizAnswer: (t) => korQuizAnswer(t),
     korQuizNext: () => korQuizNext(),
     renderPracticeMenu: () => renderPracticeMenu(),
+    renderSubjectStudyMenu: () => renderSubjectStudyMenu(),
     renderSimMenu: () => renderSimMenu(),
+    renderCaseMenu: () => renderCaseMenu(),
     renderDrillMenu: () => renderDrillMenu(),
     pickShift: (t) => pickShift(t),
     renderShiftPicker: () => renderShiftPicker(),

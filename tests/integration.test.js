@@ -141,27 +141,31 @@ beforeEach(() => {
 // 잡스 컷 이후: 학습 모드는 진입 메뉴(풀이/시뮬/훈련) 거쳐 접근
 // 테스트 helper — 학습 진입 메뉴를 거치지 않고 액션 직접 호출
 function goto(action) {
-    // 학습 탭 → 진입 메뉴 자동 라우팅
+    // 학습 탭 → 진입 메뉴 자동 라우팅 (배열 = 중첩 경로)
     const STUDY_ROUTES = {
-        renderQuizMenu: "renderPracticeMenu",
-        startMockExam: "renderPracticeMenu",
-        startDailyChallenge: "renderPracticeMenu",
-        renderNclexMenu: "renderPracticeMenu",
-        renderEpisodeMenu: "renderSimMenu",
-        renderScenarioMenu: "renderSimMenu",
-        initSurvival: "renderSimMenu",
-        renderImageQuizMenu: "renderDrillMenu",
-        renderDrugDrill: "renderDrillMenu",
-        startHandoff: "renderDrillMenu",
-        startTriage: "renderDrillMenu",
+        renderQuizMenu: ["renderPracticeMenu", "renderSubjectStudyMenu"],
+        renderKorMenu: ["renderPracticeMenu", "renderSubjectStudyMenu"],
+        renderSubjectStudyMenu: ["renderPracticeMenu"],
+        startMockExam: ["renderPracticeMenu"],
+        startDailyChallenge: ["renderPracticeMenu"],
+        renderNclexMenu: ["renderPracticeMenu"],
+        renderEpisodeMenu: ["renderSimMenu", "renderCaseMenu"],
+        renderScenarioMenu: ["renderSimMenu", "renderCaseMenu"],
+        renderCaseMenu: ["renderSimMenu"],
+        renderImageQuizMenu: ["renderDrillMenu"],
+        renderDrugDrill: ["renderDrillMenu"],
+        startHandoff: ["renderDrillMenu"],
+        startTriage: ["renderDrillMenu"],
     };
-    const entry = STUDY_ROUTES[action];
-    if (entry) {
+    const path = STUDY_ROUTES[action];
+    if (path) {
         // 학습 탭으로 이동 (이미 있을 수도 있지만 안전하게)
         const studyTab = document.querySelector('[data-action="setMenuTab"][data-tab="study"]');
         if (studyTab) studyTab.click();
-        const entryBtn = document.querySelector(`[data-action="${entry}"]`);
-        if (entryBtn) entryBtn.click();
+        for (const step of path) {
+            const entryBtn = document.querySelector(`[data-action="${step}"]`);
+            if (entryBtn) entryBtn.click();
+        }
     }
     const targetBtn = document.querySelector(`[data-action="${action}"]`);
     if (targetBtn) {
@@ -183,10 +187,13 @@ describe("부트 / 메뉴 렌더", () => {
         expect(document.querySelector('[data-action="renderPracticeMenu"]')).not.toBeNull();
         expect(document.querySelector('[data-action="renderSimMenu"]')).not.toBeNull();
         expect(document.querySelector('[data-action="renderDrillMenu"]')).not.toBeNull();
-        // 풀이 메뉴 진입 → 과목별/모의고사 노출
+        // 풀이 메뉴 진입 → 과목별 학습/모의고사 노출
         document.querySelector('[data-action="renderPracticeMenu"]').click();
-        expect(document.querySelector('[data-action="renderQuizMenu"]')).not.toBeNull();
+        expect(document.querySelector('[data-action="renderSubjectStudyMenu"]')).not.toBeNull();
         expect(document.querySelector('[data-action="startMockExam"]')).not.toBeNull();
+        // 과목별 학습 진입 → 변형 연습(renderQuizMenu) 노출
+        document.querySelector('[data-action="renderSubjectStudyMenu"]').click();
+        expect(document.querySelector('[data-action="renderQuizMenu"]')).not.toBeNull();
     });
 });
 
