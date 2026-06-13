@@ -398,26 +398,38 @@ body {
 .scene-card { position: relative; }
 .bookmark-toggle {
     position: absolute;
-    top: 14px;
-    right: 14px;
+    top: 16px;
+    right: 16px;
     width: 44px;
     height: 44px;
     border: none;
-    background: var(--bg);
+    background: var(--card);
     color: var(--muted);
     border-radius: 50%;
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--inset-light), var(--shadow-sm);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: color 120ms ease;
+    transition: color 0.18s, transform 0.22s var(--ease-spring), box-shadow 0.2s;
+    z-index: 5;
 }
 .bookmark-toggle svg { width: 22px; height: 22px; }
-.bookmark-toggle:hover { color: var(--primary-dark); }
-.bookmark-toggle.on { color: var(--primary); }
-.bookmark-toggle.on:hover { color: var(--primary-dark); }
+.bookmark-toggle:hover {
+    color: var(--primary);
+    transform: translateY(-1px) scale(1.06);
+    box-shadow: var(--inset-light), var(--shadow-md);
+}
+.bookmark-toggle:active { transform: translateY(0) scale(0.94); }
+.bookmark-toggle.on {
+    color: var(--warning);
+    background: linear-gradient(135deg, var(--card) 0%, color-mix(in srgb, var(--warning) 14%, var(--card)) 100%);
+}
+.bookmark-toggle.on:hover { color: var(--warning); }
 .bookmark-toggle:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+@supports not (background: color-mix(in srgb, white, black)) {
+    .bookmark-toggle.on { background: var(--card); }
+}
 
 .bookmark-list {
     display: flex;

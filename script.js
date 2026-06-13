@@ -2297,7 +2297,7 @@ function bookmarkIdFor(ev) {
 }
 
 // 북마크 가능 모드 — 에피소드/시나리오 step 자체는 컨텍스트가 필요해 제외
-const BOOKMARKABLE_MODES = new Set(["survival", "quiz", "mock", "daily", "wrong_review"]);
+const BOOKMARKABLE_MODES = new Set(["survival", "quiz", "mock", "daily", "wrong_review", "episode", "scenario"]);
 
 function renderSceneCard(ev, options = {}) {
     // 방어 — generateClinicalEventByCategory 가 빈 풀로 null 반환 시
@@ -4323,7 +4323,7 @@ function renderEpisodeStep() {
     const stepNum = gameState.episodeStep + 1;
     const totalSteps = ep.steps.length;
     const ev = {
-        baseId: "episode",
+        baseId: `episode-${ep.id}-${stepNum}`,
         category: ep.title,
         part: `${step.time || ""} · Step ${stepNum}/${totalSteps}`,
         emoji: "📖",
@@ -4710,7 +4710,7 @@ function renderScenarioStep() {
     if (gameState.scenarioStep >= s.steps.length) { endScenario(); return; }
     const step = s.steps[gameState.scenarioStep];
     const ev = {
-        baseId: "scenario", category: s.title, part: `Step ${gameState.scenarioStep + 1}/${s.steps.length}`,
+        baseId: `scenario-${s.id}-${gameState.scenarioStep + 1}`, category: s.title, part: `Step ${gameState.scenarioStep + 1}/${s.steps.length}`,
         emoji: "📋", title: step.prompt,
         desc: gameState.scenarioStep === 0 ? s.intro : `현재 HP ${gameState.hp} / 평판 ${gameState.rep}`,
         image: step.image || null,
