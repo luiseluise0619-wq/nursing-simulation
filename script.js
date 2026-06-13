@@ -6063,8 +6063,21 @@ function returnToMenu() {
 // D-day 카운트다운 (한국 국시 / NCLEX) — 9~12월 트래픽 폭증 유도
 // =========================================================================
 // 한국 간호사 국가시험 — 매년 1월 셋째주 수요일 (대략)
-// 2027년 예상: 2027-01-20 (수)  / 변경 시 KNCA 공식 발표 따라 업데이트
-const KOREAN_EXAM_DATE = "2027-01-20";
+// 시험 후 4일 지나면 자동으로 +1년 (운영 부담 0)
+const KOREAN_EXAM_BASE = "2027-01-20"; // 기준 — KNCA 공식 발표 시 업데이트
+
+function getKoreanExamDate() {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    let target = new Date(KOREAN_EXAM_BASE + "T00:00:00");
+    // 시험 후 4일 이상 지났으면 다음 해로 자동 이동
+    while ((today - target) / (1000 * 60 * 60 * 24) > 4) {
+        target.setFullYear(target.getFullYear() + 1);
+    }
+    return target.toISOString().slice(0, 10);
+}
+// 호환성 — 기존 코드는 KOREAN_EXAM_DATE 참조
+const KOREAN_EXAM_DATE = getKoreanExamDate();
 
 function getDaysUntil(dateStr) {
     const today = new Date();
@@ -6224,8 +6237,13 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
     // 그레이스 사용 안내 — 오늘 처음 메뉴 진입 시 한 번
     const showedGrace = streak._lastGraceLog === _todayK;
     const graceHint = showedGrace ? '<span class="streak-grace">🧊 1회 보호 사용됨</span>' : "";
+    // 손실 경고 — 오후 8시 이후 오늘 학습 안 한 streak 보유자에게 부드러운 알림
+    const nowHour = new Date().getHours();
+    const studiedToday = streak.lastDate === _todayK;
+    const atRisk = streakCount >= 2 && !studiedToday && nowHour >= 20;
+    const riskHint = atRisk ? `<span class="streak-risk">⏰ 오늘 학습하면 ${streakCount}일 유지</span>` : "";
     const streakHtml = streakCount >= 1
-        ? `<div class="streak-banner" title="연속 학습일">🔥 <strong>${streakCount}일</strong> 연속 학습 중${streak.best > streakCount ? ` · 최고 ${streak.best}일` : ""}${graceHint}</div>`
+        ? `<div class="streak-banner${atRisk ? ' at-risk' : ''}" title="연속 학습일">🔥 <strong>${streakCount}일</strong> 연속 학습 중${streak.best > streakCount ? ` · 최고 ${streak.best}일` : ""}${graceHint}${riskHint}</div>`
         : "";
 
     // D-day 카운트다운 — 한국 국시 (1월) / NCLEX 모드 시 비활성
