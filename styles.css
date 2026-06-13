@@ -30,6 +30,16 @@ body.app-hidden *::after {
     --log-text:   #e8eaed;
     --log-border: #3a4250;
     --modal-bg: rgba(30, 41, 59, 0.96);
+
+    /* === Design Tokens (consolidated) === */
+    --ease-spring:        var(--ease-spring);
+    --ease-out:           var(--ease-out);
+    --inset-light:        var(--inset-light);
+    --inset-light-soft:   var(--inset-light-soft);
+    --glow-sage:          0 8px 20px -6px rgba(127, 168, 129, 0.4);
+    --glow-sage-strong:   0 14px 28px -8px rgba(127, 168, 129, 0.55);
+    --gradient-primary:   var(--gradient-primary);
+    --glass-blur:         var(--glass-blur);
 }
 
 [data-theme="dark"] {
@@ -51,6 +61,11 @@ body.app-hidden *::after {
     --log-text:   #e5eaf0;
     --log-border: #1d2330;
     --modal-bg: rgba(8, 12, 20, 0.97);
+    /* 다크 모드 보정 — 토큰 오버라이드 */
+    --inset-light:        0 1px 0 rgba(255, 255, 255, 0.06) inset;
+    --inset-light-soft:   0 1px 0 rgba(255, 255, 255, 0.04) inset;
+    --glow-sage:          0 8px 20px -6px rgba(170, 202, 169, 0.25);
+    --glow-sage-strong:   0 14px 28px -8px rgba(170, 202, 169, 0.35);
 }
 
 body {
@@ -81,8 +96,8 @@ body {
     gap: 10px;
     padding: 14px 16px;
     background: color-mix(in srgb, var(--bg) 80%, transparent);
-    -webkit-backdrop-filter: saturate(180%) blur(16px);
-    backdrop-filter: saturate(180%) blur(16px);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
     border-bottom: none;
     font-weight: bold;
     position: sticky;
@@ -105,7 +120,7 @@ body {
     cursor: pointer;
     padding: 0;
     box-shadow: var(--shadow-sm);
-    transition: box-shadow .2s, transform .2s cubic-bezier(.34,1.56,.64,1);
+    transition: box-shadow .2s, transform .2s var(--ease-spring);
     -webkit-tap-highlight-color: transparent;
 }
 .back-btn svg { width: 18px; height: 18px; transition: transform .2s; }
@@ -139,14 +154,14 @@ body {
     cursor: pointer;
     font-size: 16px;
     box-shadow:
-        0 1px 0 rgba(255,255,255,0.5) inset,
+        var(--inset-light),
         var(--shadow-sm);
     display: inline-flex;
     align-items: center;
     justify-content: center;
     transition:
         box-shadow .2s,
-        transform .22s cubic-bezier(.34,1.56,.64,1);
+        transform .22s var(--ease-spring);
 }
 .icon-btn:hover {
     box-shadow: var(--shadow-md);
@@ -173,7 +188,7 @@ body {
     height: 100%;
     width: 0%;
     border-radius: var(--radius-pill);
-    transition: width 0.5s cubic-bezier(.2,.8,.2,1);
+    transition: width 0.5s var(--ease-out);
     position: relative;
     box-shadow:
         0 1px 0 rgba(255,255,255,0.3) inset,
@@ -234,14 +249,14 @@ body {
     padding: 24px;
     border-radius: var(--radius-lg);
     box-shadow:
-        0 1px 0 rgba(255,255,255,0.5) inset,
+        var(--inset-light),
         var(--shadow-md);
     border: none;
     margin-bottom: 18px;
     position: relative;
 }
 .scene-card {
-    animation: sceneFadeIn 320ms cubic-bezier(.2,.8,.2,1);
+    animation: sceneFadeIn 320ms var(--ease-out);
     position: relative;
     overflow: hidden;
 }
@@ -296,7 +311,7 @@ body {
     height: 6px;
     border-radius: var(--radius-pill);
     background: rgba(127,168,129,.18);
-    transition: background .3s, box-shadow .3s, transform .3s cubic-bezier(.34,1.56,.64,1);
+    transition: background .3s, box-shadow .3s, transform .3s var(--ease-spring);
 }
 .step-progress .seg.done {
     background: linear-gradient(90deg, var(--primary) 0%, var(--primary-dark) 100%);
@@ -555,13 +570,13 @@ body {
     border-radius: 5px;
     background: var(--softer);
     border: 1px solid var(--soft);
-    transition: transform .2s cubic-bezier(.34,1.56,.64,1), background .15s;
+    transition: transform .2s var(--ease-spring), background .15s;
 }
 .study-calendar .cal-cell.on {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    background: var(--gradient-primary);
     border-color: var(--primary-dark);
     box-shadow:
-        0 1px 0 rgba(255, 255, 255, 0.25) inset,
+        var(--inset-light-soft),
         0 2px 4px -1px rgba(127, 168, 129, 0.3);
 }
 .study-calendar .cal-cell.today {
@@ -593,7 +608,7 @@ body {
     border: none;
     text-align: left;
     cursor: pointer;
-    transition: transform .22s cubic-bezier(.34,1.56,.64,1), box-shadow .2s;
+    transition: transform .22s var(--ease-spring), box-shadow .2s;
     position: relative;
     overflow: hidden;
 }
@@ -628,7 +643,7 @@ button.countdown-card:active { transform: translateY(0); }
     align-items: center;
     justify-content: center;
     box-shadow:
-        0 1px 0 rgba(255, 255, 255, 0.5) inset,
+        var(--inset-light),
         0 2px 6px -2px rgba(0, 0, 0, 0.06);
 }
 .countdown-card .cd-icon {
@@ -762,7 +777,7 @@ button.countdown-card:active { transform: translateY(0); }
     overflow-wrap: anywhere;
     box-shadow: var(--shadow-sm);
     transition:
-        transform .22s cubic-bezier(.34,1.56,.64,1),
+        transform .22s var(--ease-spring),
         box-shadow .2s,
         border-color .15s,
         background .2s,
@@ -796,7 +811,7 @@ button.countdown-card:active { transform: translateY(0); }
 }
 .choice-btn:disabled { cursor: not-allowed; opacity: 0.55; transform: none; }
 .choice-btn.primary {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    background: var(--gradient-primary);
     color: #fff;
     border: none;
     text-align: center;
@@ -938,7 +953,7 @@ button.countdown-card:active { transform: translateY(0); }
 }
 #modal.active {
     display: flex;
-    animation: modalFadeIn .26s cubic-bezier(.2,.8,.2,1);
+    animation: modalFadeIn .26s var(--ease-out);
 }
 @keyframes modalFadeIn {
     from { opacity: 0; backdrop-filter: blur(0px); -webkit-backdrop-filter: blur(0px); }
@@ -955,7 +970,7 @@ button.countdown-card:active { transform: translateY(0); }
     box-shadow: var(--shadow-sm);
     position: relative;
     overflow: hidden;
-    animation: feedbackPop 360ms cubic-bezier(.34,1.56,.64,1);
+    animation: feedbackPop 360ms var(--ease-spring);
     border-left: 4px solid;
 }
 .feedback-box::before {
@@ -1449,7 +1464,7 @@ body {
     font-weight: 600;
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-sm);
-    transition: transform .12s cubic-bezier(.2,.8,.2,1),
+    transition: transform .12s var(--ease-out),
                 box-shadow .12s, background .2s, filter .2s;
     -webkit-tap-highlight-color: transparent;
 }
@@ -1506,7 +1521,7 @@ body {
     gap: 4px;
     position: relative;
     overflow: hidden;
-    transition: transform .12s cubic-bezier(.2,.8,.2,1), border-color .15s, box-shadow .15s, background .15s;
+    transition: transform .12s var(--ease-out), border-color .15s, box-shadow .15s, background .15s;
     -webkit-tap-highlight-color: transparent;
     font-family: inherit;
 }
@@ -1580,7 +1595,7 @@ body {
     background: var(--card);
     border-radius: var(--radius-pill);
     box-shadow:
-        0 1px 0 rgba(255,255,255,0.5) inset,
+        var(--inset-light),
         var(--shadow-sm);
 }
 .stat-gauge .sg-bar {
@@ -1593,7 +1608,7 @@ body {
 }
 .stat-gauge .sg-fill {
     height: 100%; border-radius: var(--radius-pill);
-    transition: width .5s cubic-bezier(.2,.8,.2,1), background .3s, box-shadow .3s;
+    transition: width .5s var(--ease-out), background .3s, box-shadow .3s;
     position: relative;
 }
 .stat-gauge.hp .sg-fill {
@@ -1634,7 +1649,7 @@ body {
     box-shadow: 0 1px 3px rgba(127,168,129,.25);
 }
 .badge.combo.burst {
-    animation: comboBurst .25s cubic-bezier(.2,.8,.2,1);
+    animation: comboBurst .25s var(--ease-out);
 }
 @keyframes comboBurst {
     0%   { transform: scale(1); }
@@ -2112,7 +2127,7 @@ img.onboard-svg { display: block; }
 
 /* Hero card — 오늘의 듀티 (그라데이션 + 글로우) */
 .hero-card {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    background: var(--gradient-primary);
     color: #fff;
     border: none;
     border-radius: var(--radius-lg);
@@ -2123,7 +2138,7 @@ img.onboard-svg { display: block; }
         0 1px 0 rgba(255, 255, 255, 0.18) inset,
         0 12px 32px -8px rgba(127, 168, 129, 0.45),
         var(--shadow-md);
-    transition: transform .18s cubic-bezier(.34,1.56,.64,1), box-shadow .2s;
+    transition: transform .18s var(--ease-spring), box-shadow .2s;
     font-family: inherit;
     position: relative;
     overflow: hidden;
@@ -2296,8 +2311,8 @@ img.onboard-svg { display: block; }
     text-align: left;
     cursor: pointer;
     box-shadow: var(--shadow-sm);
-    transition: box-shadow .22s cubic-bezier(.34,1.56,.64,1),
-                transform .22s cubic-bezier(.34,1.56,.64,1),
+    transition: box-shadow .22s var(--ease-spring),
+                transform .22s var(--ease-spring),
                 border-color .15s;
     font-family: inherit;
     min-height: 64px;
@@ -2332,7 +2347,7 @@ img.onboard-svg { display: block; }
     box-shadow:
         0 1px 0 rgba(255,255,255,0.6) inset,
         0 4px 12px -2px rgba(127, 168, 129, 0.18);
-    transition: transform .22s cubic-bezier(.34,1.56,.64,1);
+    transition: transform .22s var(--ease-spring);
 }
 .row-card:hover .row-icon { transform: scale(1.06) rotate(-2deg); }
 .row-icon.big { width: 52px; height: 52px; }
@@ -2407,8 +2422,8 @@ img.onboard-svg { display: block; }
     height: 72px;
     padding: 6px 8px max(8px, env(safe-area-inset-bottom));
     background: color-mix(in srgb, var(--card) 88%, transparent);
-    -webkit-backdrop-filter: saturate(180%) blur(20px);
-    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
     box-shadow: 0 -8px 24px -6px rgba(0,0,0,0.08), 0 -1px 0 var(--border);
     display: flex;
     z-index: 100;
@@ -2435,7 +2450,7 @@ img.onboard-svg { display: block; }
     font-family: inherit;
     font-size: 11px;
     font-weight: 700;
-    transition: color .18s, transform .22s cubic-bezier(.34,1.56,.64,1);
+    transition: color .18s, transform .22s var(--ease-spring);
     border-radius: var(--radius-md);
     min-height: 56px;
     position: relative;
@@ -2444,7 +2459,7 @@ img.onboard-svg { display: block; }
     width: 24px;
     height: 24px;
     stroke: currentColor;
-    transition: transform .22s cubic-bezier(.34,1.56,.64,1);
+    transition: transform .22s var(--ease-spring);
 }
 .tab-btn.active { color: var(--primary-dark); }
 .tab-btn.active svg { transform: scale(1.08); }
@@ -2840,7 +2855,7 @@ body:has(.tab-bar) #game-area { padding-bottom: 90px; }
 
 /* ===== 프리미엄 페이지 / 후원 ===== */
 .premium-hero {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    background: var(--gradient-primary);
     color: #fff;
     padding: 28px 22px;
     border-radius: var(--radius-lg);
@@ -3000,16 +3015,16 @@ body:has(.tab-bar) #game-area { padding-bottom: 90px; }
     top: 50%; left: 50%;
     transform: translate(-50%, -50%);
     z-index: 9999;
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    background: var(--gradient-primary);
     color: #fff;
     padding: 32px 40px;
     border-radius: var(--radius-lg);
     box-shadow:
-        0 1px 0 rgba(255,255,255,0.25) inset,
+        var(--inset-light-soft),
         0 30px 80px -10px rgba(127, 168, 129, 0.6),
         0 20px 60px rgba(0,0,0,0.4);
     text-align: center;
-    animation: badgePop 600ms cubic-bezier(.34,1.56,.64,1), badgeFloat 2.5s ease-out forwards;
+    animation: badgePop 600ms var(--ease-spring), badgeFloat 2.5s ease-out forwards;
     animation-delay: 0s, 0.6s;
     max-width: 340px;
     position: fixed;
@@ -3040,7 +3055,7 @@ body:has(.tab-bar) #game-area { padding-bottom: 90px; }
     line-height: 1;
     margin-bottom: 12px;
     filter: drop-shadow(0 4px 12px rgba(0,0,0,0.2));
-    animation: badgeEmojiBounce 0.8s cubic-bezier(.34,1.56,.64,1) infinite;
+    animation: badgeEmojiBounce 0.8s var(--ease-spring) infinite;
 }
 @keyframes badgeEmojiBounce {
     0%, 100% { transform: translateY(0); }
@@ -3218,16 +3233,16 @@ body:has(.tab-bar) #game-area { padding-bottom: 90px; }
     right: 16px;
     z-index: 100;
     background: color-mix(in srgb, var(--card) 92%, transparent);
-    -webkit-backdrop-filter: saturate(180%) blur(16px);
-    backdrop-filter: saturate(180%) blur(16px);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
     border-radius: var(--radius-md);
     box-shadow:
-        0 1px 0 rgba(255,255,255,0.5) inset,
+        var(--inset-light),
         0 12px 32px -8px rgba(0,0,0,0.18),
         var(--shadow-lg);
     padding: 6px;
     min-width: 200px;
-    animation: kebabSlide .24s cubic-bezier(.34,1.56,.64,1);
+    animation: kebabSlide .24s var(--ease-spring);
     transform-origin: top right;
     border: 1px solid var(--border);
 }

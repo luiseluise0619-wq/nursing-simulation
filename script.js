@@ -1872,7 +1872,7 @@ function showReviewToast() {
     el.style.cssText = "position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#7fa881,#6a9170);color:#fff;padding:18px 24px;border-radius:14px;box-shadow:0 10px 32px rgba(0,0,0,0.35);z-index:99996;font-family:inherit;text-align:center;max-width:calc(100vw - 32px);animation:badgePop 500ms ease;";
     document.body.appendChild(el);
     document.getElementById("review-toast-yes")?.addEventListener("click", () => {
-        try { track("review_prompt_positive"); } catch {}
+        track("review_prompt_positive");
         // Play Store 리뷰 페이지로 이동 (본인 출시 후 패키지명 교체)
         const PACKAGE_ID = "com.luiseluise0619.nursingsim";
         const url = `https://play.google.com/store/apps/details?id=${PACKAGE_ID}&showAllReviews=true`;
@@ -1881,12 +1881,12 @@ function showReviewToast() {
         el.remove();
     });
     document.getElementById("review-toast-no")?.addEventListener("click", () => {
-        try { track("review_prompt_feedback"); } catch {}
+        track("review_prompt_feedback");
         try { openFeedback(); } catch {}
         el.remove();
     });
     document.getElementById("review-toast-dismiss")?.addEventListener("click", () => {
-        try { track("review_prompt_dismiss"); } catch {}
+        track("review_prompt_dismiss");
         el.remove();
     });
 }
@@ -2840,7 +2840,7 @@ function renderKorMenu() {
           <button class="choice-btn center" data-action="returnToMenu">메뉴</button>
         </div>
       </div>`;
-    try { track("kor_menu_open", { total: qs.length }); } catch {}
+    track("kor_menu_open", { total: qs.length });
 }
 
 function startKorQuiz(t) {
@@ -2860,7 +2860,7 @@ function startKorQuiz(t) {
     gameState.korCategory = arg === "__all__" ? null : arg;
     try { Storage.markModeUsed("kor_quiz"); } catch {}
     renderKorCard();
-    try { track("kor_quiz_start", { category: arg, count: pool.length }); } catch {}
+    track("kor_quiz_start", { category: arg, count: pool.length });
 }
 
 function renderKorCard() {
@@ -2918,7 +2918,7 @@ function korQuizAnswer(t) {
     }
     const nextBtn = document.getElementById("kor-next-btn");
     if (nextBtn) nextBtn.classList.remove("hidden");
-    try { track("kor_quiz_answer", { correct: isCorrect, category: q.category }); } catch {}
+    track("kor_quiz_answer", { correct: isCorrect, category: q.category });
 }
 
 function korQuizNext() {
@@ -2949,7 +2949,7 @@ function renderKorSummary() {
           <button class="choice-btn center" data-action="returnToMenu">메뉴</button>
         </div>
       </div>`;
-    try { track("kor_quiz_complete", { total, correct, acc }); } catch {}
+    track("kor_quiz_complete", { total, correct, acc });
 }
 
 function renderImageQuizMenu() {
@@ -2995,7 +2995,7 @@ function renderImageQuizMenu() {
           <button class="choice-btn center" data-action="returnToMenu">메인 메뉴</button>
         </div>
       </div>`;
-    try { track("image_quiz_menu_open", { total: scenes.length }); } catch {}
+    track("image_quiz_menu_open", { total: scenes.length });
 }
 
 function startImageQuiz(t) {
@@ -3030,7 +3030,7 @@ function startImageQuiz(t) {
     gameState.imageQuizCorrect = 0;
     gameState.imageQuizBucket = bucket;
     renderImageQuizCard();
-    try { track("image_quiz_start", { bucket, count: shuffled.length }); } catch {}
+    track("image_quiz_start", { bucket, count: shuffled.length });
 }
 
 function renderImageQuizCard() {
@@ -3094,7 +3094,7 @@ function imageQuizAnswer(t) {
     }
     const nextBtn = document.getElementById("image-quiz-next-btn");
     if (nextBtn) nextBtn.classList.remove("hidden");
-    try { track("image_quiz_answer", { correct: isCorrect, image: scene.image }); } catch {}
+    track("image_quiz_answer", { correct: isCorrect, image: scene.image });
 }
 
 function imageQuizNext() {
@@ -3120,7 +3120,7 @@ function renderImageQuizSummary() {
           <button class="choice-btn center" data-action="returnToMenu">메인 메뉴</button>
         </div>
       </div>`;
-    try { track("image_quiz_complete", { total, correct, acc }); } catch {}
+    track("image_quiz_complete", { total, correct, acc });
 }
 const QUIZ_SET_SIZE = 10; // 한 세트 = 10문제 (종결감 + 진행도)
 function startQuiz(category) {
@@ -3207,8 +3207,8 @@ function loadNclexContent() {
             const s = document.createElement("script");
             s.src = "nclex-content.js";
             s.async = true;
-            s.onload = () => { try { track("nclex_loaded"); } catch {} resolve(_nclexAvailable()); };
-            s.onerror = () => { try { track("nclex_load_fail"); } catch {} resolve(false); };
+            s.onload = () => { track("nclex_loaded"); resolve(_nclexAvailable()); };
+            s.onerror = () => { track("nclex_load_fail"); resolve(false); };
             document.head.appendChild(s);
         } catch { resolve(false); }
     });
@@ -3725,7 +3725,7 @@ function handleDailyChoice(choice, ev) {
                 data.referral.bonusAwardedDate = todayKey();
                 Storage.save(data);
                 addLog("🎁 초대 보너스 +10 평판! (1회 한정)", "log-good");
-                try { track("referral_bonus_awarded"); } catch {}
+                track("referral_bonus_awarded");
             }
         } catch {}
     }
@@ -5248,7 +5248,7 @@ async function scheduleDailyNotification() {
         track("daily_notify_scheduled");
         return true;
     } catch (e) {
-        try { track("daily_notify_schedule_fail"); } catch {}
+        track("daily_notify_schedule_fail");
         return false;
     }
 }
@@ -5325,7 +5325,7 @@ function renderPremiumPage() {
 
         <button class="choice-btn center" data-action="returnToMenu">메인 메뉴</button>
       </div>`;
-    try { track("premium_view"); } catch {}
+    track("premium_view");
 }
 
 // Toss/KakaoPay 후원 — 백엔드 없이 작동 (본인 toss.me 핸들만 설정)
@@ -5335,7 +5335,7 @@ const TOSS_HANDLE = "nursesim"; // ← 본인 Toss 핸들로 교체
 function donate(t) {
     const amount = parseInt((t && t.dataset && t.dataset.amount) || "0", 10);
     const method = (t && t.dataset && t.dataset.method) || "toss";
-    try { track("donation_click", { amount, method }); } catch {}
+    track("donation_click", { amount, method });
 
     if (method === "toss") {
         // toss.me 링크 형식: https://toss.me/{handle}/{amount}  (amount 0 = 자유)
@@ -5444,7 +5444,7 @@ function renderDrugDrill() {
             <button class="choice-btn center" data-action="returnToMenu">메인 메뉴</button>
         </div>
       </div>`;
-    try { track("drug_drill_menu"); } catch {}
+    track("drug_drill_menu");
 }
 
 function startDrugDrill() {
@@ -5465,7 +5465,7 @@ function startDrugDrill() {
     gameState.drugCorrect = 0;
     Storage.markModeUsed("drug_drill");
     renderDrugDrillCard();
-    try { track("drug_drill_start"); } catch {}
+    track("drug_drill_start");
 }
 
 function buildDrugQuestion(drug, qType) {
@@ -5537,7 +5537,7 @@ function drugDrillAnswer(t) {
     }
     const nextBtn = document.getElementById("drug-drill-next-btn");
     if (nextBtn) nextBtn.classList.remove("hidden");
-    try { track("drug_drill_answer", { correct: isCorrect, drug: q.drug, qType: q.qType }); } catch {}
+    track("drug_drill_answer", { correct: isCorrect, drug: q.drug, qType: q.qType });
 }
 
 function drugDrillNext() {
@@ -5563,7 +5563,7 @@ function renderDrugDrillSummary() {
           <button class="choice-btn center" data-action="returnToMenu">메인 메뉴</button>
         </div>
       </div>`;
-    try { track("drug_drill_complete", { total, correct, acc }); } catch {}
+    track("drug_drill_complete", { total, correct, acc });
 }
 
 // 로컬 리더보드 — 본인 최고 기록 페이지
@@ -5622,7 +5622,7 @@ function renderLeaderboard() {
         <div class="lb-list">${topSetsHtml}</div>
         <button class="choice-btn center" data-action="returnToMenu">메인 메뉴</button>
       </div>`;
-    try { track("leaderboard_view"); } catch {}
+    track("leaderboard_view");
 }
 
 function renderPrivacy() {
@@ -6521,7 +6521,7 @@ async function useHint() {
     }
     try { Storage.incrementHintUsed(); } catch {}
     addLog("💡 힌트 사용 — 오답 1개 제거됨", "log-good");
-    try { track("hint_used"); } catch {}
+    track("hint_used");
     checkAndNotifyAchievements();
 }
 
@@ -6900,7 +6900,7 @@ function handleShortcutUrl() {
                 data.referral.invitedBy = ref;
                 data.referral.bonusGranted = true;
                 Storage.save(data);
-                try { track("referral_received", { code: ref }); } catch {}
+                track("referral_received", { code: ref });
                 // 보너스: 첫 진입 시 사용자 알림 (boot 완료 후 표시)
                 setTimeout(() => addLog("🎁 친구 초대 보너스 — 일일 챌린지 첫 정답 시 추가 +10 평판", "log-good"), 1500);
             }
@@ -6963,7 +6963,7 @@ function openExternalLegal(type) {
             // popup blocker 차단 시: location.href 로 덮지 않고 인앱 렌더 (state 보존)
             if (!w && !inAppFallback()) location.href = page;
         }
-        try { track("legal_open", { type }); } catch {}
+        track("legal_open", { type });
     } catch {
         if (!inAppFallback()) location.href = page;
     }
@@ -7166,7 +7166,7 @@ function checkAndNotifyAchievements() {
     if (newly.length > 0) {
         try { Sound.correct(); } catch {}
         try { Haptics.heavy(); } catch {}
-        try { track("achievement_unlocked", { count: String(newly.length) }); } catch {}
+        track("achievement_unlocked", { count: String(newly.length) });
     }
 }
 
@@ -7379,7 +7379,7 @@ function inviteFriend() {
     const url = `${location.origin}${location.pathname}?ref=${code}`;
     const title = "간호사 시뮬레이터";
     const text = `간호사 시뮬레이터 — 한국 간호 국시 RPG. 내 코드로 가입하면 양쪽 보너스! ${code}\n${url}`;
-    try { track("invite_sent"); } catch {}
+    track("invite_sent");
     try { Storage.incrementInvitesSent(); } catch {}
 
     // Web Share API 우선 — 모바일에서 카톡/문자/이메일로 바로 전달
@@ -7677,7 +7677,7 @@ function handleDelegatedAction(e) {
         handler(target);
     } catch (err) {
         // 핸들러 에러 격리 — 한 액션 실패가 앱 전체 죽이지 않게
-        try { track("delegated_action_error", { action: target.dataset.action, msg: String(err && err.message || err).slice(0, 60) }); } catch {}
+        track("delegated_action_error", { action: target.dataset.action, msg: String(err && err.message || err).slice(0, 60) });
         try { console.error("[action error]", target.dataset.action, err); } catch {}
         try { addLog("작업 처리 중 오류가 발생했어요. 다시 시도해 주세요.", "log-bad"); } catch {}
     }
