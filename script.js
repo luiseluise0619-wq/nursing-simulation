@@ -5316,6 +5316,57 @@ async function toggleDailyNotify() {
 
 // Capacitor LocalNotifications — 매일 오전 9시 반복 알림 예약 (모바일 빌드 전용)
 // 웹/PWA 에서는 플러그인 부재로 false 반환 (no-op, 앱 방문 시 인앱 안내로 대체)
+// 알림 카피 풀 — 매일 다른 메시지로 알림 피로도 ↓ (Duolingo 검증된 패턴)
+// 7일 주기 회전 + D-day 가까울수록 긴급 톤
+const NOTIFY_COPY_GENERAL = [
+    { title: "오늘 10분이면 충분해요", body: "한 듀티만 돌아도 streak 유지 ✨" },
+    { title: "어제의 약점, 오늘 잡기", body: "오답 노트가 기다려요." },
+    { title: "한 문제만이라도", body: "꾸준함이 시험을 이깁니다." },
+    { title: "🩺 임상 사례 한 편", body: "오늘은 어떤 환자를 만날까?" },
+    { title: "🔥 streak 안 끊기게", body: "5분 듀티로 오늘 학습 완료." },
+    { title: "💡 약물 드릴 어때요?", body: "50종 핵심 약물 중 랜덤 5문제." },
+    { title: "📚 모의고사 한 판?", body: "30분으로 점수 변화 체크." },
+    { title: "ECG·청진음·동공 사정", body: "이미지 문제로 실전 감각 ↑" },
+    { title: "오늘의 트리아지", body: "5명 환자 우선순위, 1분이면 됨." },
+    { title: "🎯 약점 과목 공략", body: "어제 가장 많이 틀린 과목 다시." },
+    { title: "🌅 좋은 아침이에요", body: "커피 한 잔과 함께 한 문제." },
+    { title: "오답이 자산입니다", body: "다시 풀면 정답 — 반복이 답." },
+    { title: "Day vs Evening vs Night", body: "오늘은 어떤 시프트로 들어갈까?" },
+    { title: "📖 에피소드 이어하기", body: "지난 환자가 기다리고 있어요." },
+    { title: "한 챕터만 끝내고 쉬자", body: "10문제 풀면 보상 광고로 부활." },
+    { title: "🇰🇷 국시 320 문제", body: "공식 출제기준 그대로 5지선다." },
+    { title: "오늘의 일일 챌린지", body: "10문제 · 정답률 80% 목표." },
+    { title: "퇴근 후 잠깐만", body: "출퇴근길 5분 학습이면 충분." },
+    { title: "🩸 ABGA 해석 연습", body: "산-염기 분석 한 문제씩." },
+    { title: "📊 이번 주 통계", body: "어떻게 발전하고 있나 확인해봐요." },
+];
+const NOTIFY_COPY_DDAY = [
+    { dMin: 1,   dMax: 3,   title: "🔥 D-{d} 최종 점검", body: "오답·핵심 약물·우선순위 정리할 시간." },
+    { dMin: 4,   dMax: 7,   title: "⚡ D-{d} 스프린트", body: "고빈도 키워드 + 모의고사 1회 권장." },
+    { dMin: 8,   dMax: 30,  title: "🚀 D-{d} 집중기", body: "매일 5문제 + 오답 복습으로 충분합니다." },
+    { dMin: 31,  dMax: 100, title: "💪 D-{d} 본격 시작", body: "지금부터 매일 1시간이면 충분." },
+    { dMin: 101, dMax: 200, title: "📚 D-{d} 장기 학습", body: "기초 다지기 좋은 시기예요." },
+    { dMin: 201, dMax: 999, title: "📅 D-{d} 까지", body: "여유 있게 — 천천히 누적해도 충분." },
+];
+function pickNotifyCopy() {
+    // D-day 알림 우선 — 한국 모드 + 시험일 다가오면
+    try {
+        const mode = (typeof Storage !== "undefined" && Storage.getExamMode) ? Storage.getExamMode() : "korean";
+        if (mode === "korean") {
+            const days = getDaysUntil(KOREAN_EXAM_DATE);
+            if (days >= 1 && days <= 200) {
+                const slot = NOTIFY_COPY_DDAY.find(s => days >= s.dMin && days <= s.dMax);
+                if (slot) return { title: slot.title.replace("{d}", days), body: slot.body };
+            }
+        }
+    } catch {}
+    // 일반 알림 — 요일+주차 시드로 7일 순환 (사용자가 같은 요일 다른 메시지 받음)
+    const d = new Date();
+    const weekIdx = Math.floor(d.getDate() / 7);
+    const idx = (d.getDay() * 3 + weekIdx) % NOTIFY_COPY_GENERAL.length;
+    return NOTIFY_COPY_GENERAL[idx];
+}
+
 async function scheduleDailyNotification() {
     try {
         const LN = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications;
@@ -5327,16 +5378,18 @@ async function scheduleDailyNotification() {
         } catch {}
         // 기존 예약 제거 후 재등록 (중복 방지)
         try { await LN.cancel({ notifications: [{ id: 7001 }] }); } catch {}
+        // 동적 카피 — 그날 D-day / 요일 기반 선택
+        const copy = pickNotifyCopy();
         await LN.schedule({
             notifications: [{
                 id: 7001,
-                title: "간호사 시뮬레이터",
-                body: "오늘의 일일 챌린지가 기다려요. 한 듀티 돌고 가실래요? ✨",
+                title: copy.title,
+                body: copy.body,
                 schedule: { on: { hour: 9, minute: 0 }, repeats: true, every: "day", allowWhileIdle: true },
                 smallIcon: "ic_stat_icon_config_sample",
             }],
         });
-        track("daily_notify_scheduled");
+        track("daily_notify_scheduled", { copy: copy.title.slice(0, 40) });
         return true;
     } catch (e) {
         track("daily_notify_schedule_fail");
@@ -6405,6 +6458,17 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
             </div>
             <div class="row-chev">›</div>
           </button>` : ''}
+
+          <button class="row-card" data-action="openSearch" aria-label="검색 — 키워드로 시나리오·문제·약물 찾기">
+            <div class="row-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            </div>
+            <div class="row-body">
+              <div class="row-title">검색</div>
+              <div class="row-sub">키워드로 시나리오·문제·약물 빠른 탐색</div>
+            </div>
+            <div class="row-chev">›</div>
+          </button>
         </div>
       </div>`;
 
@@ -6553,12 +6617,30 @@ function renderReviveSlot() {
         && !!ADS_UNITS.rewarded;
     if (!eligible) { slot.classList.add("hidden"); slot.innerHTML = ""; return; }
     slot.classList.remove("hidden");
+    const remaining = REVIVE_CONFIG.maxPerSession - (gameState.reviveCount || 0);
     slot.innerHTML = `
-      <button class="choice-btn primary revive-btn" data-action="reviveByAd" aria-label="광고 보고 부활하기">
-        <span class="revive-icon" aria-hidden="true">💚</span>
-        <span class="revive-text">광고 보고 부활하기 (HP ${REVIVE_CONFIG.hpRestore} 회복)</span>
-        <span class="revive-sub">남은 기회: ${REVIVE_CONFIG.maxPerSession - (gameState.reviveCount || 0)}회</span>
-      </button>`;
+      <div class="revive-card">
+        <div class="revive-header">
+          <div class="revive-emoji-wrap" aria-hidden="true">💚</div>
+          <div class="revive-headline">
+            <div class="revive-title">광고 시청 → 부활</div>
+            <div class="revive-deal">HP <strong>+${REVIVE_CONFIG.hpRestore}</strong> · 평판 유지 · 진행도 보존</div>
+          </div>
+        </div>
+        <div class="revive-progress" aria-hidden="true">
+          <div class="rp-step">📺 30초 광고</div>
+          <div class="rp-arrow">→</div>
+          <div class="rp-step rp-reward">💚 즉시 부활</div>
+        </div>
+        <button class="choice-btn primary revive-btn" data-action="reviveByAd" aria-label="광고 보고 부활하기">
+          광고 보고 부활하기
+        </button>
+        <div class="revive-meta">
+          <span>🎟 남은 기회 ${remaining}회</span>
+          <span>·</span>
+          <span>AdMob 보상형 광고</span>
+        </div>
+      </div>`;
 }
 
 // =========================================================================
@@ -7152,11 +7234,43 @@ function computeWeeklyReport(now, data) {
         }
     });
     const accuracy = totalSolved > 0 ? Math.round((totalCorrect / totalSolved) * 100) : 0;
+
+    // 약점 분석 — 카테고리별 정답률 (Storage.getCategoryStats 데이터)
+    let weakest = null, strongest = null;
+    try {
+        const stats = (typeof Storage !== "undefined" && Storage.load) ? Storage.load() : data;
+        const cat = stats && stats.categoryStats;
+        if (cat && typeof cat === "object") {
+            const ranked = Object.entries(cat)
+                .map(([name, v]) => ({
+                    name,
+                    solved: v?.solved || 0,
+                    correct: v?.correct || 0,
+                    acc: (v?.solved || 0) > 0 ? Math.round((v.correct / v.solved) * 100) : 0,
+                }))
+                .filter(x => x.solved >= 5); // 충분한 표본
+            if (ranked.length > 0) {
+                ranked.sort((a, b) => a.acc - b.acc);
+                weakest = ranked[0];
+                strongest = ranked[ranked.length - 1];
+            }
+        }
+    } catch {}
+
+    // 추천 액션 — 약점 카테고리 + 활동량 기반
+    let recommendation = "";
+    if (days.size === 0) recommendation = "이번 주 학습 기록이 없어요. 한 듀티만 돌고 가셔도 좋아요.";
+    else if (weakest && weakest.acc < 60) recommendation = `${weakest.name} 정답률 ${weakest.acc}% — 다음 주는 이 과목 우선.`;
+    else if (accuracy < 60) recommendation = "전반적 정답률이 낮아요. 오답 노트 복습 우선 추천.";
+    else if (days.size >= 5) recommendation = `🔥 ${days.size}일 학습 — 훌륭한 페이스. 이대로!`;
+    else recommendation = "꾸준한 페이스 유지 중. 한 모드만 더 시도해볼까요?";
+
     const d = new Date(now);
     return {
         totalSolved, totalCorrect, accuracy,
         daysActive: days.size,
         modesPlayed: recent.length,
+        weakest, strongest, recommendation,
         isSundayAfternoon: d.getDay() === 0 && d.getHours() >= 12,
     };
 }
@@ -7173,19 +7287,38 @@ function renderWeeklyReport() {
         modeCount[h.mode] = (modeCount[h.mode] || 0) + 1;
     });
     const modeLines = Object.entries(modeCount).map(([m, n]) => `<li><strong>${escapeHtml(m)}</strong> · ${n}회</li>`).join("");
+    // 인사이트 박스 — 약점/강점/추천
+    const insightHtml = `
+        <div class="weekly-insights">
+          <div class="wi-recommend">💡 ${escapeHtml(w.recommendation)}</div>
+          ${w.weakest ? `
+          <div class="wi-row wi-weak">
+            <div class="wi-label">약점 과목</div>
+            <div class="wi-value">${escapeHtml(w.weakest.name)}</div>
+            <div class="wi-acc">${w.weakest.acc}%</div>
+          </div>` : ''}
+          ${w.strongest && w.strongest.name !== w.weakest?.name ? `
+          <div class="wi-row wi-strong">
+            <div class="wi-label">강점 과목</div>
+            <div class="wi-value">${escapeHtml(w.strongest.name)}</div>
+            <div class="wi-acc">${w.strongest.acc}%</div>
+          </div>` : ''}
+        </div>`;
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
         <h2 class="scene-title">🗓 위클리 리포트</h2>
-        <p class="scene-desc">최근 7일 학습 요약</p>
+        <p class="scene-desc">최근 7일 학습 요약 + 인사이트</p>
         <div class="dashboard-row" role="group" aria-label="주간 통계">
           <div class="dash-stat"><div class="ds-num">${w.totalSolved}</div><div class="ds-label">총 풀이</div></div>
           <div class="dash-stat"><div class="ds-num">${w.accuracy}%</div><div class="ds-label">정답률</div></div>
           <div class="dash-stat"><div class="ds-num">${w.daysActive}</div><div class="ds-label">학습 일수</div></div>
           <div class="dash-stat"><div class="ds-num">${w.modesPlayed}</div><div class="ds-label">모드 완료</div></div>
         </div>
+        ${insightHtml}
         ${modeLines ? `<h3 class="modal-section-title">모드별</h3><ul class="weekly-mode-list">${modeLines}</ul>` : ''}
         <div class="choice-list">
-          <button class="choice-btn primary" data-action="shareResultCard" data-mode="weekly" data-title="이번 주 ${w.totalSolved}문제 풀이" data-lines="정답률 ${w.accuracy}%|학습 일수 ${w.daysActive}일|모드 완료 ${w.modesPlayed}회">결과 카드 다운로드</button>
+          ${w.weakest ? `<button class="choice-btn primary" data-action="startQuiz" data-arg="${escapeHtml(w.weakest.name)}">📚 ${escapeHtml(w.weakest.name)} 바로 연습</button>` : ''}
+          <button class="choice-btn ${w.weakest ? '' : 'primary'}" data-action="shareResultCard" data-mode="weekly" data-title="이번 주 ${w.totalSolved}문제 풀이" data-lines="정답률 ${w.accuracy}%|학습 일수 ${w.daysActive}일|모드 완료 ${w.modesPlayed}회${w.weakest ? `|약점: ${w.weakest.name} ${w.weakest.acc}%` : ''}">결과 카드 다운로드</button>
           <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
         </div>
       </div>`;
@@ -7385,35 +7518,111 @@ function shareResultCard(target) {
         canvas.width = W; canvas.height = H;
         const ctx = canvas.getContext("2d");
         if (!ctx) throw new Error("canvas unsupported");
-        // 배경 — 세이지 톤
-        ctx.fillStyle = "#eef2f5"; ctx.fillRect(0, 0, W, H);
-        // 카드
-        const cx = 48, cy = 96, cw = W - 96, ch = H - 192;
+
+        // === 배경: 세이지 그라데이션 (라디얼 + 베이스) ===
+        const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+        bgGrad.addColorStop(0, "#dfe7df");
+        bgGrad.addColorStop(0.5, "#eef2f5");
+        bgGrad.addColorStop(1, "#e8f0e9");
+        ctx.fillStyle = bgGrad; ctx.fillRect(0, 0, W, H);
+        // 우상단 / 좌하단 라디얼 분위기
+        const r1 = ctx.createRadialGradient(W - 60, 60, 0, W - 60, 60, 300);
+        r1.addColorStop(0, "rgba(127, 168, 129, 0.18)"); r1.addColorStop(1, "rgba(127, 168, 129, 0)");
+        ctx.fillStyle = r1; ctx.fillRect(0, 0, W, H);
+
+        // === 카드 본체 ===
+        const cx = 48, cy = 80, cw = W - 96, ch = H - 160;
+        // 카드 그림자 (3겹)
+        ctx.shadowColor = "rgba(127, 168, 129, 0.2)";
+        ctx.shadowBlur = 40; ctx.shadowOffsetY = 20;
+        ctx.fillStyle = "#ffffff"; roundRect(ctx, cx, cy, cw, ch, 32); ctx.fill();
+        ctx.shadowColor = "transparent"; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+
+        // === 카드 상단 액센트 라인 (그라데이션) ===
+        const accentGrad = ctx.createLinearGradient(cx, 0, cx + cw, 0);
+        accentGrad.addColorStop(0, "rgba(127, 168, 129, 0)");
+        accentGrad.addColorStop(0.3, "rgba(127, 168, 129, 1)");
+        accentGrad.addColorStop(0.7, "rgba(106, 145, 112, 1)");
+        accentGrad.addColorStop(1, "rgba(127, 168, 129, 0)");
+        ctx.fillStyle = accentGrad;
+        ctx.fillRect(cx, cy, cw, 5);
+
+        // === 로고 마크 (좌상단 둥근 원 + 의료 십자) ===
+        const logoR = 28, logoX = cx + 48, logoY = cy + 58;
+        const logoGrad = ctx.createLinearGradient(logoX - logoR, logoY - logoR, logoX + logoR, logoY + logoR);
+        logoGrad.addColorStop(0, "#9ec0a0"); logoGrad.addColorStop(1, "#6a9170");
+        ctx.fillStyle = logoGrad;
+        ctx.beginPath(); ctx.arc(logoX, logoY, logoR, 0, Math.PI * 2); ctx.fill();
         ctx.fillStyle = "#ffffff";
-        roundRect(ctx, cx, cy, cw, ch, 28); ctx.fill();
-        // 헤더
+        ctx.fillRect(logoX - 4, logoY - 16, 8, 32);
+        ctx.fillRect(logoX - 16, logoY - 4, 32, 8);
+
+        // === 브랜드 워드마크 ===
+        ctx.fillStyle = "#3f4a40";
+        ctx.font = "700 22px 'Pretendard', -apple-system, system-ui, sans-serif";
+        ctx.fillText("간호사 시뮬레이터", logoX + 44, logoY + 8);
+        // 서브 라벨
         ctx.fillStyle = "#7fa881";
-        ctx.font = "600 28px 'Pretendard', system-ui, sans-serif";
-        ctx.fillText("간호사 시뮬레이터", cx + 36, cy + 60);
-        // 제목
+        ctx.font = "600 11px 'Pretendard', system-ui, sans-serif";
+        ctx.fillText("KOREAN NURSING + NCLEX-RN", logoX + 44, logoY + 24);
+
+        // === "RESULT" 작은 라벨 ===
+        ctx.fillStyle = "#7fa881";
+        ctx.font = "700 12px 'Pretendard', system-ui, sans-serif";
+        ctx.fillText("RESULT", cx + 48, cy + 130);
+        // 액센트 점
+        ctx.fillStyle = "#c9a25b";
+        ctx.beginPath(); ctx.arc(cx + 100, cy + 126, 3, 0, Math.PI * 2); ctx.fill();
+
+        // === 제목 (큼지막하게) ===
         ctx.fillStyle = "#1e293b";
-        ctx.font = "700 44px 'Pretendard', system-ui, sans-serif";
-        wrapText(ctx, String(title), cx + 36, cy + 140, cw - 72, 56);
-        // 본문
-        ctx.fillStyle = "#1e293b";
-        ctx.font = "500 24px 'Pretendard', system-ui, sans-serif";
-        let yy = cy + 260;
-        for (const ln of lines) { wrapText(ctx, ln, cx + 36, yy, cw - 72, 36); yy += 60; }
-        // 푸터 + 워터마크/브랜딩
-        ctx.fillStyle = "#64748b";
-        ctx.font = "500 18px 'Pretendard', system-ui, sans-serif";
-        ctx.fillText("교육 목적 · 임상 적용 금지", cx + 36, cy + ch - 56);
-        ctx.font = "500 16px 'Pretendard', system-ui, sans-serif";
+        ctx.font = "800 46px 'Pretendard', system-ui, sans-serif";
+        wrapText(ctx, String(title), cx + 48, cy + 178, cw - 96, 56);
+
+        // === 구분선 ===
+        ctx.strokeStyle = "rgba(127, 168, 129, 0.2)";
+        ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(cx + 48, cy + 296); ctx.lineTo(cx + cw - 48, cy + 296); ctx.stroke();
+
+        // === 본문 — 스탯 라인 ===
+        ctx.fillStyle = "#3f4a40";
+        ctx.font = "600 26px 'Pretendard', system-ui, sans-serif";
+        let yy = cy + 348;
+        for (const ln of lines) {
+            // 라인 앞 그린 점 (시각 강조)
+            ctx.fillStyle = "#7fa881";
+            ctx.beginPath(); ctx.arc(cx + 56, yy - 7, 5, 0, Math.PI * 2); ctx.fill();
+            // 라인 텍스트
+            ctx.fillStyle = "#1e293b";
+            wrapText(ctx, ln, cx + 76, yy, cw - 124, 40);
+            yy += 60;
+        }
+
+        // === 면책 박스 (하단) ===
+        const boxY = cy + ch - 130;
+        ctx.fillStyle = "rgba(127, 168, 129, 0.08)";
+        roundRect(ctx, cx + 48, boxY, cw - 96, 64, 12); ctx.fill();
+        ctx.fillStyle = "#5a6f5d";
+        ctx.font = "600 14px 'Pretendard', system-ui, sans-serif";
+        ctx.fillText("교육 목적 · 실제 임상 적용 금지", cx + 68, boxY + 28);
+        ctx.fillStyle = "#7a8c7d";
+        ctx.font = "500 12px 'Pretendard', system-ui, sans-serif";
+        ctx.fillText("KNCA / AHA / USPSTF 가이드라인 기반", cx + 68, boxY + 50);
+
+        // === 푸터 워터마크 ===
         ctx.fillStyle = "#94a3b8";
+        ctx.font = "500 14px 'Pretendard', system-ui, sans-serif";
         const watermark = myCode
-            ? `간호사 시뮬레이터 · nursing-sim.app · 초대코드 ${myCode}`
-            : "간호사 시뮬레이터 · nursing-sim.app";
-        ctx.fillText(watermark, cx + 36, cy + ch - 28);
+            ? `nursing-sim.app · 초대코드 ${myCode}`
+            : "nursing-sim.app";
+        ctx.fillText(watermark, cx + 48, cy + ch - 32);
+        // 우측 작은 박스 — 100% FREE 강조
+        const badgeW = 110, badgeH = 28, badgeX = cx + cw - badgeW - 48, badgeY = cy + ch - 50;
+        ctx.fillStyle = "#7fa881";
+        roundRect(ctx, badgeX, badgeY, badgeW, badgeH, 14); ctx.fill();
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "700 12px 'Pretendard', system-ui, sans-serif";
+        ctx.fillText("100% FREE", badgeX + 24, badgeY + 19);
         // 다운로드
         canvas.toBlob((blob) => {
             if (!blob) return;
