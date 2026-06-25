@@ -1018,6 +1018,11 @@ const Storage = {
                 hintUsedCount: Number.isFinite(raw.achievements.hintUsedCount) ? raw.achievements.hintUsedCount : 0,
                 graduatedCount: Number.isFinite(raw.achievements.graduatedCount) ? raw.achievements.graduatedCount : 0,
             } : { unlocked: [], lastChecked: 0, hintUsedCount: 0, graduatedCount: 0 },
+            // 특성(perks) — 마일스톤 자동 잠금해제 + 게임 효과
+            perks: (raw.perks && typeof raw.perks === "object" && !Array.isArray(raw.perks)) ? {
+                unlocked: Array.isArray(raw.perks.unlocked) ? raw.perks.unlocked.filter(x => typeof x === "string") : [],
+                counters: (raw.perks.counters && typeof raw.perks.counters === "object" && !Array.isArray(raw.perks.counters)) ? raw.perks.counters : {},
+            } : { unlocked: [], counters: {} },
             referral: (raw.referral && typeof raw.referral === "object" && !Array.isArray(raw.referral)) ? {
                 myCode: (typeof raw.referral.myCode === "string" && /^[A-Z0-9]{6}$/.test(raw.referral.myCode)) ? raw.referral.myCode : null,
                 invitedBy: (typeof raw.referral.invitedBy === "string" && /^[A-Z0-9]{6}$/.test(raw.referral.invitedBy)) ? raw.referral.invitedBy : null,
@@ -2505,6 +2510,8 @@ function bumpCombo() {
         Storage.setBestCombo(gameState.bestCombo);
     }
     if (gameState.combo >= 3) Sound.combo(gameState.combo);
+    // 특성 카운터 — 콤보 도달 기록
+    try { Perks.onComboReach(gameState.combo); } catch {}
     // 콤보 뱃지 burst 애니메이션 재트리거
     requestAnimationFrame(() => {
         const badge = document.querySelector(".badge.combo");
@@ -2680,26 +2687,307 @@ function renderSurvivalEvent(eventId) {
     }
     renderSceneCard(ev, { mode: "survival", meta: [`난이도: ${gameState.currentShift}`, `누적: ${gameState.eventCount}건`, `콤보: ${gameState.combo}`] });
 }
+// =========================================================================
+// 특성 (Perks) — Cyberpunk 스타일 자동 획득 + 게임 효과
+// =========================================================================
+// 게임 진행 중 마일스톤 달성 시 자동 잠금해제.
+// 활성 perks 는 applyChoiceEffect 에서 HP/REP 델타를 보정 (수동 활성화 없음, 자동).
+// 5 카테고리 × 2-3 등급 = 12 perks.
+const PERKS = [
+    // 🩺 청진 / 사정 계열
+    { id: "stethoscope_apprentice", name: "청진 도제", icon: "🩺", category: "사정",
+      desc: "오답 시 HP 손실 -10% (사정 직감)",
+      unlock: { type: "correctCount", count: 30 } },
+    { id: "stethoscope_master", name: "청진 명의", icon: "👂", category: "사정",
+      desc: "오답 시 HP 손실 -20% (어느 청진음도 놓치지 않음)",
+      unlock: { type: "correctCount", count: 100 } },
+
+    // 💉 약물 계열
+    { id: "pharm_apprentice", name: "약물 견습", icon: "💊", category: "약물",
+      desc: "정답 시 평판 +1 (꼼꼼한 5R)",
+      unlock: { type: "comboReach", count: 5 } },
+    { id: "pharm_master", name: "약물 마스터", icon: "💉", category: "약물",
+      desc: "정답 시 평판 +3 (의사도 묻는 RN)",
+      unlock: { type: "comboReach", count: 15 } },
+
+    // ⚡ 응급 / 위기 대응 계열
+    { id: "emergency_responder", name: "응급 대응자", icon: "⚡", category: "응급",
+      desc: "HP 30 미만일 때 오답 손실 -30% (위기에 강함)",
+      unlock: { type: "lowHpSurvive", count: 5 } },
+    { id: "code_blue_hero", name: "코드블루 영웅", icon: "🚨", category: "응급",
+      desc: "콤보 5+ 유지 시 평판 보너스 +2 (스피드 + 정확)",
+      unlock: { type: "comboReach", count: 10 } },
+
+    // 📚 학습 / 회복 계열
+    { id: "study_addict", name: "책벌레", icon: "📚", category: "학습",
+      desc: "오답노트 복습 시 정답 평판 +2 (반복이 답)",
+      unlock: { type: "wrongReviewCount", count: 20 } },
+    { id: "fast_recovery", name: "빠른 회복", icon: "❤️", category: "학습",
+      desc: "정답 시 HP +2 보너스 (멘탈 회복력)",
+      unlock: { type: "perfectDuty", count: 1 } },
+
+    // 🌟 평판 / 명성 계열
+    { id: "good_reputation", name: "좋은 평판", icon: "🌟", category: "명성",
+      desc: "정답 시 평판 +1 (수간호사 신뢰)",
+      unlock: { type: "correctCount", count: 50 } },
+    { id: "legendary_nurse", name: "전설의 RN", icon: "👑", category: "명성",
+      desc: "정답 시 평판 +2 + HP +1 (모든 효과 누적)",
+      unlock: { type: "correctCount", count: 200 } },
+
+    // 🎯 시프트 마스터리
+    { id: "night_owl", name: "야간 듀티 전문", icon: "🌙", category: "시프트",
+      desc: "Night 시프트 HP 손실 -15% (밤이 적성)",
+      unlock: { type: "nightShiftComplete", count: 3 } },
+    { id: "morning_chief", name: "데이 시프트 리더", icon: "☀️", category: "시프트",
+      desc: "Day 시프트 평판 +1 (인계·라운드 든든)",
+      unlock: { type: "dayShiftComplete", count: 3 } },
+];
+
+const Perks = {
+    // 모든 perks 카탈로그 (UI 노출용)
+    all() { return PERKS.slice(); },
+    // 잠금해제된 perks ID 목록
+    unlocked() {
+        try {
+            const data = Storage.load();
+            return Array.isArray(data.perks?.unlocked) ? data.perks.unlocked : [];
+        } catch { return []; }
+    },
+    has(id) { return this.unlocked().includes(id); },
+
+    // perk 통계 카운터 (마일스톤 검사용)
+    _counters() {
+        try {
+            const data = Storage.load();
+            return data.perks?.counters || {};
+        } catch { return {}; }
+    },
+    _saveCounters(updater) {
+        const data = Storage.load();
+        if (!data.perks) data.perks = { unlocked: [], counters: {} };
+        if (!data.perks.counters) data.perks.counters = {};
+        updater(data.perks.counters);
+        Storage.save(data);
+    },
+
+    // 정답/오답 호출 — bumpCombo 옆에서 호출
+    onAnswer(isCorrect, opts = {}) {
+        this._saveCounters(c => {
+            if (isCorrect) c.correctCount = (c.correctCount || 0) + 1;
+            if (opts.fromWrongReview && isCorrect) c.wrongReviewCount = (c.wrongReviewCount || 0) + 1;
+        });
+        this._checkUnlocks();
+    },
+    onComboReach(combo) {
+        this._saveCounters(c => {
+            c.bestCombo = Math.max(c.bestCombo || 0, combo);
+        });
+        this._checkUnlocks();
+    },
+    onLowHpSurvived() {
+        this._saveCounters(c => { c.lowHpSurvive = (c.lowHpSurvive || 0) + 1; });
+        this._checkUnlocks();
+    },
+    onDutyComplete(shift, perfect) {
+        this._saveCounters(c => {
+            if (perfect) c.perfectDuty = (c.perfectDuty || 0) + 1;
+            if (shift === "Night") c.nightShiftComplete = (c.nightShiftComplete || 0) + 1;
+            if (shift === "Day")   c.dayShiftComplete = (c.dayShiftComplete || 0) + 1;
+        });
+        this._checkUnlocks();
+    },
+
+    // 마일스톤 검사 → 새로 잠금해제된 perk 발견 시 배너 + 토스트
+    _checkUnlocks() {
+        const counters = this._counters();
+        const unlocked = this.unlocked();
+        for (const p of PERKS) {
+            if (unlocked.includes(p.id)) continue;
+            const u = p.unlock;
+            let met = false;
+            if (u.type === "correctCount") met = (counters.correctCount || 0) >= u.count;
+            else if (u.type === "comboReach") met = (counters.bestCombo || 0) >= u.count;
+            else if (u.type === "lowHpSurvive") met = (counters.lowHpSurvive || 0) >= u.count;
+            else if (u.type === "wrongReviewCount") met = (counters.wrongReviewCount || 0) >= u.count;
+            else if (u.type === "perfectDuty") met = (counters.perfectDuty || 0) >= u.count;
+            else if (u.type === "nightShiftComplete") met = (counters.nightShiftComplete || 0) >= u.count;
+            else if (u.type === "dayShiftComplete") met = (counters.dayShiftComplete || 0) >= u.count;
+            if (met) this._unlock(p);
+        }
+    },
+    _unlock(perk) {
+        const data = Storage.load();
+        if (!data.perks) data.perks = { unlocked: [], counters: {} };
+        if (data.perks.unlocked.includes(perk.id)) return;
+        data.perks.unlocked.push(perk.id);
+        Storage.save(data);
+        track("perk_unlocked", { id: perk.id });
+        try { showPerkUnlockBanner(perk); } catch {}
+        try { addLog(`✨ 특성 획득 — ${perk.icon} ${perk.name}: ${perk.desc}`, "log-important"); } catch {}
+    },
+
+    // 선택지 효과에 perk 보정 적용
+    applyChoiceModifier({ hpDelta, repDelta, choice }) {
+        const owned = this.unlocked();
+        if (owned.length === 0) return { hpDelta, repDelta };
+        const isCorrect = choice && choice.correct === true;
+        const isWrong = !isCorrect && choice && choice.effect && (choice.effect.hp || 0) < 0;
+        const shift = gameState.currentShift;
+        const lowHp = gameState.hp < 30;
+        // 청진 도제 — 오답 손실 -10%
+        if (isWrong && owned.includes("stethoscope_apprentice")) hpDelta = Math.round(hpDelta * 0.9);
+        // 청진 명의 — 오답 손실 -20% (도제 위에 누적)
+        if (isWrong && owned.includes("stethoscope_master")) hpDelta = Math.round(hpDelta * 0.8);
+        // 응급 대응자 — HP < 30 일 때 오답 손실 -30%
+        if (isWrong && lowHp && owned.includes("emergency_responder")) hpDelta = Math.round(hpDelta * 0.7);
+        // 약물 견습 — 정답 평판 +1
+        if (isCorrect && owned.includes("pharm_apprentice")) repDelta += 1;
+        // 약물 마스터 — 정답 평판 +3
+        if (isCorrect && owned.includes("pharm_master")) repDelta += 3;
+        // 코드블루 영웅 — 콤보 5+ 시 정답 평판 +2
+        if (isCorrect && gameState.combo >= 5 && owned.includes("code_blue_hero")) repDelta += 2;
+        // 책벌레 — 오답복습 정답 평판 +2
+        if (isCorrect && gameState.mode === "wrong_review" && owned.includes("study_addict")) repDelta += 2;
+        // 빠른 회복 — 정답 HP +2
+        if (isCorrect && owned.includes("fast_recovery")) hpDelta += 2;
+        // 좋은 평판 — 정답 +1
+        if (isCorrect && owned.includes("good_reputation")) repDelta += 1;
+        // 전설의 RN — 정답 +2 + HP +1
+        if (isCorrect && owned.includes("legendary_nurse")) { repDelta += 2; hpDelta += 1; }
+        // 야간 듀티 전문 — Night 시프트 HP 손실 -15%
+        if (isWrong && shift === "Night" && owned.includes("night_owl")) hpDelta = Math.round(hpDelta * 0.85);
+        // 데이 시프트 리더 — Day 시프트 정답 평판 +1
+        if (isCorrect && shift === "Day" && owned.includes("morning_chief")) repDelta += 1;
+        return { hpDelta, repDelta };
+    },
+};
+
+// 특성 잠금해제 배너 — 배지와 비슷한 화면 중앙 폭발 애니메이션
+function showPerkUnlockBanner(perk) {
+    try {
+        const old = document.querySelector(".perk-unlock-banner");
+        if (old) old.remove();
+        const el = document.createElement("div");
+        el.className = "perk-unlock-banner";
+        el.setAttribute("role", "status");
+        el.setAttribute("aria-live", "polite");
+        el.innerHTML = `
+          <div class="perk-unlock-emoji">${perk.icon}</div>
+          <div class="perk-unlock-tag">특성 획득</div>
+          <div class="perk-unlock-name">${escapeHtml(perk.name)}</div>
+          <div class="perk-unlock-desc">${escapeHtml(perk.desc)}</div>
+        `;
+        document.body.appendChild(el);
+        try { Haptics.heavy && Haptics.heavy(); } catch {}
+        setTimeout(() => { try { el.remove(); } catch {} }, 3200);
+    } catch {}
+}
+
+function renderPerksPage() {
+    gameState.mode = "perks";
+    resetStateForMode();
+    showCoreUI(); if (UI.logBar) UI.logBar.innerHTML = "";
+    updateStats();
+    const owned = new Set(Perks.unlocked());
+    const counters = Perks._counters();
+    const byCategory = {};
+    PERKS.forEach(p => {
+        if (!byCategory[p.category]) byCategory[p.category] = [];
+        byCategory[p.category].push(p);
+    });
+    const progress = (p) => {
+        const u = p.unlock;
+        const have = counters[
+            u.type === "correctCount" ? "correctCount" :
+            u.type === "comboReach" ? "bestCombo" :
+            u.type === "lowHpSurvive" ? "lowHpSurvive" :
+            u.type === "wrongReviewCount" ? "wrongReviewCount" :
+            u.type === "perfectDuty" ? "perfectDuty" :
+            u.type === "nightShiftComplete" ? "nightShiftComplete" :
+            u.type === "dayShiftComplete" ? "dayShiftComplete" : "_none"
+        ] || 0;
+        return { have: Math.min(have, u.count), need: u.count };
+    };
+    const labelFor = (u) => ({
+        correctCount: "정답 누적",
+        comboReach: "최고 콤보",
+        lowHpSurvive: "HP 30 미만 생존",
+        wrongReviewCount: "오답복습 정답",
+        perfectDuty: "퍼펙트 듀티 (HP 80+)",
+        nightShiftComplete: "Night 시프트 완주",
+        dayShiftComplete: "Day 시프트 완주",
+    }[u.type] || "마일스톤");
+    let html = `
+      <div class="scene-card card">
+        <h2 class="scene-title">⚡ 특성 <span class="perk-count">${owned.size}/${PERKS.length}</span></h2>
+        <p class="scene-desc">게임 중 마일스톤을 달성하면 자동으로 잠금해제 — 활성 특성은 듀티에서 HP·평판 보너스로 작용해요.</p>
+    `;
+    for (const [cat, perks] of Object.entries(byCategory)) {
+        html += `<h3 class="perk-category">${escapeHtml(cat)}</h3><div class="perk-grid">`;
+        for (const p of perks) {
+            const has = owned.has(p.id);
+            const prog = progress(p);
+            const pct = Math.round((prog.have / prog.need) * 100);
+            html += `
+              <div class="perk-card ${has ? 'unlocked' : 'locked'}">
+                <div class="perk-icon">${p.icon}</div>
+                <div class="perk-body">
+                  <div class="perk-name">${escapeHtml(p.name)}</div>
+                  <div class="perk-desc">${escapeHtml(p.desc)}</div>
+                  ${has ? `<div class="perk-status active">✓ 활성</div>` : `
+                    <div class="perk-progress" role="progressbar" aria-valuenow="${prog.have}" aria-valuemin="0" aria-valuemax="${prog.need}">
+                      <div class="perk-progress-fill" style="width:${pct}%"></div>
+                    </div>
+                    <div class="perk-progress-label">${labelFor(p.unlock)} ${prog.have}/${prog.need}</div>
+                  `}
+                </div>
+              </div>`;
+        }
+        html += `</div>`;
+    }
+    html += `
+        <div class="choice-list">
+          <button class="choice-btn center" data-action="returnToMenu">메인 메뉴</button>
+        </div>
+      </div>`;
+    UI.gameArea.innerHTML = html;
+}
+
 function applyChoiceEffect(choice) {
     if (!choice.effect) return;
     let hpDelta = choice.effect.hp || 0;
+    let repDelta = choice.effect.rep || 0;
     // 시나리오 모드는 큐레이팅된 HP 손실/회복을 그대로 적용 (shift 가중치 미적용)
     if (hpDelta < 0 && gameState.mode !== "scenario") hpDelta = Math.round(hpDelta * gameState.difficulty);
+    // 특성(perks) 효과 — 활성 perks 가 hp/rep 델타 조정
+    try {
+        const perkMod = Perks.applyChoiceModifier({ hpDelta, repDelta, choice });
+        hpDelta = perkMod.hpDelta;
+        repDelta = perkMod.repDelta;
+    } catch {}
     gameState.hp = clamp(gameState.hp + hpDelta, 0, 100);
-    gameState.rep += choice.effect.rep || 0;
+    gameState.rep += repDelta;
     if (choice.effect.item) gameState.items.push(choice.effect.item);
     updateStats();
 }
 function handleSurvivalChoice(choice) {
+    const hpBefore = gameState.hp;
     applyChoiceEffect(choice);
     const isCorrect = isCorrectChoice(choice);
     if (isCorrect) { bumpCombo(); Sound.correct(); checkAndNotifyAchievements(); }
     else { resetCombo(); Sound.wrong(); }
+    // 특성 카운터 — 정답/오답 + 저HP 생존
+    try {
+        Perks.onAnswer(isCorrect);
+        if (hpBefore < 30 && gameState.hp > 0 && isCorrect) Perks.onLowHpSurvived();
+    } catch {}
     if (choice.log) addLog(choice.log, isCorrect ? "log-good" : (choice.effect?.rep || 0) < 0 ? "log-bad" : "");
     if (gameState.hp <= 0) return showGameOver("체력 고갈", "번아웃 되었습니다. 환자 안전을 위해 퇴근하세요.");
     if (gameState.rep < -60) return showGameOver("평판 실추", "치명적인 실수 누적으로 투약 사고 위기입니다.");
     if (gameState.eventCount >= MAX_PROGRESS_EVENTS) {
         Storage.addHistory({ mode: "survival", at: Date.now(), hp: gameState.hp, rep: gameState.rep, events: gameState.eventCount, bestCombo: gameState.bestCombo });
+        // 특성 카운터 — 듀티 완주 (퍼펙트 = HP 80+ 유지)
+        try { Perks.onDutyComplete(gameState.currentShift, gameState.hp >= 80); } catch {}
         return showGameOver("듀티 무사 완수!", "수고하셨습니다. 당신은 훌륭한 간호사입니다.");
     }
     renderSurvivalEvent(choice.next || "random_hub");
@@ -6535,6 +6823,19 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
           </div>
           <div class="row-chev">›</div>
         </button>
+        ${(() => {
+            const perkOwned = Perks.unlocked().length;
+            const perkTotal = PERKS.length;
+            return `
+        <button class="row-card big" data-action="renderPerksPage">
+          <div class="row-icon big" aria-hidden="true">⚡</div>
+          <div class="row-body">
+            <div class="row-title">특성 <span class="row-pill ${perkOwned > 0 ? 'done' : ''}">${perkOwned}/${perkTotal}</span></div>
+            <div class="row-sub">${perkOwned > 0 ? "활성 효과로 게임 보너스" : "정답·콤보·완주로 자동 획득"}</div>
+          </div>
+          <div class="row-chev">›</div>
+        </button>`;
+        })()}
         <button class="row-card big" data-action="reviewWrongAnswers">
           <div class="row-icon big">${ICONS.wrong}</div>
           <div class="row-body">
@@ -7968,6 +8269,7 @@ const DELEGATED_ACTIONS = {
     useHint: () => useHint(),
     // 배지 컬렉션
     renderAchievements: () => renderAchievements(),
+    renderPerksPage: () => renderPerksPage(),
     // 친구 초대 · 약점 분석
     renderInviteScreen: () => renderInviteScreen(),
     inviteFriend: () => inviteFriend(),

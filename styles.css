@@ -910,6 +910,211 @@ button.countdown-card:active { transform: translateY(0); }
 .weekly-insights .wi-weak .wi-acc { color: var(--danger); }
 .weekly-insights .wi-strong .wi-acc { color: var(--primary); }
 
+/* ============================================================
+   ⚡ 특성 (Perks) — Cyberpunk 스타일 카드 + 자동 잠금해제 배너
+   ============================================================ */
+.perk-count {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 3px 10px;
+    background: var(--primary-soft);
+    color: var(--primary-dark);
+    border-radius: var(--radius-pill);
+    font-size: 13px;
+    font-weight: 700;
+}
+.perk-category {
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin: 18px 0 8px;
+}
+.perk-grid {
+    display: grid;
+    gap: 10px;
+    grid-template-columns: 1fr;
+}
+@media (min-width: 480px) {
+    .perk-grid { grid-template-columns: 1fr 1fr; }
+}
+.perk-card {
+    display: flex;
+    align-items: stretch;
+    gap: 12px;
+    padding: 14px 16px;
+    background: var(--card);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+    transition: transform .22s var(--ease-spring), box-shadow .25s, border-color .2s;
+    position: relative;
+    overflow: hidden;
+}
+.perk-card.unlocked {
+    border-color: var(--primary);
+    background: linear-gradient(135deg, var(--card) 0%, var(--primary-soft) 200%);
+    box-shadow: var(--inset-light), var(--glow-sage);
+}
+.perk-card.unlocked::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; bottom: 0;
+    width: 3px;
+    background: var(--gradient-primary);
+}
+.perk-card.locked { opacity: 0.72; }
+.perk-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+.perk-card .perk-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    background: var(--softer);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    flex-shrink: 0;
+    box-shadow: var(--inset-light), var(--shadow-sm);
+    filter: grayscale(0.5);
+    transition: filter .3s, transform .3s var(--ease-spring);
+}
+.perk-card.unlocked .perk-icon {
+    background: linear-gradient(135deg, var(--primary-soft), var(--card));
+    filter: grayscale(0) drop-shadow(0 2px 6px rgba(127, 168, 129, 0.3));
+}
+.perk-card:hover .perk-icon { transform: scale(1.08) rotate(-3deg); }
+.perk-card .perk-body { flex: 1; min-width: 0; }
+.perk-card .perk-name {
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--text);
+    letter-spacing: -0.01em;
+    margin-bottom: 3px;
+}
+.perk-card.locked .perk-name { color: var(--muted); }
+.perk-card .perk-desc {
+    font-size: 12px;
+    line-height: 1.45;
+    color: var(--muted);
+    margin-bottom: 8px;
+}
+.perk-card .perk-status.active {
+    display: inline-block;
+    padding: 2px 9px;
+    background: var(--primary);
+    color: #fff;
+    border-radius: var(--radius-pill);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+}
+.perk-card .perk-progress {
+    width: 100%;
+    height: 5px;
+    background: var(--softer);
+    border-radius: var(--radius-pill);
+    overflow: hidden;
+    box-shadow: var(--shadow-press);
+    margin-bottom: 4px;
+}
+.perk-card .perk-progress-fill {
+    height: 100%;
+    background: var(--gradient-primary);
+    border-radius: var(--radius-pill);
+    transition: width .5s var(--ease-out);
+}
+.perk-card .perk-progress-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+}
+
+/* 특성 잠금해제 배너 — 중앙 폭발 + 사이버펑크 톤 */
+.perk-unlock-banner {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 9999;
+    background: linear-gradient(135deg, #1e2330 0%, #2a3340 100%);
+    color: #fff;
+    padding: 28px 36px;
+    border-radius: var(--radius-lg);
+    text-align: center;
+    max-width: 340px;
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--primary) 60%, transparent);
+    box-shadow:
+        0 0 0 1px rgba(127, 168, 129, 0.6) inset,
+        0 0 40px rgba(127, 168, 129, 0.4),
+        0 30px 80px -10px rgba(0,0,0,0.6);
+    animation: perkPop 600ms var(--ease-spring), perkFloat 3.2s ease-out forwards;
+    animation-delay: 0s, 0.7s;
+}
+@supports not (background: color-mix(in srgb, white, black)) {
+    .perk-unlock-banner { border-color: var(--primary); }
+}
+.perk-unlock-banner::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(circle at top right, rgba(127, 168, 129, 0.2) 0%, transparent 60%),
+        radial-gradient(circle at bottom left, rgba(201, 162, 91, 0.15) 0%, transparent 60%);
+    pointer-events: none;
+}
+.perk-unlock-banner::after {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--primary), transparent);
+    box-shadow: 0 0 8px var(--primary);
+}
+.perk-unlock-banner .perk-unlock-emoji {
+    font-size: 52px;
+    line-height: 1;
+    margin-bottom: 10px;
+    filter: drop-shadow(0 4px 14px rgba(127, 168, 129, 0.7));
+    animation: perkEmojiSpin 1.2s var(--ease-spring) infinite alternate;
+}
+.perk-unlock-banner .perk-unlock-tag {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    color: var(--primary);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+}
+.perk-unlock-banner .perk-unlock-name {
+    font-size: 22px;
+    font-weight: 800;
+    margin-bottom: 6px;
+    letter-spacing: -0.02em;
+}
+.perk-unlock-banner .perk-unlock-desc {
+    font-size: 13px;
+    line-height: 1.45;
+    color: #cbd5e1;
+    opacity: 0.9;
+}
+@keyframes perkPop {
+    0%   { transform: translate(-50%, -50%) scale(0.5) rotate(-5deg); opacity: 0; }
+    60%  { transform: translate(-50%, -50%) scale(1.06) rotate(2deg); }
+    100% { transform: translate(-50%, -50%) scale(1) rotate(0); opacity: 1; }
+}
+@keyframes perkEmojiSpin {
+    0%   { transform: scale(1) rotate(-4deg); }
+    100% { transform: scale(1.08) rotate(4deg); }
+}
+@keyframes perkFloat {
+    to { transform: translate(-50%, -160%); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .perk-unlock-banner .perk-unlock-emoji { animation: none; }
+}
+
 /* 빈 상태 카드 — 세이지 뉴모픽 일러스트 + 한 줄 안내 */
 .empty-state {
     text-align: center;
