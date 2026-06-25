@@ -2142,6 +2142,7 @@ function recentlyUsed(baseId) { return gameState.recentIds.includes(baseId); }
 
 function updateStats() {
     const shownHp = clamp(gameState.hp, 0, 100);
+    const prevRep = updateStats._prevRep;
     UI.hp.textContent = shownHp;
     UI.rep.textContent = gameState.rep;
     UI.hp.style.color = shownHp < 30 ? "var(--danger)" : shownHp < 60 ? "var(--warning)" : "var(--success)";
@@ -2161,6 +2162,12 @@ function updateStats() {
         const repPct = clamp(Math.round(((gameState.rep + 60) / 180) * 100), 0, 100);
         repFill.style.width = `${repPct}%`;
     }
+    // 평판 상승 시 별 bump 트리거 (감소시는 X)
+    if (repGauge && Number.isFinite(prevRep) && gameState.rep > prevRep) {
+        repGauge.classList.add("bump");
+        setTimeout(() => { try { repGauge.classList.remove("bump"); } catch {} }, 700);
+    }
+    updateStats._prevRep = gameState.rep;
 
     let value = 0, total = 1, label = "진행도";
     if (gameState.mode === "survival") { value = gameState.eventCount; total = MAX_PROGRESS_EVENTS; label = "듀티 진행도"; }

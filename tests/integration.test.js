@@ -1119,16 +1119,18 @@ describe("P1 — 디자인 폴리시 (빈 상태 / 단계 진행 / fade-in / 콤
         expect(css).toMatch(/@keyframes\s+sceneFadeIn/);
     });
 
-    test("콤보 burst 애니메이션은 scale 1.05 + 글로우 없음 (sage 톤다운)", () => {
+    test("콤보 burst 애니메이션은 절제된 sage 톤 (네온 글로우 없음)", () => {
         const fs = require("fs");
         const path = require("path");
         const css = fs.readFileSync(path.join(__dirname, "..", "styles.css"), "utf-8");
-        // keyframe 의 50% scale 이 1.05 여야 함 (이전 1.12 톤다운)
-        const m = css.match(/@keyframes\s+comboBurst\s*\{[\s\S]*?50%\s*\{\s*transform:\s*scale\(([\d.]+)\)/);
+        // comboBurst keyframe 존재 + 최대 scale 1.2 이하 (네온 폭발 방지)
+        const m = css.match(/@keyframes\s+comboBurst\s*\{[\s\S]*?\}/);
         expect(m).not.toBeNull();
-        expect(parseFloat(m[1])).toBeLessThanOrEqual(1.06);
-        // box-shadow rgba 가 sage(127,168,129) 톤이어야 함 (orange 245,158,11 → sage 톤다운)
-        expect(css).toMatch(/rgba\(127,\s*168,\s*129/);
+        const scales = (m[0].match(/scale\(([\d.]+)\)/g) || []).map(s => parseFloat(s.match(/[\d.]+/)[0]));
+        expect(scales.length).toBeGreaterThan(0);
+        expect(Math.max(...scales)).toBeLessThanOrEqual(1.2);
+        // 그림자에 sage 톤 (combo 배지 자체) — 글로우는 sage 색만 허용
+        expect(css).toMatch(/rgba\(127,\s*168,\s*129|rgba\(201,\s*162,\s*91/);
         // 더이상 orange/amber rgba(245,158,11) 톤이 .badge.combo 에 사용되지 않음
         const badgeBlock = css.match(/\.badge\.combo\s*\{[\s\S]*?\n\}/);
         expect(badgeBlock).not.toBeNull();

@@ -127,19 +127,37 @@ body {
 .back-btn:hover { box-shadow: var(--shadow-md); transform: translateX(-2px); }
 .back-btn:hover svg { transform: translateX(-1px); }
 .back-btn:active { box-shadow: var(--shadow-press); transform: translateX(0) scale(0.95); }
-.stat-gauge.hp::before {
-    content: "HP";
-    font-size: 10px;
-    font-weight: 800;
-    color: var(--danger);
-    letter-spacing: 0.04em;
+.stat-gauge .sg-icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    transition: transform 0.3s var(--ease-spring), color 0.3s;
 }
-.stat-gauge.rep::before {
-    content: "REP";
-    font-size: 10px;
-    font-weight: 800;
-    color: var(--warning);
-    letter-spacing: 0.04em;
+.stat-gauge.hp .sg-icon { color: var(--danger); }
+.stat-gauge.rep .sg-icon { color: var(--warning); }
+/* 위험할 때 하트 펄스 */
+.stat-gauge.hp[data-level="lo"] .sg-icon {
+    animation: heartPulse 0.9s ease-in-out infinite;
+}
+.stat-gauge.hp[data-level="mid"] .sg-icon {
+    animation: heartPulse 1.6s ease-in-out infinite;
+}
+@keyframes heartPulse {
+    0%, 100% { transform: scale(1); }
+    50%      { transform: scale(1.18); }
+}
+/* REP 별 — 점수 올라가면 짧은 회전 (JS 클래스로 트리거) */
+.stat-gauge.rep.bump .sg-icon {
+    animation: starBump 0.6s var(--ease-spring);
+}
+@keyframes starBump {
+    0%   { transform: rotate(0) scale(1); }
+    40%  { transform: rotate(-15deg) scale(1.25); }
+    70%  { transform: rotate(8deg) scale(1.1); }
+    100% { transform: rotate(0) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .stat-gauge .sg-icon { animation: none !important; }
 }
 
 #top-bar .top-actions { display: flex; gap: 8px; }
@@ -1750,16 +1768,30 @@ body {
    ============================================================ */
 .stat-gauge {
     display: inline-flex; align-items: center; gap: 8px;
-    font-size: 13px; font-weight: 700;
-    padding: 6px 12px 6px 10px;
+    font-size: 14px; font-weight: 800;
+    padding: 7px 14px 7px 12px;
     background: var(--card);
     border-radius: var(--radius-pill);
     box-shadow:
         var(--inset-light),
         var(--shadow-sm);
+    border: 1px solid transparent;
+    transition: border-color .25s, box-shadow .25s;
+}
+.stat-gauge.hp[data-level="mid"] { border-color: color-mix(in srgb, var(--warning) 30%, transparent); }
+.stat-gauge.hp[data-level="lo"]  {
+    border-color: color-mix(in srgb, var(--danger) 50%, transparent);
+    box-shadow:
+        var(--inset-light),
+        var(--shadow-sm),
+        0 0 0 3px color-mix(in srgb, var(--danger) 14%, transparent);
+}
+@supports not (background: color-mix(in srgb, white, black)) {
+    .stat-gauge.hp[data-level="mid"] { border-color: rgba(201, 162, 91, 0.3); }
+    .stat-gauge.hp[data-level="lo"]  { border-color: rgba(201, 112, 112, 0.5); }
 }
 .stat-gauge .sg-bar {
-    width: 60px; height: 7px;
+    width: 64px; height: 7px;
     background: var(--soft);
     border-radius: var(--radius-pill);
     overflow: hidden;
@@ -1802,18 +1834,27 @@ body {
    콤보 뱃지 — 절제된 강조 (과한 shine/회전 제거)
    ============================================================ */
 .badge.combo {
-    background: var(--warning);
+    background: linear-gradient(135deg, var(--warning) 0%, #b88f4d 100%);
     color: #fff;
     font-size: 12px;
-    padding: 3px 10px;
-    box-shadow: 0 1px 3px rgba(127,168,129,.25);
+    font-weight: 800;
+    padding: 4px 12px;
+    box-shadow:
+        var(--inset-light-soft),
+        0 2px 8px -2px rgba(201, 162, 91, 0.45);
+    letter-spacing: -0.005em;
+}
+.badge.combo::before {
+    content: "🔥 ";
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.2));
 }
 .badge.combo.burst {
-    animation: comboBurst .25s var(--ease-out);
+    animation: comboBurst .42s var(--ease-spring);
 }
 @keyframes comboBurst {
     0%   { transform: scale(1); }
-    50%  { transform: scale(1.05); }
+    35%  { transform: scale(1.18) rotate(-3deg); }
+    70%  { transform: scale(1.06) rotate(2deg); }
     100% { transform: scale(1); }
 }
 
