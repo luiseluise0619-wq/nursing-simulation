@@ -1,16 +1,37 @@
 // =========================================================================
 // 간호사 시뮬레이터 — 메인 게임 로직
-// 의존: questions.js (window.NurseQuestions)
+// =========================================================================
+// 이 파일은 앱의 "두뇌". 모든 화면 렌더링·문제 출제·점수 계산·저장이 여기 있음.
+// HTML(index.html)이 화면 뼈대, CSS(styles.css)가 보이는 모양, JS(이 파일)가 동작.
+//
+// 의존 파일:
+//   - questions.js     : 38개 문제 생성기 (window.NurseQuestions = NQ)
+//   - content.js       : 시나리오 / 에피소드 / 인계 / 트리아지 (window.NurseContent = NC)
+//   - kor-content.js   : 한국 국시 정적 320문제 (window.KOR_QUESTIONS)
+//   - nclex-content.js : NCLEX 2,200문제 (지연 로드, 2MB)
+//   - i18n.js          : 4언어 번역 (window.I18N)
+//   - images/image-map.js : 임상 이미지 매핑 (ECG·X-ray 등)
+//
+// 동작 흐름:
+//   1. index.html 로드 → DOM 준비
+//   2. script.js 마지막에 initApp() 실행 → 약관·온보딩 체크
+//   3. 통과하면 returnToMenu() → 메인 메뉴 렌더
+//   4. 사용자가 카드 누르면 data-action 이벤트 위임 → DELEGATED_ACTIONS 핸들러 호출
+//   5. 각 모드 렌더 함수 (initSurvival, startMockExam, ...) → UI.gameArea.innerHTML 갱신
+//
+// 데이터 저장: localStorage 키 "nurseSim:v1" (Storage.load / Storage.save).
+//             모든 진행도·설정·오답·북마크가 여기 들어감. 서버 X.
 // =========================================================================
 
-const MAX_PROGRESS_EVENTS = 20;
-const MAX_LOG_ENTRIES = 50;
-const RECENT_HISTORY_SIZE = 50;
-const MOCK_EXAM_TOTAL = 30;
-const MOCK_EXAM_SECONDS = 30 * 60;
-const DAILY_CHALLENGE_TOTAL = 10;
-const STORAGE_KEY = "nurseSim:v1";
-const APP_VERSION = "1.1.0-beta";
+// 게임 진행에 쓰는 전역 상수
+const MAX_PROGRESS_EVENTS = 20;       // 한 듀티 = 20개 이벤트 (HP 0 안 되면)
+const MAX_LOG_ENTRIES = 50;           // 하단 로그 바 최대 표시 줄
+const RECENT_HISTORY_SIZE = 50;       // 안티중복: 최근 50개 문제 baseId 기억
+const MOCK_EXAM_TOTAL = 30;           // 모의고사 1회 = 30문제
+const MOCK_EXAM_SECONDS = 30 * 60;    // 모의고사 시간 = 30분 (= 1800초)
+const DAILY_CHALLENGE_TOTAL = 10;     // 일일 챌린지 = 10문제
+const STORAGE_KEY = "nurseSim:v1";    // localStorage 키 (v1 = 스키마 버전)
+const APP_VERSION = "1.1.0-beta";     // package.json 과 별개 표시 버전
 
 // 분석 (Plausible) — 익명·쿠키리스·GDPR/PIPA 준수.
 // 배포 도메인을 여기 1줄 입력하면 자동 활성화. 비워두면 완전 no-op (외부 호출 0).
