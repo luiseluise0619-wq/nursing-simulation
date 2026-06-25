@@ -4129,17 +4129,33 @@ function endDailyChallenge() {
     Storage.addHistory({ mode: "daily", at: Date.now(), total: DAILY_CHALLENGE_TOTAL, correct, date: todayKey() });
     const streak = Storage.bumpStreak(); // 연속 학습일 갱신
     checkAndNotifyAchievements();
+    // 콘페티 셀레브레이션 — 정답 7+ 일 때 (성취감)
+    if (correct >= 7) {
+        try { launchConfetti({ count: correct >= 9 ? 70 : 45 }); } catch {}
+    }
+    const accuracy = Math.round((correct / DAILY_CHALLENGE_TOTAL) * 100);
+    const grade = correct === 10 ? { tag: "PERFECT", emoji: "🏆", color: "warning" }
+                : correct >= 8  ? { tag: "EXCELLENT", emoji: "✨", color: "primary" }
+                : correct >= 6  ? { tag: "GOOD", emoji: "👍", color: "primary" }
+                : correct >= 4  ? { tag: "NICE TRY", emoji: "💪", color: "muted" }
+                                : { tag: "KEEP GOING", emoji: "📚", color: "muted" };
     const streakMsg = streak.count >= 2
         ? `🔥 ${streak.count}일 연속 학습 중! (최고 ${streak.best}일)`
         : `🔥 연속 학습 시작! 내일 또 오면 2일째.`;
     UI.gameArea.innerHTML = `
-      <div class="scene-card card">
-        
-        <h2 class="scene-title">일일 챌린지 완료</h2>
-        <p class="scene-desc">정답 ${correct}/${DAILY_CHALLENGE_TOTAL}\n${streakMsg}</p>
+      <div class="scene-card card daily-end-card">
+        <div class="daily-end-hero">
+          <div class="dh-emoji" aria-hidden="true">${grade.emoji}</div>
+          <div class="dh-tag dh-tag-${grade.color}">${grade.tag}</div>
+          <div class="dh-score"><span class="dh-correct">${correct}</span><span class="dh-slash">/</span><span class="dh-total">${DAILY_CHALLENGE_TOTAL}</span></div>
+          <div class="dh-acc">정답률 ${accuracy}%</div>
+        </div>
+        <div class="daily-end-streak">${streakMsg}</div>
+        <h2 class="scene-title" style="text-align:center; margin:18px 0 6px;">일일 챌린지 완료</h2>
+        <p class="scene-desc" style="text-align:center;">오늘 학습 끝 — 내일 또 만나요.</p>
         <div class="choice-list">
-          <button class="choice-btn" data-action="shareResultCard" data-mode="daily" data-title="일일 챌린지 ${correct}/${DAILY_CHALLENGE_TOTAL} · ${streak.count}일 연속" data-lines="${todayKey()}|정답 ${correct} 문제|🔥 ${streak.count}일 연속">결과 카드 다운로드</button>
           <button class="choice-btn primary" data-action="returnToMenu">메뉴로</button>
+          <button class="choice-btn" data-action="shareResultCard" data-mode="daily" data-title="일일 챌린지 ${correct}/${DAILY_CHALLENGE_TOTAL} · ${streak.count}일 연속" data-lines="${todayKey()}|정답 ${correct} 문제 · ${accuracy}%|🔥 ${streak.count}일 연속">결과 카드 공유</button>
         </div>
       </div>`;
 }

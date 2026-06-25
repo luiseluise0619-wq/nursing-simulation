@@ -1906,8 +1906,9 @@ describe("P2 — AdMob 어댑터 (Capacitor 호환)", () => {
         const stored = JSON.parse(localStorage.getItem("nurseSim:v1") || "{}");
         expect(stored.streak).toBeDefined();
         expect(stored.streak.count).toBe(1);
-        // 완료 화면에 연속 학습 메시지
-        expect(document.querySelector(".scene-desc").textContent).toMatch(/연속 학습|🔥/);
+        // 완료 화면에 연속 학습 메시지 (.daily-end-streak 또는 .scene-desc 어디든)
+        const endCard = document.querySelector(".daily-end-card") || document.querySelector(".scene-card");
+        expect(endCard.textContent).toMatch(/연속 학습|🔥/);
         // 홈 탭에 streak 배너 (goto()가 학습 탭으로 이동시켰으니 홈 탭으로 복귀)
         document.querySelector('[data-action="returnToMenu"]').click();
         const homeTab = document.querySelector('[data-action="setMenuTab"][data-tab="home"]');

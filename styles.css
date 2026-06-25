@@ -1339,27 +1339,213 @@ button.countdown-card:active { transform: translateY(0); }
     width: 100%;
     height: 100%;
     background: var(--modal-bg);
-    -webkit-backdrop-filter: blur(8px);
-    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(14px) saturate(160%);
+    backdrop-filter: blur(14px) saturate(160%);
     color: #fff;
     display: none;
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
-    padding: 30px 20px;
+    padding: 32px 20px;
     box-sizing: border-box;
     overflow-y: auto;
     z-index: 1000;
 }
+#modal::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background:
+        radial-gradient(circle at top right, rgba(127, 168, 129, 0.18) 0%, transparent 60%),
+        radial-gradient(circle at bottom left, rgba(201, 162, 91, 0.12) 0%, transparent 60%);
+}
 #modal.active {
     display: flex;
-    animation: modalFadeIn .26s var(--ease-out);
+    animation: modalFadeIn .32s var(--ease-spring);
 }
 @keyframes modalFadeIn {
     from { opacity: 0; backdrop-filter: blur(0px); -webkit-backdrop-filter: blur(0px); }
     to   { opacity: 1; }
 }
-#modal-stats .highlight { font-weight: bold; color: var(--warning); }
+#modal > * { animation: modalContentIn .42s var(--ease-spring) backwards; }
+#modal-title { animation-delay: 0.05s; }
+#modal-desc { animation-delay: 0.1s; }
+#modal-stats { animation-delay: 0.15s; }
+@keyframes modalContentIn {
+    from { opacity: 0; transform: translateY(12px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+#modal-stats .highlight { font-weight: 800; color: var(--warning); }
+
+/* ============================================================
+   🍞 통합 토스트 — .app-toast (모든 알림형 UI 일관 스타일)
+   ============================================================ */
+.app-toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 99996;
+    background: var(--card);
+    color: var(--text);
+    padding: 12px 18px;
+    border-radius: var(--radius-md);
+    box-shadow:
+        var(--inset-light),
+        0 16px 40px -8px rgba(0,0,0,0.18),
+        var(--shadow-md);
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    max-width: calc(100vw - 32px);
+    border-left: 4px solid var(--primary);
+    animation: toastIn 380ms var(--ease-spring);
+}
+.app-toast.app-toast-primary {
+    background: var(--gradient-primary);
+    color: #fff;
+    border-left-color: rgba(255,255,255,0.3);
+}
+.app-toast.app-toast-warning {
+    border-left-color: var(--warning);
+}
+.app-toast.app-toast-danger {
+    border-left-color: var(--danger);
+}
+.app-toast .at-icon { font-size: 18px; }
+.app-toast .at-msg { flex: 1; line-height: 1.4; }
+.app-toast .at-btn {
+    background: rgba(255,255,255,0.95);
+    color: var(--primary-dark);
+    border: none;
+    padding: 7px 14px;
+    border-radius: var(--radius-pill);
+    font-weight: 800;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: transform 0.18s var(--ease-spring);
+}
+.app-toast .at-btn:hover { transform: scale(1.04); }
+.app-toast .at-btn-ghost {
+    background: transparent;
+    color: inherit;
+    opacity: 0.85;
+    font-weight: 600;
+}
+.app-toast.app-toast-leaving {
+    animation: toastOut 280ms var(--ease-out) forwards;
+}
+@keyframes toastIn {
+    0%   { opacity: 0; transform: translateX(-50%) translateY(20px); }
+    100% { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+@keyframes toastOut {
+    0%   { opacity: 1; transform: translateX(-50%) translateY(0); }
+    100% { opacity: 0; transform: translateX(-50%) translateY(20px); }
+}
+
+/* ============================================================
+   🎯 일일 챌린지 완료 카드 — 셀레브레이션 hero
+   ============================================================ */
+.daily-end-card {
+    text-align: center;
+    overflow: hidden;
+    position: relative;
+}
+.daily-end-card .daily-end-hero {
+    padding: 28px 18px 22px;
+    background: linear-gradient(135deg, var(--softer) 0%, var(--card) 100%);
+    border-radius: var(--radius-lg);
+    margin: -8px -8px 16px;
+    border: 1px solid var(--primary-soft);
+    box-shadow: var(--inset-light);
+    position: relative;
+}
+.daily-end-card .daily-end-hero::before {
+    content: "";
+    position: absolute;
+    top: -40px;
+    right: -40px;
+    width: 120px;
+    height: 120px;
+    background: radial-gradient(circle, color-mix(in srgb, var(--primary) 22%, transparent) 0%, transparent 65%);
+    pointer-events: none;
+}
+@supports not (background: color-mix(in srgb, white, black)) {
+    .daily-end-card .daily-end-hero::before { display: none; }
+}
+.daily-end-card .dh-emoji {
+    font-size: 64px;
+    line-height: 1;
+    margin-bottom: 8px;
+    filter: drop-shadow(0 6px 14px rgba(0,0,0,0.18));
+    animation: dailyEmojiPop 0.8s var(--ease-spring), dailyEmojiBob 2.4s ease-in-out 0.8s infinite;
+}
+.daily-end-card .dh-tag {
+    display: inline-block;
+    padding: 4px 14px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    margin-bottom: 12px;
+}
+.daily-end-card .dh-tag-warning {
+    background: linear-gradient(135deg, var(--warning) 0%, #b88f4d 100%);
+    color: #fff;
+    box-shadow: 0 4px 12px -2px rgba(201, 162, 91, 0.5);
+}
+.daily-end-card .dh-tag-primary {
+    background: var(--gradient-primary);
+    color: #fff;
+    box-shadow: 0 4px 12px -2px rgba(127, 168, 129, 0.5);
+}
+.daily-end-card .dh-tag-muted {
+    background: var(--soft);
+    color: var(--muted);
+}
+.daily-end-card .dh-score {
+    font-size: 56px;
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    line-height: 1;
+    margin-bottom: 6px;
+    color: var(--text);
+}
+.daily-end-card .dh-correct { color: var(--primary-dark); }
+.daily-end-card .dh-slash { color: var(--muted); margin: 0 4px; font-weight: 400; }
+.daily-end-card .dh-total { color: var(--muted); font-size: 36px; }
+.daily-end-card .dh-acc {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--muted);
+}
+.daily-end-card .daily-end-streak {
+    text-align: center;
+    padding: 12px 16px;
+    background: var(--primary-soft);
+    color: var(--primary-dark);
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 700;
+}
+@keyframes dailyEmojiPop {
+    0%   { transform: scale(0) rotate(-20deg); opacity: 0; }
+    60%  { transform: scale(1.18) rotate(8deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0); }
+}
+@keyframes dailyEmojiBob {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-6px); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .daily-end-card .dh-emoji { animation: none; }
+}
 
 .feedback-box {
     padding: 18px 20px;
@@ -2199,17 +2385,24 @@ img.onboard-svg { display: block; }
     display: flex;
     justify-content: center;
     gap: 8px;
-    margin: 12px 0 16px;
+    margin: 16px 0 20px;
 }
 .onboard-dot {
     width: 8px; height: 8px;
     border-radius: 50%;
-    background: var(--border);
-    transition: background .2s, transform .2s;
+    background: var(--soft);
+    transition: width .35s var(--ease-spring), background .25s, transform .25s, box-shadow .25s;
 }
 .onboard-dot.active {
-    background: var(--primary);
-    transform: scale(1.3);
+    background: var(--gradient-primary);
+    width: 28px;
+    border-radius: 999px;
+    box-shadow:
+        var(--inset-light),
+        0 2px 6px -2px color-mix(in srgb, var(--primary) 60%, transparent);
+}
+@supports not (background: color-mix(in srgb, white, black)) {
+    .onboard-dot.active { box-shadow: var(--inset-light), 0 2px 6px -2px var(--primary); }
 }
 
 .menu-footer {
