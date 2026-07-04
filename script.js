@@ -61,6 +61,30 @@ const CATEGORIES = [
     "지역사회간호학", "정신간호학", "간호관리학", "보건의약관계법규"
 ];
 
+// 한국 간호사 국가시험(KNLE) 실제 출제 blueprint (총 295문항 비율)
+// 성인 70 / 모성·아동·지역·정신·관리 각 35 / 기본 30 / 법규 20
+// 모의고사가 실제 시험의 과목 분포를 재현하도록 가중 샘플링에 사용.
+const KNLE_BLUEPRINT = [
+    { category: "성인간호학", weight: 70 },
+    { category: "모성간호학", weight: 35 },
+    { category: "아동간호학", weight: 35 },
+    { category: "지역사회간호학", weight: 35 },
+    { category: "정신간호학", weight: 35 },
+    { category: "간호관리학", weight: 35 },
+    { category: "기본간호학", weight: 30 },
+    { category: "보건의약관계법규", weight: 20 },
+];
+// blueprint 가중치에 따라 카테고리 1개 선택 (모의고사 문항 추출용)
+function pickBlueprintCategory() {
+    const total = KNLE_BLUEPRINT.reduce((s, b) => s + b.weight, 0);
+    let r = Math.random() * total;
+    for (const b of KNLE_BLUEPRINT) {
+        r -= b.weight;
+        if (r <= 0) return b.category;
+    }
+    return KNLE_BLUEPRINT[0].category;
+}
+
 const NQ = (typeof window !== "undefined" && window.NurseQuestions)
     || (typeof require !== "undefined" ? require("./questions.js") : null);
 const NC = (typeof window !== "undefined" && window.NurseContent)
@@ -3969,7 +3993,10 @@ function startMockExam() {
     renderNextMockQuestion();
 }
 function renderNextMockQuestion() {
-    const ev = generateClinicalEventByCategory(null);
+    // 실제 국시 과목 분포(blueprint)로 카테고리 가중 추출 → 균등 랜덤보다 시험 재현도 ↑
+    // 해당 카테고리 문제가 없으면(fallback) 전체 랜덤으로 안전 복귀.
+    const cat = pickBlueprintCategory();
+    const ev = generateClinicalEventByCategory(cat) || generateClinicalEventByCategory(null);
     gameState._lastMockEv = ev;
     renderSceneCard(ev, {
         mode: "mock",
