@@ -7744,13 +7744,13 @@ function showBadgeUnlockBanner(badge) {
 /** Confetti 셀레브레이션 — 배지 획득·완벽 세트 시
  * 외부 라이브러리 없음, CSS + DOM 직접
  */
-function launchConfetti() {
+function launchConfetti(opts = {}) {
     if (document.getElementById("confetti-layer")) return;
     const layer = document.createElement("div");
     layer.id = "confetti-layer";
     layer.style.cssText = "position:fixed;inset:0;pointer-events:none;z-index:99997;overflow:hidden;";
     const colors = ["#7fa881", "#aacaa9", "#c9a25b", "#d99494", "#9aa5b8", "#7fa881"];
-    const count = 60;
+    const count = Number.isFinite(opts.count) ? clamp(opts.count, 10, 120) : 60;
     for (let i = 0; i < count; i++) {
         const piece = document.createElement("div");
         const size = 6 + Math.random() * 8;
