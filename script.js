@@ -2114,14 +2114,15 @@ function toggleSound() {
 // 언어 순환 전환 (한국어 → English → Filipino → Español → 한국어)
 function toggleLang() {
     if (typeof window === "undefined" || !window.I18N) return;
-    const ORDER = ["ko", "en", "fil", "es"];
+    // UI 셸이 완전 번역된 언어만 순환 (ko ↔ en). NCLEX 문제는 en 모드에서 영어 노출.
+    const ORDER = ["ko", "en"];
     const cur = window.I18N.getLang();
     const idx = ORDER.indexOf(cur);
     const next = ORDER[(idx + 1) % ORDER.length];
     window.I18N.setLang(next);
     Storage.setSettings({ lang: next });
     document.documentElement.lang = next;
-    const LABELS = { ko: "🇰🇷 한국어", en: "🇺🇸 English", fil: "🇵🇭 Filipino", es: "🇪🇸 Español" };
+    const LABELS = { ko: "🇰🇷 한국어", en: "🇺🇸 English" };
     addLog("🌐 " + LABELS[next], "log-good");
     try { returnToMenu(); } catch {}
 }

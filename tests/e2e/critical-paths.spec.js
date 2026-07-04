@@ -145,16 +145,14 @@ test.describe("케밥 메뉴 (UX)", () => {
         await expect(menu.locator('[data-action="openSettings"]')).toBeVisible();
     });
 
-    test("언어 토글 → 영어로 변경 + 다시 한국어 복귀", async ({ page }) => {
+    test("언어 토글 → 영어로 변경 + 다시 한국어 복귀 (ko ↔ en 2개 순환)", async ({ page }) => {
         await page.click("#kebab-btn");
         await page.click('[data-action="toggleLang"]');
         // 영어 라벨 일부 노출 확인 (학습 탭)
         await page.click('[data-action="setMenuTab"][data-tab="study"]');
         await expect(page.locator(".row-title").first()).toContainText("Practice");
-        // 다시 한국어로
+        // 다시 한국어로 (2개 순환이므로 1번 더 토글)
         await page.click("#kebab-btn");
-        await page.click('[data-action="toggleLang"]');
-        await page.click('[data-action="toggleLang"]');
         await page.click('[data-action="toggleLang"]');
         await page.click('[data-action="setMenuTab"][data-tab="study"]');
         await expect(page.locator(".row-title").first()).toContainText("풀이");

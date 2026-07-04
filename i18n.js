@@ -182,7 +182,9 @@
     // 현재 언어 — Storage settings.lang 또는 NCLEX 모드 시 자동 en
     let _lang = "ko";
 
-    const SUPPORTED = ["ko", "en", "fil", "es"];
+    // 실제 노출 언어 — ko + en 만. UI 셸이 완전 번역된 언어만 SUPPORTED 에 둔다.
+    // (fil/es STRINGS 는 향후 UI 전면 번역 완료 시 재활성화 예정, 지금은 미노출 → 정직성)
+    const SUPPORTED = ["ko", "en"];
 
     function detectLang() {
         try {
@@ -195,12 +197,10 @@
                     }
                 }
             }
-            // 브라우저 기본 언어 — 4개 중 매칭
+            // 브라우저 기본 언어 — 지원 언어(ko/en) 중 매칭, 그 외 en 폴백 (NCLEX 영어권)
             const nav = ((typeof navigator !== "undefined" && navigator.language) || "ko").toLowerCase();
-            if (nav.startsWith("en")) return "en";
-            if (nav.startsWith("fil") || nav.startsWith("tl")) return "fil";
-            if (nav.startsWith("es")) return "es";
-            return "ko";
+            if (nav.startsWith("ko")) return "ko";
+            return "en";
         } catch { return "ko"; }
     }
 
