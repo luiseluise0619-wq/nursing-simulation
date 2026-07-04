@@ -28,3 +28,7 @@ ios/
 
 # 단일 미리보기 빌드 (build:preview)
 preview.html
+
+# Playwright 산출물
+test-results/
+playwright-report/
