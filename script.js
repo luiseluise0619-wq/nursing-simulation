@@ -2183,7 +2183,7 @@ function updateStats() {
     if (hpGauge) hpGauge.dataset.level = shownHp > 60 ? "hi" : shownHp > 30 ? "mid" : "lo";
 
     // 게임 모드에서만 HP/REP 표시 — 메뉴/통계/설정에선 숨김 (잡스 모드: 컨텍스트 없는 정보 제거)
-    const isGameMode = ["survival", "episode", "scenario", "quiz", "mock", "daily", "wrong_review", "handoff", "triage", "image_quiz", "drug_drill", "nclex"].includes(gameState.mode);
+    const isGameMode = ["survival", "episode", "scenario", "quiz", "mock", "daily", "wrong_review", "handoff", "handoff_write", "triage", "image_quiz", "drug_drill", "nclex"].includes(gameState.mode);
     if (hpGauge) hpGauge.classList.toggle("hidden", !isGameMode);
     const repGauge = document.getElementById("rep-gauge");
     if (repGauge) repGauge.classList.toggle("hidden", !isGameMode);
@@ -2207,6 +2207,7 @@ function updateStats() {
     else if (gameState.mode === "daily") { value = gameState.dailySolved; total = DAILY_CHALLENGE_TOTAL; label = "일일 챌린지"; }
     else if (gameState.mode === "wrong_review") { value = gameState.quizSolved; total = Math.max(gameState.wrongQueue.length, 1); label = "오답노트"; }
     else if (gameState.mode === "handoff") { value = gameState.handoffIndex; total = NC.HANDOFF_PATIENTS.length; label = "인계 시뮬레이터"; }
+    else if (gameState.mode === "handoff_write") { value = gameState.handoffIndex; total = gameState.handoffPool ? gameState.handoffPool.length : HANDOFF_SESSION_SIZE; label = "인계 작성 실습"; }
     else if (gameState.mode === "triage") { value = gameState.triageIndex; total = NC.TRIAGE_CASES.length; label = "트리아지"; }
     else if (gameState.mode === "scenario") {
         const s = NC.SCENARIOS.find(x => x.id === gameState.scenarioId);
@@ -3204,7 +3205,12 @@ function renderDrillMenu() {
         </button>
         <button class="row-card" data-action="startHandoff">
           <div class="row-icon">${ICONS.handoff}</div>
-          <div class="row-body"><div class="row-title">인계 시뮬</div><div class="row-sub">100명 풀 셔플</div></div>
+          <div class="row-body"><div class="row-title">인계 듣기</div><div class="row-sub">음성 인계 듣고 핵심 키워드 회상</div></div>
+          <div class="row-chev">›</div>
+        </button>
+        <button class="row-card" data-action="startHandoffWrite">
+          <div class="row-icon">${ICONS.handoff}</div>
+          <div class="row-body"><div class="row-title">인계 작성 실습 (SBAR)</div><div class="row-sub">케이스 보고 직접 SBAR 인계문 작성</div></div>
           <div class="row-chev">›</div>
         </button>
         <button class="row-card" data-action="startTriage">
@@ -4431,6 +4437,130 @@ function endHandoff() {
         <p class="scene-desc">키워드 정확도: ${correct}/${total} (${acc}%)</p>
         <div class="choice-list">
           <button class="choice-btn primary" data-action="startHandoff">다시 시작</button>
+          <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
+        </div>
+      </div>`;
+}
+
+// =========================================================================
+// 인계 작성 실습 (SBAR) — 케이스를 보고 직접 인계문을 SBAR 4항목으로 작성
+// 기존 인계(듣고 회상)와 반대: 정보를 스스로 구조화하는 능동적 훈련.
+// 데이터는 HANDOFF_PATIENTS 재활용 (title=환자, hint=담을 항목, keywords=채점, narration=모범답안)
+// =========================================================================
+const SBAR_FIELDS = [
+    { key: "s", label: "S — Situation (상황)", ph: "지금 이 환자의 현재 상황·주호소를 한두 문장으로" },
+    { key: "b", label: "B — Background (배경)", ph: "진단명·입원 경위·관련 병력·투약" },
+    { key: "a", label: "A — Assessment (사정)", ph: "현재 V/S·검사 수치·간호사 판단" },
+    { key: "r", label: "R — Recommendation (권고)", ph: "다음 근무자가 관찰·조치·보고할 기준" },
+];
+
+function startHandoffWrite() {
+    resetStateForMode();
+    gameState.mode = "handoff_write";
+    gameState.handoffPool = pickHandoffSession(HANDOFF_SESSION_SIZE);
+    showCoreUI(); UI.logBar.innerHTML = "";
+    addLog(`인계 작성 실습 — 케이스를 보고 SBAR 형식으로 직접 인계문을 작성하세요.`, "log-important");
+    renderHandoffWrite();
+}
+
+function renderHandoffWrite() {
+    if (gameState.handoffIndex >= gameState.handoffPool.length) { endHandoffWrite(); return; }
+    const id = gameState.handoffPool[gameState.handoffIndex];
+    const p = NC.HANDOFF_PATIENTS.find(x => x.id === id);
+    if (!p) { endHandoffWrite(); return; }
+    Storage.addHandoffSeen(id);
+    // 담을 항목 체크리스트 (hint 를 · 기준으로 분해)
+    const checklist = String(p.hint || "").split(/·|,/).map(s => s.trim()).filter(Boolean);
+    const checklistHtml = checklist.length
+        ? `<ul class="sbar-checklist">${checklist.map(c => `<li>${escapeHtml(c)}</li>`).join("")}</ul>`
+        : "";
+    const fields = SBAR_FIELDS.map(f => `
+        <label class="sbar-field">
+          <span class="sbar-field-label">${escapeHtml(f.label)}</span>
+          <textarea id="sbar-${f.key}" class="sbar-textarea" rows="2" placeholder="${escapeHtml(f.ph)}" aria-label="${escapeHtml(f.label)}"></textarea>
+        </label>`).join("");
+    UI.gameArea.innerHTML = `
+      <div class="scene-card card">
+        <div class="handoff-header">
+          ${renderPatientAvatar(p.id, p.title, { cls: "handoff-avatar" })}
+          <h2 class="scene-title">[작성 ${gameState.handoffIndex + 1}/${gameState.handoffPool.length}] ${escapeHtml(p.title)}</h2>
+        </div>
+        <p class="scene-desc">이 환자를 다음 근무자에게 <strong>SBAR</strong> 형식으로 인계하세요. 아래 항목을 빠짐없이 담으면 좋아요.</p>
+        ${checklistHtml ? `<div class="sbar-hint-box"><div class="sbar-hint-title">📋 인계에 담을 핵심</div>${checklistHtml}</div>` : ""}
+        <div class="sbar-form">${fields}</div>
+        <div class="choice-list">
+          <button class="choice-btn primary" data-action="handoffWriteSubmit">제출 · 채점</button>
+          <button class="choice-btn" data-action="returnToMenu">메뉴로</button>
+        </div>
+        <div id="handoff-write-feedback" aria-live="polite"></div>
+      </div>`;
+    updateStats();
+}
+
+function handoffWriteSubmit() {
+    const id = gameState.handoffPool && gameState.handoffPool[gameState.handoffIndex];
+    const p = id ? NC.HANDOFF_PATIENTS.find(x => x.id === id) : null;
+    if (!p) return;
+    // SBAR 4칸 합산 → 토큰화
+    const combined = SBAR_FIELDS.map(f => {
+        const el = document.getElementById(`sbar-${f.key}`);
+        return el ? el.value : "";
+    }).join(" ");
+    const tokens = combined.split(/[\s,·•。、]+/).map(normalizeKeyword).filter(Boolean);
+    const filledFields = SBAR_FIELDS.filter(f => {
+        const el = document.getElementById(`sbar-${f.key}`);
+        return el && el.value.trim().length > 0;
+    }).length;
+    const hits = [], misses = [];
+    p.keywords.forEach(k => {
+        const n = normalizeKeyword(k);
+        const found = tokens.some(t => t.includes(n) || n.includes(t));
+        if (found) hits.push(k); else misses.push(k);
+    });
+    // 구조 보너스 — SBAR 4칸 모두 작성 시 가점 개념 (표시용)
+    const structureScore = Math.round((filledFields / SBAR_FIELDS.length) * 100);
+    gameState.handoffCorrect += hits.length;
+    gameState.handoffTotal += p.keywords.length;
+    const allHit = hits.length === p.keywords.length;
+    const fb = document.getElementById("handoff-write-feedback");
+    fb.innerHTML = "";
+    const box = document.createElement("div");
+    box.className = `feedback-box ${allHit ? "correct" : "wrong"}`;
+    box.innerHTML = `
+      <div style="font-weight:800;">${hits.length}/${p.keywords.length} 핵심 요소 포함 · SBAR 구조 ${structureScore}%</div>
+      <div style="font-weight:normal;margin-top:8px;white-space:pre-wrap;">✅ 포함: ${escapeHtml(hits.join(", ") || "(없음)")}
+❌ 놓침: ${escapeHtml(misses.join(", ") || "(없음)")}</div>
+      <div class="sbar-model">
+        <div class="sbar-model-title">📝 모범 인계 (SBAR 예시)</div>
+        <div class="sbar-model-text">${escapeHtml(p.narration)}</div>
+      </div>`;
+    fb.appendChild(box);
+    if (allHit && filledFields === SBAR_FIELDS.length) { bumpCombo(); Sound.correct(); }
+    else { resetCombo(); Sound.wrong(); }
+    const next = document.createElement("button");
+    next.className = "choice-btn primary center";
+    next.textContent = gameState.handoffIndex + 1 >= gameState.handoffPool.length ? "결과 보기" : "다음 케이스";
+    next.dataset.action = "handoffWriteNext";
+    fb.appendChild(next);
+    fb.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+function handoffWriteNext() {
+    gameState.handoffIndex += 1;
+    renderHandoffWrite();
+}
+
+function endHandoffWrite() {
+    const total = gameState.handoffTotal, correct = gameState.handoffCorrect;
+    const acc = total ? Math.round(correct / total * 100) : 0;
+    Storage.setHandoffBest(acc);
+    Storage.addHistory({ mode: "handoff_write", at: Date.now(), total, correct, accuracy: acc });
+    UI.gameArea.innerHTML = `
+      <div class="scene-card card">
+        <h2 class="scene-title">인계 작성 실습 완료</h2>
+        <p class="scene-desc">핵심 요소 포함도: ${correct}/${total} (${acc}%)\nSBAR로 스스로 인계문을 구성하는 훈련을 마쳤어요.</p>
+        <div class="choice-list">
+          <button class="choice-btn primary" data-action="startHandoffWrite">다시 시작</button>
           <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
         </div>
       </div>`;
@@ -7192,7 +7322,7 @@ function handleKeydown(e) {
     // Esc — 메뉴로 (접근성 — 사용자가 어디서든 안전하게 나감)
     if (e.key === "Escape") {
         const inGame = ["survival", "episode", "scenario", "quiz", "mock", "daily",
-            "wrong_review", "handoff", "triage", "image_quiz", "drug_drill",
+            "wrong_review", "handoff", "handoff_write", "triage", "image_quiz", "drug_drill",
             "nclex_quiz", "kor_quiz"].includes(gameState.mode);
         if (inGame) { returnToMenu(); e.preventDefault(); }
         return;
@@ -8244,6 +8374,9 @@ const DELEGATED_ACTIONS = {
     handoffShow: () => handoffShow(),
     handoffSubmit: () => handoffSubmit(),
     handoffNext: () => handoffNext(),
+    startHandoffWrite: () => startHandoffWrite(),
+    handoffWriteSubmit: () => handoffWriteSubmit(),
+    handoffWriteNext: () => handoffWriteNext(),
     startTriage: () => startTriage(),
     triagePick: (t) => triagePick(t),
     triageSubmit: () => triageSubmit(),

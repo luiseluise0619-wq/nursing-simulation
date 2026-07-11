@@ -155,6 +155,7 @@ function goto(action) {
         renderImageQuizMenu: ["renderDrillMenu"],
         renderDrugDrill: ["renderDrillMenu"],
         startHandoff: ["renderDrillMenu"],
+        startHandoffWrite: ["renderDrillMenu"],
         startTriage: ["renderDrillMenu"],
     };
     const path = STUDY_ROUTES[action];
@@ -462,6 +463,27 @@ describe("인계 시뮬레이터 (TTS)", () => {
         expect(title.textContent).toMatch(/인계 시뮬레이션 완료/);
         const stored = JSON.parse(localStorage.getItem("nurseSim:v1") || "{}");
         expect(typeof stored.handoffBest).toBe("number");
+    });
+
+    test("SBAR 인계 작성 실습 — 케이스 + 4칸 입력 노출, 채점 시 모범답안 공개", () => {
+        loadScript();
+        goto("startHandoffWrite");
+        // SBAR 4칸 + 제출 버튼
+        const fields = document.querySelectorAll(".sbar-textarea");
+        expect(fields.length).toBe(4);
+        expect(document.querySelector('[data-action="handoffWriteSubmit"]')).not.toBeNull();
+        // 현재 케이스 역추적 후 핵심 키워드를 S칸에 몰아 입력
+        const C = require("../content.js");
+        const titleEl = document.querySelector(".scene-title");
+        const shown = C.HANDOFF_PATIENTS.find(p => titleEl.textContent.includes(p.title));
+        expect(shown).toBeDefined();
+        document.getElementById("sbar-s").value = shown.keywords.join(" ");
+        document.querySelector('[data-action="handoffWriteSubmit"]').click();
+        const fb = document.getElementById("handoff-write-feedback");
+        expect(fb.textContent).toMatch(/핵심 요소/);
+        // 모범 인계(narration) 공개됨
+        expect(fb.querySelector(".sbar-model")).not.toBeNull();
+        expect(fb.textContent).toContain(shown.narration.slice(0, 10));
     });
 
     test("연속 세션에서 본 환자 ID는 다음 세션 풀에서 제외 (cycle)", () => {
