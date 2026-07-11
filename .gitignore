@@ -32,3 +32,6 @@ preview.html
 # Playwright 산출물
 test-results/
 playwright-report/
+
+# Claude Code 에이전트 worktree (격리 작업공간)
+.claude/
