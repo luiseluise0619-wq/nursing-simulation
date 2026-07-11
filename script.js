@@ -7,7 +7,7 @@
 // 의존 파일:
 //   - questions.js     : 38개 문제 생성기 (window.NurseQuestions = NQ)
 //   - content.js       : 시나리오 / 에피소드 / 인계 / 트리아지 (window.NurseContent = NC)
-//   - kor-content.js   : 한국 국시 정적 320문제 (window.KOR_QUESTIONS)
+//   - kor-content.js   : 한국 국시 정적 280문제 (법규 제외) (window.KOR_QUESTIONS)
 //   - nclex-content.js : NCLEX 2,200문제 (지연 로드, 2MB)
 //   - i18n.js          : 4언어 번역 (window.I18N)
 //   - images/image-map.js : 임상 이미지 매핑 (ECG·X-ray 등)
@@ -56,14 +56,16 @@ function track(event, props) {
     } catch { /* no-op */ }
 }
 
+// 보건의약관계법규 제외 — 법령 개정이 잦아 오래된 문항의 오정보 리스크 (v1.1 제거)
 const CATEGORIES = [
     "기본간호학", "성인간호학", "모성간호학", "아동간호학",
-    "지역사회간호학", "정신간호학", "간호관리학", "보건의약관계법규"
+    "지역사회간호학", "정신간호학", "간호관리학"
 ];
 
-// 한국 간호사 국가시험(KNLE) 실제 출제 blueprint (총 295문항 비율)
-// 성인 70 / 모성·아동·지역·정신·관리 각 35 / 기본 30 / 법규 20
-// 모의고사가 실제 시험의 과목 분포를 재현하도록 가중 샘플링에 사용.
+// 한국 간호사 국가시험(KNLE) 실제 출제 blueprint (법규 제외 비율)
+// 성인 70 / 모성·아동·지역·정신·관리 각 35 / 기본 30
+// 보건의약관계법규는 법령 개정 리스크로 앱에서 제외 → blueprint 에서도 뺌.
+// 모의고사가 (법규 외) 실제 시험의 과목 분포를 재현하도록 가중 샘플링에 사용.
 const KNLE_BLUEPRINT = [
     { category: "성인간호학", weight: 70 },
     { category: "모성간호학", weight: 35 },
@@ -72,7 +74,6 @@ const KNLE_BLUEPRINT = [
     { category: "정신간호학", weight: 35 },
     { category: "간호관리학", weight: 35 },
     { category: "기본간호학", weight: 30 },
-    { category: "보건의약관계법규", weight: 20 },
 ];
 // blueprint 가중치에 따라 카테고리 1개 선택 (모의고사 문항 추출용)
 function pickBlueprintCategory() {
@@ -3024,15 +3025,15 @@ function handleSurvivalChoice(choice) {
 function renderQuizMenu() {
     gameState.mode = "quiz_menu"; resetStateForMode();
     showCoreUI(); UI.logBar.innerHTML = "";
-    addLog("국가고시 8과목 트레이닝 모드입니다.", "log-important");
+    addLog("국가고시 7과목 트레이닝 모드입니다.", "log-important");
     updateStats();
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
-        <h2 class="scene-title">국가고시 8과목 트레이닝</h2>
+        <h2 class="scene-title">국가고시 7과목 트레이닝</h2>
         <p class="scene-desc">숫자와 상황이 계속 변하는 무한 랜덤 4지선다 문제를 제공합니다.\n트레이닝 모드에서는 체력이 감소하지 않습니다.</p>
         <h3 class="episode-group-label">🎲 전체 랜덤</h3>
         <div class="choice-list">
-          <button class="choice-btn primary" data-action="startQuiz" data-arg="__random__">🎲 8과목 통합 랜덤</button>
+          <button class="choice-btn primary" data-action="startQuiz" data-arg="__random__">🎲 7과목 통합 랜덤</button>
         </div>
         <h3 class="episode-group-label">📚 과목별</h3>
         <div class="choice-list">
@@ -3104,7 +3105,7 @@ function renderPracticeMenu() {
         ${nclexBtn}
         <button class="row-card" data-action="renderSubjectStudyMenu">
           <div class="row-icon">${ICONS.training}</div>
-          <div class="row-body"><div class="row-title">과목별 학습</div><div class="row-sub">국시 8과목 · 정식 5지선다 + 무한 변형</div></div>
+          <div class="row-body"><div class="row-title">과목별 학습</div><div class="row-sub">국시 7과목 · 정식 5지선다 + 무한 변형</div></div>
           <div class="row-chev">›</div>
         </button>
         <button class="row-card" data-action="startMockExam">
@@ -3129,7 +3130,7 @@ function renderSubjectStudyMenu() {
     const korBtn = korCount > 0
         ? `<button class="row-card" data-action="renderKorMenu">
              <div class="row-icon">${ICONS.training}</div>
-             <div class="row-body"><div class="row-title">정식 국시 (5지선다)</div><div class="row-sub">${korCount}문제 · 8과목 · KNCA 출제기준</div></div>
+             <div class="row-body"><div class="row-title">정식 국시 (5지선다)</div><div class="row-sub">${korCount}문제 · 7과목 · KNCA 출제기준</div></div>
              <div class="row-chev">›</div>
            </button>` : "";
     UI.gameArea.innerHTML = `
@@ -3139,7 +3140,7 @@ function renderSubjectStudyMenu() {
         ${korBtn}
         <button class="row-card" data-action="renderQuizMenu">
           <div class="row-icon">${ICONS.training}</div>
-          <div class="row-body"><div class="row-title">변형 연습 (무한 랜덤)</div><div class="row-sub">국시 8과목 · 같은 유형 다른 숫자/임상</div></div>
+          <div class="row-body"><div class="row-title">변형 연습 (무한 랜덤)</div><div class="row-sub">국시 7과목 · 같은 유형 다른 숫자/임상</div></div>
           <div class="row-chev">›</div>
         </button>
         <button class="choice-btn center" data-action="renderPracticeMenu">뒤로</button>
@@ -3216,7 +3217,7 @@ function renderDrillMenu() {
 }
 
 // =========================================================================
-// 한국 국시 정적 문제 (kor-content.js) — 5지선다, 8과목 × 30
+// 한국 국시 정적 문제 (kor-content.js) — 5지선다, 7과목 × 40
 // =========================================================================
 function renderKorMenu() {
     gameState.mode = "kor_menu";
@@ -3535,12 +3536,12 @@ function renderImageQuizSummary() {
 }
 const QUIZ_SET_SIZE = 10; // 한 세트 = 10문제 (종결감 + 진행도)
 function startQuiz(category) {
-    // "__random__" = 8과목 통합 랜덤 (category null → 전체 풀 출제)
+    // "__random__" = 7과목 통합 랜덤 (category null → 전체 풀 출제)
     if (category === "__random__") category = null;
     gameState.mode = "quiz"; gameState.quizCategory = category;
     gameState.quizSolved = 0; gameState.quizCorrect = 0; gameState.quizWrong = 0;
     gameState.quizSetStartCorrect = 0; gameState.quizSetStartSolved = 0;
-    const label = category || "8과목 통합 랜덤";
+    const label = category || "7과목 통합 랜덤";
     UI.logBar.innerHTML = ""; addLog(`${label} 풀이를 시작합니다. (한 세트 ${QUIZ_SET_SIZE}문제)`, "log-important");
     renderNextQuizQuestion();
 }
@@ -3558,7 +3559,7 @@ function renderQuizSetSummary() {
     const setNum = Math.floor(gameState.quizSolved / QUIZ_SET_SIZE);
     const setCorrect = gameState.quizCorrect - gameState.quizSetStartCorrect;
     const acc = Math.round((setCorrect / QUIZ_SET_SIZE) * 100);
-    const catLabel = gameState.quizCategory || "8과목 통합 랜덤";
+    const catLabel = gameState.quizCategory || "7과목 통합 랜덤";
     let msg, emoji;
     if (acc >= 90) { emoji = "🏆"; msg = "완벽에 가까워요! 이 과목은 자신감 가져도 됩니다."; }
     else if (acc >= 70) { emoji = "🌟"; msg = "안정적입니다. 틀린 문제는 오답노트에서 복습하세요."; }
@@ -5359,7 +5360,7 @@ function openSettings() {
           <button class="choice-btn ${settings.examMode !== "nclex" ? "primary" : ""}" data-action="setExamMode" data-mode="korean">🇰🇷 한국 국시</button>
           <button class="choice-btn ${settings.examMode === "nclex" ? "primary" : ""}" data-action="setExamMode" data-mode="nclex">🇺🇸 NCLEX-RN</button>
         </div>
-        <p class="settings-help">${settings.examMode === "nclex" ? "NCLEX-RN: US licensing exam questions in English (MCQ + SATA + Priority)." : "한국 간호사 국가고시 문제 (8과목)."}</p>
+        <p class="settings-help">${settings.examMode === "nclex" ? "NCLEX-RN: US licensing exam questions in English (MCQ + SATA + Priority)." : "한국 간호사 국가고시 문제 (7과목)."}</p>
         <div class="settings-row">
           <span>일일 학습 알림</span>
           <span class="settings-value">${data.notifyOptIn ? "켜짐" : "꺼짐"}</span>
@@ -5558,7 +5559,7 @@ function renderAbout() {
           <li>🎙️ 인계 환자 ${NC.HANDOFF_PATIENTS.length}명 풀</li>
           <li>📋 임상 시나리오 ${NC.SCENARIOS.length}개</li>
           <li>🚑 트리아지 케이스 ${NC.TRIAGE_CASES.length}개</li>
-          <li>📚 4지선다 generator ${NQ.allGenerators.length}종 (8과목 균형)</li>
+          <li>📚 4지선다 generator ${NQ.allGenerators.length}종 (7과목 균형)</li>
           <li>📚 자동 매칭 의료 출처 ${KNOWN_SOURCES.length}건</li>
         </ul>
 
@@ -5569,7 +5570,7 @@ function renderAbout() {
           <li>AHA ACLS/BLS Provider Manual (2020)</li>
           <li>ACOG · KDIGO · GOLD · GINA · ADA 가이드라인</li>
           <li>한국 법령 (의료법·감염병관리법·마약류관리법 등 — 법제처)</li>
-          <li>표준 한국 간호학 교과서 8과목 (수문사·현문사)</li>
+          <li>표준 한국 간호학 교과서 7과목 (수문사·현문사)</li>
           <li>대한심폐소생협회 KACPR · 대한간호협회 KNA</li>
         </ul>
         <p class="about-meta">전체 출처 목록: 저장소의 <code>SOURCES.md</code> 참고. 본 자료는 정식 RN/MD 감수 전 베타이며, 실제 임상 적용 시 최신 기관 가이드라인을 우선합니다.</p>

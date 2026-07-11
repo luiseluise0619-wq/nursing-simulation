@@ -6,7 +6,7 @@
 // 1. AdMob ID 일관성 (capacitor.config / AndroidManifest / script.js)
 // 2. 개인정보처리방침에 AdMob 명시
 // 3. SDK / 권한 / signing 설정
-// 4. 컨텐츠 카운트 (KO 320 / NCLEX 2,200)
+// 4. 컨텐츠 카운트 (KO 280 / NCLEX 2,200)
 // 5. 필수 파일 존재 (privacy / terms / sitemap / robots / manifest)
 // 6. 키스토어 properties 참조 가능
 // 7. JS syntax / JSON-LD 파싱
@@ -57,8 +57,8 @@ const kor = fs.readFileSync("kor-content.js", "utf8");
 const nclex = fs.readFileSync("nclex-content.js", "utf8");
 const korCount = (kor.match(/{\s*id:\s*['"]/g) || []).length;
 const nclexCount = (nclex.match(/{\s*id:\s*['"]/g) || []).length;
-if (korCount >= 320) ok(`한국 국시 ${korCount}문항 (320+ 충족)`);
-else er(`한국 국시 ${korCount}문항 — 320 미달`);
+if (korCount >= 280) ok(`한국 국시 ${korCount}문항 (280+ 충족, 법규 제외)`);
+else er(`한국 국시 ${korCount}문항 — 280 미달`);
 if (nclexCount >= 2200) ok(`NCLEX ${nclexCount}문항 (2200+ 충족)`);
 else er(`NCLEX ${nclexCount}문항 — 2200 미달`);
 

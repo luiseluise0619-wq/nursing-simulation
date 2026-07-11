@@ -210,10 +210,12 @@ describe("출제 경향 데이터 invariants", () => {
         });
     });
 
-    test("국시 8과목이 모두 포함된다", () => {
-        const expected = ["기본간호학", "성인간호학", "모성간호학", "아동간호학", "지역사회간호학", "정신간호학", "간호관리학", "보건의약관계법규"];
+    test("국시 7과목이 모두 포함된다 (법규 제외 — 법령 개정 리스크)", () => {
+        const expected = ["기본간호학", "성인간호학", "모성간호학", "아동간호학", "지역사회간호학", "정신간호학", "간호관리학"];
         expected.forEach(c => {
             expect(C.EXAM_TRENDS.categories).toHaveProperty(c);
         });
+        // 보건의약관계법규는 제거되어야 함
+        expect(C.EXAM_TRENDS.categories).not.toHaveProperty("보건의약관계법규");
     });
 });

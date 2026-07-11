@@ -218,16 +218,18 @@ describe("이벤트 위임 핸들러", () => {
         expect(document.querySelector(".scene-card")).not.toBeNull();
     });
 
-    test("renderQuizMenu 클릭으로 8과목 + 통합 랜덤 버튼이 노출된다", () => {
+    test("renderQuizMenu 클릭으로 7과목 + 통합 랜덤 버튼이 노출된다 (법규 제외)", () => {
         loadScript();
         goto("renderQuizMenu");
         const cats = document.querySelectorAll('[data-action="startQuiz"]');
-        // 8과목 + __random__ = 9
-        expect(cats.length).toBe(9);
-        // 8과목 각각 존재
+        // 7과목 + __random__ = 8
+        expect(cats.length).toBe(8);
+        // 7과목 각각 존재
         const args = [...cats].map(b => b.dataset.arg);
         expect(args).toContain("__random__");
-        expect(args.filter(a => a !== "__random__").length).toBe(8);
+        expect(args.filter(a => a !== "__random__").length).toBe(7);
+        // 법규는 제외
+        expect(args).not.toContain("보건의약관계법규");
     });
 });
 
@@ -677,7 +679,7 @@ describe("출제 경향 SVG 차트", () => {
         const svg = document.querySelector(".trends-svg");
         expect(svg).not.toBeNull();
         const bars = svg.querySelectorAll(".trend-bar");
-        expect(bars.length).toBe(8); // 8과목
+        expect(bars.length).toBe(7); // 7과목 (법규 제외)
     });
 });
 
@@ -1404,7 +1406,7 @@ describe("P2 — AdMob 어댑터 (Capacitor 호환)", () => {
         const C = require("../content.js");
         const epTitles = (C.EPISODES || []).map(e => e.title);
         const generatorCats = ["성인간호학", "모성간호학", "아동간호학", "정신간호학",
-            "지역사회간호학", "간호관리학", "기본간호학", "보건의약관계법규"];
+            "지역사회간호학", "간호관리학", "기본간호학"];
         const tagText = tag.textContent || "";
         // 에피소드 제목 중 하나가 카테고리에 들어있어야 함
         const matchedEp = epTitles.some(t => tagText.includes(t));
@@ -1417,7 +1419,7 @@ describe("P2 — AdMob 어댑터 (Capacitor 호환)", () => {
     test("듀티 시뮬레이션 — 에피소드를 끝까지 진행해도 매 step 이 에피소드 step (일반 문제 0건)", () => {
         const C = require("../content.js");
         const generatorCats = ["성인간호학", "모성간호학", "아동간호학", "정신간호학",
-            "지역사회간호학", "간호관리학", "기본간호학", "보건의약관계법규"];
+            "지역사회간호학", "간호관리학", "기본간호학"];
         // 여러 번 시도해 다양한 랜덤 에피소드를 끝까지 검증
         for (let run = 0; run < 8; run++) {
             freshDom();

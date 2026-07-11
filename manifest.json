@@ -1,7 +1,7 @@
 {
   "name": "간호사 시뮬레이터 — 국시 + NCLEX 무료",
   "short_name": "간호 시뮬",
-  "description": "한국 간호사 국가시험 + NCLEX-RN 무료 학습. 35편 임상 시뮬레이션 + 2,520 정적 문제. 듀티처럼 돌면서 공부.",
+  "description": "한국 간호사 국가시험 + NCLEX-RN 무료 학습. 35편 임상 시뮬레이션 + 2,480 정적 문제. 듀티처럼 돌면서 공부.",
   "categories": ["education", "medical", "books"],
   "lang": "ko-KR",
   "dir": "ltr",

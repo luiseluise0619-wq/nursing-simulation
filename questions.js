@@ -1927,7 +1927,7 @@
         generateElectrolyteQuestion, generatePedsPriorityQuestion, generateOBQuestion,
         generateManagementQuestion, generateRespQuestion, generateSafetyPriorityQuestion,
         generateTransfusionQuestion, generateIICPQuestion, generateFHRQuestion,
-        generateLawQuestion, generateMIQuestion, generateABGAQuestion, generateTriageQuestion,
+        generateMIQuestion, generateABGAQuestion, generateTriageQuestion,
         generatePositionQuestion, generateVaccineQuestion, generateNaegeleQuestion,
         generateApgarQuestion, generateBurnQuestion, generateShockQuestion,
         generateDiabeticQuestion, generateAsepticQuestion,
@@ -1946,8 +1946,6 @@
         generateMaternalChildQuestion, generateOccupationalHealthQuestion, generateChronicDiseaseQuestion,
         generateLeadershipQuestion, generateDelegationQuestion, generatePatientSafetyQuestion,
         generateQIQuestion,
-        generateMedicalLawQuestion, generateNarcoticLawQuestion, generateMentalHealthLawQuestion,
-        generateBloodLawQuestion, generateInfectionLawGradeQuestion,
         generateAnticoagulantQuestion, generateChestTubeQuestion, generateRenalFailureQuestion,
         generateStrokeQuestion, generateThyroidQuestion,
         // 비율 보정
@@ -1976,11 +1974,10 @@
         generateMaternalHealthCenterQuestion,
         generateTimemanagementQuestion, generateNurseHandoffQuestion,
         generateCostEffectivenessQuestion,
-        generateConfidentialityLawQuestion, generateAdvancedDirectiveLawQuestion,
         // v1.2 평가 도구·임상 표준 라운드 (15)
         generateKTASQuestion, generateAldreteScoreQuestion, generateMorseFallScaleQuestion,
         generateBradenScaleQuestion, generateSilvermanScoreQuestion, generateBloodTypeQuestion,
-        generateDrugScheduleQuestion, generateVentilatorSettingQuestion, generateNeonatalVitalsQuestion,
+        generateVentilatorSettingQuestion, generateNeonatalVitalsQuestion,
         generateIVExtravasationQuestion, generateGastricLavageQuestion, generateVTEPreventionQuestion,
         generateSterileGownQuestion, generateNutritionalAssessmentQuestion, generateMoCAQuestion,
         // v1.2 특수 영역 (12)
@@ -1988,8 +1985,7 @@
         generateNeonatalHypoglycemiaQuestion, generateBreastfeedingDrugQuestion,
         generateADHDQuestion, generatePedsLeukemiaQuestion,
         generateOCDQuestion, generateForeignerCareQuestion,
-        generateMedicalDeviceQuestion, generateHospiceLawQuestion,
-    ];
+        generateMedicalDeviceQuestion, ];
 
     function generateECGStripQuestion() {
         const rhythms = [
