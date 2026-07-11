@@ -1761,6 +1761,37 @@ button.countdown-card:active { transform: translateY(0); }
     color: var(--primary);
 }
 /* 에피소드 그룹 라벨 — 임상 영역별 묶음 헤더 */
+/* 난이도 세그먼트 (기본 / 심화) */
+.difficulty-seg {
+    display: flex;
+    gap: 6px;
+    padding: 5px;
+    background: var(--softer);
+    border-radius: var(--radius-pill);
+    box-shadow: var(--shadow-in);
+    margin: 4px 0 12px;
+}
+.difficulty-seg .diff-btn {
+    flex: 1;
+    padding: 9px 12px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 800;
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+    transition: transform .2s var(--ease-spring), box-shadow .2s, color .2s, background .2s;
+}
+.difficulty-seg .diff-btn.active {
+    background: var(--card);
+    color: var(--primary-dark);
+    box-shadow: var(--inset-light), var(--shadow-sm);
+}
+.difficulty-seg .diff-btn.active:last-child { color: #c25450; }
+.difficulty-seg .diff-btn:active { transform: scale(0.96); }
+
 .episode-group-label {
     font-size: 14px;
     font-weight: 700;

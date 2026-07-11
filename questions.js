@@ -1922,7 +1922,137 @@
             ]) };
     }
 
+    // =====================================================================
+    // 심화 (advanced) — 케이스 기반 임상 판단형. 현직/고득점 대비.
+    // difficulty:"advanced" 태그 → 트레이닝 '심화' 모드에서만 출제.
+    // =====================================================================
+    function advVisitingNurseQuestion() {
+        return { baseId: "adv_visiting_nurse", category: "지역사회간호학", part: "방문간호", emoji: "🏠", difficulty: "advanced",
+            title: "독거노인 방문간호 — 우선 중재",
+            desc: `방문간호 대상 독거노인(82세). 오늘 방문 시 BP 182/104, 지난 3일 혈압약·당뇨약 미복용(약통 그대로), 냉장고 비어 있음, 거실 바닥에 낙상 흔적과 우측 팔 멍. 의식 명료하나 "괜찮다"만 반복. 가장 우선되는 간호중재는?`,
+            choices: shuffle([
+                { text: "활력징후·낙상 손상 사정 후 미복약·영양·안전 문제를 통합 평가하고 담당의·복지 연계", correct: true, effect: { hp: -3, rep: 25 }, log: "정답. 복합 위험(고혈압 위기·미복약·영양결핍·낙상)을 먼저 사정·안전 확보 후 다직종 연계가 우선." },
+                { text: "혈압이 높으므로 보관 중인 혈압약을 즉시 2배로 복용시킨다", effect: { hp: -30, rep: -22 }, log: "임의 증량은 금기. 미복약 원인 파악·처방 확인이 먼저." },
+                { text: "낙상 멍만 냉찜질하고 다음 방문 때 재평가한다", effect: { hp: -28, rep: -20 }, log: "고혈압 위기·미복약을 놓침. 단일 문제만 대응은 부적절." },
+                { text: "요양병원 입원이 필요하다고 설득하는 데 시간을 집중한다", effect: { hp: -22, rep: -14 }, log: "본인 의사·급성 위험 사정이 먼저. 성급한 시설 권유는 부적절." },
+                { text: "냉장고가 비었으니 식품 배달만 신청하고 종료한다", effect: { hp: -25, rep: -18 }, log: "가장 급한 혈압 위기·낙상을 놓친 부분 대응." }
+            ]) };
+    }
+    function advSchoolOutbreakQuestion() {
+        return { baseId: "adv_school_outbreak", category: "지역사회간호학", part: "학교보건·감염관리", emoji: "🏫", difficulty: "advanced",
+            title: "학교 집단 위장관 증상 — 보건교사 우선순위",
+            desc: `점심 후 2시간 내 같은 학급 학생 12명이 구토·설사·복통 호소. 3명은 어지럼과 창백. 급식은 동일 메뉴(김밥). 보건교사로서 가장 먼저 할 조치는?`,
+            choices: shuffle([
+                { text: "중증(탈수·어지럼) 학생 활력징후 사정·수분·응급이송 판단 후 유증상자 격리·관할 보건소 신고", correct: true, effect: { hp: -3, rep: 24 }, log: "정답. 환자 안전(중증 선별·이송) → 확산 차단(격리) → 신고. 집단 식중독은 보건소 신고 대상." },
+                { text: "원인 규명을 위해 남은 급식 검체 확보에 먼저 집중한다", effect: { hp: -24, rep: -16 }, log: "검체 보존은 중요하나 중증 환자 안전보다 우선일 수 없음." },
+                { text: "전교생에게 지사제를 배부한다", effect: { hp: -30, rep: -22 }, log: "임의 투약 금기. 감염성 설사에 지사제는 오히려 해로울 수 있음." },
+                { text: "학부모에게 먼저 일괄 문자 공지 후 대응한다", effect: { hp: -22, rep: -15 }, log: "환자 사정·안전이 먼저. 공지는 이후." },
+                { text: "증상 학생을 모두 귀가시킨다", effect: { hp: -26, rep: -18 }, log: "중증자 이송·역학 관리 없이 귀가는 위험·확산 우려." }
+            ]) };
+    }
+    function advSepticShockQuestion() {
+        return { baseId: "adv_septic_shock", category: "성인간호학", part: "패혈증·쇼크", emoji: "🩸", difficulty: "advanced",
+            title: "패혈성 쇼크 초기 — 1시간 번들 우선순위",
+            desc: `요로감염 병력 78세 여성. T 38.9, BP 82/48, HR 122, RR 26, 의식 혼미, 소변량 감소, Lactate 4.2 mmol/L. 담당의 지시 하 1시간 내 조치 중 가장 먼저 수행할 것은?`,
+            choices: shuffle([
+                { text: "혈액배양 채취 후 광범위 항생제 투여 + 30mL/kg 결정질 수액 급속 주입", correct: true, effect: { hp: -4, rep: 25 }, log: "정답. Sepsis-1hr bundle: 배양 후 항생제·수액·젖산 재측정. 배양은 항생제 전에." },
+                { text: "혈압이 낮으니 승압제(노르에피네프린)를 수액보다 먼저 시작한다", effect: { hp: -26, rep: -18 }, log: "초기 수액 소생이 우선. 수액 불응 시 승압제." },
+                { text: "해열제부터 투여해 체온을 정상화한다", effect: { hp: -28, rep: -20 }, log: "해열은 우선순위 낮음. 관류·감염원 관리가 먼저." },
+                { text: "항생제 배양 결과가 나올 때까지 항생제를 보류한다", effect: { hp: -32, rep: -24 }, log: "패혈증에서 항생제 지연은 사망률 증가. 배양 직후 경험적 투여." },
+                { text: "소변량 감소 원인 파악 위해 신장 초음파를 먼저 시행한다", effect: { hp: -24, rep: -16 }, log: "영상보다 소생(수액·항생제)이 먼저." }
+            ]) };
+    }
+    function advMultiOrganPriorityQuestion() {
+        return { baseId: "adv_multiorgan_priority", category: "성인간호학", part: "우선순위·중증도", emoji: "🚑", difficulty: "advanced",
+            title: "동시 4환자 — 재평가 우선순위",
+            desc: `야간 병동에서 동시에 상황 발생. 어느 환자를 가장 먼저 사정해야 하는가?`,
+            choices: shuffle([
+                { text: "수술 후 2일째 환자가 갑자기 SpO2 88%, 호흡곤란·빈맥 — 폐색전 의심", correct: true, effect: { hp: -4, rep: 24 }, log: "정답. 급성 저산소·폐색전 의심은 즉각적 생명 위협(ABC). 최우선." },
+                { text: "만성통증 환자가 진통제 추가 요청(NRS 6)", effect: { hp: -20, rep: -12 }, log: "긴급하나 생명 위협은 아님." },
+                { text: "퇴원 예정 환자가 교육 자료를 요청", effect: { hp: -18, rep: -10 }, log: "비긴급. 후순위." },
+                { text: "수액이 다 들어가 교체가 필요한 환자", effect: { hp: -20, rep: -12 }, log: "중요하나 저산소 환자보다 후순위." },
+                { text: "불면 호소로 수면제를 요청한 환자", effect: { hp: -16, rep: -10 }, log: "비긴급." }
+            ]) };
+    }
+    function advPedsDehydrationQuestion() {
+        return { baseId: "adv_peds_dehydration", category: "아동간호학", part: "탈수·수분전해질", emoji: "👶", difficulty: "advanced",
+            title: "영아 중증 탈수 — 판단과 중재",
+            desc: `10개월 영아, 2일간 구토·설사. 체중 8→7.2kg(10% 감소), 대천문 함몰, 피부 탄력 저하, 모세혈관 재충전 4초, 무기력, 소변 8시간째 없음. 가장 적절한 판단·중재는?`,
+            choices: shuffle([
+                { text: "중증(≈10%) 탈수·저혈량 → 정맥로 확보 후 등장액 볼루스(20mL/kg) 급속 투여, 반응 재사정", correct: true, effect: { hp: -3, rep: 25 }, log: "정답. 10% 체중감소·CRT 지연·무뇨는 중증 탈수. IV 등장액 소생이 우선." },
+                { text: "경구수액(ORS)을 소량씩 먹이며 경과 관찰한다", effect: { hp: -30, rep: -22 }, log: "무기력·무뇨의 중증 탈수엔 경구만으론 부족. IV 필요." },
+                { text: "지사제와 지토제를 먼저 투여한다", effect: { hp: -28, rep: -20 }, log: "영아 급성 설사에 지사제 금기. 수분소생이 우선." },
+                { text: "체중이 회복될 때까지 금식시킨다", effect: { hp: -26, rep: -18 }, log: "장기 금식은 부적절. 소생 후 조기 재수유." },
+                { text: "발열 여부부터 확인하고 해열제를 준비한다", effect: { hp: -22, rep: -14 }, log: "저혈량 소생이 최우선." }
+            ]) };
+    }
+    function advSuicideRiskQuestion() {
+        return { baseId: "adv_suicide_risk", category: "정신간호학", part: "위기·안전", emoji: "🆘", difficulty: "advanced",
+            title: "자살 위험 사정 — 우선 간호",
+            desc: `우울장애 입원 3일째 환자. 오늘 갑자기 밝아지고 소지품을 정리하며 "이제 다 편해질 거예요"라고 말함. 최근 약을 모으는 정황. 간호사의 가장 우선되는 대응은?`,
+            choices: shuffle([
+                { text: "구체적 자살 계획·수단을 직접 사정하고, 지속 관찰(1:1)·환경 위험물 제거·팀 즉시 보고", correct: true, effect: { hp: -3, rep: 26 }, log: "정답. 갑작스러운 호전·소지품 정리·약물 저장은 고위험 신호. 직접 사정+안전 확보+보고." },
+                { text: "환자가 안정되어 보이므로 관찰 수준을 낮춘다", effect: { hp: -34, rep: -26 }, log: "치명적 오판. '갑작스러운 호전'은 자살 결심의 위험 신호." },
+                { text: "자살 얘기를 꺼내면 자극되므로 화제를 돌린다", effect: { hp: -30, rep: -22 }, log: "직접 묻는 것이 위험을 높이지 않음. 회피가 더 위험." },
+                { text: "다음 회진 때 의사에게 전달하기로 하고 기록만 남긴다", effect: { hp: -32, rep: -24 }, log: "즉시 보고·관찰이 필요한 응급. 지연은 위험." },
+                { text: "가족에게 먼저 연락해 상담하도록 안내한다", effect: { hp: -24, rep: -16 }, log: "즉각적 안전 확보가 먼저." }
+            ]) };
+    }
+    function advDisasterTriageQuestion() {
+        return { baseId: "adv_disaster_triage", category: "지역사회간호학", part: "재난·트리아지", emoji: "🚨", difficulty: "advanced",
+            title: "다수사상자 현장 — START 재분류",
+            desc: `버스 전복 현장. 한 환자는 기도 개방 후 호흡 30회/분, 요골맥박 촉지, 지시 따름. START 분류상 색상과 그 근거로 옳은 것은?`,
+            choices: shuffle([
+                { text: "황색(응급) — 호흡·순환·의식 모두 즉각적 위협 기준 미달, 그러나 처치 필요", correct: true, effect: { hp: -4, rep: 23 }, log: "정답. RR<30, 요골맥박 있음(관류 양호), 지시 수행(의식 양호) → 적색 기준 미달 = 황색." },
+                { text: "적색(긴급) — 호흡을 하므로 무조건 최우선", effect: { hp: -26, rep: -18 }, log: "호흡만으로 적색 아님. RR·관류·의식 종합 판단." },
+                { text: "녹색(경증) — 걸을 수 있으니 경증", effect: { hp: -24, rep: -16 }, log: "보행 여부 미제시. 처치 필요한 황색." },
+                { text: "흑색(사망/기대) — 다발 외상이므로", effect: { hp: -30, rep: -22 }, log: "호흡·맥박·의식 있음. 흑색 아님." },
+                { text: "분류 불가 — 정보가 부족하므로 보류", effect: { hp: -22, rep: -14 }, log: "제시된 3요소로 분류 가능." }
+            ]) };
+    }
+    function advHomeCareComplexQuestion() {
+        return { baseId: "adv_homecare_complex", category: "지역사회간호학", part: "가정간호·복합질환", emoji: "🏡", difficulty: "advanced",
+            title: "가정간호 복합 사례 — 통합 우선순위",
+            desc: `가정간호 대상 70세 남성: 당뇨(공복혈당 320), 천골 3기 욕창(악취·삼출 증가), 최근 식욕저하·38.2도 미열, 보호자 소진 호소. 오늘 방문에서 우선순위가 가장 높은 것은?`,
+            choices: shuffle([
+                { text: "감염 징후(발열·욕창 악화·고혈당) 통합 사정 → 패혈증 위험 평가·의뢰, 혈당·상처·영양·보호자 지원 계획", correct: true, effect: { hp: -3, rep: 25 }, log: "정답. 발열+욕창 악화+고혈당은 감염·패혈증 위험 신호. 급성 위험 사정·의뢰가 먼저." },
+                { text: "욕창 드레싱만 교체하고 다음 방문에 재평가", effect: { hp: -28, rep: -20 }, log: "감염 전신 징후를 놓친 단일 대응." },
+                { text: "고혈당이므로 인슐린 용량을 임의로 늘린다", effect: { hp: -30, rep: -22 }, log: "임의 조정 금기. 감염이 고혈당 원인일 수 있어 통합 평가 필요." },
+                { text: "보호자 소진이 크므로 요양시설 입소를 우선 추진", effect: { hp: -24, rep: -16 }, log: "급성 감염 위험 사정이 먼저." },
+                { text: "식욕저하 개선을 위해 영양제 처방을 요청", effect: { hp: -22, rep: -14 }, log: "발열·감염 평가가 우선." }
+            ]) };
+    }
+    function advOccupationalExposureQuestion() {
+        return { baseId: "adv_occupational_exposure", category: "지역사회간호학", part: "산업보건", emoji: "🏭", difficulty: "advanced",
+            title: "산업장 화학물질 노출 — 응급 대응",
+            desc: `도금 공장 근로자가 작업 중 눈·기도 자극, 기침, 흉부 압박감 호소하며 보건관리자에게 옴. 밀폐 공간에서 산(acid) 흄 노출 의심. 우선 조치는?`,
+            choices: shuffle([
+                { text: "즉시 오염원에서 분리(신선한 공기)·다량 생리식염수로 눈·피부 세척, 호흡·SpO2 사정 후 의료기관 의뢰", correct: true, effect: { hp: -3, rep: 24 }, log: "정답. 노출원 차단·제염(세척)·기도 사정이 화학 노출 응급의 기본." },
+                { text: "중화제를 눈에 직접 넣어 산을 중화한다", effect: { hp: -32, rep: -24 }, log: "중화 시도 금기. 발열 반응으로 손상 악화. 다량 물 세척." },
+                { text: "증상이 가벼우면 마스크만 착용시키고 작업 복귀", effect: { hp: -30, rep: -22 }, log: "흄 노출·기도 증상은 지연 폐부종 위험. 복귀 부적절." },
+                { text: "작업일지부터 확인해 노출 농도를 계산한다", effect: { hp: -24, rep: -16 }, log: "환자 제염·기도 사정이 먼저." },
+                { text: "물 세척은 감염 위험이 있어 마른 거즈로 닦는다", effect: { hp: -28, rep: -20 }, log: "화학 노출은 다량 관류 세척이 원칙." }
+            ]) };
+    }
+    function advEpidemicInvestigationQuestion() {
+        return { baseId: "adv_epidemic_investigation", category: "지역사회간호학", part: "역학·감염관리", emoji: "🔬", difficulty: "advanced",
+            title: "역학조사 — 지표 해석·조치",
+            desc: `한 아파트에서 2주간 폐렴 유사 환자 8명 발생, 공통점은 지하 주차장 냉각탑 인근 거주. 발병률이 특정 구역에 집중. 지역사회 간호사의 가장 적절한 판단·조치는?`,
+            choices: shuffle([
+                { text: "공동 노출원(레지오넬라 등) 의심 → 관할 보건소 신고·환경 검체·냉각탑 소독 연계, 고위험군 감시", correct: true, effect: { hp: -3, rep: 25 }, log: "정답. 공간적 집적·냉각탑 연관은 레지오넬라 등 환경성 감염 시사. 신고·환경조사·감시가 핵심." },
+                { text: "사람 간 전파를 막기 위해 아파트 전체를 격리한다", effect: { hp: -26, rep: -18 }, log: "환경성 감염은 사람 간 전파가 아님. 오염원 관리가 핵심." },
+                { text: "증상자에게 항생제를 임의 배부한다", effect: { hp: -30, rep: -22 }, log: "임의 투약 금기. 진단·신고·환경조사가 우선." },
+                { text: "우연의 일치로 보고 경과만 지켜본다", effect: { hp: -32, rep: -24 }, log: "공간적 집적은 공동 노출 신호. 조사 필요." },
+                { text: "개인위생 교육 리플렛만 배포하고 종료", effect: { hp: -24, rep: -16 }, log: "오염원(냉각탑) 관리 없이 교육만으론 불충분." }
+            ]) };
+    }
+
     const allGenerators = [
+        // 심화 (advanced) — 케이스 판단형
+        advVisitingNurseQuestion, advSchoolOutbreakQuestion, advSepticShockQuestion,
+        advMultiOrganPriorityQuestion, advPedsDehydrationQuestion, advSuicideRiskQuestion,
+        advDisasterTriageQuestion, advHomeCareComplexQuestion, advOccupationalExposureQuestion,
+        advEpidemicInvestigationQuestion,
         generateDopamineQuestion, generateSepsisQuestion, generatePsychQuestion,
         generateElectrolyteQuestion, generatePedsPriorityQuestion, generateOBQuestion,
         generateManagementQuestion, generateRespQuestion, generateSafetyPriorityQuestion,

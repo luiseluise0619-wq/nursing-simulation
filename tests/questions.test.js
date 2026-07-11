@@ -11,10 +11,16 @@ describe("문제 생성기 invariants", () => {
     generators.forEach((gen) => {
         const sample = gen();
         describe(`${sample.baseId} (${sample.category})`, () => {
-            test("4개 선택지를 가진다", () => {
+            test("선택지가 4~5개 (기본 4지선다 / 심화 케이스형 5지선다)", () => {
                 for (let i = 0; i < ITERATIONS; i++) {
                     const ev = gen();
-                    expect(ev.choices.length).toBe(4);
+                    // 심화(advanced)는 근접 오답이 많은 5지선다 허용, 그 외 4지선다
+                    if (ev.difficulty === "advanced") {
+                        expect(ev.choices.length).toBeGreaterThanOrEqual(4);
+                        expect(ev.choices.length).toBeLessThanOrEqual(5);
+                    } else {
+                        expect(ev.choices.length).toBe(4);
+                    }
                 }
             });
 

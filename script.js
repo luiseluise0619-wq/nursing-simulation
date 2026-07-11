@@ -2314,28 +2314,34 @@ function _buildImagedScenePool() {
     return out;
 }
 
-function generateClinicalEventByCategory(category = null) {
+// difficulty: null(전체) | "basic"(심화 제외) | "advanced"(심화만)
+function generateClinicalEventByCategory(category = null, difficulty = null) {
+    const matchDiff = (ev) => {
+        if (difficulty === "advanced") return ev.difficulty === "advanced";
+        if (difficulty === "basic") return ev.difficulty !== "advanced";
+        return true;
+    };
     const pool = [];
     // 1. 절차적 generator (questions.js)
     for (const gen of NQ.allGenerators) {
         const ev = gen();
-        if ((!category || ev.category === category) && !recentlyUsed(ev.baseId)) pool.push(ev);
+        if ((!category || ev.category === category) && matchDiff(ev) && !recentlyUsed(ev.baseId)) pool.push(ev);
     }
-    // 2. 이미지 보유 시나리오 (content.js EPISODES) — 카테고리 필터 없을 때만 (듀티 mode)
-    if (!category) {
+    // 2. 이미지 보유 시나리오 (content.js EPISODES) — 카테고리 필터 없고 심화 아닐 때만 (듀티 mode)
+    if (!category && difficulty !== "advanced") {
         if (_IMAGED_SCENE_POOL == null) _IMAGED_SCENE_POOL = _buildImagedScenePool();
         for (const ev of _IMAGED_SCENE_POOL) {
             if (!recentlyUsed(ev.baseId)) pool.push(ev);
         }
     }
     if (pool.length === 0) {
-        // 모든 후보 소진 → 최근 기록 리셋 후 재충전
+        // 모든 후보 소진 → 최근 기록 리셋 후 재충전 (심화 필터는 유지)
         gameState.recentIds = [];
         for (const gen of NQ.allGenerators) {
             const ev = gen();
-            if (!category || ev.category === category) pool.push(ev);
+            if ((!category || ev.category === category) && matchDiff(ev)) pool.push(ev);
         }
-        if (!category && _IMAGED_SCENE_POOL) {
+        if (!category && difficulty !== "advanced" && _IMAGED_SCENE_POOL) {
             for (const ev of _IMAGED_SCENE_POOL) pool.push(ev);
         }
     }
@@ -3028,10 +3034,18 @@ function renderQuizMenu() {
     showCoreUI(); UI.logBar.innerHTML = "";
     addLog("국가고시 7과목 트레이닝 모드입니다.", "log-important");
     updateStats();
+    const diff = gameState.quizDifficulty || "basic";
+    const diffDesc = diff === "advanced"
+        ? "🔥 심화 — 케이스 기반 임상 판단·우선순위 문제 (현직·고득점 대비)."
+        : "숫자와 상황이 계속 변하는 무한 랜덤 문제. 체력은 감소하지 않습니다.";
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
         <h2 class="scene-title">국가고시 7과목 트레이닝</h2>
-        <p class="scene-desc">숫자와 상황이 계속 변하는 무한 랜덤 4지선다 문제를 제공합니다.\n트레이닝 모드에서는 체력이 감소하지 않습니다.</p>
+        <div class="difficulty-seg" role="group" aria-label="난이도 선택">
+          <button class="diff-btn ${diff === 'basic' ? 'active' : ''}" data-action="setQuizDifficulty" data-arg="basic">📗 기본</button>
+          <button class="diff-btn ${diff === 'advanced' ? 'active' : ''}" data-action="setQuizDifficulty" data-arg="advanced">🔥 심화</button>
+        </div>
+        <p class="scene-desc">${diffDesc}</p>
         <h3 class="episode-group-label">🎲 전체 랜덤</h3>
         <div class="choice-list">
           <button class="choice-btn primary" data-action="startQuiz" data-arg="__random__">🎲 7과목 통합 랜덤</button>
@@ -3042,6 +3056,12 @@ function renderQuizMenu() {
           <button class="choice-btn center" data-action="returnToMenu">메인 메뉴</button>
         </div>
       </div>`;
+}
+
+function setQuizDifficulty(arg) {
+    gameState.quizDifficulty = (arg === "advanced") ? "advanced" : "basic";
+    track("quiz_difficulty_set", { level: gameState.quizDifficulty });
+    renderQuizMenu();
 }
 
 // =========================================================================
@@ -3553,8 +3573,13 @@ function startQuiz(category) {
 }
 function renderNextQuizQuestion() {
     const inSet = (gameState.quizSolved % QUIZ_SET_SIZE) + 1; // 현재 세트 내 위치 (1~10)
-    const catLabel = gameState.quizCategory || "🎲 통합 랜덤";
-    renderSceneCard(generateClinicalEventByCategory(gameState.quizCategory), {
+    const diff = gameState.quizDifficulty === "advanced" ? "advanced" : "basic";
+    const catLabel = (gameState.quizCategory || "🎲 통합 랜덤") + (diff === "advanced" ? " · 🔥심화" : "");
+    // 심화 모드에서 해당 카테고리에 심화 문제가 없으면 기본으로 폴백 (빈 화면 방지)
+    let ev = generateClinicalEventByCategory(gameState.quizCategory, diff);
+    if (!ev && diff === "advanced") ev = generateClinicalEventByCategory(gameState.quizCategory, "basic");
+    if (!ev) ev = generateClinicalEventByCategory(gameState.quizCategory);
+    renderSceneCard(ev, {
         mode: "quiz", questionIndex: gameState.quizSolved + 1,
         totalSteps: QUIZ_SET_SIZE,
         meta: [catLabel, `세트 ${inSet}/${QUIZ_SET_SIZE}`, `총 ${gameState.quizSolved}문제 · 정답률 ${gameState.quizSolved > 0 ? Math.round(gameState.quizCorrect / gameState.quizSolved * 100) : 0}%`]
@@ -8358,6 +8383,7 @@ const DELEGATED_ACTIONS = {
     imageQuizAnswer: (t) => imageQuizAnswer(t),
     imageQuizNext: () => imageQuizNext(),
     startQuiz: (t) => startQuiz(t.dataset.arg),
+    setQuizDifficulty: (t) => setQuizDifficulty(t.dataset.arg),
     quizContinue: () => quizContinue(),
     startMockExam: () => startMockExam(),
     startDailyChallenge: () => startDailyChallenge(),
