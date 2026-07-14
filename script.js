@@ -4352,12 +4352,58 @@ function pickHandoffSession(n) {
     return shuffle(pool).slice(0, n).map(p => p.id);
 }
 
+// 인계 듣기 진입 메뉴 — 랜덤 세션 or 과목별 케이스 직접 선택
 function startHandoff() {
     resetStateForMode();
+    gameState.mode = "handoff_menu";
+    showCoreUI(); if (UI.logBar) UI.logBar.innerHTML = ""; updateStats();
+    const pts = NC.HANDOFF_PATIENTS || [];
+    // 과목별 그룹핑 (category 기준, kor 과목 순서 유지)
+    const ORDER = ["성인간호학", "모성간호학", "아동간호학", "정신간호학", "지역사회간호학", "간호관리학", "기본간호학"];
+    const byCat = {};
+    pts.forEach(p => { const c = p.category || "기타"; (byCat[c] = byCat[c] || []).push(p); });
+    const cats = ORDER.filter(c => byCat[c]).concat(Object.keys(byCat).filter(c => !ORDER.includes(c)));
+    const groups = cats.map(c => {
+        const seen = Storage.getHandoffSeen ? Storage.getHandoffSeen() : [];
+        const cards = byCat[c].map(p => {
+            const done = seen.includes(p.id);
+            return `<button class="handoff-case-btn ${done ? 'done' : ''}" data-action="startHandoffSingle" data-arg="${escapeHtml(p.id)}">
+                <span class="hc-title">${escapeHtml(p.title)}</span>
+                ${done ? '<span class="hc-done">✓</span>' : '<span class="hc-play">▶</span>'}
+            </button>`;
+        }).join("");
+        return `<details class="handoff-cat" open><summary>${escapeHtml(c)} <span class="hc-count">${byCat[c].length}</span></summary><div class="handoff-case-list">${cards}</div></details>`;
+    }).join("");
+    UI.gameArea.innerHTML = `
+      <div class="scene-card card">
+        <h2 class="scene-title">🎙️ 인계 듣기</h2>
+        <p class="scene-desc">음성 인계를 듣고 핵심 키워드를 회상하세요. 총 ${pts.length}개 케이스.</p>
+        <button class="choice-btn primary" data-action="startHandoffRandom">🎲 랜덤 세션 (${HANDOFF_SESSION_SIZE}명 무작위)</button>
+        <h3 class="episode-group-label">📋 케이스 선택</h3>
+        ${groups}
+        <div class="choice-list"><button class="choice-btn center" data-action="returnToMenu">메뉴</button></div>
+      </div>`;
+}
+
+// 랜덤 세션 (기존 방식)
+function startHandoffRandom() {
+    resetStateForMode();
     gameState.mode = "handoff";
+    gameState.handoffSingle = false;
     gameState.handoffPool = pickHandoffSession(HANDOFF_SESSION_SIZE);
     showCoreUI(); UI.logBar.innerHTML = "";
-    addLog(`인계 시뮬레이터 — 100명 풀에서 ${HANDOFF_SESSION_SIZE}명 무작위 출제.`, "log-important");
+    addLog(`인계 시뮬레이터 — ${(NC.HANDOFF_PATIENTS||[]).length}명 풀에서 ${HANDOFF_SESSION_SIZE}명 무작위 출제.`, "log-important");
+    renderHandoffPatient();
+}
+
+// 단일 케이스 선택 재생
+function startHandoffSingle(id) {
+    if (!id) return;
+    resetStateForMode();
+    gameState.mode = "handoff";
+    gameState.handoffSingle = true;
+    gameState.handoffPool = [id];
+    showCoreUI(); UI.logBar.innerHTML = "";
     renderHandoffPatient();
 }
 
@@ -4447,6 +4493,8 @@ function handoffSubmit() {
     fb.appendChild(next);
 }
 function handoffNext() {
+    // 단일 케이스 모드면 다음 없이 케이스 목록으로 복귀
+    if (gameState.handoffSingle) { startHandoff(); return; }
     gameState.handoffIndex += 1;
     renderHandoffPatient();
 }
@@ -4567,7 +4615,7 @@ function handoffWriteSubmit() {
     next.textContent = gameState.handoffIndex + 1 >= gameState.handoffPool.length ? "결과 보기" : "다음 케이스";
     next.dataset.action = "handoffWriteNext";
     fb.appendChild(next);
-    fb.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    try { fb.scrollIntoView({ behavior: "smooth", block: "nearest" }); } catch {}
 }
 
 function handoffWriteNext() {
@@ -8395,6 +8443,8 @@ const DELEGATED_ACTIONS = {
     setMenuTab: (t) => { gameState.menuTab = t.dataset.tab; returnToMenu(); },
     // 신규 모드
     startHandoff: () => startHandoff(),
+    startHandoffRandom: () => startHandoffRandom(),
+    startHandoffSingle: (t) => startHandoffSingle(t.dataset.arg),
     handoffPlay: () => handoffPlay(),
     handoffStop: () => handoffStop(),
     handoffShow: () => handoffShow(),

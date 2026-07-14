@@ -414,18 +414,36 @@ describe("모달 접근성 속성", () => {
 });
 
 describe("인계 시뮬레이터 (TTS)", () => {
-    test("메인 메뉴에 인계 버튼이 있고 클릭하면 답변 textarea 가 노출된다", () => {
+    test("인계 듣기 메뉴 → 케이스 선택 목록 + 랜덤 세션 버튼 노출", () => {
         loadScript();
-        // 잡스 컷: 학습 탭 → 훈련 메뉴 → 인계 시뮬
         goto("startHandoff");
+        // 케이스 선택 UI + 랜덤 세션 버튼
+        expect(document.querySelector('[data-action="startHandoffRandom"]')).not.toBeNull();
+        const caseBtns = document.querySelectorAll('[data-action="startHandoffSingle"]');
+        expect(caseBtns.length).toBeGreaterThanOrEqual(100); // 전체 케이스 노출
+    });
+
+    test("랜덤 세션 진입 시 답변 textarea 가 노출된다", () => {
+        loadScript();
+        goto("startHandoff");
+        document.querySelector('[data-action="startHandoffRandom"]').click();
         expect(document.getElementById("handoff-answer")).not.toBeNull();
         expect(document.querySelector('[data-action="handoffPlay"]')).not.toBeNull();
+    });
+
+    test("단일 케이스 선택 시 해당 케이스 인계 화면 진입", () => {
+        loadScript();
+        goto("startHandoff");
+        const firstCase = document.querySelector('[data-action="startHandoffSingle"]');
+        expect(firstCase).not.toBeNull();
+        firstCase.click();
+        expect(document.getElementById("handoff-answer")).not.toBeNull();
     });
 
     test("정답 키워드를 모두 입력하면 정답률 100% 피드백이 표시된다", () => {
         loadScript();
         goto("startHandoff");
-        // 100명 풀에서 셔플로 선정된 첫 환자의 ID 를 타이틀로 역추적
+        document.querySelector('[data-action="startHandoffRandom"]').click();
         const C = require("../content.js");
         const titleEl = document.querySelector(".scene-title");
         expect(titleEl).not.toBeNull();
@@ -438,10 +456,10 @@ describe("인계 시뮬레이터 (TTS)", () => {
         expect(fb.querySelector(".feedback-box.correct")).not.toBeNull();
     });
 
-    test("100명 풀에서 세션은 10명만 출제한다 (sessionSize)", () => {
+    test("랜덤 세션은 10명만 출제한다 (sessionSize)", () => {
         loadScript();
         goto("startHandoff");
-        // 진행도 표시가 1/10 형식
+        document.querySelector('[data-action="startHandoffRandom"]').click();
         const titleEl = document.querySelector(".scene-title");
         expect(titleEl.textContent).toMatch(/1\/10/);
     });
@@ -450,6 +468,7 @@ describe("인계 시뮬레이터 (TTS)", () => {
         // 회귀: setHandoffBest 미정의로 endHandoff 가 TypeError 던지던 버그
         loadScript();
         goto("startHandoff");
+        document.querySelector('[data-action="startHandoffRandom"]').click();
         // 10명 전부 제출 → 다음 (마지막엔 endHandoff)
         for (let n = 0; n < 10; n++) {
             const submitBtn = document.querySelector('[data-action="handoffSubmit"]');
@@ -490,6 +509,7 @@ describe("인계 시뮬레이터 (TTS)", () => {
         loadScript();
         // 1회차 세션 시작 → 첫 환자 ID 기록
         goto("startHandoff");
+        document.querySelector('[data-action="startHandoffRandom"]').click();
         const C = require("../content.js");
         const firstTitle = document.querySelector(".scene-title").textContent;
         const firstPatient = C.HANDOFF_PATIENTS.find(p => firstTitle.includes(p.title));
@@ -502,6 +522,7 @@ describe("인계 시뮬레이터 (TTS)", () => {
     test("handoffPlay 가 speechSynthesis.speak 를 호출한다", () => {
         loadScript();
         goto("startHandoff");
+        document.querySelector('[data-action="startHandoffRandom"]').click();
         document.querySelector('[data-action="handoffPlay"]').click();
         expect(window.speechSynthesis.speak).toHaveBeenCalled();
     });
@@ -509,6 +530,7 @@ describe("인계 시뮬레이터 (TTS)", () => {
     test("handoffShow 가 본문을 노출시킨다", () => {
         loadScript();
         goto("startHandoff");
+        document.querySelector('[data-action="startHandoffRandom"]').click();
         document.querySelector('[data-action="handoffShow"]').click();
         const el = document.getElementById("handoff-narration");
         expect(el.classList.contains("hidden")).toBe(false);
