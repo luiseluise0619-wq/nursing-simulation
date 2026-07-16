@@ -989,7 +989,7 @@ const Storage = {
         const stats = {};
         CATEGORIES.forEach(c => stats[c] = { solved: 0, correct: 0 });
         return {
-            settings: { theme: "auto", sound: true, haptics: true, tts: false, examMode: "korean", lang: "ko" },
+            settings: { theme: "dark", sound: true, haptics: true, tts: false, examMode: "korean", lang: "ko" },
             stats,
             wrongQueue: [],
             bookmarks: {},     // { contentId: { type, label, ts } } — 즐겨찾기

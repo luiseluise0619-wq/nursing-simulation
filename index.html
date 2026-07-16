@@ -151,6 +151,139 @@
             0%, 100% { transform: scale(1); opacity: 1; }
             50% { transform: scale(0.95); opacity: 0.85; }
         }
+
+        /* ===================== CODE BLUE 인트로 =====================
+           초기 진입 시네마틱. app-loader(99999) 위(100000)에 얹는 독립
+           오버레이 — 게임 로직/테마와 무관. 탭 스킵 + reduced-motion 대응.
+           세션당 1회(sessionStorage). CSP 준수: gradient만 사용(data-URI 없음). */
+        #cb-intro {
+            position: fixed; inset: 0; z-index: 100000;
+            background:
+                radial-gradient(120% 80% at 50% 12%, rgba(52,245,163,.07), transparent 60%),
+                #05080b;
+            color: #e8f0ec; overflow: hidden;
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+            --acc: #34f5a3; --acc-rgb: 52,245,163; --warn: #ff3b47; --muted: #6b7d76;
+            --mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+        }
+        #cb-intro.cb-done { opacity: 0; pointer-events: none; transition: opacity .5s ease; }
+        /* 배경 그리드 + 코너 브래킷 + 스캔라인 */
+        #cb-intro .cb-grid {
+            position: absolute; inset: 0; pointer-events: none; opacity: .5;
+            background-image:
+                linear-gradient(rgba(52,245,163,.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(52,245,163,.05) 1px, transparent 1px);
+            background-size: 26px 26px;
+            -webkit-mask-image: radial-gradient(130% 100% at 50% 30%, #000 55%, transparent 100%);
+            mask-image: radial-gradient(130% 100% at 50% 30%, #000 55%, transparent 100%);
+        }
+        #cb-intro .cb-scan {
+            position: absolute; inset: 0; pointer-events: none; z-index: 60; opacity: .5;
+            background: repeating-linear-gradient(0deg, rgba(0,0,0,.28) 0 1px, transparent 1px 3px);
+        }
+        #cb-intro .cb-vig {
+            position: absolute; inset: 0; pointer-events: none; z-index: 60;
+            background: radial-gradient(120% 90% at 50% 45%, transparent 55%, rgba(0,0,0,.55) 100%);
+        }
+        #cb-intro .cb-corner { position: absolute; width: 24px; height: 24px; border: 2px solid rgba(52,245,163,.55); pointer-events: none; z-index: 61; }
+        #cb-intro .cb-corner.tl { top: 14px; left: 14px; border-right: 0; border-bottom: 0; }
+        #cb-intro .cb-corner.tr { top: 14px; right: 14px; border-left: 0; border-bottom: 0; }
+        #cb-intro .cb-corner.bl { bottom: 14px; left: 14px; border-right: 0; border-top: 0; }
+        #cb-intro .cb-corner.br { bottom: 14px; right: 14px; border-left: 0; border-top: 0; }
+        #cb-intro .cb-skiphint {
+            position: absolute; top: 18px; right: 46px; z-index: 62;
+            font-family: var(--mono); font-size: 10px; letter-spacing: .16em; color: var(--muted);
+        }
+        /* 중앙 모니터 컬럼 */
+        #cb-intro .cb-monitor {
+            position: relative; z-index: 10; width: min(92vw, 420px);
+            padding: 0 4px; display: flex; flex-direction: column; align-items: stretch;
+            animation: cbDimMon .45s ease 4.5s forwards;   /* 로고 등장 시 모니터 디밍 */
+        }
+        @keyframes cbDimMon { to { opacity: .14; filter: blur(1px); } }
+        #cb-intro .cb-boot {
+            font-family: var(--mono); font-size: 12px; letter-spacing: .06em;
+            color: rgba(52,245,163,.9); min-height: 40px; margin-bottom: 6px;
+        }
+        #cb-intro .cb-boot .l2 { margin-top: 6px; color: var(--muted); }
+        #cb-intro .cb-boot .dots::after { content: ""; animation: cbDots 1s steps(4,end) infinite; }
+        @keyframes cbDots { 0%{content:""} 25%{content:"."} 50%{content:".."} 75%{content:"..."} 100%{content:""} }
+        /* 그려지는 ECG */
+        #cb-intro .cb-ecg { width: 100%; height: 96px; opacity: 0; animation: cbAppear .01s linear 1.2s forwards; }
+        #cb-intro .cb-ecg path {
+            fill: none; stroke: var(--acc); stroke-width: 2.4;
+            filter: drop-shadow(0 0 6px rgba(52,245,163,.8));
+            stroke-dasharray: 1400; stroke-dashoffset: 1400; animation: cbEcgDraw 1.1s ease-out 1.25s forwards;
+        }
+        @keyframes cbEcgDraw { to { stroke-dashoffset: 0; } }
+        @keyframes cbAppear { to { opacity: 1; } }
+        /* 바이탈 */
+        #cb-intro .cb-vitals { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
+        #cb-intro .cb-vital {
+            opacity: 0; transform: translateY(14px);
+            border: 1px solid rgba(255,255,255,.06); background: rgba(255,255,255,.02);
+            border-radius: 10px; padding: 10px 13px; font-family: var(--mono);
+        }
+        #cb-intro .cb-vital .k { font-size: 10px; letter-spacing: .16em; color: var(--muted); }
+        #cb-intro .cb-vital .v { font-size: 24px; font-weight: 600; margin-top: 4px; line-height: 1; color: var(--acc); text-shadow: 0 0 12px rgba(52,245,163,.5); }
+        #cb-intro .cb-vital.bad .v { color: var(--warn); text-shadow: 0 0 12px rgba(255,59,71,.5); }
+        #cb-intro .cb-vital.warnc .v { color: #ffb648; text-shadow: 0 0 12px rgba(255,182,72,.5); }
+        #cb-intro .cb-vital:nth-child(1) { animation: cbRise .5s cubic-bezier(.2,.7,.2,1) 2.2s forwards; }
+        #cb-intro .cb-vital:nth-child(2) { animation: cbRise .5s cubic-bezier(.2,.7,.2,1) 2.4s forwards; }
+        #cb-intro .cb-vital:nth-child(3) { animation: cbRise .5s cubic-bezier(.2,.7,.2,1) 2.6s forwards; }
+        #cb-intro .cb-vital:nth-child(4) { animation: cbRise .5s cubic-bezier(.2,.7,.2,1) 2.8s forwards; }
+        @keyframes cbRise { to { opacity: 1; transform: translateY(0); } }
+        /* 경고 배너 */
+        #cb-intro .cb-warn {
+            opacity: 0; margin-top: 12px; border: 1px solid rgba(255,59,71,.6);
+            background: rgba(255,59,71,.08); border-radius: 10px; padding: 11px 13px;
+            display: flex; gap: 10px; align-items: center;
+            animation: cbRise .4s ease 3.1s forwards, cbShake .5s ease 3.4s;
+        }
+        #cb-intro .cb-warn .ico { color: var(--warn); font-size: 17px; }
+        #cb-intro .cb-warn .t { font-size: 13.5px; color: #ffd7da; }
+        #cb-intro .cb-warn .t b { color: var(--warn); }
+        @keyframes cbShake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)} 40%{transform:translateX(5px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(3px)} }
+        /* 제세동 충전 바 */
+        #cb-intro .cb-defib { opacity: 0; margin-top: 12px; animation: cbAppear .3s ease 3.8s forwards; }
+        #cb-intro .cb-defib .lab { font-family: var(--mono); font-size: 11.5px; letter-spacing: .12em; color: var(--acc); display: flex; justify-content: space-between; }
+        #cb-intro .cb-defib .bar { height: 9px; margin-top: 7px; border: 1px solid rgba(52,245,163,.4); border-radius: 6px; overflow: hidden; background: rgba(0,0,0,.4); }
+        #cb-intro .cb-defib .fill { height: 100%; width: 0; background: linear-gradient(90deg, rgba(52,245,163,.5), var(--acc)); box-shadow: 0 0 14px rgba(52,245,163,.7); animation: cbCharge .7s cubic-bezier(.4,0,.9,.6) 3.85s forwards; }
+        @keyframes cbCharge { to { width: 100%; } }
+        /* 쇼크 방사 플래시 */
+        #cb-intro .cb-shock {
+            position: absolute; inset: 0; z-index: 52; opacity: 0; pointer-events: none;
+            background: radial-gradient(circle at 50% 55%, rgba(52,245,163,.9), rgba(52,245,163,.15) 30%, transparent 62%);
+            animation: cbShockFlash .5s ease 4.5s;
+        }
+        @keyframes cbShockFlash { 0%{opacity:0;transform:scale(.4)} 18%{opacity:.95} 100%{opacity:0;transform:scale(1.6)} }
+        /* 로고 펀치인 */
+        #cb-intro .cb-logo {
+            position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%);
+            text-align: center; z-index: 53; opacity: 0;
+            animation: cbPunch .5s cubic-bezier(.16,1.2,.3,1) 4.6s forwards;
+        }
+        #cb-intro .cb-logo h1 {
+            font-family: 'Oswald', 'Arial Narrow', system-ui, sans-serif;
+            font-weight: 700; font-size: clamp(64px, 22vw, 104px); line-height: .86; letter-spacing: .01em;
+            text-transform: uppercase; color: #e8f0ec; margin: 0;
+            animation: cbGlow 2.6s ease-in-out 5.2s infinite;
+        }
+        #cb-intro .cb-logo h1 .blue { color: var(--acc); }
+        #cb-intro .cb-logo .sub { margin-top: 10px; font-size: clamp(13px, 3.4vw, 16px); letter-spacing: .42em; color: var(--muted); padding-left: .42em; }
+        @keyframes cbPunch { 0%{opacity:0;transform:translateY(-50%) scale(1.4);filter:blur(14px)} 60%{opacity:1} 100%{opacity:1;transform:translateY(-50%) scale(1);filter:blur(0)} }
+        @keyframes cbGlow { 0%,100%{text-shadow:0 0 18px rgba(52,245,163,.35)} 50%{text-shadow:0 0 34px rgba(52,245,163,.7)} }
+        #cb-intro .cb-tap {
+            position: absolute; left: 0; right: 0; bottom: 12%; text-align: center; z-index: 54;
+            font-family: var(--mono); font-size: 12.5px; letter-spacing: .24em; color: rgba(52,245,163,.85);
+            opacity: 0; animation: cbAppear .4s ease 5.5s forwards, cbBlink 1.1s steps(2) 5.8s infinite;
+        }
+        @keyframes cbBlink { 50% { opacity: .25; } }
+        @media (prefers-reduced-motion: reduce) {
+            #cb-intro *, #cb-intro { animation-duration: .001s !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; }
+            #cb-intro .cb-scan { display: none; }
+        }
     </style>
 </head>
 <body>
@@ -171,6 +304,89 @@
         </div>
         <div class="loader-title">간호사 시뮬레이터</div>
     </div>
+
+    <!-- CODE BLUE 인트로 시네마틱 (세션당 1회, 탭 스킵) -->
+    <div id="cb-intro" role="presentation" aria-hidden="true">
+        <div class="cb-grid"></div>
+        <div class="cb-skiphint">TAP ▸ SKIP</div>
+
+        <div class="cb-monitor">
+            <div class="cb-boot">
+                <div id="cb-boot1"></div>
+                <div class="l2"><span id="cb-boot2"></span><span class="dots"></span></div>
+            </div>
+            <svg class="cb-ecg" viewBox="0 0 400 96" preserveAspectRatio="none">
+                <path d="M0 48 H90 l14 0 10 -34 10 62 10 -28 8 0 H250 l12 0 10 -34 10 62 10 -28 8 0 H400"/>
+            </svg>
+            <div class="cb-vitals">
+                <div class="cb-vital warnc"><div class="k">HR bpm</div><div class="v">118</div></div>
+                <div class="cb-vital"><div class="k">BP mmHg</div><div class="v">98/62</div></div>
+                <div class="cb-vital bad"><div class="k">SpO₂ %</div><div class="v">91</div></div>
+                <div class="cb-vital bad"><div class="k">TEMP ℃</div><div class="v">39.2</div></div>
+            </div>
+            <div class="cb-warn"><span class="ico">⚠</span><span class="t"><b>WARNING</b> · 3호실 상태 악화</span></div>
+            <div class="cb-defib">
+                <div class="lab"><span>⚡ CHARGING</span><span>200 J</span></div>
+                <div class="bar"><div class="fill"></div></div>
+            </div>
+        </div>
+
+        <div class="cb-shock"></div>
+        <div class="cb-logo">
+            <h1>CODE <span class="blue">BLUE</span></h1>
+            <div class="sub">간호사 시뮬레이터</div>
+        </div>
+        <div class="cb-tap">탭하여 시작</div>
+
+        <span class="cb-corner tl"></span><span class="cb-corner tr"></span>
+        <span class="cb-corner bl"></span><span class="cb-corner br"></span>
+        <div class="cb-scan"></div><div class="cb-vig"></div>
+    </div>
+    <script>
+    /* CODE BLUE 인트로 구동 — script.js 로드 전에 즉시 실행(연출이 로드시간을 가림).
+       세션당 1회. reduced-motion 이면 짧게 스킵. 탭/타이머로 dismiss. */
+    (function () {
+        var intro = document.getElementById("cb-intro");
+        if (!intro) return;
+        var reduce = false;
+        try { reduce = matchMedia("(prefers-reduced-motion:reduce)").matches; } catch (e) {}
+        var seen = false;
+        try { seen = sessionStorage.getItem("nurseSim:cbIntroSeen") === "1"; } catch (e) {}
+
+        function dismiss() {
+            if (intro.classList.contains("cb-done")) return;
+            clearTimeout(intro._t);
+            intro.classList.add("cb-done");
+            try { sessionStorage.setItem("nurseSim:cbIntroSeen", "1"); } catch (e) {}
+            setTimeout(function () { try { intro.remove(); } catch (e) {} }, 550);
+        }
+
+        if (seen) { intro.remove(); return; }   // 같은 세션 재방문 — 인트로 생략
+
+        // 부팅 타자기
+        function type(el, txt, speed, done) {
+            if (!el) { if (done) done(); return; }
+            el.textContent = ""; var i = 0;
+            (function tick() {
+                if (i <= txt.length) { el.textContent = txt.slice(0, i++); setTimeout(tick, speed); }
+                else if (done) done();
+            })();
+        }
+        var b1 = document.getElementById("cb-boot1"), b2 = document.getElementById("cb-boot2");
+        if (reduce) {
+            if (b1) b1.textContent = "SYSTEM ONLINE · NIGHT SHIFT";
+            if (b2) b2.textContent = "PATIENT MONITOR CONNECTING";
+            intro._t = setTimeout(dismiss, 1400);
+        } else {
+            type(b1, "SYSTEM ONLINE · NIGHT SHIFT", 34, function () {
+                setTimeout(function () { type(b2, "PATIENT MONITOR CONNECTING", 30); }, 250);
+            });
+            intro._t = setTimeout(dismiss, 6300);
+        }
+        intro.addEventListener("click", dismiss);
+        intro.addEventListener("touchstart", dismiss, { passive: true });
+    })();
+    </script>
 
     <div id="app-disclaimer" class="app-disclaimer hidden" role="note">
         교육 목적 · 임상 적용 금지 · <button class="disclaimer-link" data-action="openErrorReport">오류 신고</button>

@@ -43,29 +43,50 @@ body.app-hidden *::after {
 }
 
 [data-theme="dark"] {
-    /* === Sage Neumorphic — Dark (보정) === */
-    --primary:       #aacaa9;       /* 약간 밝게 — contrast 강화 */
-    --primary-dark:  #91b690;
-    --primary-soft:  #2e3f33;       /* 살짝 채도 ↑ */
-    --danger:  #df9a9a;
-    --warning: #dcbb7d;
-    --success: #aacaa9;
-    --bg:        #161b27;           /* 더 깊게 (1a1f2b → 161b27) */
-    --text:      #ecedf0;           /* 살짝 더 밝게 */
-    --card:      #232b3a;           /* card vs bg contrast 강화 */
-    --muted:     #aab4c4;
-    --border:    #2c3543;
-    --soft:      #2a3340;
-    --softer:    #1d2330;
-    --log-bg:     #0c1019;
-    --log-text:   #e5eaf0;
-    --log-border: #1d2330;
-    --modal-bg: rgba(8, 12, 20, 0.97);
-    /* 다크 모드 보정 — 토큰 오버라이드 */
-    --inset-light:        0 1px 0 rgba(255, 255, 255, 0.06) inset;
-    --inset-light-soft:   0 1px 0 rgba(255, 255, 255, 0.04) inset;
-    --glow-sage:          0 8px 20px -6px rgba(170, 202, 169, 0.25);
-    --glow-sage-strong:   0 14px 28px -8px rgba(170, 202, 169, 0.35);
+    /* === CODE BLUE — ECG 모니터 다크 팔레트 ===
+       기존 세이지-다크를 나이트시프트 병동 모니터 톤으로 리튠.
+       변수만 교체 → 다크 override 규칙 전체가 그대로 카스케이드. */
+    --primary:       #34f5a3;       /* monitor green (ECG) */
+    --primary-dark:  #22c988;
+    --primary-soft:  #10251d;       /* 그린 틴트 soft 배경 */
+    --danger:  #ff6b74;             /* 오답·위험 — 모니터 레드 */
+    --warning: #ffb648;             /* 경고 — 앰버 */
+    --success: #34f5a3;             /* 정답 — primary 그린 */
+    --bg:        #0c1116;           /* deep monitor bg */
+    --text:      #e8f0ec;
+    --card:      #0f161d;           /* 패널 */
+    --muted:     #8ba39a;           /* 그린-그레이 (가독성 확보) */
+    --border:    #223029;           /* 그린 틴트 보더 */
+    --soft:      #131c22;
+    --softer:    #0e151b;
+    --log-bg:     #070b0f;
+    --log-text:   #dfeee8;
+    --log-border: #16211b;
+    --modal-bg: rgba(7, 11, 15, 0.97);
+    /* 다크 모드 보정 — 토큰 오버라이드 (그린 글로우) */
+    --inset-light:        0 1px 0 rgba(255, 255, 255, 0.05) inset;
+    --inset-light-soft:   0 1px 0 rgba(255, 255, 255, 0.035) inset;
+    --glow-sage:          0 8px 22px -6px rgba(52, 245, 163, 0.28);
+    --glow-sage-strong:   0 14px 30px -8px rgba(52, 245, 163, 0.42);
+}
+
+/* CODE BLUE — ECG 그리드 + ambient 배경 (다크 전용 시그니처) */
+[data-theme="dark"] body {
+    background-color: #0c1116;
+    background-image:
+        radial-gradient(120% 80% at 50% -8%, rgba(52, 245, 163, 0.06), transparent 55%),
+        linear-gradient(rgba(52, 245, 163, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(52, 245, 163, 0.035) 1px, transparent 1px);
+    background-size: 100% 100%, 30px 30px, 30px 30px;
+    background-attachment: fixed;
+}
+@supports not (background: color-mix(in srgb, white, black)) {
+    [data-theme="dark"] body {
+        background-image:
+            linear-gradient(rgba(52, 245, 163, 0.035) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(52, 245, 163, 0.035) 1px, transparent 1px);
+        background-size: 30px 30px, 30px 30px;
+    }
 }
 
 body {
