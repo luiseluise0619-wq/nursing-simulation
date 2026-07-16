@@ -755,6 +755,14 @@
               { text: "원래 그렇다며 차분히 기다리라고 말한다", effect: { hp: -10, rep: -12 }, log: "방어적 대응은 갈등을 키웁니다." },
               { text: "약사 잘못이라며 책임을 돌린다", effect: { hp: -8, rep: -10 }, log: "팀 신뢰가 깨지고 사실관계도 부정확합니다." },
           ] },
+        // event 8: 아나필락시스 위기 (BOSS 2)
+        { atEvent: 8, baseId: "boss-anaphylaxis", boss: true, title: "🚨 아나필락시스 — 512호", emoji: "💉",
+          desc: "항생제(세프트리악손) 정주 5분 후, 512호 환자가 갑자기 목이 조이고 전신 두드러기.\n천명음, BP 78/40, SpO₂ 88%. 급속히 악화됩니다.",
+          choices: [
+              { text: "즉시 항생제 중단 + Epinephrine IM(대퇴 외측) + 응급 호출·기도 확보", correct: true, boss: true, effect: { hp: -10, rep: 16 }, log: "정답. 아나필락시스 1차 치료는 근육내 에피네프린이 최우선입니다." },
+              { text: "항히스타민제(디펜히드라민)부터 IV로 투여하고 관찰", effect: { hp: -25, rep: -28 }, log: "항히스타민은 보조제 — 에피네프린 지연은 치명적입니다." },
+              { text: "수액을 빠르게 올리며 의사 지시를 기다린다", effect: { hp: -22, rep: -24 }, log: "기도 폐쇄가 진행 중 — 에피네프린이 먼저입니다." },
+          ] },
         // event 10: 점심 인터럽트
         { atEvent: 10, baseId: "story-lunch", title: "점심 시간 콜벨", emoji: "🍱",
           desc: "겨우 자리에 앉아 첫 입을 떴는데 콜벨 3개가 동시에 울립니다.\n· 503호: 통증 호소\n· 522호: 화장실 도움\n· 614호: 'V/S 좀 빨리...'",
@@ -763,11 +771,11 @@
               { text: "점심 마저 먹고 한꺼번에 처리한다", effect: { hp: -5, rep: -20 }, log: "치명적 — V/S 호소가 응급일 수 있습니다." },
               { text: "보조원에게 전달하고 자리 정리", effect: { hp: -10, rep: -15 }, log: "위임 가능 업무와 간호 사정을 구분해야 합니다." },
           ] },
-        // event 13: 코드 블루
-        { atEvent: 13, baseId: "story-codeblue", title: "🚨 CODE BLUE — 507호", emoji: "🚨",
+        // event 13: 코드 블루 (BOSS 1)
+        { atEvent: 13, baseId: "story-codeblue", boss: true, title: "🚨 CODE BLUE — 507호", emoji: "💥",
           desc: "복도 끝에서 비명. 507호 환자가 의식 없이 침대에서 떨어져 있습니다.\n맥박 — 없음.",
           choices: [
-              { text: "즉시 응급 호출, CPR 시작, 동시에 모니터·제세동기 요청", correct: true, effect: { hp: -10, rep: 15 }, log: "정답. ACLS 알고리즘 — 호출·CPR·전기 동시 진행." },
+              { text: "즉시 응급 호출, CPR 시작, 동시에 모니터·제세동기 요청", correct: true, boss: true, effect: { hp: -10, rep: 15 }, log: "정답. ACLS 알고리즘 — 호출·CPR·전기 동시 진행." },
               { text: "의사가 올 때까지 환자 옆에서 대기 + 30분 후 재평가", effect: { hp: -25, rep: -30 }, log: "심정지는 1분 지연마다 생존율 7-10% 감소합니다." },
               { text: "혼자 환자를 침대로 올린다", effect: { hp: -15, rep: -10 }, log: "CPR이 먼저, 이동은 그 다음입니다." },
           ] },
@@ -778,6 +786,14 @@
               { text: "피드백 수용, 다음엔 단계별 설명 추가하겠다고 답한다", correct: true, effect: { hp: 0, rep: 8 }, log: "정답. 비판이 아닌 성장 피드백으로 수용하는 자세." },
               { text: "신규가 너무 따라가지 못한다고 변명한다", effect: { hp: -5, rep: -12 }, log: "방어적 태도는 성장을 멈춥니다." },
               { text: "그래서 어쩌라는 거냐며 짜증을 낸다", effect: { hp: -10, rep: -20 }, log: "관계 손상 — 평판이 크게 떨어집니다." },
+          ] },
+        // event 17: 대량재해 (BOSS 3)
+        { atEvent: 17, baseId: "boss-mass", boss: true, title: "🚨 대량재해 — 버스 전복", emoji: "🚑",
+          desc: "관광버스 전복. 부상자 8명이 동시에 응급실로 밀려듭니다.\n손은 둘, 시간은 없다. 무엇부터?",
+          choices: [
+              { text: "START 분류로 중증도 트리아지 → 인력·자원 배분 후 최우선부터", correct: true, boss: true, effect: { hp: -12, rep: 18 }, log: "정답. 대량재해는 개별 처치보다 트리아지·자원 배분이 먼저입니다." },
+              { text: "가장 크게 우는 환자부터 순서대로 처치", effect: { hp: -25, rep: -30 }, log: "소리 크기는 중증도와 무관 — 조용한 환자가 더 위중할 수 있습니다." },
+              { text: "도착 순서대로 한 명씩 완전히 처치", effect: { hp: -22, rep: -26 }, log: "대량재해에서 순차 처치는 살릴 수 있는 환자를 놓칩니다." },
           ] },
         // event 18: 마지막 환자
         { atEvent: 18, baseId: "story-handover", title: "마지막 환자 인계 준비", emoji: "📋",
