@@ -2687,6 +2687,19 @@ function _initSurvivalReal() {
     }
     beginEpisode(target.id, 0, 100, 0);
 }
+// 위기 듀티 — 랜덤 사건 20건 + 위기상황(보스) 3회의 로그라이크 듀티.
+// 큐레이팅 에피소드(initSurvival→beginEpisode)와 별개의 독립 모드.
+function initCrisisDuty() {
+    try { Storage.setFirstActionDone(); } catch {}
+    gameState.mode = "survival";
+    resetStateForMode();
+    if (!Number.isFinite(gameState.difficulty) || gameState.difficulty <= 0) gameState.difficulty = 1.0;
+    showCoreUI();
+    if (UI.logBar) UI.logBar.innerHTML = "";
+    addLog("🚨 위기 듀티 시작 — 사건 20건. 위기상황(BOSS) 3회를 넘기면 병동을 지킨다.", "log-important");
+    updateStats();
+    renderSurvivalEvent("intro");
+}
 function renderSurvivalEvent(eventId) {
     let ev;
     if (eventId === "intro") {
@@ -4859,6 +4872,7 @@ function renderEpisodeMenu() {
         <div class="choice-list">
           <button class="choice-btn primary" data-action="renderCampaign">📖 커리어 스토리 (4막 13화 — 소설처럼 이어보기)</button>
           <button class="choice-btn primary" data-action="initSurvival">🎲 랜덤 에피소드 (오늘의 듀티)</button>
+          <button class="choice-btn primary" data-action="initCrisisDuty">🚨 위기 듀티 (랜덤 · 보스전 3회)</button>
         </div>
         ${groupsHtml}
         <div class="choice-list">
@@ -8410,6 +8424,7 @@ function renderWeaknessAnalysis() {
 const DELEGATED_ACTIONS = {
     returnToMenu: () => returnToMenu(),
     initSurvival: () => initSurvival(),
+    initCrisisDuty: () => initCrisisDuty(),
     renderQuizMenu: () => renderQuizMenu(),
     renderImageQuizMenu: () => renderImageQuizMenu(),
     renderKorMenu: () => renderKorMenu(),
