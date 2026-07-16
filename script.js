@@ -105,6 +105,7 @@ const gameState = {
     quizSolved: 0, quizCorrect: 0, quizWrong: 0,
     recentIds: [],
     combo: 0, bestCombo: 0,
+    bossesCleared: 0,      // 위기상황(보스) 인카운터 클리어 수 — 듀티당 리셋
     // mock
     mockTotal: 0, mockAnswered: 0, mockCorrect: 0, mockDeadlineTs: 0, mockTimerId: null, mockWrong: [],
     // daily
@@ -2586,6 +2587,7 @@ function resetStateForMode() {
     gameState.scenarioId = null; gameState.scenarioStep = 0;
     gameState.episodeId = null; gameState.episodeStep = 0;
     gameState.firedStoryBeats = [];
+    gameState.bossesCleared = 0;
     gameState.reviveCount = 0;
     gameState._lastDeath = null;
     // NCLEX 영어 모드 상태
@@ -2701,8 +2703,8 @@ function renderSurvivalEvent(eventId) {
         if (beat) {
             gameState.firedStoryBeats.push(beat.baseId);
             ev = {
-                baseId: beat.baseId, category: "스토리", part: `Event ${upcomingCount}`,
-                emoji: beat.emoji, title: beat.title, desc: beat.desc,
+                baseId: beat.baseId, category: beat.boss ? "🚨 위기상황" : "스토리", part: beat.boss ? "BOSS" : `Event ${upcomingCount}`,
+                emoji: beat.emoji, title: beat.title, desc: beat.desc, boss: beat.boss || false,
                 choices: beat.choices.map(c => ({ ...c })),
             };
         } else {
@@ -2718,7 +2720,10 @@ function renderSurvivalEvent(eventId) {
         }
         gameState.eventCount += 1;
     }
-    renderSceneCard(ev, { mode: "survival", meta: [`난이도: ${gameState.currentShift}`, `누적: ${gameState.eventCount}건`, `콤보: ${gameState.combo}`] });
+    const survMeta = [`난이도: ${gameState.currentShift}`, `누적: ${gameState.eventCount}건`, `콤보: ${gameState.combo}`];
+    if (ev.boss) survMeta.unshift("🚨 위기상황 BOSS");
+    else if (gameState.bossesCleared > 0) survMeta.push(`👑 보스 ${gameState.bossesCleared}/3`);
+    renderSceneCard(ev, { mode: "survival", meta: survMeta });
 }
 // =========================================================================
 // 특성 (Perks) — Cyberpunk 스타일 자동 획득 + 게임 효과
@@ -3015,13 +3020,26 @@ function handleSurvivalChoice(choice) {
         if (hpBefore < 30 && gameState.hp > 0 && isCorrect) Perks.onLowHpSurvived();
     } catch {}
     if (choice.log) addLog(choice.log, isCorrect ? "log-good" : (choice.effect?.rep || 0) < 0 ? "log-bad" : "");
+    // 위기상황(보스) 클리어 — 올바른 보스 대응 시 HP 회복 + 카운터 + 연출
+    if (choice.boss && isCorrect) {
+        gameState.bossesCleared += 1;
+        gameState.hp = clamp(gameState.hp + 15, 0, 100);
+        updateStats();
+        addLog(`👑 위기 극복! 보스 ${gameState.bossesCleared}/3 · HP +15`, "log-important");
+        try { Sound.correct(); Haptics.medium(); } catch {}
+    }
     if (gameState.hp <= 0) return showGameOver("체력 고갈", "번아웃 되었습니다. 환자 안전을 위해 퇴근하세요.");
     if (gameState.rep < -60) return showGameOver("평판 실추", "치명적인 실수 누적으로 투약 사고 위기입니다.");
     if (gameState.eventCount >= MAX_PROGRESS_EVENTS) {
         Storage.addHistory({ mode: "survival", at: Date.now(), hp: gameState.hp, rep: gameState.rep, events: gameState.eventCount, bestCombo: gameState.bestCombo });
         // 특성 카운터 — 듀티 완주 (퍼펙트 = HP 80+ 유지)
         try { Perks.onDutyComplete(gameState.currentShift, gameState.hp >= 80); } catch {}
-        return showGameOver("듀티 무사 완수!", "수고하셨습니다. 당신은 훌륭한 간호사입니다.");
+        const bc = gameState.bossesCleared;
+        let dutyDesc = "수고하셨습니다. 당신은 훌륭한 간호사입니다.";
+        if (bc >= 3 && gameState.hp >= 80) dutyDesc = `👑 위기상황 ${bc}/3 전부 극복 + HP ${gameState.hp} 유지. 오늘 병동을 지킨 건 당신입니다. 수간호사 후보감.`;
+        else if (bc >= 3) dutyDesc = `👑 위기상황 ${bc}/3 전부 극복! 긴박한 순간마다 당신이 있었습니다.`;
+        else if (bc > 0) dutyDesc = `위기상황 ${bc}/3 극복. 수고하셨습니다 — 다음엔 전부 지켜봅시다.`;
+        return showGameOver(bc >= 3 ? "👑 듀티 완수 — 위기 정복" : "듀티 무사 완수!", dutyDesc);
     }
     renderSurvivalEvent(choice.next || "random_hub");
 }
