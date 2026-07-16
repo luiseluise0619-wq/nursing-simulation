@@ -91,6 +91,16 @@ const NQ = (typeof window !== "undefined" && window.NurseQuestions)
 const NC = (typeof window !== "undefined" && window.NurseContent)
     || (typeof require !== "undefined" ? require("./content.js") : null);
 
+// 확장 고난도 문제 병합 — questions-extra.js(있으면)를 allGenerators 에 추가.
+// 브라우저: index.html 이 script.js 앞에 로드. 없으면 무시(main 143 그대로).
+try {
+    const EX = (typeof window !== "undefined" && window.NurseQuestionsExtra)
+        || (typeof require !== "undefined" ? require("./questions-extra.js") : null);
+    if (NQ && EX && Array.isArray(EX.extraGenerators) && Array.isArray(NQ.allGenerators)) {
+        NQ.allGenerators = NQ.allGenerators.concat(EX.extraGenerators);
+    }
+} catch (e) { /* 확장 문제 없으면 조용히 무시 */ }
+
 // =========================================================================
 // 상태
 // =========================================================================

@@ -1,13 +1,14 @@
 // 간호사 시뮬레이터 서비스 워커 — 오프라인 우선 (cache-first)
 // Electron 환경(file://)에서는 등록되지 않으며, PWA 호스팅 시에만 동작.
 // 버전 변경 시 활성화·재캐싱 발생 — 배포 때마다 v숫자 올려야 사용자에게 업데이트 전달됨.
-const CACHE = "nurse-sim-v22";
+const CACHE = "nurse-sim-v23";
 const ASSETS = [
     "./",
     "./index.html",
     "./styles.css",
     "./script.js",
     "./questions.js",
+    "./questions-extra.js",
     // nclex-content.js (2MB) — lazy load 시 자동 캐시 (precache 제외하여 초기 로딩 빠르게)
     "./kor-content.js",
     "./content.js",
