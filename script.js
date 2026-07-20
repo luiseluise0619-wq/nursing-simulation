@@ -33,6 +33,9 @@ const DAILY_CHALLENGE_TOTAL = 10;     // 일일 챌린지 = 10문제
 const STORAGE_KEY = "nurseSim:v1";    // localStorage 키 (v1 = 스키마 버전)
 const APP_VERSION = "1.1.0-beta";     // package.json 과 별개 표시 버전
 
+// i18n 전역 헬퍼 — 현재 언어(ko/en)로 핵심 UI 라벨 번역. I18N 없으면 폴백 문자열.
+const _t = (k, fb) => (typeof window !== "undefined" && window.I18N) ? window.I18N.t(k, fb) : fb;
+
 // 분석 (Plausible) — 익명·쿠키리스·GDPR/PIPA 준수.
 // 배포 도메인을 여기 1줄 입력하면 자동 활성화. 비워두면 완전 no-op (외부 호출 0).
 const ANALYTICS_DOMAIN = ""; // 예: "luiseluise0619-wq.github.io"
@@ -3177,7 +3180,7 @@ function renderPracticeMenu() {
            </button>` : "";
     UI.gameArea.innerHTML = `
       <div class="tab-section">
-        <h2 class="page-title">풀이</h2>
+        <h2 class="page-title">${_t("study.practice", "풀이")}</h2>
         <p class="page-sub">빠른 풀이로 점수 만들기.</p>
         ${nclexBtn}
         <button class="row-card" data-action="renderSubjectStudyMenu">
@@ -3229,7 +3232,7 @@ function renderSimMenu() {
     showCoreUI(); if (UI.logBar) UI.logBar.innerHTML = ""; updateStats();
     UI.gameArea.innerHTML = `
       <div class="tab-section">
-        <h2 class="page-title">시뮬레이션</h2>
+        <h2 class="page-title">${_t("study.simulation", "시뮬레이션")}</h2>
         <p class="page-sub">실제 듀티처럼 한 사례를 끝까지.</p>
         <button class="row-card" data-action="renderCaseMenu">
           <div class="row-icon">${ICONS.episode}</div>
@@ -3267,7 +3270,7 @@ function renderDrillMenu() {
     showCoreUI(); if (UI.logBar) UI.logBar.innerHTML = ""; updateStats();
     UI.gameArea.innerHTML = `
       <div class="tab-section">
-        <h2 class="page-title">훈련</h2>
+        <h2 class="page-title">${_t("study.drills", "훈련")}</h2>
         <p class="page-sub">한 가지를 깊이.</p>
         <button class="row-card" data-action="renderImageQuizMenu">
           <div class="row-icon">${ICONS.scenario}</div>
@@ -7075,16 +7078,16 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
 
         <button class="hero-card ${Storage.isFirstAction() ? 'hero-card-first' : ''}" data-action="initSurvival">
           ${Storage.isFirstAction() ? '<div class="hero-tooltip" aria-hidden="true">👇 여기 먼저 눌러보세요</div>' : ''}
-          <div class="hero-label">지금 시작</div>
-          <div class="hero-title">오늘의 듀티</div>
-          <div class="hero-sub">환자 관리하며 점수 쌓기</div>
+          <div class="hero-label">${_t("duty.start", "지금 시작")}</div>
+          <div class="hero-title">${_t("duty.title", "오늘의 듀티")}</div>
+          <div class="hero-sub">${_t("duty.sub", "환자 관리하며 점수 쌓기")}</div>
         </button>
 
         <div class="home-row">
           <button class="row-card ${dailyDone ? 'done' : ''}" data-action="startDailyChallenge">
             <div class="row-icon">${ICONS.daily}</div>
             <div class="row-body">
-              <div class="row-title">일일 챌린지 ${dailyDone ? '<span class="row-pill done">완료</span>' : ''}</div>
+              <div class="row-title">${_t("daily.title", "일일 챌린지")} ${dailyDone ? `<span class="row-pill done">${_t("daily.done", "완료")}</span>` : ''}</div>
               <div class="row-sub">${dailyDone ? `오늘 ${dailyCorrect}/${DAILY_CHALLENGE_TOTAL} 정답` : `매일 ${DAILY_CHALLENGE_TOTAL}문제`}</div>
             </div>
             <div class="row-chev">›</div>
@@ -7094,8 +7097,8 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
           <button class="row-card" data-action="reviewWrongAnswers">
             <div class="row-icon">${ICONS.wrong}</div>
             <div class="row-body">
-              <div class="row-title">오답 복습 <span class="row-pill warn">${wrongCount}</span></div>
-              <div class="row-sub">틀렸던 문제 다시 풀기</div>
+              <div class="row-title">${_t("wrong.review", "오답 복습")} <span class="row-pill warn">${wrongCount}</span></div>
+              <div class="row-sub">${_t("wrong.review.sub", "틀렸던 문제 다시 풀기")}</div>
             </div>
             <div class="row-chev">›</div>
           </button>` : ''}
@@ -7237,15 +7240,15 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
         <nav class="tab-bar" role="tablist" aria-label="메인 탐색">
           <button class="tab-btn ${tab === 'home' ? 'active' : ''}" data-action="setMenuTab" data-tab="home" role="tab" aria-selected="${tab === 'home'}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12 12 3l9 9"/><path d="M5 10v10h14V10"/></svg>
-            <span>홈</span>
+            <span>${_t("menu.home", "홈")}</span>
           </button>
           <button class="tab-btn ${tab === 'study' ? 'active' : ''}" data-action="setMenuTab" data-tab="study" role="tab" aria-selected="${tab === 'study'}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-            <span>학습</span>
+            <span>${_t("menu.study", "학습")}</span>
           </button>
           <button class="tab-btn ${tab === 'my' ? 'active' : ''}" data-action="setMenuTab" data-tab="my" role="tab" aria-selected="${tab === 'my'}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            <span>내 기록</span>
+            <span>${_t("menu.my", "내 기록")}</span>
           </button>
         </nav>
       </div>`;
