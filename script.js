@@ -2180,7 +2180,7 @@ function closeKebab() {
 }
 function _syncKebabSoundLabel() {
     const el = document.getElementById("kebab-sound-label");
-    if (el) el.textContent = Sound.enabled ? "사운드 끄기" : "사운드 켜기";
+    if (el) el.textContent = Sound.enabled ? _t("kebab.soundOff", "사운드 끄기") : _t("kebab.soundOn", "사운드 켜기");
 }
 
 // =========================================================================
@@ -2231,22 +2231,22 @@ function updateStats() {
     }
     updateStats._prevRep = gameState.rep;
 
-    let value = 0, total = 1, label = "진행도";
-    if (gameState.mode === "survival") { value = gameState.eventCount; total = MAX_PROGRESS_EVENTS; label = "듀티 진행도"; }
-    else if (gameState.mode === "quiz") { value = gameState.quizSolved; total = Math.max(gameState.quizSolved, 1); label = `학습 진행도 · ${gameState.quizCategory || ""}`; }
-    else if (gameState.mode === "mock") { value = gameState.mockAnswered; total = gameState.mockTotal; label = "모의고사"; }
-    else if (gameState.mode === "daily") { value = gameState.dailySolved; total = DAILY_CHALLENGE_TOTAL; label = "일일 챌린지"; }
-    else if (gameState.mode === "wrong_review") { value = gameState.quizSolved; total = Math.max(gameState.wrongQueue.length, 1); label = "오답노트"; }
-    else if (gameState.mode === "handoff") { value = gameState.handoffIndex; total = NC.HANDOFF_PATIENTS.length; label = "인계 시뮬레이터"; }
-    else if (gameState.mode === "handoff_write") { value = gameState.handoffIndex; total = gameState.handoffPool ? gameState.handoffPool.length : HANDOFF_SESSION_SIZE; label = "인계 작성 실습"; }
-    else if (gameState.mode === "triage") { value = gameState.triageIndex; total = NC.TRIAGE_CASES.length; label = "트리아지"; }
+    let value = 0, total = 1, label = _t("status.progress", "진행도");
+    if (gameState.mode === "survival") { value = gameState.eventCount; total = MAX_PROGRESS_EVENTS; label = _t("status.dutyProgress", "듀티 진행도"); }
+    else if (gameState.mode === "quiz") { value = gameState.quizSolved; total = Math.max(gameState.quizSolved, 1); label = `${_t("status.study", "학습 진행도")} · ${gameState.quizCategory || ""}`; }
+    else if (gameState.mode === "mock") { value = gameState.mockAnswered; total = gameState.mockTotal; label = _t("mock.title", "모의고사"); }
+    else if (gameState.mode === "daily") { value = gameState.dailySolved; total = DAILY_CHALLENGE_TOTAL; label = _t("daily.title", "일일 챌린지"); }
+    else if (gameState.mode === "wrong_review") { value = gameState.quizSolved; total = Math.max(gameState.wrongQueue.length, 1); label = _t("status.wrongNote", "오답노트"); }
+    else if (gameState.mode === "handoff") { value = gameState.handoffIndex; total = NC.HANDOFF_PATIENTS.length; label = _t("status.handoff", "인계 시뮬레이터"); }
+    else if (gameState.mode === "handoff_write") { value = gameState.handoffIndex; total = gameState.handoffPool ? gameState.handoffPool.length : HANDOFF_SESSION_SIZE; label = _t("status.handoffWrite", "인계 작성 실습"); }
+    else if (gameState.mode === "triage") { value = gameState.triageIndex; total = NC.TRIAGE_CASES.length; label = _t("status.triage", "트리아지"); }
     else if (gameState.mode === "scenario") {
         const s = NC.SCENARIOS.find(x => x.id === gameState.scenarioId);
-        value = gameState.scenarioStep; total = s ? s.steps.length : 1; label = `시나리오 · ${s ? s.title : ""}`;
+        value = gameState.scenarioStep; total = s ? s.steps.length : 1; label = `${_t("status.scenario", "시나리오")} · ${s ? s.title : ""}`;
     }
     else if (gameState.mode === "episode") {
         const ep = NC.EPISODES.find(x => x.id === gameState.episodeId);
-        value = gameState.episodeStep; total = ep ? ep.steps.length : 1; label = `에피소드 · ${ep ? ep.title : ""}`;
+        value = gameState.episodeStep; total = ep ? ep.steps.length : 1; label = `${_t("status.episode", "에피소드")} · ${ep ? ep.title : ""}`;
     }
 
     const progressRaw = total > 0 ? (value / total) * 100 : 0;
@@ -2260,15 +2260,16 @@ function updateStats() {
     UI.inventory.innerHTML = "";
     const shiftBadge = document.createElement("span");
     shiftBadge.className = "badge accent";
-    shiftBadge.textContent = `근무: ${gameState.currentShift}`;
+    shiftBadge.textContent = `${_t("status.shift", "근무")}: ${gameState.currentShift}`;
     UI.inventory.appendChild(shiftBadge);
 
     const statusBadge = document.createElement("span");
     statusBadge.className = "badge";
-    statusBadge.textContent = ({
-        survival: "상태: 실전 모드", quiz: "상태: 트레이닝", mock: "상태: 모의고사",
-        daily: "상태: 일일 챌린지", wrong_review: "상태: 오답 복습", dashboard: "상태: 대시보드",
-    })[gameState.mode] || "상태: 대기";
+    const _stBody = ({
+        survival: _t("badge.survival", "실전 모드"), quiz: _t("badge.quiz", "트레이닝"), mock: _t("mock.title", "모의고사"),
+        daily: _t("daily.title", "일일 챌린지"), wrong_review: _t("wrong.review", "오답 복습"), dashboard: _t("badge.dashboard", "대시보드"),
+    })[gameState.mode] || _t("badge.idle", "대기");
+    statusBadge.textContent = `${_t("status.label", "상태")}: ${_stBody}`;
     UI.inventory.appendChild(statusBadge);
 
     if (gameState.combo >= 2) {
@@ -3194,15 +3195,15 @@ function renderPracticeMenu() {
         </button>
         <button class="row-card" data-action="startMockExam">
           <div class="row-icon">${ICONS.mock}</div>
-          <div class="row-body"><div class="row-title">모의고사</div><div class="row-sub">${MOCK_EXAM_TOTAL}문제 · ${MOCK_EXAM_SECONDS / 60}분</div></div>
+          <div class="row-body"><div class="row-title">${_t("mock.title", "모의고사")}</div><div class="row-sub">${MOCK_EXAM_TOTAL}${_t("unit.q", "문제")} · ${MOCK_EXAM_SECONDS / 60}${_t("unit.min", "분")}</div></div>
           <div class="row-chev">›</div>
         </button>
         <button class="row-card" data-action="startDailyChallenge">
           <div class="row-icon">${ICONS.daily}</div>
-          <div class="row-body"><div class="row-title">일일 챌린지</div><div class="row-sub">매일 ${DAILY_CHALLENGE_TOTAL}문제</div></div>
+          <div class="row-body"><div class="row-title">${_t("daily.title", "일일 챌린지")}</div><div class="row-sub">${_t("daily.every", "매일")} ${DAILY_CHALLENGE_TOTAL}${_t("unit.q", "문제")}</div></div>
           <div class="row-chev">›</div>
         </button>
-        <button class="choice-btn center" data-action="returnToMenu">메뉴</button>
+        <button class="choice-btn center" data-action="returnToMenu">${_t("action.back", "메뉴")}</button>
       </div>`;
 }
 
@@ -3243,7 +3244,7 @@ function renderSimMenu() {
           <div class="row-body"><div class="row-title">사례 학습</div><div class="row-sub">에피소드 35편 + 짧은 시나리오</div></div>
           <div class="row-chev">›</div>
         </button>
-        <button class="choice-btn center" data-action="returnToMenu">메뉴</button>
+        <button class="choice-btn center" data-action="returnToMenu">${_t("action.back", "메뉴")}</button>
       </div>`;
 }
 
@@ -3301,7 +3302,7 @@ function renderDrillMenu() {
           <div class="row-body"><div class="row-title">트리아지</div><div class="row-sub">응급실 다중환자 분류</div></div>
           <div class="row-chev">›</div>
         </button>
-        <button class="choice-btn center" data-action="returnToMenu">메뉴</button>
+        <button class="choice-btn center" data-action="returnToMenu">${_t("action.back", "메뉴")}</button>
       </div>`;
 }
 
@@ -4127,15 +4128,15 @@ function endMockExam(reason) {
     try { Storage.updateMockBest(correct); Storage.markModeUsed("mock"); checkAndNotifyAchievements(); } catch {}
     Storage.addHistory({ mode: "mock", at: Date.now(), total, answered, correct, accuracy: acc, reason });
 
-    const title = reason === "timeout" ? "⏰ 시간 종료" : reason === "abort" ? "모의고사 중단" : "🏁 모의고사 완료";
+    const title = reason === "timeout" ? _t("res.timeout", "⏰ 시간 종료") : reason === "abort" ? _t("res.abort", "모의고사 중단") : _t("res.done", "🏁 모의고사 완료");
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
         <h2 class="scene-title">${title}</h2>
         <p class="scene-desc">총 ${total}문제 중 ${answered}문제 응답 / 정답 ${correct} (정답률 ${acc}%)</p>
         <div class="choice-list">
-          <button class="choice-btn primary" data-action="startMockExam">한 번 더</button>
-          <button class="choice-btn" data-action="reviewWrongAnswers">오답 복습</button>
-          <button class="choice-btn center" data-action="returnToMenu">메인 메뉴</button>
+          <button class="choice-btn primary" data-action="startMockExam">${_t("res.moreOnce", "한 번 더")}</button>
+          <button class="choice-btn" data-action="reviewWrongAnswers">${_t("wrong.review", "오답 복습")}</button>
+          <button class="choice-btn center" data-action="returnToMenu">${_t("nav.mainMenu", "메인 메뉴")}</button>
         </div>
       </div>`;
 }
@@ -4271,14 +4272,14 @@ function endDailyChallenge() {
           <div class="dh-emoji" aria-hidden="true">${grade.emoji}</div>
           <div class="dh-tag dh-tag-${grade.color}">${grade.tag}</div>
           <div class="dh-score"><span class="dh-correct">${correct}</span><span class="dh-slash">/</span><span class="dh-total">${DAILY_CHALLENGE_TOTAL}</span></div>
-          <div class="dh-acc">정답률 ${accuracy}%</div>
+          <div class="dh-acc">${_t("acc.rate", "정답률")} ${accuracy}%</div>
         </div>
         <div class="daily-end-streak">${streakMsg}</div>
-        <h2 class="scene-title" style="text-align:center; margin:18px 0 6px;">일일 챌린지 완료</h2>
-        <p class="scene-desc" style="text-align:center;">오늘 학습 끝 — 내일 또 만나요.</p>
+        <h2 class="scene-title" style="text-align:center; margin:18px 0 6px;">${_t("daily.complete", "일일 챌린지 완료")}</h2>
+        <p class="scene-desc" style="text-align:center;">${_t("daily.completeSub", "오늘 학습 끝 — 내일 또 만나요.")}</p>
         <div class="choice-list">
-          <button class="choice-btn primary" data-action="returnToMenu">메뉴로</button>
-          <button class="choice-btn" data-action="shareResultCard" data-mode="daily" data-title="일일 챌린지 ${correct}/${DAILY_CHALLENGE_TOTAL} · ${streak.count}일 연속" data-lines="${todayKey()}|정답 ${correct} 문제 · ${accuracy}%|🔥 ${streak.count}일 연속">결과 카드 공유</button>
+          <button class="choice-btn primary" data-action="returnToMenu">${_t("nav.toMenu", "메뉴로")}</button>
+          <button class="choice-btn" data-action="shareResultCard" data-mode="daily" data-title="일일 챌린지 ${correct}/${DAILY_CHALLENGE_TOTAL} · ${streak.count}일 연속" data-lines="${todayKey()}|정답 ${correct} 문제 · ${accuracy}%|🔥 ${streak.count}일 연속">${_t("share.card", "결과 카드 공유")}</button>
         </div>
       </div>`;
 }
@@ -5600,9 +5601,9 @@ function safeConfirm(message) {
     return false; // 폴백: 확인 불가 → 안전하게 거부
 }
 function confirmClearStats() {
-    if (!safeConfirm("모든 통계/오답/기록을 초기화합니다. 계속하시겠습니까?")) return;
+    if (!safeConfirm(_t("confirm.clearStats", "모든 통계/오답/기록을 초기화합니다. 계속하시겠습니까?"))) return;
     localStorage.removeItem(STORAGE_KEY);
-    addLog("저장된 데이터를 초기화했습니다.", "log-important");
+    addLog(_t("toast.dataReset", "저장된 데이터를 초기화했습니다."), "log-important");
     renderDashboard();
 }
 
@@ -5621,108 +5622,108 @@ function openSettings() {
     const acc = totalSolved ? Math.round(totalCorrect / totalSolved * 100) : 0;
     UI.gameArea.innerHTML = `
       <div class="card settings-card">
-        <h2 class="scene-title">설정</h2>
+        <h2 class="scene-title">${_t("settings.title", "설정")}</h2>
 
-        <h3 class="settings-section">일반</h3>
+        <h3 class="settings-section">${_t("settings.sec.general", "일반")}</h3>
         <div class="settings-row">
-          <span>테마</span>
-          <span class="settings-value">${settings.theme === "dark" ? "다크" : settings.theme === "light" ? "라이트" : "자동"}</span>
+          <span>${_t("settings.theme", "테마")}</span>
+          <span class="settings-value">${settings.theme === "dark" ? _t("theme.dark", "다크") : settings.theme === "light" ? _t("theme.light", "라이트") : _t("theme.auto", "자동")}</span>
         </div>
         <div class="settings-row-3col">
-          <button class="choice-btn ${settings.theme === "light" ? "primary" : ""}" data-action="setTheme" data-theme="light">라이트</button>
-          <button class="choice-btn ${settings.theme === "dark" ? "primary" : ""}" data-action="setTheme" data-theme="dark">다크</button>
-          <button class="choice-btn ${(!settings.theme || settings.theme === "auto") ? "primary" : ""}" data-action="setTheme" data-theme="auto">자동</button>
+          <button class="choice-btn ${settings.theme === "light" ? "primary" : ""}" data-action="setTheme" data-theme="light">${_t("theme.light", "라이트")}</button>
+          <button class="choice-btn ${settings.theme === "dark" ? "primary" : ""}" data-action="setTheme" data-theme="dark">${_t("theme.dark", "다크")}</button>
+          <button class="choice-btn ${(!settings.theme || settings.theme === "auto") ? "primary" : ""}" data-action="setTheme" data-theme="auto">${_t("theme.auto", "자동")}</button>
         </div>
         <div class="settings-toggle-row">
           <div class="settings-toggle-label">
-            <span class="settings-toggle-name">사운드</span>
-            <span class="settings-toggle-sub">정답·오답 효과음</span>
+            <span class="settings-toggle-name">${_t("settings.sound", "사운드")}</span>
+            <span class="settings-toggle-sub">${_t("settings.sound.sub", "정답·오답 효과음")}</span>
           </div>
           <button class="toggle-switch ${settings.sound !== false ? 'on' : ''}" data-action="toggleSound" aria-pressed="${settings.sound !== false}"></button>
         </div>
         <div class="settings-toggle-row">
           <div class="settings-toggle-label">
-            <span class="settings-toggle-name">햅틱</span>
-            <span class="settings-toggle-sub">진동 피드백 (모바일)</span>
+            <span class="settings-toggle-name">${_t("settings.haptics", "햅틱")}</span>
+            <span class="settings-toggle-sub">${_t("settings.haptics.sub", "진동 피드백 (모바일)")}</span>
           </div>
           <button class="toggle-switch ${settings.haptics !== false ? 'on' : ''}" data-action="toggleHaptics" aria-pressed="${settings.haptics !== false}"></button>
         </div>
         <div class="settings-toggle-row">
           <div class="settings-toggle-label">
-            <span class="settings-toggle-name">음성 읽기</span>
-            <span class="settings-toggle-sub">TTS 자동 읽기</span>
+            <span class="settings-toggle-name">${_t("settings.tts", "음성 읽기")}</span>
+            <span class="settings-toggle-sub">${_t("settings.tts.sub", "TTS 자동 읽기")}</span>
           </div>
           <button class="toggle-switch ${settings.tts === true ? 'on' : ''}" data-action="toggleTts" aria-pressed="${settings.tts === true}"></button>
         </div>
         <div class="choice-list">
-          <button class="choice-btn" data-action="renderTtsSettings">음성 상세 설정</button>
+          <button class="choice-btn" data-action="renderTtsSettings">${_t("settings.tts.detail", "음성 상세 설정")}</button>
         </div>
-        <h3 class="settings-section">시험 모드 (Exam Mode)</h3>
+        <h3 class="settings-section">${_t("settings.sec.examMode", "시험 모드 (Exam Mode)")}</h3>
         <div class="settings-row">
-          <span>현재 모드</span>
-          <span class="settings-value">${settings.examMode === "nclex" ? "🇺🇸 NCLEX-RN (English)" : "🇰🇷 한국 국시"}</span>
+          <span>${_t("settings.currentMode", "현재 모드")}</span>
+          <span class="settings-value">${settings.examMode === "nclex" ? "🇺🇸 NCLEX-RN (English)" : `🇰🇷 ${_t("mode.korean", "한국 국시")}`}</span>
         </div>
         <div class="choice-list">
-          <button class="choice-btn ${settings.examMode !== "nclex" ? "primary" : ""}" data-action="setExamMode" data-mode="korean">🇰🇷 한국 국시</button>
+          <button class="choice-btn ${settings.examMode !== "nclex" ? "primary" : ""}" data-action="setExamMode" data-mode="korean">🇰🇷 ${_t("mode.korean", "한국 국시")}</button>
           <button class="choice-btn ${settings.examMode === "nclex" ? "primary" : ""}" data-action="setExamMode" data-mode="nclex">🇺🇸 NCLEX-RN</button>
         </div>
-        <p class="settings-help">${settings.examMode === "nclex" ? "NCLEX-RN: US licensing exam questions in English (MCQ + SATA + Priority)." : "한국 간호사 국가고시 문제 (7과목)."}</p>
+        <p class="settings-help">${settings.examMode === "nclex" ? _t("settings.examHelp.nclex", "NCLEX-RN: US licensing exam questions in English (MCQ + SATA + Priority).") : _t("settings.examHelp.korean", "한국 간호사 국가고시 문제 (7과목).")}</p>
         <div class="settings-row">
-          <span>일일 학습 알림</span>
-          <span class="settings-value">${data.notifyOptIn ? "켜짐" : "꺼짐"}</span>
+          <span>${_t("settings.notify", "일일 학습 알림")}</span>
+          <span class="settings-value">${data.notifyOptIn ? _t("common.on", "켜짐") : _t("common.off", "꺼짐")}</span>
         </div>
         <div class="choice-list">
-          <button class="choice-btn" data-action="toggleDailyNotify">${data.notifyOptIn ? "🔕 알림 끄기" : "🔔 일일 챌린지 알림 켜기"}</button>
+          <button class="choice-btn" data-action="toggleDailyNotify">${data.notifyOptIn ? _t("notify.turnOff", "🔕 알림 끄기") : _t("notify.turnOn", "🔔 일일 챌린지 알림 켜기")}</button>
         </div>
 
-        <h3 class="settings-section">프리미엄 (준비중)</h3>
+        <h3 class="settings-section">${_t("settings.sec.premium", "프리미엄 (준비중)")}</h3>
         <div class="settings-row">
-          <span>광고 제거 + 무제한 부활 + 우선 RN 감수 받기</span>
-          <span class="settings-value">₩4,900/월</span>
+          <span>${_t("settings.premium.desc", "광고 제거 + 무제한 부활 + 우선 RN 감수 받기")}</span>
+          <span class="settings-value">₩4,900${_t("premium.perMonth", "/월")}</span>
         </div>
         <div class="choice-list">
-          <button class="choice-btn primary" data-action="renderPremiumPage">⭐ 프리미엄 자세히 보기</button>
+          <button class="choice-btn primary" data-action="renderPremiumPage">${_t("settings.premium.more", "⭐ 프리미엄 자세히 보기")}</button>
         </div>
 
-        <h3 class="settings-section">데이터</h3>
+        <h3 class="settings-section">${_t("settings.sec.data", "데이터")}</h3>
         <div class="settings-row">
-          <span>총 풀이</span>
-          <span class="settings-value">${totalSolved}문제 · 정답 ${totalCorrect} (${acc}%)</span>
+          <span>${_t("settings.data.total", "총 풀이")}</span>
+          <span class="settings-value">${totalSolved}${_t("unit.q", "문제")} · ${_t("data.correct", "정답")} ${totalCorrect} (${acc}%)</span>
         </div>
         <div class="settings-row">
-          <span>오답노트</span>
-          <span class="settings-value">${(data.wrongQueue || []).length}건</span>
+          <span>${_t("settings.data.wrongNote", "오답노트")}</span>
+          <span class="settings-value">${(data.wrongQueue || []).length}${_t("unit.cases", "건")}</span>
         </div>
         <div class="settings-row">
-          <span>에피소드 완료</span>
+          <span>${_t("settings.data.episodesDone", "에피소드 완료")}</span>
           <span class="settings-value">${Object.keys(data.episodes || {}).length} / ${NC.EPISODES.length}</span>
         </div>
         <div class="settings-row">
-          <span>오류 신고</span>
-          <span class="settings-value">${(data.errorReports || []).length}건</span>
+          <span>${_t("settings.data.errorReports", "오류 신고")}</span>
+          <span class="settings-value">${(data.errorReports || []).length}${_t("unit.cases", "건")}</span>
         </div>
 
         <div class="choice-list">
-          <button class="choice-btn primary" data-action="renderDataControl">📋 내 데이터 (백업·내보내기·삭제)</button>
-          <button class="choice-btn" data-action="exportData">📦 빠른 백업 (JSON 다운로드)</button>
-          <button class="choice-btn" data-action="triggerImportData">📥 데이터 복원 (JSON 업로드)</button>
+          <button class="choice-btn primary" data-action="renderDataControl">${_t("settings.data.myData", "📋 내 데이터 (백업·내보내기·삭제)")}</button>
+          <button class="choice-btn" data-action="exportData">${_t("settings.data.quickBackup", "📦 빠른 백업 (JSON 다운로드)")}</button>
+          <button class="choice-btn" data-action="triggerImportData">${_t("settings.data.restore", "📥 데이터 복원 (JSON 업로드)")}</button>
           <input type="file" id="import-file-input" accept="application/json" style="display:none">
-          <button class="choice-btn" data-action="confirmClearStats">🗑 전체 데이터 초기화</button>
+          <button class="choice-btn" data-action="confirmClearStats">${_t("settings.data.resetAll", "🗑 전체 데이터 초기화")}</button>
         </div>
 
-        <h3 class="settings-section">정보</h3>
+        <h3 class="settings-section">${_t("settings.sec.about", "정보")}</h3>
         <div class="choice-list">
-          <button class="choice-btn" data-action="renderAbout">앱 정보 · 버전 · 변경 이력</button>
-          <button class="choice-btn" data-action="renderPrivacy">개인정보 처리방침 (요약)</button>
-          <button class="choice-btn" data-action="showLegal">이용 약관 · 면책 (요약)</button>
-          <button class="choice-btn" data-action="openExternalPrivacy">📄 개인정보 전문</button>
-          <button class="choice-btn" data-action="openExternalTerms">📄 이용약관 전문</button>
-          <button class="choice-btn" data-action="showOnboarding">튜토리얼 다시 보기</button>
-          <button class="choice-btn" data-action="openErrorReport">컨텐츠 오류 신고</button>
+          <button class="choice-btn" data-action="renderAbout">${_t("about.appInfoRow", "앱 정보 · 버전 · 변경 이력")}</button>
+          <button class="choice-btn" data-action="renderPrivacy">${_t("about.privacyShort", "개인정보 처리방침 (요약)")}</button>
+          <button class="choice-btn" data-action="showLegal">${_t("about.legalShort", "이용 약관 · 면책 (요약)")}</button>
+          <button class="choice-btn" data-action="openExternalPrivacy">${_t("about.privacyFull", "📄 개인정보 전문")}</button>
+          <button class="choice-btn" data-action="openExternalTerms">${_t("about.termsFull", "📄 이용약관 전문")}</button>
+          <button class="choice-btn" data-action="showOnboarding">${_t("about.replayTutorial", "튜토리얼 다시 보기")}</button>
+          <button class="choice-btn" data-action="openErrorReport">${_t("about.reportContent", "컨텐츠 오류 신고")}</button>
         </div>
 
         <div class="choice-list">
-          <button class="choice-btn primary" data-action="returnToMenu">메인 메뉴</button>
+          <button class="choice-btn primary" data-action="returnToMenu">${_t("nav.mainMenu", "메인 메뉴")}</button>
         </div>
       </div>`;
     // 파일 업로드 핸들러 wiring
@@ -5749,30 +5750,28 @@ function renderDataControl() {
     })();
     UI.gameArea.innerHTML = `
       <div class="card">
-        <h2 class="scene-title">내 데이터</h2>
-        <p class="scene-desc">모든 학습 데이터는 사용자 기기 내에만 저장됩니다. 언제든 백업·이전·삭제 가능.</p>
+        <h2 class="scene-title">${_t("dc.title", "내 데이터")}</h2>
+        <p class="scene-desc">${_t("dc.desc", "모든 학습 데이터는 사용자 기기 내에만 저장됩니다. 언제든 백업·이전·삭제 가능.")}</p>
 
-        <h3 class="settings-section">현재 저장량</h3>
-        <div class="settings-row"><span>localStorage 사용</span><span class="settings-value">${lsSize} KB</span></div>
-        <div class="settings-row"><span>오답 노트</span><span class="settings-value">${(data.wrongQueue || []).length}개</span></div>
-        <div class="settings-row"><span>학습 히스토리</span><span class="settings-value">${(data.history || []).length}건</span></div>
-        <div class="settings-row"><span>북마크</span><span class="settings-value">${Object.keys(data.bookmarks || {}).length}개</span></div>
-        <div class="settings-row"><span>최근 에러 로그</span><span class="settings-value">${errLog.length}건</span></div>
+        <h3 class="settings-section">${_t("dc.sec.storage", "현재 저장량")}</h3>
+        <div class="settings-row"><span>${_t("dc.ls", "localStorage 사용")}</span><span class="settings-value">${lsSize} KB</span></div>
+        <div class="settings-row"><span>${_t("dc.wrongNote", "오답 노트")}</span><span class="settings-value">${(data.wrongQueue || []).length}${_t("unit.count", "개")}</span></div>
+        <div class="settings-row"><span>${_t("dc.history", "학습 히스토리")}</span><span class="settings-value">${(data.history || []).length}${_t("unit.cases", "건")}</span></div>
+        <div class="settings-row"><span>${_t("dc.bookmarks", "북마크")}</span><span class="settings-value">${Object.keys(data.bookmarks || {}).length}${_t("unit.count", "개")}</span></div>
+        <div class="settings-row"><span>${_t("dc.errLog", "최근 에러 로그")}</span><span class="settings-value">${errLog.length}${_t("unit.cases", "건")}</span></div>
 
-        <h3 class="settings-section">권리 행사 (GDPR / PIPA)</h3>
+        <h3 class="settings-section">${_t("dc.sec.rights", "권리 행사 (GDPR / PIPA)")}</h3>
         <div class="choice-list">
-          <button class="choice-btn primary" data-action="exportData">📦 전체 데이터 백업 (JSON)</button>
-          <button class="choice-btn" data-action="triggerImportData">📥 백업에서 복원</button>
-          <button class="choice-btn" data-action="exportErrLog">🐛 에러 로그 다운로드 (오류 신고용)</button>
-          <button class="choice-btn" data-action="confirmClearErrLog">🧹 에러 로그만 삭제</button>
-          <button class="choice-btn" data-action="confirmClearStats">⚠️ 전체 데이터 영구 삭제</button>
+          <button class="choice-btn primary" data-action="exportData">${_t("dc.backup", "📦 전체 데이터 백업 (JSON)")}</button>
+          <button class="choice-btn" data-action="triggerImportData">${_t("dc.restore", "📥 백업에서 복원")}</button>
+          <button class="choice-btn" data-action="exportErrLog">${_t("dc.errLogDownload", "🐛 에러 로그 다운로드 (오류 신고용)")}</button>
+          <button class="choice-btn" data-action="confirmClearErrLog">${_t("dc.errLogClear", "🧹 에러 로그만 삭제")}</button>
+          <button class="choice-btn" data-action="confirmClearStats">${_t("dc.deleteAll", "⚠️ 전체 데이터 영구 삭제")}</button>
         </div>
         <p class="scene-desc" style="font-size: 12px; color: var(--muted); margin-top: 16px;">
-          ℹ️ 본 앱은 학습 데이터를 외부 서버로 전송하지 않습니다.<br>
-          광고(AdMob)와 익명 사용 통계(Plausible)는 모바일 빌드에서만 작동하며, 개인 식별정보는 수집하지 않습니다.<br>
-          자세한 내용: <button class="text-link" data-action="renderPrivacy">개인정보 처리방침</button>
+          ${_t("dc.note", "ℹ️ 본 앱은 학습 데이터를 외부 서버로 전송하지 않습니다.<br>광고(AdMob)와 익명 사용 통계(Plausible)는 모바일 빌드에서만 작동하며, 개인 식별정보는 수집하지 않습니다.<br>자세한 내용:")} <button class="text-link" data-action="renderPrivacy">${_t("dc.privacyLink", "개인정보 처리방침")}</button>
         </p>
-        <button class="choice-btn center" data-action="returnToMenu">메뉴</button>
+        <button class="choice-btn center" data-action="returnToMenu">${_t("action.back", "메뉴")}</button>
       </div>`;
 }
 
@@ -5788,16 +5787,16 @@ function exportErrLog() {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        addLog("에러 로그 파일이 다운로드됐어요. 오류 신고 시 첨부하시면 도움됩니다.", "log-good");
+        addLog(_t("toast.errLogDownloaded", "에러 로그 파일이 다운로드됐어요. 오류 신고 시 첨부하시면 도움됩니다."), "log-good");
     } catch (e) {
-        addLog("에러 로그 다운로드 실패: " + e.message, "log-bad");
+        addLog(_t("toast.errLogFail", "에러 로그 다운로드 실패: ") + e.message, "log-bad");
     }
 }
 
 function confirmClearErrLog() {
-    if (!safeConfirm("에러 로그만 삭제합니다 (학습 데이터는 유지). 계속하시겠습니까?")) return;
+    if (!safeConfirm(_t("confirm.clearErrLog", "에러 로그만 삭제합니다 (학습 데이터는 유지). 계속하시겠습니까?"))) return;
     try { localStorage.removeItem("nurseSim:errLog"); } catch {}
-    addLog("에러 로그가 삭제됐어요.", "log-good");
+    addLog(_t("toast.errLogCleared", "에러 로그가 삭제됐어요."), "log-good");
     renderDataControl();
 }
 
@@ -5818,9 +5817,9 @@ function exportData() {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        addLog("데이터 백업 파일이 다운로드됐습니다.", "log-good");
+        addLog(_t("toast.backupDownloaded", "데이터 백업 파일이 다운로드됐습니다."), "log-good");
     } catch (e) {
-        addLog("백업 실패: " + e.message, "log-bad");
+        addLog(_t("toast.backupFail", "백업 실패: ") + e.message, "log-bad");
     }
 }
 function triggerImportData() {
@@ -5835,15 +5834,15 @@ function handleImportFile(e) {
         try {
             const parsed = JSON.parse(ev.target.result);
             const payload = parsed.data || parsed; // 둘 다 허용
-            if (!payload || typeof payload !== "object") throw new Error("유효하지 않은 파일");
-            if (!safeConfirm("기존 데이터가 모두 덮어쓰여집니다. 계속하시겠습니까?")) return;
+            if (!payload || typeof payload !== "object") throw new Error(_t("import.invalidFile", "유효하지 않은 파일"));
+            if (!safeConfirm(_t("confirm.overwrite", "기존 데이터가 모두 덮어쓰여집니다. 계속하시겠습니까?"))) return;
             const validated = Storage.validate(payload);
             Storage.save(validated);
-            addLog("데이터가 복원됐습니다.", "log-good");
+            addLog(_t("toast.dataRestored", "데이터가 복원됐습니다."), "log-good");
             openSettings();
         } catch (err) {
-            addLog("복원 실패: " + err.message, "log-bad");
-            alert("복원 실패: " + err.message);
+            addLog(_t("toast.restoreFail", "복원 실패: ") + err.message, "log-bad");
+            alert(_t("toast.restoreFail", "복원 실패: ") + err.message);
         }
     };
     reader.readAsText(file);
@@ -5855,11 +5854,11 @@ function renderAbout() {
     const totalSteps = NC.EPISODES.reduce((a, e) => a + e.steps.length, 0);
     UI.gameArea.innerHTML = `
       <div class="card about-card">
-        <h2 class="scene-title">앱 정보</h2>
-        <p><strong>간호사 시뮬레이터 v${APP_VERSION}</strong></p>
-        <p class="about-meta">한국 간호사 국가고시 학습을 위한 임상 시뮬레이션 + 문제풀이 하이브리드.</p>
+        <h2 class="scene-title">${_t("about.title", "앱 정보")}</h2>
+        <p><strong>${_t("app.name", "간호사 시뮬레이터")} v${APP_VERSION}</strong></p>
+        <p class="about-meta">${_t("about.meta1", "한국 간호사 국가고시 학습을 위한 임상 시뮬레이션 + 문제풀이 하이브리드.")}</p>
 
-        <h3 class="settings-section">수록 컨텐츠</h3>
+        <h3 class="settings-section">${_t("about.sec.content", "수록 컨텐츠")}</h3>
         <ul class="about-list">
           <li>📖 에피소드 ${NC.EPISODES.length}개 (${totalSteps} 단계)</li>
           <li>🎙️ 인계 환자 ${NC.HANDOFF_PATIENTS.length}명 풀</li>
@@ -5869,8 +5868,8 @@ function renderAbout() {
           <li>📚 자동 매칭 의료 출처 ${KNOWN_SOURCES.length}건</li>
         </ul>
 
-        <h3 class="settings-section">컨텐츠 출처</h3>
-        <p class="about-meta">본 시뮬레이터는 다음 표준 자료에 기반합니다:</p>
+        <h3 class="settings-section">${_t("about.sec.sources", "컨텐츠 출처")}</h3>
+        <p class="about-meta">${_t("about.sourcesIntro", "본 시뮬레이터는 다음 표준 자료에 기반합니다:")}</p>
         <ul class="about-list">
           <li>한국 간호사 국가시험 출제기준 (국시원 2024)</li>
           <li>AHA ACLS/BLS Provider Manual (2020)</li>
@@ -5881,28 +5880,28 @@ function renderAbout() {
         </ul>
         <p class="about-meta">전체 출처 목록: 저장소의 <code>SOURCES.md</code> 참고. 본 자료는 정식 RN/MD 감수 전 베타이며, 실제 임상 적용 시 최신 기관 가이드라인을 우선합니다.</p>
 
-        <h3 class="settings-section">변경 이력</h3>
+        <h3 class="settings-section">${_t("about.sec.changelog", "변경 이력")}</h3>
         <p class="about-meta"><strong>v1.1</strong> — Sage neumorphic 디자인 · 3탭 메뉴 · Leitner SRS · 북마크 · 공유 · 위클리 · 부활 · 컨텐츠 +600 결정포인트.</p>
         <p class="about-meta"><strong>v1.0.0</strong> — 정식 출시. 설정 · 백업/복원 · About · Privacy in-app · v1.0 배지.</p>
         <p class="about-meta"><strong>v0.9</strong> — 이어하기 · spaced repetition · 검색 · 출처 표시.</p>
         <p class="about-meta"><strong>v0.8</strong> — 면책 스트립 · BETA 배지 · 오류 신고 · 동의 체크박스.</p>
         <p class="about-meta">전체 이력: <code>CHANGELOG.md</code></p>
 
-        <h3 class="settings-section">피드백 · 오류 신고</h3>
-        <p class="about-meta">버그·잘못된 의학 정보·UX 불편·새 컨텐츠 제안 모두 환영합니다.</p>
+        <h3 class="settings-section">${_t("about.sec.feedback", "피드백 · 오류 신고")}</h3>
+        <p class="about-meta">${_t("about.feedbackIntro", "버그·잘못된 의학 정보·UX 불편·새 컨텐츠 제안 모두 환영합니다.")}</p>
         <ul class="about-list">
           <li>앱 내 "❗" 버튼 (오답 옆): 의학적 오류 즉시 신고</li>
           <li>GitHub Issues: <code>github.com/luiseluise0619-wq/nursing-simulation/issues</code></li>
           <li>피드백: 본 페이지 하단 "피드백 보내기" 버튼</li>
         </ul>
 
-        <h3 class="settings-section">라이선스</h3>
+        <h3 class="settings-section">${_t("about.sec.license", "라이선스")}</h3>
         <p class="about-meta">MIT License. 의료 면책 고지는 <code>LICENSE</code> · <code>SOURCES.md</code> 참고.</p>
 
         <div class="choice-list">
-          <button class="choice-btn primary" data-action="openFeedback">📝 피드백 보내기</button>
-          <button class="choice-btn" data-action="openSettings">설정으로</button>
-          <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
+          <button class="choice-btn primary" data-action="openFeedback">${_t("about.sendFeedback", "📝 피드백 보내기")}</button>
+          <button class="choice-btn" data-action="openSettings">${_t("about.toSettings", "설정으로")}</button>
+          <button class="choice-btn" data-action="returnToMenu">${_t("nav.mainMenu", "메인 메뉴")}</button>
         </div>
       </div>`;
 }
@@ -5931,13 +5930,13 @@ async function toggleDailyNotify() {
             const LN = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications;
             if (LN) await LN.cancel({ notifications: [{ id: 7001 }] });
         } catch {}
-        addLog("🔕 알림 꺼졌습니다. 설정에서 다시 켤 수 있어요.", "log-good");
+        addLog(_t("notify.off", "🔕 알림 꺼졌습니다. 설정에서 다시 켤 수 있어요."), "log-good");
         openSettings();
         return;
     }
     // 권한 요청
     if (!("Notification" in window)) {
-        addLog("이 기기는 알림을 지원하지 않습니다.", "log-bad");
+        addLog(_t("notify.unsupported", "이 기기는 알림을 지원하지 않습니다."), "log-bad");
         return;
     }
     try {
@@ -5948,14 +5947,14 @@ async function toggleDailyNotify() {
             // Capacitor 모바일: 매일 반복 로컬 알림 실제 스케줄
             const scheduled = await scheduleDailyNotification();
             addLog(scheduled
-                ? "🔔 매일 오전 9시 일일 챌린지 알림이 예약되었습니다."
-                : "🔔 알림이 켜졌습니다. (웹에서는 앱 방문 시 안내로 표시됩니다)", "log-good");
-            try { new Notification("간호사 시뮬레이터", { body: "알림이 켜졌어요. 매일 한 듀티씩 ✨", icon: "icon.svg" }); } catch {}
+                ? _t("notify.scheduled", "🔔 매일 오전 9시 일일 챌린지 알림이 예약되었습니다.")
+                : _t("notify.onWeb", "🔔 알림이 켜졌습니다. (웹에서는 앱 방문 시 안내로 표시됩니다)"), "log-good");
+            try { new Notification(_t("app.name", "간호사 시뮬레이터"), { body: _t("notify.testBody", "알림이 켜졌어요. 매일 한 듀티씩 ✨"), icon: "icon.svg" }); } catch {}
         } else {
-            addLog("알림 권한이 거부되었습니다. 브라우저 설정에서 허용해주세요.", "log-bad");
+            addLog(_t("notify.denied", "알림 권한이 거부되었습니다. 브라우저 설정에서 허용해주세요."), "log-bad");
         }
     } catch (e) {
-        addLog("알림 권한 요청 실패: " + (e && e.message ? e.message : "unknown"), "log-bad");
+        addLog(_t("notify.reqFail", "알림 권한 요청 실패: ") + (e && e.message ? e.message : "unknown"), "log-bad");
     }
     openSettings();
 }
@@ -5980,7 +5979,7 @@ const NOTIFY_COPY_GENERAL = [
     { title: "Day vs Evening vs Night", body: "오늘은 어떤 시프트로 들어갈까?" },
     { title: "📖 에피소드 이어하기", body: "지난 환자가 기다리고 있어요." },
     { title: "한 챕터만 끝내고 쉬자", body: "10문제 풀면 보상 광고로 부활." },
-    { title: "🇰🇷 국시 320 문제", body: "공식 출제기준 그대로 5지선다." },
+    { title: "🇰🇷 국시 280 문제", body: "공식 출제기준 그대로 5지선다." },
     { title: "오늘의 일일 챌린지", body: "10문제 · 정답률 80% 목표." },
     { title: "퇴근 후 잠깐만", body: "출퇴근길 5분 학습이면 충분." },
     { title: "🩸 ABGA 해석 연습", body: "산-염기 분석 한 문제씩." },
@@ -6072,48 +6071,48 @@ function renderPremiumPage() {
     UI.gameArea.innerHTML = `
       <div class="card">
         <div class="premium-hero">
-            <h2>프리미엄</h2>
-            <p>광고 없이, 더 깊게.</p>
+            <h2>${_t("premium.title", "프리미엄")}</h2>
+            <p>${_t("premium.tagline", "광고 없이, 더 깊게.")}</p>
         </div>
 
         <div class="premium-pricing">
             <div class="premium-plan">
-                <div class="premium-plan-label">월간</div>
-                <div class="premium-plan-price">₩4,900<span>/월</span></div>
-                <div class="premium-plan-desc">언제든 해지</div>
+                <div class="premium-plan-label">${_t("premium.monthly", "월간")}</div>
+                <div class="premium-plan-price">₩4,900<span>${_t("premium.perMonth", "/월")}</span></div>
+                <div class="premium-plan-desc">${_t("premium.cancelAny", "언제든 해지")}</div>
             </div>
             <div class="premium-plan recommended">
-                <div class="premium-plan-badge">2개월 무료</div>
-                <div class="premium-plan-label">연간</div>
-                <div class="premium-plan-price">₩49,000<span>/년</span></div>
-                <div class="premium-plan-desc">월 ₩4,083 효과</div>
+                <div class="premium-plan-badge">${_t("premium.2free", "2개월 무료")}</div>
+                <div class="premium-plan-label">${_t("premium.annual", "연간")}</div>
+                <div class="premium-plan-price">₩49,000<span>${_t("premium.perYear", "/년")}</span></div>
+                <div class="premium-plan-desc">${_t("premium.effective", "월 ₩4,083 효과")}</div>
             </div>
         </div>
 
         <div class="premium-features">
-            <div class="premium-feature"><div class="premium-feature-icon">🚫</div><div class="premium-feature-body"><div class="premium-feature-title">광고 0</div><div class="premium-feature-sub">힌트·부활 광고 없이 즉시 사용</div></div></div>
-            <div class="premium-feature"><div class="premium-feature-icon">📚</div><div class="premium-feature-body"><div class="premium-feature-title">독점 에피소드</div><div class="premium-feature-sub">신규 임상 시뮬 매월 +2편</div></div></div>
-            <div class="premium-feature"><div class="premium-feature-icon">🎯</div><div class="premium-feature-body"><div class="premium-feature-title">AI 약점 코칭</div><div class="premium-feature-sub">개인 맞춤 학습 계획 자동 생성</div></div></div>
-            <div class="premium-feature"><div class="premium-feature-icon">☁️</div><div class="premium-feature-body"><div class="premium-feature-title">기기 간 동기화</div><div class="premium-feature-sub">폰·태블릿·PC 진도 이어가기</div></div></div>
-            <div class="premium-feature"><div class="premium-feature-icon">📝</div><div class="premium-feature-body"><div class="premium-feature-title">기출 라이선스</div><div class="premium-feature-sub">5년치 국시 + NCLEX 풀이</div></div></div>
-            <div class="premium-feature"><div class="premium-feature-icon">💎</div><div class="premium-feature-body"><div class="premium-feature-title">RN 검수 우선</div><div class="premium-feature-sub">현직 간호사 검수 콘텐츠 우선 공개</div></div></div>
+            <div class="premium-feature"><div class="premium-feature-icon">🚫</div><div class="premium-feature-body"><div class="premium-feature-title">${_t("premium.f1.title", "광고 0")}</div><div class="premium-feature-sub">${_t("premium.f1.sub", "힌트·부활 광고 없이 즉시 사용")}</div></div></div>
+            <div class="premium-feature"><div class="premium-feature-icon">📚</div><div class="premium-feature-body"><div class="premium-feature-title">${_t("premium.f2.title", "독점 에피소드")}</div><div class="premium-feature-sub">${_t("premium.f2.sub", "신규 임상 시뮬 매월 +2편")}</div></div></div>
+            <div class="premium-feature"><div class="premium-feature-icon">🎯</div><div class="premium-feature-body"><div class="premium-feature-title">${_t("premium.f3.title", "AI 약점 코칭")}</div><div class="premium-feature-sub">${_t("premium.f3.sub", "개인 맞춤 학습 계획 자동 생성")}</div></div></div>
+            <div class="premium-feature"><div class="premium-feature-icon">☁️</div><div class="premium-feature-body"><div class="premium-feature-title">${_t("premium.f4.title", "기기 간 동기화")}</div><div class="premium-feature-sub">${_t("premium.f4.sub", "폰·태블릿·PC 진도 이어가기")}</div></div></div>
+            <div class="premium-feature"><div class="premium-feature-icon">📝</div><div class="premium-feature-body"><div class="premium-feature-title">${_t("premium.f5.title", "기출 라이선스")}</div><div class="premium-feature-sub">${_t("premium.f5.sub", "5년치 국시 + NCLEX 풀이")}</div></div></div>
+            <div class="premium-feature"><div class="premium-feature-icon">💎</div><div class="premium-feature-body"><div class="premium-feature-title">${_t("premium.f6.title", "RN 검수 우선")}</div><div class="premium-feature-sub">${_t("premium.f6.sub", "현직 간호사 검수 콘텐츠 우선 공개")}</div></div></div>
         </div>
 
         <div class="tip-jar-card">
-            <h3>💚 응원하기</h3>
-            <p>구독은 준비 중. 지금 응원하고 싶으시면 작은 후원으로 도움 가능합니다.<br><small>모든 후원은 콘텐츠 검수·서버·디자인에 100% 사용됩니다.</small></p>
+            <h3>${_t("premium.support", "💚 응원하기")}</h3>
+            <p>${_t("premium.supportDesc", "구독은 준비 중. 지금 응원하고 싶으시면 작은 후원으로 도움 가능합니다.<br><small>모든 후원은 콘텐츠 검수·서버·디자인에 100% 사용됩니다.</small>")}</p>
             <div class="tip-jar-amounts">
                 <button class="choice-btn" data-action="donate" data-amount="3000" data-method="toss">☕ 3,000원 (커피)</button>
                 <button class="choice-btn" data-action="donate" data-amount="5000" data-method="toss">🍱 5,000원 (점심)</button>
                 <button class="choice-btn" data-action="donate" data-amount="10000" data-method="toss">📚 10,000원 (책)</button>
             </div>
             <div class="choice-list" style="margin-top: 12px;">
-                <button class="choice-btn" data-action="donate" data-amount="0" data-method="toss">💚 자유 금액 (Toss)</button>
-                <button class="choice-btn" data-action="notifyPremium">📬 출시 알림 받기</button>
+                <button class="choice-btn" data-action="donate" data-amount="0" data-method="toss">${_t("premium.customAmount", "💚 자유 금액 (Toss)")}</button>
+                <button class="choice-btn" data-action="notifyPremium">${_t("premium.notifyMe", "📬 출시 알림 받기")}</button>
             </div>
         </div>
 
-        <button class="choice-btn center" data-action="returnToMenu">메인 메뉴</button>
+        <button class="choice-btn center" data-action="returnToMenu">${_t("nav.mainMenu", "메인 메뉴")}</button>
       </div>`;
     track("premium_view");
 }
@@ -6658,7 +6657,7 @@ const ONBOARDING_ILLUSTRATIONS = [
 
 const ONBOARDING_SLIDES = [
     { illust: 0, title: "간호사 시뮬레이터에 오신 것을 환영합니다",
-      body: "한국 국시 320문항 + NCLEX-RN 2,200문항 + 실전 듀티 시뮬레이션을 하나의 앱에서.\n완전 무료, 가입 없음, 광고는 보상형만 사용합니다." },
+      body: "한국 국시 280문항 + NCLEX-RN 2,200문항 + 실전 듀티 시뮬레이션을 하나의 앱에서.\n완전 무료, 가입 없음, 광고는 보상형만 사용합니다." },
     { illust: 1, title: "실전 듀티 시뮬레이션",
       body: "Day · Evening · Night 3교대 시프트로 임상 상황을 체험하세요.\n시프트에 따라 HP 손실과 난이도가 달라집니다." },
     { illust: 2, title: "NCLEX-RN 2,200 문제",
@@ -6682,14 +6681,14 @@ function renderOnboarding(idx = 0) {
     UI.gameArea.innerHTML = `
       <div class="card onboard-card">
         <div class="onboard-illust" aria-hidden="true">${ONBOARDING_ILLUSTRATIONS[slide.illust]}</div>
-        <h1 class="menu-title">${escapeHtml(slide.title)}</h1>
-        <p class="onboard-body">${escapeHtml(slide.body)}</p>
-        <div class="onboard-dots" role="tablist" aria-label="튜토리얼 진행도">${dots}</div>
+        <h1 class="menu-title">${escapeHtml(_t("onboard.s" + (idx + 1) + ".title", slide.title))}</h1>
+        <p class="onboard-body">${escapeHtml(_t("onboard.s" + (idx + 1) + ".body", slide.body))}</p>
+        <div class="onboard-dots" role="tablist" aria-label="${_t("onboard.progress", "튜토리얼 진행도")}">${dots}</div>
         <div class="choice-list">
           ${idx < total - 1
-              ? `<button class="choice-btn primary" data-action="onboardNext">다음 (${idx + 1}/${total})</button>
-                 <button class="choice-btn subtle center" data-action="onboardSkip">건너뛰기</button>`
-              : `<button class="choice-btn primary" data-action="onboardFinish">시작하기</button>`}
+              ? `<button class="choice-btn primary" data-action="onboardNext">${_t("onboard.next", "다음")} (${idx + 1}/${total})</button>
+                 <button class="choice-btn subtle center" data-action="onboardSkip">${_t("onboard.skip", "건너뛰기")}</button>`
+              : `<button class="choice-btn primary" data-action="onboardFinish">${_t("onboard.start", "시작하기")}</button>`}
         </div>
       </div>`;
 }
@@ -6711,10 +6710,10 @@ function onboardFinish() {
 // 온보딩 완료 후 1회 노출. 메인 메뉴 위에 오버레이로 표시.
 // =========================================================================
 const PERSONA_OPTIONS = [
-    { id: "student",    icon: "🩺", label: "간호학과 학생",   sub: "재학생",       available: true },
-    { id: "rn-exam",    icon: "📖", label: "간호사 국시 준비", sub: "시험 준비",     available: true },
-    { id: "nclex",      icon: "🇺🇸", label: "NCLEX-RN 준비",   sub: "미국 간호사 면허", available: true },
-    { id: "pharmacist", icon: "💊", label: "약사 국시",        sub: "예정",         available: false },
+    { id: "student",    k: "student",    icon: "🩺", label: "간호학과 학생",   sub: "재학생",       available: true },
+    { id: "rn-exam",    k: "rnExam",     icon: "📖", label: "간호사 국시 준비", sub: "시험 준비",     available: true },
+    { id: "nclex",      k: "nclex",      icon: "🇺🇸", label: "NCLEX-RN 준비",   sub: "미국 간호사 면허", available: true },
+    { id: "pharmacist", k: "pharmacist", icon: "💊", label: "약사 국시",        sub: "예정",         available: false },
 ];
 
 function renderPersonaPicker() {
@@ -6733,18 +6732,18 @@ function renderPersonaPicker() {
                   data-action="choosePersona"
                   data-persona="${opt.id}"
                   ${disabled ? 'aria-disabled="true"' : ""}>
-            ${disabled ? '<span class="persona-coming">곧 만나요</span>' : ""}
+            ${disabled ? `<span class="persona-coming">${_t("persona.coming", "곧 만나요")}</span>` : ""}
             <span class="persona-icon" aria-hidden="true">${opt.icon}</span>
-            <span class="persona-label">${escapeHtml(opt.label)}</span>
-            <span class="persona-sub">${escapeHtml(opt.sub)}</span>
+            <span class="persona-label">${escapeHtml(_t("persona." + opt.k + ".label", opt.label))}</span>
+            <span class="persona-sub">${escapeHtml(_t("persona." + opt.k + ".sub", opt.sub))}</span>
           </button>`;
     }).join("");
     overlay.innerHTML = `
       <div class="persona-card-wrap">
-        <h2 id="persona-title" class="persona-title">어떤 분야 준비 중이세요?</h2>
-        <p class="persona-subdesc">학습 콘텐츠 추천에 활용해요. 언제든 설정에서 변경할 수 있어요.</p>
+        <h2 id="persona-title" class="persona-title">${_t("persona.title", "어떤 분야 준비 중이세요?")}</h2>
+        <p class="persona-subdesc">${_t("persona.subdesc", "학습 콘텐츠 추천에 활용해요. 언제든 설정에서 변경할 수 있어요.")}</p>
         <div class="persona-grid">${cards}</div>
-        <button class="choice-btn subtle center" data-action="skipPersona">나중에 선택</button>
+        <button class="choice-btn subtle center" data-action="skipPersona">${_t("persona.later", "나중에 선택")}</button>
       </div>`;
     document.body.appendChild(overlay);
     track("persona_picker_shown");
@@ -6764,7 +6763,7 @@ function choosePersona(discipline) {
         if (wrap && !wrap.querySelector(".persona-toast")) {
             const toast = document.createElement("div");
             toast.className = "persona-toast";
-            toast.textContent = "관심 감사합니다! 곧 만나요 💚";
+            toast.textContent = _t("persona.toast", "관심 감사합니다! 곧 만나요 💚");
             wrap.appendChild(toast);
             setTimeout(() => { toast.remove(); }, 2400);
         }
@@ -7215,15 +7214,15 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
         </button>
 
         <div class="my-footer">
-          <button class="text-link" data-action="openSearch">🔍 검색</button>
+          <button class="text-link" data-action="openSearch">${_t("footer.search", "🔍 검색")}</button>
           <span class="dot-sep" aria-hidden="true">·</span>
-          <button class="text-link" data-action="renderInviteScreen">🎁 친구 초대</button>
+          <button class="text-link" data-action="renderInviteScreen">${_t("footer.invite", "🎁 친구 초대")}</button>
           <span class="dot-sep" aria-hidden="true">·</span>
-          <button class="text-link" data-action="showOnboarding">튜토리얼</button>
+          <button class="text-link" data-action="showOnboarding">${_t("footer.tutorial", "튜토리얼")}</button>
           <span class="dot-sep" aria-hidden="true">·</span>
-          <button class="text-link" data-action="renderPrivacy">개인정보</button>
+          <button class="text-link" data-action="renderPrivacy">${_t("footer.privacy", "개인정보")}</button>
           <span class="dot-sep" aria-hidden="true">·</span>
-          <button class="text-link" data-action="showLegal">약관</button>
+          <button class="text-link" data-action="showLegal">${_t("footer.terms", "약관")}</button>
           <span class="dot-sep" aria-hidden="true">·</span>
           <button class="text-link" data-action="renderAbout">v${APP_VERSION}</button>
         </div>
