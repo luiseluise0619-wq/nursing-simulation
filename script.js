@@ -4363,8 +4363,42 @@ function reviewWrongForce() {
 // =========================================================================
 // 인계 시뮬레이터 (TTS 인계 + 키워드 채점)
 // =========================================================================
+// 하이브리드 TTS — 온라인이면 서버 Neural 음성(/api/tts, Edge TTS ko-KR-SunHiNeural),
+// 오프라인·차단·실패면 기기 Web Speech 로 자동 폴백. 인터페이스(speak/stop/supported)는 유지.
 const Speech = {
+    _audio: null,
+    _serverOk: true,       // 서버 TTS 사용 가능 여부 (실패 누적 시 꺼짐)
+    _serverFails: 0,
     speak(text, onEnd) {
+        this.stop();
+        const t = String(text || "").slice(0, 1000);
+        if (!t) return false;
+        // 서버 Neural 음성 시도 (온라인 + 최근 실패 적음)
+        const canServer = this._serverOk
+            && typeof navigator !== "undefined" && navigator.onLine !== false
+            && typeof Audio !== "undefined";
+        if (canServer) {
+            try {
+                const url = `/api/tts?voice=ko-KR-SunHiNeural&text=${encodeURIComponent(t)}`;
+                const audio = new Audio(url);
+                this._audio = audio;
+                audio.onended = () => { this._serverFails = 0; if (onEnd) onEnd(); };
+                audio.onerror = () => { this._onServerFail(t, onEnd); };
+                const p = audio.play();
+                if (p && p.catch) p.catch(() => this._onServerFail(t, onEnd));
+                return true;
+            } catch { return this._deviceSpeak(t, onEnd); }
+        }
+        return this._deviceSpeak(t, onEnd);
+    },
+    _onServerFail(text, onEnd) {
+        // 서버 TTS 실패 → 기기 음성으로 폴백. 3회 연속 실패면 세션 동안 서버 끔.
+        this._serverFails += 1;
+        if (this._serverFails >= 3) this._serverOk = false;
+        try { if (this._audio) { this._audio.onerror = null; this._audio = null; } } catch {}
+        this._deviceSpeak(text, onEnd);
+    },
+    _deviceSpeak(text, onEnd) {
         try {
             if (typeof window === "undefined" || !window.speechSynthesis) return false;
             window.speechSynthesis.cancel();
@@ -4376,8 +4410,13 @@ const Speech = {
             return true;
         } catch { return false; }
     },
-    stop() { try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch {} },
-    supported() { return typeof window !== "undefined" && !!window.speechSynthesis; },
+    stop() {
+        try { if (this._audio) { this._audio.pause(); this._audio.onerror = null; this._audio = null; } } catch {}
+        try { window.speechSynthesis && window.speechSynthesis.cancel(); } catch {}
+    },
+    supported() {
+        return typeof window !== "undefined" && (!!window.speechSynthesis || (this._serverOk && typeof Audio !== "undefined"));
+    },
 };
 
 function normalizeKeyword(s) {
