@@ -108,6 +108,24 @@
     <link rel="preload" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" rel="stylesheet"></noscript>
     <link rel="stylesheet" href="styles.css">
+    <!-- 다크모드 flash 방지 — 저장된 테마를 스타일/렌더 전에 data-theme 로 즉시 적용.
+         로더가 OS 다크가 아니라 실제 앱 테마를 따르게 해 초기 화면 색 불일치(깜빡임) 제거. -->
+    <script>
+        (function () {
+            try {
+                var t = "auto";
+                var raw = localStorage.getItem("nurseSim:v1");
+                if (raw) { var d = JSON.parse(raw); if (d && d.settings && d.settings.theme) t = d.settings.theme; }
+                var resolved = t;
+                if (t === "auto" || !t) {
+                    resolved = (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light";
+                }
+                document.documentElement.setAttribute("data-theme", resolved);
+            } catch (e) {
+                document.documentElement.setAttribute("data-theme", "light");
+            }
+        })();
+    </script>
     <style>
         /* 앱 로더 — JS 로드 전 노출 (FOUC 방지) */
         #app-loader {
@@ -121,10 +139,11 @@
             z-index: 99999;
             transition: opacity .3s;
         }
-        @media (prefers-color-scheme: dark) {
-            #app-loader { background: #161b27; }
-            #app-loader .loader-title { color: #ecedf0; }
-        }
+        /* 로더 배경은 OS가 아니라 실제 앱 테마(data-theme)를 따름 — 초기 화면 색 불일치 방지 */
+        :root[data-theme="dark"] #app-loader { background: #161b27; }
+        :root[data-theme="dark"] #app-loader .loader-title { color: #ecedf0; }
+        :root[data-theme="amoled"] #app-loader { background: #000000; }
+        :root[data-theme="amoled"] #app-loader .loader-title { color: #ecedf0; }
         #app-loader.fade-out { opacity: 0; pointer-events: none; }
         .loader-mark {
             width: 64px; height: 64px;
