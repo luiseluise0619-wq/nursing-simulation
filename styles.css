@@ -32,14 +32,14 @@ body.app-hidden *::after {
     --modal-bg: rgba(30, 41, 59, 0.96);
 
     /* === Design Tokens (consolidated) === */
-    --ease-spring:        var(--ease-spring);
-    --ease-out:           var(--ease-out);
-    --inset-light:        var(--inset-light);
-    --inset-light-soft:   var(--inset-light-soft);
+    --ease-spring:        cubic-bezier(.34, 1.56, .64, 1);
+    --ease-out:           cubic-bezier(.2, .8, .2, 1);
+    --inset-light:        0 1px 0 rgba(255, 255, 255, 0.5) inset;
+    --inset-light-soft:   0 1px 0 rgba(255, 255, 255, 0.25) inset;
     --glow-sage:          0 8px 20px -6px rgba(127, 168, 129, 0.4);
     --glow-sage-strong:   0 14px 28px -8px rgba(127, 168, 129, 0.55);
-    --gradient-primary:   var(--gradient-primary);
-    --glass-blur:         var(--glass-blur);
+    --gradient-primary:   linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    --glass-blur:         saturate(180%) blur(16px);
 }
 
 [data-theme="dark"] {
