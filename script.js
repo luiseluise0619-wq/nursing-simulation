@@ -156,12 +156,18 @@ function cacheUI() {
     UI.backBtn = document.getElementById("back-btn");
 }
 
-// 메뉴/온보딩/약관 화면에선 뒤로 버튼을 숨김, 게임 모드에선 표시
+// 뒤로 버튼은 '문제 풀이/게임' 화면에서만 표시.
+// 메뉴·서브메뉴(자체 '메뉴/뒤로' 버튼 보유)·설정·온보딩에선 숨김.
+// (showOn 화이트리스트 방식 — 새 메뉴 모드가 추가돼도 기본 숨김이라 안전)
+const BACK_BUTTON_MODES = new Set([
+    "survival", "episode", "scenario", "quiz", "mock", "daily", "wrong_review",
+    "handoff", "handoff_write", "triage", "image_quiz", "drug_drill",
+    "nclex_quiz", "kor_quiz", "crisis",
+]);
 function updateBackButton() {
     if (!UI.backBtn) return;
-    const hideOn = ["menu", "quiz_menu", "scenario_menu"];
-    const hide = hideOn.includes(gameState.mode);
-    UI.backBtn.classList.toggle("hidden", hide);
+    const show = BACK_BUTTON_MODES.has(gameState.mode);
+    UI.backBtn.classList.toggle("hidden", !show);
 }
 
 // =========================================================================
@@ -2288,6 +2294,8 @@ function showCoreUI() {
     UI.inventory.classList.remove("hidden");
     UI.progressWrap.classList.remove("hidden");
     UI.progressInfo.classList.remove("hidden");
+    // 화면 진입 시 뒤로 버튼을 현재 mode 기준으로 갱신 (게임=표시 / 메뉴·서브메뉴=숨김)
+    updateBackButton();
 }
 function hideCoreUI() {
     UI.topBar.classList.add("hidden");
@@ -6832,6 +6840,8 @@ function returnToMenu() {
 
     // 메인 메뉴에서도 상단 헤더는 표시(테마/사운드 토글 위해)
     UI.topBar.classList.remove("hidden");
+    // 뒤로 버튼은 메뉴(mode="menu")에서 숨김 — 이전 게임 화면 상태가 남지 않게 갱신
+    updateBackButton();
 }
 
 // =========================================================================
