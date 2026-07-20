@@ -1015,8 +1015,12 @@ const Storage = {
     defaults() {
         const stats = {};
         CATEGORIES.forEach(c => stats[c] = { solved: 0, correct: 0 });
+        // 신규 유저 기본값 — 브라우저 언어 기준. 한국어권은 국시/ko, 그 외(영어권)는 NCLEX/en.
+        // (국제 NCLEX 시장 = 필리핀·인도·미국 간호사. 한국어 유저 경험은 그대로.)
+        const _initLang = (typeof window !== "undefined" && window.I18N && window.I18N.detectLang) ? window.I18N.detectLang() : "ko";
+        const _initMode = _initLang === "ko" ? "korean" : "nclex";
         return {
-            settings: { theme: "dark", sound: true, haptics: true, tts: false, examMode: "korean", lang: "ko" },
+            settings: { theme: "dark", sound: true, haptics: true, tts: false, examMode: _initMode, lang: _initLang },
             stats,
             wrongQueue: [],
             bookmarks: {},     // { contentId: { type, label, ts } } — 즐겨찾기
