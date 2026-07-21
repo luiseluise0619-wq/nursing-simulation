@@ -3696,7 +3696,14 @@ function renderQuizSetSummary() {
         <div class="choice-list">
           <button class="choice-btn primary" data-action="quizContinue">한 세트 더 (${QUIZ_SET_SIZE}문제)</button>
           ${gameState.quizWrong > 0 ? `<button class="choice-btn" data-action="reviewWrongAnswers">오답노트 복습 (${gameState.quizWrong})</button>` : ""}
-          <button class="choice-btn" data-action="shareResultCard" data-mode="quiz" data-title="${escapeHtml(catLabel)} 세트 ${setNum}" data-lines="이번 세트 ${setCorrect}/${QUIZ_SET_SIZE} (${acc}%)|누적 ${gameState.quizSolved}문제|간호사 시뮬레이터">결과 카드</button>
+          ${(() => {
+            const _en = (typeof window !== "undefined" && window.I18N && window.I18N.getLang && window.I18N.getLang() === "en");
+            const _title = _en ? `${escapeHtml(catLabel)} Set ${setNum}` : `${escapeHtml(catLabel)} 세트 ${setNum}`;
+            const _l1 = _en ? `This set ${setCorrect}/${QUIZ_SET_SIZE} (${acc}%)` : `이번 세트 ${setCorrect}/${QUIZ_SET_SIZE} (${acc}%)`;
+            const _l2 = _en ? `Total ${gameState.quizSolved} Qs` : `누적 ${gameState.quizSolved}문제`;
+            const _brand = _en ? "Nurse Simulator" : "간호사 시뮬레이터";
+            return `<button class="choice-btn" data-action="shareResultCard" data-mode="quiz" data-title="${_title}" data-lines="${_l1}|${_l2}|${_brand}">${_t("share.card", "결과 카드")}</button>`;
+          })()}
           <button class="choice-btn" data-action="renderQuizMenu">과목 변경</button>
           <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
         </div>
@@ -5205,7 +5212,14 @@ function renderCampaign() {
             </div>
             <p class="scene-desc"><strong>${escapeHtml(finale)}</strong></p>
             <div class="choice-list">
-              <button class="choice-btn" data-action="shareResultCard" data-mode="campaign" data-title="간호사 커리어 완주" data-lines="${c.log.length}화 완주|우수 듀티 ${goodCount}|평균 평판 ${avgRep}">결과 카드 다운로드</button>
+              ${(() => {
+                const _en = (typeof window !== "undefined" && window.I18N && window.I18N.getLang && window.I18N.getLang() === "en");
+                const _title = _en ? "Nursing career complete" : "간호사 커리어 완주";
+                const _l1 = _en ? `${c.log.length} episodes done` : `${c.log.length}화 완주`;
+                const _l2 = _en ? `Great duties ${goodCount}` : `우수 듀티 ${goodCount}`;
+                const _l3 = _en ? `Avg reputation ${avgRep}` : `평균 평판 ${avgRep}`;
+                return `<button class="choice-btn" data-action="shareResultCard" data-mode="campaign" data-title="${_title}" data-lines="${_l1}|${_l2}|${_l3}">${_t("share.download", "결과 카드 다운로드")}</button>`;
+              })()}
               <button class="choice-btn" data-action="resetCampaignConfirm">처음부터 다시</button>
               <button class="choice-btn primary" data-action="returnToMenu">메인 메뉴</button>
             </div>
@@ -5370,7 +5384,11 @@ function endEpisode() {
         <div class="choice-list">
           <button class="choice-btn primary" data-action="initSurvival">다음 듀티 (랜덤 에피소드)</button>
           <button class="choice-btn" data-action="renderEpisodeMenu">에피소드 목록</button>
-          <button class="choice-btn" data-action="shareResultCard" data-mode="career" data-title="${escapeHtml(career.title)}" data-lines="HP ${gameState.hp}|평판 ${gameState.rep}|${escapeHtml(ep.title)}">결과 카드 다운로드</button>
+          ${(() => {
+            const _en = (typeof window !== "undefined" && window.I18N && window.I18N.getLang && window.I18N.getLang() === "en");
+            const _l2 = _en ? `Reputation ${gameState.rep}` : `평판 ${gameState.rep}`;
+            return `<button class="choice-btn" data-action="shareResultCard" data-mode="career" data-title="${escapeHtml(career.title)}" data-lines="HP ${gameState.hp}|${_l2}|${escapeHtml(ep.title)}">${_t("share.download", "결과 카드 다운로드")}</button>`;
+          })()}
           <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
         </div>
       </div>`;
@@ -8035,7 +8053,15 @@ function renderWeeklyReport() {
         ${modeLines ? `<h3 class="modal-section-title">모드별</h3><ul class="weekly-mode-list">${modeLines}</ul>` : ''}
         <div class="choice-list">
           ${w.weakest ? `<button class="choice-btn primary" data-action="startQuiz" data-arg="${escapeHtml(w.weakest.name)}">📚 ${escapeHtml(w.weakest.name)} 바로 연습</button>` : ''}
-          <button class="choice-btn ${w.weakest ? '' : 'primary'}" data-action="shareResultCard" data-mode="weekly" data-title="이번 주 ${w.totalSolved}문제 풀이" data-lines="정답률 ${w.accuracy}%|학습 일수 ${w.daysActive}일|모드 완료 ${w.modesPlayed}회${w.weakest ? `|약점: ${w.weakest.name} ${w.weakest.acc}%` : ''}">결과 카드 다운로드</button>
+          ${(() => {
+            const _en = (typeof window !== "undefined" && window.I18N && window.I18N.getLang && window.I18N.getLang() === "en");
+            const _title = _en ? `This week: ${w.totalSolved} questions` : `이번 주 ${w.totalSolved}문제 풀이`;
+            const _l1 = _en ? `Accuracy ${w.accuracy}%` : `정답률 ${w.accuracy}%`;
+            const _l2 = _en ? `${w.daysActive} days studied` : `학습 일수 ${w.daysActive}일`;
+            const _l3 = _en ? `${w.modesPlayed} modes done` : `모드 완료 ${w.modesPlayed}회`;
+            const _l4 = w.weakest ? (_en ? `|Weakest: ${w.weakest.name} ${w.weakest.acc}%` : `|약점: ${w.weakest.name} ${w.weakest.acc}%`) : '';
+            return `<button class="choice-btn ${w.weakest ? '' : 'primary'}" data-action="shareResultCard" data-mode="weekly" data-title="${_title}" data-lines="${_l1}|${_l2}|${_l3}${_l4}">${_t("share.download", "결과 카드 다운로드")}</button>`;
+          })()}
           <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
         </div>
       </div>`;
