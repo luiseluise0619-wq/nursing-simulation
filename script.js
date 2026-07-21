@@ -2273,7 +2273,9 @@ function updateStats() {
     statusBadge.textContent = `${_t("status.label", "상태")}: ${_stBody}`;
     UI.inventory.appendChild(statusBadge);
 
-    if (gameState.combo >= 2) {
+    // 콤보 배지 — 시뮬레이션(듀티/에피소드/시나리오)에선 상단바를 HP+평판만으로 유지하려 숨김.
+    // 콤보는 결과 화면에서 정산(최고 콤보). 순수 학습 모드에선 즉각 피드백으로 유지.
+    if (gameState.combo >= 2 && !isSimMode) {
         const b = document.createElement("span");
         b.className = "badge combo combo-flash";
         b.textContent = `🔥 ${gameState.combo} 콤보`;
@@ -3783,8 +3785,8 @@ function renderNclexMenu() {
           <button class="choice-btn primary" data-action="startNclexQuiz" data-arg="__random__">🎲 All Categories (Random)</button>
         </div>
         <h3 class="episode-group-label">📚 By Client Need Category</h3>
+        <div class="nclex-cat-grid">${buttons}</div>
         <div class="choice-list">
-          ${buttons}
           <button class="choice-btn center" data-action="returnToMenu">Back to Menu</button>
         </div>
       </div>`;

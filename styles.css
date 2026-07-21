@@ -3327,6 +3327,11 @@ img.onboard-svg { display: block; }
 .record-empty-svg { width: 96px; max-width: 40%; height: auto; margin: 4px auto 10px; opacity: 0.9; }
 .record-empty .choice-btn { max-width: 260px; }
 
+/* NCLEX 카테고리 2열 그리드 — 스크롤 압축 */
+.nclex-cat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.nclex-cat-grid .choice-btn { margin-bottom: 0; text-align: center; }
+.nclex-cat-grid .choice-btn small { display: block; opacity: 0.8; font-weight: 600; margin-top: 2px; }
+
 .section-label {
     font-size: 11px;
     font-weight: 700;
