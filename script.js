@@ -4288,7 +4288,13 @@ function endDailyChallenge() {
         <p class="scene-desc" style="text-align:center;">${_t("daily.completeSub", "오늘 학습 끝 — 내일 또 만나요.")}</p>
         <div class="choice-list">
           <button class="choice-btn primary" data-action="returnToMenu">${_t("nav.toMenu", "메뉴로")}</button>
-          <button class="choice-btn" data-action="shareResultCard" data-mode="daily" data-title="일일 챌린지 ${correct}/${DAILY_CHALLENGE_TOTAL} · ${streak.count}일 연속" data-lines="${todayKey()}|정답 ${correct} 문제 · ${accuracy}%|🔥 ${streak.count}일 연속">${_t("share.card", "결과 카드 공유")}</button>
+          ${(() => {
+            const _en = (typeof window !== "undefined" && window.I18N && window.I18N.getLang && window.I18N.getLang() === "en");
+            const _streak = _en ? `${streak.count}-day streak` : `${streak.count}일 연속`;
+            const _title = _en ? `Daily Challenge ${correct}/${DAILY_CHALLENGE_TOTAL} · ${_streak}` : `일일 챌린지 ${correct}/${DAILY_CHALLENGE_TOTAL} · ${_streak}`;
+            const _line2 = _en ? `${correct} correct · ${accuracy}%` : `정답 ${correct} 문제 · ${accuracy}%`;
+            return `<button class="choice-btn" data-action="shareResultCard" data-mode="daily" data-title="${_title}" data-lines="${todayKey()}|${_line2}|🔥 ${_streak}">${_t("share.card", "결과 카드 공유")}</button>`;
+          })()}
         </div>
       </div>`;
 }
@@ -8217,8 +8223,9 @@ function openBookmark(target) {
 // 공유 (결과 카드 Canvas 렌더 → blob 다운로드)
 // =========================================================================
 function shareResultCard(target) {
+    const _shareEn = (typeof window !== "undefined" && window.I18N && window.I18N.getLang && window.I18N.getLang() === "en");
     const mode = target.dataset.mode || gameState.mode || "result";
-    const title = target.dataset.title || "간호사 시뮬레이터 결과";
+    const title = target.dataset.title || (_shareEn ? "Nurse Simulator Result" : "간호사 시뮬레이터 결과");
     const lines = (target.dataset.lines || "").split("|").filter(Boolean);
     // 친구 초대 코드 — 결과 카드 + 공유 텍스트에 자동 동봉
     let myCode = null;
@@ -8271,7 +8278,7 @@ function shareResultCard(target) {
         // === 브랜드 워드마크 ===
         ctx.fillStyle = "#3f4a40";
         ctx.font = "700 22px 'Pretendard', -apple-system, system-ui, sans-serif";
-        ctx.fillText("간호사 시뮬레이터", logoX + 44, logoY + 8);
+        ctx.fillText(_shareEn ? "Nurse Simulator" : "간호사 시뮬레이터", logoX + 44, logoY + 8);
         // 서브 라벨
         ctx.fillStyle = "#7fa881";
         ctx.font = "600 11px 'Pretendard', system-ui, sans-serif";
@@ -8315,16 +8322,16 @@ function shareResultCard(target) {
         roundRect(ctx, cx + 48, boxY, cw - 96, 64, 12); ctx.fill();
         ctx.fillStyle = "#5a6f5d";
         ctx.font = "600 14px 'Pretendard', system-ui, sans-serif";
-        ctx.fillText("교육 목적 · 실제 임상 적용 금지", cx + 68, boxY + 28);
+        ctx.fillText(_shareEn ? "For education only · Not for clinical use" : "교육 목적 · 실제 임상 적용 금지", cx + 68, boxY + 28);
         ctx.fillStyle = "#7a8c7d";
         ctx.font = "500 12px 'Pretendard', system-ui, sans-serif";
-        ctx.fillText("KNCA / AHA / USPSTF 가이드라인 기반", cx + 68, boxY + 50);
+        ctx.fillText(_shareEn ? "Based on KNCA / AHA / USPSTF guidelines" : "KNCA / AHA / USPSTF 가이드라인 기반", cx + 68, boxY + 50);
 
         // === 푸터 워터마크 ===
         ctx.fillStyle = "#94a3b8";
         ctx.font = "500 14px 'Pretendard', system-ui, sans-serif";
         const watermark = myCode
-            ? `nursing-sim.app · 초대코드 ${myCode}`
+            ? `nursing-sim.app · ${_shareEn ? "invite" : "초대코드"} ${myCode}`
             : "nursing-sim.app";
         ctx.fillText(watermark, cx + 48, cy + ch - 32);
         // 우측 작은 박스 — 100% FREE 강조
@@ -8349,7 +8356,9 @@ function shareResultCard(target) {
         if (myCode) {
             try {
                 const shareUrl = `${location.origin}${location.pathname}?ref=${myCode}`;
-                const shareText = `간호사 시뮬레이터 — ${title}\n내 초대코드 ${myCode} 로 가입하면 양쪽 +10 평판 보너스!\n${shareUrl}`;
+                const shareText = _shareEn
+                    ? `Nurse Simulator — ${title}\nSign up with my invite code ${myCode} for a +10 reputation bonus on both sides!\n${shareUrl}`
+                    : `간호사 시뮬레이터 — ${title}\n내 초대코드 ${myCode} 로 가입하면 양쪽 +10 평판 보너스!\n${shareUrl}`;
                 if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
                     navigator.clipboard.writeText(shareText).catch(() => {});
                 }
