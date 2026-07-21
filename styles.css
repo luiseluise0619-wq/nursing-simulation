@@ -2764,6 +2764,44 @@ img.onboard-svg { display: block; }
     margin-right: 8px;
     vertical-align: middle;
 }
+/* 설정 아코디언 — 네이티브 details/summary (JS 없음) */
+.settings-acc { border-top: 1px solid var(--border); }
+.settings-acc:last-of-type { border-bottom: 1px solid var(--border); }
+.settings-acc-sum {
+    list-style: none;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 16px 4px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    user-select: none;
+}
+.settings-acc-sum::-webkit-details-marker { display: none; }
+.settings-acc-sum::before {
+    content: "";
+    display: inline-block;
+    width: 4px; height: 11px;
+    background: var(--primary);
+    border-radius: 2px;
+    margin-right: 8px;
+    vertical-align: middle;
+}
+.settings-acc-sum::after {
+    content: "⌄";
+    margin-left: auto;
+    font-size: 15px;
+    line-height: 1;
+    transition: transform 0.2s var(--ease-out);
+}
+.settings-acc[open] > .settings-acc-sum::after { transform: rotate(180deg); }
+.settings-acc[open] > .settings-acc-sum { color: var(--text); }
+.settings-acc > *:not(summary):last-child { margin-bottom: 14px; }
+
 .settings-row {
     display: flex;
     justify-content: space-between;

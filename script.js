@@ -5658,7 +5658,7 @@ function openSettings() {
       <div class="card settings-card">
         <h2 class="scene-title">${_t("settings.title", "설정")}</h2>
 
-        <h3 class="settings-section">${_t("settings.sec.general", "일반")}</h3>
+        <details class="settings-acc" open><summary class="settings-acc-sum">${_t("settings.sec.general", "일반")}</summary>
         <div class="settings-row">
           <span>${_t("settings.language", "언어 / Language")}</span>
           <span class="settings-value">${curLang === "en" ? "🇺🇸 English" : "🇰🇷 한국어"}</span>
@@ -5699,7 +5699,8 @@ function openSettings() {
         <div class="choice-list">
           <button class="choice-btn" data-action="renderTtsSettings">${_t("settings.tts.detail", "음성 상세 설정")}</button>
         </div>
-        <h3 class="settings-section">${_t("settings.sec.examMode", "시험 모드 (Exam Mode)")}</h3>
+        </details>
+        <details class="settings-acc" open><summary class="settings-acc-sum">${_t("settings.sec.examMode", "시험 모드 (Exam Mode)")}</summary>
         <div class="settings-row">
           <span>${_t("settings.currentMode", "현재 모드")}</span>
           <span class="settings-value">${settings.examMode === "nclex" ? "🇺🇸 NCLEX-RN (English)" : `🇰🇷 ${_t("mode.korean", "한국 국시")}`}</span>
@@ -5717,7 +5718,8 @@ function openSettings() {
           <button class="choice-btn" data-action="toggleDailyNotify">${data.notifyOptIn ? _t("notify.turnOff", "🔕 알림 끄기") : _t("notify.turnOn", "🔔 일일 챌린지 알림 켜기")}</button>
         </div>
 
-        <h3 class="settings-section">${_t("settings.sec.premium", "프리미엄 (준비중)")}</h3>
+        </details>
+        <details class="settings-acc"><summary class="settings-acc-sum">${_t("settings.sec.premium", "프리미엄 (준비중)")}</summary>
         <div class="settings-row">
           <span>${_t("settings.premium.desc", "광고 제거 + 무제한 부활 + 우선 RN 감수 받기")}</span>
           <span class="settings-value">₩4,900${_t("premium.perMonth", "/월")}</span>
@@ -5726,7 +5728,8 @@ function openSettings() {
           <button class="choice-btn primary" data-action="renderPremiumPage">${_t("settings.premium.more", "⭐ 프리미엄 자세히 보기")}</button>
         </div>
 
-        <h3 class="settings-section">${_t("settings.sec.data", "데이터")}</h3>
+        </details>
+        <details class="settings-acc"><summary class="settings-acc-sum">${_t("settings.sec.data", "데이터")}</summary>
         <div class="settings-row">
           <span>${_t("settings.data.total", "총 풀이")}</span>
           <span class="settings-value">${totalSolved}${_t("unit.q", "문제")} · ${_t("data.correct", "정답")} ${totalCorrect} (${acc}%)</span>
@@ -5752,7 +5755,8 @@ function openSettings() {
           <button class="choice-btn" data-action="confirmClearStats">${_t("settings.data.resetAll", "🗑 전체 데이터 초기화")}</button>
         </div>
 
-        <h3 class="settings-section">${_t("settings.sec.about", "정보")}</h3>
+        </details>
+        <details class="settings-acc"><summary class="settings-acc-sum">${_t("settings.sec.about", "정보")}</summary>
         <div class="choice-list">
           <button class="choice-btn" data-action="renderAbout">${_t("about.appInfoRow", "앱 정보 · 버전 · 변경 이력")}</button>
           <button class="choice-btn" data-action="renderPrivacy">${_t("about.privacyShort", "개인정보 처리방침 (요약)")}</button>
@@ -5762,6 +5766,7 @@ function openSettings() {
           <button class="choice-btn" data-action="showOnboarding">${_t("about.replayTutorial", "튜토리얼 다시 보기")}</button>
           <button class="choice-btn" data-action="openErrorReport">${_t("about.reportContent", "컨텐츠 오류 신고")}</button>
         </div>
+        </details>
 
         <div class="choice-list">
           <button class="choice-btn primary" data-action="returnToMenu">${_t("nav.mainMenu", "메인 메뉴")}</button>
