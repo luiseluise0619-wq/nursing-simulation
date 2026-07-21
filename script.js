@@ -7020,6 +7020,9 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
     const todayDaily = data.daily[todayKey()];
     const dailyCorrect = todayDaily?.correct || 0;
     const bookmarkCount = Object.keys(data.bookmarks || {}).length;
+    // 신규 유저(데이터 0) 판정 — 빈 상태 카피/CTA 노출용
+    const _totalSolved = Object.values(data.stats || {}).reduce((s, v) => s + (v.solved || 0), 0);
+    const isNewUser = _totalSolved === 0 && (data.history || []).length === 0;
     const weekly = computeWeeklyReport(Date.now(), data);
     const streak = (data.streak && typeof data.streak === "object") ? data.streak : { count: 0, best: 0, lastDate: null };
     // 오늘 또는 어제 학습했으면 streak 유효, 아니면 끊긴 것으로 표시
@@ -7044,9 +7047,9 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
         ? `<div class="streak-banner${atRisk ? ' at-risk' : ''}" title="연속 학습일">🔥 <strong>${streakCount}일</strong> 연속 학습 중${streak.best > streakCount ? ` · 최고 ${streak.best}일` : ""}${graceHint}${riskHint}</div>`
         : "";
 
-    // D-day 카운트다운 — 한국 국시 (1월) / NCLEX 모드 시 비활성
+    // D-day 카운트다운 — 한국 국시(1월)만 홈에 노출. NCLEX 콜아웃은 학습 탭으로 이동(홈 위계 단순화).
     const examModeForCountdown = (typeof Storage !== "undefined" && Storage.getExamMode) ? Storage.getExamMode() : "korean";
-    const countdownHtml = examModeForCountdown === "korean" ? renderExamCountdown() : renderNclexCallout();
+    const countdownHtml = examModeForCountdown === "korean" ? renderExamCountdown() : "";
 
     // 30일 학습 캘린더 — 활동 일자 시각화 (GitHub contribution graph 형식)
     const calendarHtml = renderStudyCalendar(data);
@@ -7073,7 +7076,20 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
         </div>
       </button>` : '';
 
-    const renderHome = () => `
+    const renderHome = () => {
+      // 신규 유저 — 잡다한 카드 대신 단일 CTA 빈 상태 (첫 문제까지 마찰 최소화)
+      if (isNewUser) return `
+      <div class="tab-section home-empty">
+        <img class="home-empty-svg" src="images/empty-no-data.svg" alt="" aria-hidden="true">
+        <h2 class="home-empty-title">${_t("home.empty.title", "3문제만 풀면 여기가 채워져요")}</h2>
+        <p class="home-empty-desc">${_t("home.empty.desc", "정답률 · 연속 학습 · 오답노트가 자동으로 쌓입니다.\n지금 가볍게 시작해요.")}</p>
+        <button class="hero-card hero-card-first" data-action="startDailyChallenge">
+          <div class="hero-label">${_t("home.empty.cta.label", "몸풀기")}</div>
+          <div class="hero-title">${_t("home.empty.cta.title", "지금 첫 문제 풀기")}</div>
+          <div class="hero-sub">${_t("home.empty.cta.sub", "하루 10문제 · 1분이면 충분")}</div>
+        </button>
+      </div>`;
+      return `
       <div class="tab-section">
         ${countdownHtml}
         ${streakHtml}
@@ -7125,18 +7141,22 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
           </button>
         </div>
       </div>`;
+    };
 
     const renderStudy = () => {
       const examMode = (typeof Storage !== "undefined" && Storage.getExamMode) ? Storage.getExamMode() : "korean";
       // i18n: 언어 설정에 따라 자동 번역 (한국/영어)
       const _t = (k, fb) => (typeof window !== "undefined" && window.I18N) ? window.I18N.t(k, fb) : fb;
       const practiceSub = examMode === "nclex" ? _t("study.nclex.sub", "NCLEX · 과목별 · 모의고사") : _t("study.practice.sub", "과목별 · 모의고사 · 일일");
+      // NCLEX 콜아웃 — 홈에서 학습 탭 상단으로 이동 (NCLEX 모드일 때만)
+      const nclexCallout = examMode === "nclex" ? renderNclexCallout() : "";
       return `
       <div class="tab-section">
-        <button class="row-card big" data-action="renderPracticeMenu">
+        ${nclexCallout}
+        <button class="row-card big${examMode === "korean" ? " recommended" : ""}" data-action="renderPracticeMenu">
           <div class="row-icon big">${ICONS.practice}</div>
           <div class="row-body">
-            <div class="row-title">${_t("study.practice", "풀이")}</div>
+            <div class="row-title">${_t("study.practice", "풀이")}${examMode === "korean" ? ` <span class="row-pill rec">${_t("common.recommended", "추천")}</span>` : ""}</div>
             <div class="row-sub">${practiceSub}</div>
           </div>
           <div class="row-chev">›</div>
@@ -7164,8 +7184,16 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
         const achState = (typeof Storage !== "undefined" && Storage.getAchievements) ? Storage.getAchievements() : { unlocked: [] };
         const gotCount = Array.isArray(achState.unlocked) ? achState.unlocked.length : 0;
         const totalBadges = (typeof BADGES !== "undefined" && Array.isArray(BADGES)) ? BADGES.length : 10;
+        // 신규 유저 빈 상태 배너 — 기록이 비어 초라해 보이지 않게 + 홈 유도
+        const emptyBanner = isNewUser ? `
+        <div class="record-empty">
+          <img class="record-empty-svg" src="images/empty-no-records.svg" alt="" aria-hidden="true">
+          <p class="record-empty-desc">${_t("record.empty.desc", "3문제만 풀면 정답률이 채워져요.")}</p>
+          <button class="choice-btn primary center" data-action="setMenuTab" data-tab="home">${_t("record.empty.cta", "홈에서 시작하기")}</button>
+        </div>` : "";
         return `
       <div class="tab-section">
+        ${emptyBanner}
         <button class="row-card big" data-action="renderDashboard">
           <div class="row-icon big">${ICONS.dash}</div>
           <div class="row-body">
@@ -7177,8 +7205,8 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
         <button class="row-card big" data-action="renderAchievements">
           <div class="row-icon big" aria-hidden="true">🏆</div>
           <div class="row-body">
-            <div class="row-title">배지 ${gotCount > 0 ? `<span class="row-pill">${gotCount}/${totalBadges}</span>` : `<span class="row-pill">0/${totalBadges}</span>`}</div>
-            <div class="row-sub">${gotCount > 0 ? `획득 ${gotCount}개` : `도전과제 ${totalBadges}종`}</div>
+            <div class="row-title">${_t("record.badges", "배지")} <span class="row-pill">${gotCount}/${totalBadges}</span></div>
+            <div class="row-sub">${gotCount >= totalBadges ? _t("record.badges.done", "전체 달성! 🎉") : gotCount === 0 ? _t("record.badges.first", "첫 배지까지 1문제!") : _t("record.badges.next", "다음 배지 도전 중")}</div>
           </div>
           <div class="row-chev">›</div>
         </button>
