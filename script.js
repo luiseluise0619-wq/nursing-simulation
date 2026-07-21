@@ -2213,11 +2213,12 @@ function updateStats() {
     if (hpFill) hpFill.style.width = `${shownHp}%`;
     if (hpGauge) hpGauge.dataset.level = shownHp > 60 ? "hi" : shownHp > 30 ? "mid" : "lo";
 
-    // 게임 모드에서만 HP/REP 표시 — 메뉴/통계/설정에선 숨김 (잡스 모드: 컨텍스트 없는 정보 제거)
-    const isGameMode = ["survival", "episode", "scenario", "quiz", "mock", "daily", "wrong_review", "handoff", "handoff_write", "triage", "image_quiz", "drug_drill", "nclex"].includes(gameState.mode);
-    if (hpGauge) hpGauge.classList.toggle("hidden", !isGameMode);
+    // HP/평판은 임상 시뮬레이션(듀티·에피소드·시나리오·위기)에서만 의미 있음.
+    // 순수 학습 모드(과목별·모의고사·일일·오답·NCLEX·이미지·약물·인계·트리아지)는 진행률 바만 노출 — 인지 부하 제거.
+    const isSimMode = ["survival", "episode", "scenario", "crisis"].includes(gameState.mode);
+    if (hpGauge) hpGauge.classList.toggle("hidden", !isSimMode);
     const repGauge = document.getElementById("rep-gauge");
-    if (repGauge) repGauge.classList.toggle("hidden", !isGameMode);
+    if (repGauge) repGauge.classList.toggle("hidden", !isSimMode);
     // 평판 게이지 fill (-60 ~ +120 범위를 0~100% 로 매핑)
     const repFill = document.getElementById("rep-fill");
     if (repFill) {
