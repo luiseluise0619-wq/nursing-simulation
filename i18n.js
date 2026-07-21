@@ -15,6 +15,7 @@
             "study.drills": "훈련",
             "study.drills.sub": "이미지 · 약물 · 인계 · 트리아지",
             "study.nclex.sub": "NCLEX · 과목별 · 모의고사",
+            "drill.koHint": "인계 등 일부 훈련은 아직 한국어 전용이에요. 설정에서 한국어로 전환하면 전체 이용 가능합니다.",
             // 공통 액션
             "action.back": "메뉴",
             "action.next": "다음 →",
@@ -93,6 +94,7 @@
             // 설정
             "settings.title": "설정",
             "settings.sec.general": "일반",
+            "settings.language": "언어 / Language",
             "settings.theme": "테마",
             "theme.light": "라이트",
             "theme.dark": "다크",
@@ -267,6 +269,7 @@
             "study.drills": "Drills",
             "study.drills.sub": "Images · Drugs · Handoff · Triage",
             "study.nclex.sub": "NCLEX · Subjects · Mock",
+            "drill.koHint": "Handoff and some drills are Korean-only for now. Switch to Korean in Settings for full access.",
             "action.back": "Menu",
             "action.next": "Next →",
             "action.close": "Close",
@@ -343,6 +346,7 @@
             "kebab.soundOn": "Turn on sound",
             "settings.title": "Settings",
             "settings.sec.general": "General",
+            "settings.language": "Language",
             "settings.theme": "Theme",
             "theme.light": "Light",
             "theme.dark": "Dark",

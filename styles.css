@@ -3332,6 +3332,21 @@ img.onboard-svg { display: block; }
 .nclex-cat-grid .choice-btn { margin-bottom: 0; text-align: center; }
 .nclex-cat-grid .choice-btn small { display: block; opacity: 0.8; font-weight: 600; margin-top: 2px; }
 
+/* 한국어 전용 콘텐츠 안내 (영어 모드) */
+.ko-content-badge {
+    display: inline-block;
+    font-size: 10px; font-weight: 700;
+    padding: 1px 6px; border-radius: var(--radius-pill);
+    background: var(--softer); color: var(--muted);
+    vertical-align: middle; letter-spacing: 0.03em;
+}
+.ko-content-hint {
+    font-size: 12px; color: var(--muted);
+    background: var(--softer); border: 1px solid var(--border);
+    border-radius: var(--radius-md); padding: 8px 12px; margin: 0 0 12px;
+    line-height: 1.5;
+}
+
 .section-label {
     font-size: 11px;
     font-weight: 700;

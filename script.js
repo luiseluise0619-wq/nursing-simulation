@@ -3276,10 +3276,16 @@ function renderCaseMenu() {
 function renderDrillMenu() {
     gameState.mode = "drill_menu"; resetStateForMode();
     showCoreUI(); if (UI.logBar) UI.logBar.innerHTML = ""; updateStats();
+    // 영어 모드 안내 — 훈련(인계·트리아지)은 아직 한국어 전용 콘텐츠
+    const _curLang = (typeof window !== "undefined" && window.I18N && window.I18N.getLang) ? window.I18N.getLang() : "ko";
+    const koBadge = _curLang === "en" ? ` <span class="ko-content-badge">🇰🇷 KO</span>` : "";
+    const koHint = _curLang === "en"
+        ? `<p class="ko-content-hint">${_t("drill.koHint", "인계 등 일부 훈련은 아직 한국어 전용이에요. 설정에서 한국어로 전환하면 전체 이용 가능합니다.")}</p>` : "";
     UI.gameArea.innerHTML = `
       <div class="tab-section">
         <h2 class="page-title">${_t("study.drills", "훈련")}</h2>
         <p class="page-sub">한 가지를 깊이.</p>
+        ${koHint}
         <button class="row-card" data-action="renderImageQuizMenu">
           <div class="row-icon">${ICONS.scenario}</div>
           <div class="row-body"><div class="row-title">이미지 문제</div><div class="row-sub">ECG · 청진 · 산과 · 신경</div></div>
@@ -3292,12 +3298,12 @@ function renderDrillMenu() {
         </button>
         <button class="row-card" data-action="startHandoff">
           <div class="row-icon">${ICONS.handoff}</div>
-          <div class="row-body"><div class="row-title">인계 듣기</div><div class="row-sub">음성 인계 듣고 핵심 키워드 회상</div></div>
+          <div class="row-body"><div class="row-title">인계 듣기${koBadge}</div><div class="row-sub">음성 인계 듣고 핵심 키워드 회상</div></div>
           <div class="row-chev">›</div>
         </button>
         <button class="row-card" data-action="startHandoffWrite">
           <div class="row-icon">${ICONS.handoff}</div>
-          <div class="row-body"><div class="row-title">인계 작성 실습 (SBAR)</div><div class="row-sub">케이스 보고 직접 SBAR 인계문 작성</div></div>
+          <div class="row-body"><div class="row-title">인계 작성 실습 (SBAR)${koBadge}</div><div class="row-sub">케이스 보고 직접 SBAR 인계문 작성</div></div>
           <div class="row-chev">›</div>
         </button>
         <button class="row-card" data-action="startTriage">
@@ -5623,11 +5629,19 @@ function openSettings() {
     const totalSolved = Object.values(stats).reduce((s, v) => s + (v.solved || 0), 0);
     const totalCorrect = Object.values(stats).reduce((s, v) => s + (v.correct || 0), 0);
     const acc = totalSolved ? Math.round(totalCorrect / totalSolved * 100) : 0;
+    const curLang = (typeof window !== "undefined" && window.I18N && window.I18N.getLang) ? window.I18N.getLang() : "ko";
     UI.gameArea.innerHTML = `
       <div class="card settings-card">
         <h2 class="scene-title">${_t("settings.title", "설정")}</h2>
 
         <h3 class="settings-section">${_t("settings.sec.general", "일반")}</h3>
+        <div class="settings-row">
+          <span>${_t("settings.language", "언어 / Language")}</span>
+          <span class="settings-value">${curLang === "en" ? "🇺🇸 English" : "🇰🇷 한국어"}</span>
+        </div>
+        <div class="choice-list">
+          <button class="choice-btn primary center" data-action="toggleLang">🌐 ${curLang === "en" ? "한국어로 전환" : "Switch to English"}</button>
+        </div>
         <div class="settings-row">
           <span>${_t("settings.theme", "테마")}</span>
           <span class="settings-value">${settings.theme === "dark" ? _t("theme.dark", "다크") : settings.theme === "light" ? _t("theme.light", "라이트") : _t("theme.auto", "자동")}</span>
