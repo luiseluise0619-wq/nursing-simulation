@@ -6655,15 +6655,13 @@ const ONBOARDING_ILLUSTRATIONS = [
     '<img class="onboard-svg" src="images/onboard-5-start.svg" alt="" aria-hidden="true">',
 ];
 
+// 온보딩 3장 — 환영 / 핵심가치 / 면책+동의 (관문 최소화, 이탈 방지)
+// ⚠️ 면책 슬라이드(마지막) 문구는 의료 신뢰성상 verbatim 보존.
 const ONBOARDING_SLIDES = [
     { illust: 0, title: "간호사 시뮬레이터에 오신 것을 환영합니다",
-      body: "한국 국시 280문항 + NCLEX-RN 2,200문항 + 실전 듀티 시뮬레이션을 하나의 앱에서.\n완전 무료, 가입 없음, 광고는 보상형만 사용합니다." },
-    { illust: 1, title: "실전 듀티 시뮬레이션",
-      body: "Day · Evening · Night 3교대 시프트로 임상 상황을 체험하세요.\n시프트에 따라 HP 손실과 난이도가 달라집니다." },
-    { illust: 2, title: "NCLEX-RN 2,200 문제",
-      body: "MCQ + SATA + 우선순위까지 미국 간호사 시험 전 범위를 무료로.\n해외 취업 준비도 한 앱에서 가능합니다." },
-    { illust: 3, title: "통계로 약점 파악",
-      body: "과목별 정답률 막대 그래프 · 오답 자동 저장 · 14일 연속 배지.\n키보드 단축키(1~5, ↑↓, T, M, ESC)도 지원합니다." },
+      body: "국시부터 NCLEX까지, 실전처럼 준비하는 무료 간호 학습앱.\n가입 없음, 광고는 보상형만 사용합니다." },
+    { illust: 2, title: "국시 280 · NCLEX 2,200 · 듀티 시뮬레이션",
+      body: "한국 국시 280문항 + NCLEX-RN 2,200문항 + 실전 듀티 시뮬레이션.\n과목별 정답률·오답 자동 저장·연속 학습 배지로 약점까지 관리합니다." },
     { illust: 4, title: "학습 도구로만 사용하세요",
       body: "본 앱은 교육 목적이며, 실제 임상 의사결정을 대체하지 않습니다.\n공식 가이드라인과 의료기관 프로토콜을 항상 우선하세요." },
 ];
@@ -6686,9 +6684,9 @@ function renderOnboarding(idx = 0) {
         <div class="onboard-dots" role="tablist" aria-label="${_t("onboard.progress", "튜토리얼 진행도")}">${dots}</div>
         <div class="choice-list">
           ${idx < total - 1
-              ? `<button class="choice-btn primary" data-action="onboardNext">${_t("onboard.next", "다음")} (${idx + 1}/${total})</button>
-                 <button class="choice-btn subtle center" data-action="onboardSkip">${_t("onboard.skip", "건너뛰기")}</button>`
-              : `<button class="choice-btn primary" data-action="onboardFinish">${_t("onboard.start", "시작하기")}</button>`}
+              ? `<button class="choice-btn primary" data-action="onboardNext">${_t("onboard.next", "다음")} (${idx + 1}/${total})</button>`
+              : `<button class="choice-btn primary" data-action="onboardFinish">${_t("onboard.consent", "동의하고 시작하기")}</button>`}
+          <button class="choice-btn subtle center" data-action="onboardSkip">${_t("onboard.skip", "건너뛰기")}</button>
         </div>
       </div>`;
 }
@@ -6725,24 +6723,32 @@ function renderPersonaPicker() {
     overlay.setAttribute("role", "dialog");
     overlay.setAttribute("aria-modal", "true");
     overlay.setAttribute("aria-labelledby", "persona-title");
-    const cards = PERSONA_OPTIONS.map(opt => {
-        const disabled = !opt.available;
+    // 언어/시험모드 기반 추천 — 영어권(NCLEX 모드)은 nclex, 그 외는 국시 준비를 추천
+    const _mode = (typeof Storage !== "undefined" && Storage.getExamMode) ? Storage.getExamMode() : "korean";
+    const recommendedId = _mode === "nclex" ? "nclex" : "rn-exam";
+    // available 만 카드로, disabled(약사 등)는 카드 대신 하단 각주로 안내 (선택 마찰 제거)
+    const cards = PERSONA_OPTIONS.filter(o => o.available).map(opt => {
+        const isRec = opt.id === recommendedId;
         return `
-          <button class="persona-card${disabled ? " disabled" : ""}"
+          <button class="persona-card${isRec ? " recommended" : ""}"
                   data-action="choosePersona"
-                  data-persona="${opt.id}"
-                  ${disabled ? 'aria-disabled="true"' : ""}>
-            ${disabled ? `<span class="persona-coming">${_t("persona.coming", "곧 만나요")}</span>` : ""}
+                  data-persona="${opt.id}">
+            ${isRec ? `<span class="persona-rec-badge">${_t("persona.recommended", "추천")}</span>` : ""}
             <span class="persona-icon" aria-hidden="true">${opt.icon}</span>
             <span class="persona-label">${escapeHtml(_t("persona." + opt.k + ".label", opt.label))}</span>
             <span class="persona-sub">${escapeHtml(_t("persona." + opt.k + ".sub", opt.sub))}</span>
           </button>`;
     }).join("");
+    const comingSoon = PERSONA_OPTIONS.filter(o => !o.available)
+        .map(o => escapeHtml(_t("persona." + o.k + ".label", o.label))).join(" · ");
+    const footnote = comingSoon
+        ? `<p class="persona-footnote">${comingSoon} — ${_t("persona.comingFoot", "준비 중이에요")} 💚</p>` : "";
     overlay.innerHTML = `
       <div class="persona-card-wrap">
         <h2 id="persona-title" class="persona-title">${_t("persona.title", "어떤 분야 준비 중이세요?")}</h2>
         <p class="persona-subdesc">${_t("persona.subdesc", "학습 콘텐츠 추천에 활용해요. 언제든 설정에서 변경할 수 있어요.")}</p>
         <div class="persona-grid">${cards}</div>
+        ${footnote}
         <button class="choice-btn subtle center" data-action="skipPersona">${_t("persona.later", "나중에 선택")}</button>
       </div>`;
     document.body.appendChild(overlay);
