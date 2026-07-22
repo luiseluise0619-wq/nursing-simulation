@@ -3569,7 +3569,7 @@ function renderSiteQuizCard() {
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
         <div class="quiz-progress">🧍 ${_t("site.title", "주사 부위 짚기")} ${i + 1}/${pool.length}</div>
-        <h2 class="scene-title">${escapeHtml(L === "en" ? q.qEn : q.qKo)}</h2>
+        <h2 class="scene-title">${escapeHtml(L === "en" ? q.qEn : q.qKo)} <button class="tts-btn" data-action="ttsSpeak" data-text="${escapeHtml(L === "en" ? q.qEn : q.qKo)}" aria-label="${_t("tts.readQ", "문제 읽어주기")}" title="${_t("tts.readQ", "문제 읽어주기")}">🔊</button></h2>
         <div class="body-wrap">${_bodySvg()}</div>
         <div id="site-feedback" class="image-quiz-feedback hidden"></div>
         <button class="choice-btn subtle center hidden" id="site-next-btn" data-action="siteQuizNext">${_t("action.next", "다음 →")}</button>
@@ -3705,6 +3705,7 @@ async function tutorAsk() {
         const ids = items.map(x => "#" + x.id).join(" ");
         const left = Math.max(0, TUTOR_DAILY_FREE - quota.count);
         ans.innerHTML = `<div class="tutor-reply">${escapeHtml(answer).replace(/\n/g, "<br>")}</div>`
+            + `<div class="tutor-actions"><button class="tts-btn" data-action="ttsSpeak" data-text="${escapeHtml(answer)}" aria-label="${_t("tutor.read", "답변 읽어주기")}" title="${_t("tutor.read", "답변 읽어주기")}">🔊</button></div>`
             + `<div class="tutor-src">${_t("tutor.src", "근거")}: ${escapeHtml(ids)}</div>`
             + `<div class="tutor-quota">${_t("tutor.left", "오늘 남은 무료 질문")}: ${left}/${TUTOR_DAILY_FREE}</div>`;
         track("tutor_ask", { ok: true });

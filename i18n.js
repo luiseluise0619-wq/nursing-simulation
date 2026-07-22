@@ -34,6 +34,8 @@
             "tutor.noctx": "관련 학습 자료를 찾지 못했어요. 다른 키워드로 물어봐 주세요.",
             "tutor.limit": "오늘 무료 질문을 모두 썼어요. 내일 다시 이용하거나 프리미엄에서 무제한으로 열려요.",
             "tutor.err": "지금은 답할 수 없어요. 잠시 후 다시 시도해 주세요.",
+            "tutor.read": "답변 읽어주기",
+            "tts.readQ": "문제 읽어주기",
             "quiz.total": "총 문제",
             "quiz.correct": "정답",
             // 공통 액션
@@ -309,6 +311,8 @@
             "tutor.noctx": "Couldn't find related study material. Try different keywords.",
             "tutor.limit": "You've used today's free questions. Come back tomorrow, or go unlimited with Premium.",
             "tutor.err": "Can't answer right now. Please try again shortly.",
+            "tutor.read": "Read answer aloud",
+            "tts.readQ": "Read question aloud",
             "quiz.total": "Total",
             "quiz.correct": "Correct",
             "action.back": "Menu",
