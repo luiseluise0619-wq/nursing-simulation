@@ -1133,28 +1133,38 @@ const Storage = {
         Storage.save(data);
         return entry.id;
     },
-    // Leitner 5-box 알고리즘 — quality 0~5 (정답=5, 부분정답=3, 오답=0)
-    // box 1→2→3→4→5 (정답시 승급), 오답시 box 1 강등. 박스 5 졸업 시 자동 제거.
+    // SM-2 간격 반복 (Anki 계열) — quality 0~5 (정답=5, 부분정답=3, 오답=0)
+    // easeFactor 로 개인화: 반복해서 맞히는 문항은 간격이 지수적으로 늘고,
+    // 자주 틀리는 문항은 ease 가 낮아져 계속 짧은 간격으로 자주 노출된다.
+    // box(1~5) 는 표시·졸업용 파생값. 간격이 충분히 길어지면(≥60일, 5회+) 졸업 제거.
     updateSpacedRepetition(id, quality) {
         const data = Storage.load();
         const item = data.wrongQueue.find(e => e.id === id);
         if (!item) return;
-        const LEITNER_DAYS = [1, 3, 7, 14, 30];
-        if (typeof item.box !== "number" || item.box < 1 || item.box > 5) item.box = 1;
+        let ef = (typeof item.easeFactor === "number" && item.easeFactor >= 1.3) ? item.easeFactor : 2.5;
+        let reps = (typeof item.repetitions === "number" && item.repetitions >= 0) ? item.repetitions : 0;
+        let interval = (typeof item.interval === "number" && item.interval > 0) ? item.interval : 1;
         let graduate = false;
         if (quality < 3) {
-            item.box = 1;
-            item.repetitions = 0;
+            // 오답 — 반복 리셋, 최단 간격, ease 하향(최저 1.3)
+            reps = 0;
+            interval = 1;
+            ef = Math.max(1.3, ef - 0.2);
         } else {
-            if (item.box >= 5) {
-                graduate = true;
-            } else {
-                item.box = Math.min(5, item.box + 1);
-            }
-            item.repetitions = (item.repetitions || 0) + 1;
+            reps += 1;
+            if (reps === 1) interval = 1;
+            else if (reps === 2) interval = 6;
+            else interval = Math.round(interval * ef);
+            // SM-2 ease 갱신식
+            ef = Math.max(1.3, ef + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02)));
+            if (interval >= 60 && reps >= 5) graduate = true;
         }
-        item.interval = LEITNER_DAYS[item.box - 1];
-        item.nextDue = Date.now() + item.interval * 24 * 60 * 60 * 1000;
+        item.easeFactor = Math.round(ef * 1000) / 1000;
+        item.repetitions = reps;
+        item.interval = interval;
+        // box: 간격에서 파생 (기존 "Leitner N/5" 표시 유지)
+        item.box = interval >= 30 ? 5 : interval >= 14 ? 4 : interval >= 7 ? 3 : interval >= 3 ? 2 : 1;
+        item.nextDue = Date.now() + interval * 24 * 60 * 60 * 1000;
         item.lastReviewed = Date.now();
         if (graduate) {
             const idx = data.wrongQueue.findIndex(e => e.id === id);
