@@ -1708,17 +1708,30 @@ button.countdown-card:active { transform: translateY(0); }
 .dashboard-row .cat-stats { font-size: 0.85rem; color: var(--muted); }
 .mini-bar {
     flex: 1;
-    height: 8px;
+    height: 10px;
     background: var(--bg);
     border-radius: var(--radius-pill);
     margin: 0 12px;
     overflow: hidden;
     box-shadow: var(--shadow-in);
 }
+/* 정답률 구간별 색 + 그라데이션 + 성장 애니메이션 (ECharts풍, 순수 CSS) */
 .mini-bar-fill {
     height: 100%;
-    background: var(--success);
-    transition: width 0.4s ease;
+    border-radius: var(--radius-pill);
+    background: linear-gradient(90deg, var(--success), #9cc79e);
+    transform-origin: left center;
+    animation: barGrow 0.7s var(--ease-out) both;
+}
+.mini-bar-fill.hi { background: linear-gradient(90deg, var(--success), #9cc79e); }
+.mini-bar-fill.mid { background: linear-gradient(90deg, var(--warning), #f2d08a); }
+.mini-bar-fill.lo { background: linear-gradient(90deg, var(--danger), #e8a3a3); }
+.mini-bar-fill.none { background: var(--border); }
+@keyframes barGrow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.dashboard-row { animation: dashRowIn 0.45s var(--ease-out) both; }
+@keyframes dashRowIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+    .mini-bar-fill, .dashboard-row { animation: none; }
 }
 
 .timer-pill {

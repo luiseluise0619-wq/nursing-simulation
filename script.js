@@ -5968,16 +5968,17 @@ function renderDashboard() {
     showCoreUI(); updateStats();
     const stats = Storage.getStats();
     const data = Storage.load();
-    const rows = CATEGORIES.map(cat => {
+    const rows = CATEGORIES.map((cat, i) => {
         const s = stats[cat] || { solved: 0, correct: 0 };
         const acc = s.solved > 0 ? Math.round((s.correct / s.solved) * 100) : 0;
+        const tier = s.solved === 0 ? "none" : acc >= 80 ? "hi" : acc >= 50 ? "mid" : "lo";
         return `
-          <div class="dashboard-row">
+          <div class="dashboard-row" style="animation-delay:${Math.min(i, 8) * 45}ms">
             <div class="dashboard-cat-cell">
               <div class="cat-name">${escapeHtml(cat)}</div>
               <div class="cat-stats">${s.correct}/${s.solved} · ${acc}%</div>
             </div>
-            <div class="mini-bar" role="progressbar" aria-valuenow="${acc}" aria-valuemin="0" aria-valuemax="100" aria-label="${escapeHtml(cat)} 정답률"><div class="mini-bar-fill" style="width:${acc}%"></div></div>
+            <div class="mini-bar" role="progressbar" aria-valuenow="${acc}" aria-valuemin="0" aria-valuemax="100" aria-label="${escapeHtml(cat)} 정답률"><div class="mini-bar-fill ${tier}" style="width:${acc}%"></div></div>
           </div>`;
     }).join("");
     const wrongCount = data.wrongQueue.length;
