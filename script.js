@@ -165,7 +165,7 @@ function cacheUI() {
 const BACK_BUTTON_MODES = new Set([
     "survival", "episode", "scenario", "quiz", "mock", "daily", "wrong_review",
     "handoff", "handoff_write", "triage", "image_quiz", "drug_drill",
-    "nclex_quiz", "kor_quiz", "crisis",
+    "nclex_quiz", "kor_quiz", "crisis", "ecg_quiz",
 ]);
 function updateBackButton() {
     if (!UI.backBtn) return;
@@ -2241,6 +2241,7 @@ function updateStats() {
     else if (gameState.mode === "handoff") { value = gameState.handoffIndex; total = NC.HANDOFF_PATIENTS.length; label = _t("status.handoff", "인계 시뮬레이터"); }
     else if (gameState.mode === "handoff_write") { value = gameState.handoffIndex; total = gameState.handoffPool ? gameState.handoffPool.length : HANDOFF_SESSION_SIZE; label = _t("status.handoffWrite", "인계 작성 실습"); }
     else if (gameState.mode === "triage") { value = gameState.triageIndex; total = NC.TRIAGE_CASES.length; label = _t("status.triage", "트리아지"); }
+    else if (gameState.mode === "ecg_quiz") { value = gameState.ecgIndex; total = gameState.ecgPool ? gameState.ecgPool.length : 8; label = _t("ecg.title", "심전도 판독"); }
     else if (gameState.mode === "scenario") {
         const s = NC.SCENARIOS.find(x => x.id === gameState.scenarioId);
         value = gameState.scenarioStep; total = s ? s.steps.length : 1; label = `${_t("status.scenario", "시나리오")} · ${s ? s.title : ""}`;
@@ -3286,6 +3287,11 @@ function renderDrillMenu() {
         <h2 class="page-title">${_t("study.drills", "훈련")}</h2>
         <p class="page-sub">한 가지를 깊이.</p>
         ${koHint}
+        <button class="row-card" data-action="startEcgQuiz">
+          <div class="row-icon" aria-hidden="true">🫀</div>
+          <div class="row-body"><div class="row-title">${_t("ecg.title", "심전도 판독")} <span class="row-pill rec">NEW</span></div><div class="row-sub">${_t("ecg.sub", "리듬 스트립 보고 부정맥 판독")}</div></div>
+          <div class="row-chev">›</div>
+        </button>
         <button class="row-card" data-action="renderImageQuizMenu">
           <div class="row-icon">${ICONS.scenario}</div>
           <div class="row-body"><div class="row-title">이미지 문제</div><div class="row-sub">ECG · 청진 · 산과 · 신경</div></div>
@@ -3318,6 +3324,177 @@ function renderDrillMenu() {
 // =========================================================================
 // 한국 국시 정적 문제 (kor-content.js) — 5지선다, 7과목 × 40
 // =========================================================================
+// =========================================================================
+// 심전도(ECG) 판독 연습 — canvas 임상용지(25mm/s · 10mm/mV) + 리듬 5지선다
+// 파형은 교육용 이상화 표현이지만, 각 리듬의 "정의적 특징"(rate·규칙성·P파·QRS폭)은
+// 임상 기준을 따른다. 렌더/스펙 참고: Infirmary Integrated · ecg_paper. 값을 지어내지 않음.
+// =========================================================================
+const ECG_RHYTHMS = [
+    { id: "nsr", ko: "정상 동율동 (NSR)", en: "Normal Sinus Rhythm",
+      teachKo: "규칙적 · P파 정상 · 60~100회/분 · 각 P 뒤 QRS", teachEn: "Regular · normal P before every QRS · 60–100 bpm" },
+    { id: "brady", ko: "동서맥", en: "Sinus Bradycardia",
+      teachKo: "정상 형태, 60회/분 미만", teachEn: "Normal morphology, <60 bpm" },
+    { id: "tachy", ko: "동빈맥", en: "Sinus Tachycardia",
+      teachKo: "정상 형태(P파 존재), 100회/분 초과", teachEn: "Normal morphology with P waves, >100 bpm" },
+    { id: "afib", ko: "심방세동 (AFib)", en: "Atrial Fibrillation",
+      teachKo: "P파 없음 · 불규칙하게 불규칙한 R-R · 세동파 기저선", teachEn: "No P waves · irregularly irregular R-R · fibrillatory baseline" },
+    { id: "svt", ko: "발작성 상심실성빈맥 (SVT)", en: "Supraventricular Tachycardia",
+      teachKo: "좁은 QRS · 매우 빠름 · P파 안 보임", teachEn: "Narrow QRS · very fast · no visible P" },
+    { id: "vtach", ko: "심실빈맥 (V-Tach)", en: "Ventricular Tachycardia",
+      teachKo: "넓은 QRS · 규칙적 · 빠름 · P파 없음 (응급)", teachEn: "Wide QRS · regular · fast · no P (emergency)" },
+    { id: "vfib", ko: "심실세동 (V-Fib)", en: "Ventricular Fibrillation",
+      teachKo: "조직화된 QRS 없음 · 무질서 (즉시 제세동)", teachEn: "No organized QRS · chaotic (defibrillate now)" },
+    { id: "asystole", ko: "무수축 (Asystole)", en: "Asystole",
+      teachKo: "전기활동 없음(평탄선) · CPR", teachEn: "No electrical activity (flat line) · CPR" },
+];
+
+// 가우시안 편향 — P/QRS/T 파형 조립용
+function _ecgBump(s, fs, cSec, amp, wSec) {
+    const c = cSec * fs, w = Math.max(1, wSec * fs);
+    const lo = Math.max(0, Math.floor(c - 4 * w)), hi = Math.min(s.length - 1, Math.ceil(c + 4 * w));
+    for (let i = lo; i <= hi; i++) { const d = (i - c) / w; s[i] += amp * Math.exp(-0.5 * d * d); }
+}
+function _ecgBeat(s, fs, t, wide) {
+    if (!wide) {
+        _ecgBump(s, fs, t + 0.00, 0.12, 0.022);  // P
+        _ecgBump(s, fs, t + 0.15, -0.05, 0.008);  // Q
+        _ecgBump(s, fs, t + 0.17, 1.05, 0.010);  // R
+        _ecgBump(s, fs, t + 0.19, -0.22, 0.010);  // S
+        _ecgBump(s, fs, t + 0.33, 0.30, 0.045);  // T
+    } else {
+        _ecgBump(s, fs, t + 0.10, 0.95, 0.045);  // 넓은 R
+        _ecgBump(s, fs, t + 0.19, -0.55, 0.045);  // 넓은 S
+        _ecgBump(s, fs, t + 0.34, -0.35, 0.060);  // 불일치 T
+    }
+}
+function generateEcgSamples(id, durSec, fs) {
+    const n = Math.ceil(durSec * fs); const s = new Array(n).fill(0);
+    if (id === "nsr" || id === "brady" || id === "tachy") {
+        const rate = id === "nsr" ? 75 : id === "brady" ? 45 : 125; const rr = 60 / rate;
+        for (let t = 0.25; t < durSec - 0.2; t += rr) _ecgBeat(s, fs, t, false);
+    } else if (id === "afib") {
+        for (let i = 0; i < n; i++) s[i] += (Math.random() - 0.5) * 0.06 + 0.03 * Math.sin(i * 0.7);
+        let t = 0.3;
+        while (t < durSec - 0.2) {
+            _ecgBump(s, fs, t + 0.00, -0.05, 0.008); _ecgBump(s, fs, t + 0.02, 1.0, 0.010);
+            _ecgBump(s, fs, t + 0.04, -0.20, 0.010); _ecgBump(s, fs, t + 0.18, 0.25, 0.045);
+            t += (60 / 110) * (0.55 + Math.random() * 0.95);  // 불규칙하게 불규칙
+        }
+    } else if (id === "svt") {
+        const rr = 60 / 180;
+        for (let t = 0.2; t < durSec - 0.1; t += rr) {
+            _ecgBump(s, fs, t + 0.00, -0.05, 0.008); _ecgBump(s, fs, t + 0.02, 0.95, 0.010);
+            _ecgBump(s, fs, t + 0.04, -0.20, 0.010); _ecgBump(s, fs, t + 0.14, 0.22, 0.035);
+        }
+    } else if (id === "vtach") {
+        const rr = 60 / 180;
+        for (let t = 0.2; t < durSec - 0.1; t += rr) _ecgBeat(s, fs, t, true);
+    } else if (id === "vfib") {
+        let a = 0;
+        for (let i = 0; i < n; i++) { a += (Math.random() - 0.5) * 0.6; a *= 0.9; s[i] = a * 0.6 + 0.3 * Math.sin(i * 0.9 + Math.sin(i * 0.13)); }
+    } else if (id === "asystole") {
+        for (let i = 0; i < n; i++) s[i] = 0.015 * Math.sin(i * 0.02) + (Math.random() - 0.5) * 0.01;
+    }
+    return s;
+}
+function _drawEcg(canvas, id) {
+    const ctx = canvas.getContext("2d"); if (!ctx) return;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const cssW = canvas.clientWidth || 320, cssH = canvas.clientHeight || 180;
+    canvas.width = cssW * dpr; canvas.height = cssH * dpr; ctx.scale(dpr, dpr);
+    const pxMm = 6, big = pxMm * 5;
+    ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, cssW, cssH);
+    ctx.lineWidth = 0.5; ctx.strokeStyle = "#f3caca";
+    for (let x = 0; x <= cssW; x += pxMm) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, cssH); ctx.stroke(); }
+    for (let y = 0; y <= cssH; y += pxMm) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(cssW, y); ctx.stroke(); }
+    ctx.lineWidth = 1; ctx.strokeStyle = "#e79a9a";
+    for (let x = 0; x <= cssW; x += big) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, cssH); ctx.stroke(); }
+    for (let y = 0; y <= cssH; y += big) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(cssW, y); ctx.stroke(); }
+    const fs = 250, pxPerSec = 25 * pxMm, pxPerMv = 10 * pxMm;
+    const durSec = cssW / pxPerSec;
+    const s = generateEcgSamples(id, durSec, fs);
+    const base = cssH * 0.5;
+    ctx.lineWidth = 1.6; ctx.strokeStyle = "#111"; ctx.lineJoin = "round"; ctx.beginPath();
+    for (let i = 0; i < s.length; i++) {
+        const x = (i / fs) * pxPerSec, y = base - s[i] * pxPerMv;
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+}
+function _ecgLang() {
+    return (typeof window !== "undefined" && window.I18N && window.I18N.getLang && window.I18N.getLang() === "en") ? "en" : "ko";
+}
+function startEcgQuiz() {
+    gameState.mode = "ecg_quiz"; resetStateForMode();
+    const ids = ECG_RHYTHMS.map(r => r.id);
+    for (let k = ids.length - 1; k > 0; k--) { const j = Math.floor(Math.random() * (k + 1)); [ids[k], ids[j]] = [ids[j], ids[k]]; }
+    gameState.ecgPool = ids; gameState.ecgIndex = 0; gameState.ecgCorrect = 0;
+    showCoreUI(); if (UI.logBar) UI.logBar.innerHTML = "";
+    renderEcgQuizCard(); track("ecg_quiz_start", { count: ids.length });
+}
+function renderEcgQuizCard() {
+    const pool = gameState.ecgPool || []; const i = gameState.ecgIndex || 0;
+    if (i >= pool.length) { renderEcgQuizSummary(); return; }
+    const id = pool[i]; const L = _ecgLang();
+    const correct = ECG_RHYTHMS.find(r => r.id === id);
+    const others = ECG_RHYTHMS.filter(r => r.id !== id);
+    for (let k = others.length - 1; k > 0; k--) { const j = Math.floor(Math.random() * (k + 1)); [others[k], others[j]] = [others[j], others[k]]; }
+    let choices = [correct, ...others.slice(0, 4)];
+    for (let k = choices.length - 1; k > 0; k--) { const j = Math.floor(Math.random() * (k + 1)); [choices[k], choices[j]] = [choices[j], choices[k]]; }
+    gameState.ecgChoices = choices.map(c => c.id);
+    showCoreUI(); updateStats();
+    const choicesHtml = choices.map((c, idx) =>
+        `<button class="choice-btn" data-action="ecgQuizAnswer" data-idx="${idx}">${escapeHtml(L === "en" ? c.en : c.ko)}</button>`).join("");
+    UI.gameArea.innerHTML = `
+      <div class="scene-card card">
+        <div class="quiz-progress">🫀 ${_t("ecg.title", "심전도 판독")} ${i + 1}/${pool.length}</div>
+        <h2 class="scene-title">${_t("ecg.prompt", "이 리듬은?")}</h2>
+        <div class="ecg-strip"><canvas id="ecg-canvas" class="ecg-canvas"></canvas></div>
+        <div class="choice-list" id="ecg-choices">${choicesHtml}</div>
+        <div id="ecg-feedback" class="image-quiz-feedback hidden"></div>
+        <button class="choice-btn subtle center hidden" id="ecg-next-btn" data-action="ecgQuizNext">${_t("action.next", "다음 →")}</button>
+        <button class="choice-btn center" data-action="renderDrillMenu">${_t("nav.toMenu", "메뉴로")}</button>
+      </div>`;
+    const cv = document.getElementById("ecg-canvas"); if (cv) _drawEcg(cv, id);
+}
+function ecgQuizAnswer(t) {
+    const pool = gameState.ecgPool || []; const i = gameState.ecgIndex || 0; const id = pool[i];
+    const choiceIds = gameState.ecgChoices || []; const idx = parseInt(t.dataset.idx, 10);
+    const chosen = choiceIds[idx]; if (!chosen) return;
+    const isCorrect = chosen === id; const L = _ecgLang();
+    const r = ECG_RHYTHMS.find(x => x.id === id);
+    if (isCorrect) { gameState.ecgCorrect = (gameState.ecgCorrect || 0) + 1; Sound.correct(); } else Sound.wrong();
+    document.querySelectorAll("#ecg-choices .choice-btn").forEach((btn, bi) => {
+        btn.disabled = true;
+        if (choiceIds[bi] === id) btn.classList.add("correct-flash"); else if (bi === idx) btn.classList.add("wrong-flash");
+    });
+    const fb = document.getElementById("ecg-feedback");
+    if (fb) {
+        fb.innerHTML = `<div class="${isCorrect ? "feedback-good" : "feedback-bad"}">${isCorrect ? _t("common.correct", "✅ 정답") : _t("common.wrong", "❌ 오답")} — ${escapeHtml(L === "en" ? r.en : r.ko)}</div><div class="feedback-log">${escapeHtml(L === "en" ? r.teachEn : r.teachKo)}</div>`;
+        fb.classList.remove("hidden");
+    }
+    const nb = document.getElementById("ecg-next-btn"); if (nb) nb.classList.remove("hidden");
+    track("ecg_quiz_answer", { correct: isCorrect, rhythm: id });
+}
+function ecgQuizNext() { gameState.ecgIndex = (gameState.ecgIndex || 0) + 1; renderEcgQuizCard(); }
+function renderEcgQuizSummary() {
+    const total = (gameState.ecgPool || []).length; const correct = gameState.ecgCorrect || 0;
+    const acc = total > 0 ? Math.round(correct / total * 100) : 0;
+    UI.gameArea.innerHTML = `
+      <div class="scene-card card" style="text-align:center;">
+        <h2 class="scene-title">${_t("ecg.done", "심전도 판독 완료")}</h2>
+        <div class="quiz-summary-stats">
+          <div class="quiz-stat-row"><span>${_t("quiz.total", "총 문제")}</span><strong>${total}</strong></div>
+          <div class="quiz-stat-row"><span>${_t("quiz.correct", "정답")}</span><strong>${correct}</strong></div>
+          <div class="quiz-stat-row"><span>${_t("acc.rate", "정답률")}</span><strong>${acc}%</strong></div>
+        </div>
+        <div class="choice-list">
+          <button class="choice-btn primary" data-action="startEcgQuiz">${_t("action.retry", "다시 시도")}</button>
+          <button class="choice-btn" data-action="renderDrillMenu">${_t("action.back", "메뉴")}</button>
+        </div>
+      </div>`;
+}
+
 function renderKorMenu() {
     gameState.mode = "kor_menu";
     resetStateForMode();
@@ -8626,6 +8803,9 @@ const DELEGATED_ACTIONS = {
     startImageQuiz: (t) => startImageQuiz(t),
     imageQuizAnswer: (t) => imageQuizAnswer(t),
     imageQuizNext: () => imageQuizNext(),
+    startEcgQuiz: () => startEcgQuiz(),
+    ecgQuizAnswer: (t) => ecgQuizAnswer(t),
+    ecgQuizNext: () => ecgQuizNext(),
     startQuiz: (t) => startQuiz(t.dataset.arg),
     setQuizDifficulty: (t) => setQuizDifficulty(t.dataset.arg),
     quizContinue: () => quizContinue(),

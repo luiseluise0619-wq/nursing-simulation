@@ -3370,6 +3370,22 @@ img.onboard-svg { display: block; }
 .nclex-cat-grid .choice-btn { margin-bottom: 0; text-align: center; }
 .nclex-cat-grid .choice-btn small { display: block; opacity: 0.8; font-weight: 600; margin-top: 2px; }
 
+/* 심전도(ECG) 판독 — 임상용지 스트립 */
+.ecg-strip {
+    width: 100%;
+    margin: 8px 0 14px;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border);
+    background: #fff;
+}
+.ecg-canvas {
+    display: block;
+    width: 100%;
+    height: 190px;
+}
+
 /* 한국어 전용 콘텐츠 안내 (영어 모드) */
 .ko-content-badge {
     display: inline-block;
