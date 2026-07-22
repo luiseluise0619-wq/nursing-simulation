@@ -165,7 +165,7 @@ function cacheUI() {
 const BACK_BUTTON_MODES = new Set([
     "survival", "episode", "scenario", "quiz", "mock", "daily", "wrong_review",
     "handoff", "handoff_write", "triage", "image_quiz", "drug_drill",
-    "nclex_quiz", "kor_quiz", "crisis", "ecg_quiz",
+    "nclex_quiz", "kor_quiz", "crisis", "ecg_quiz", "site_quiz",
 ]);
 function updateBackButton() {
     if (!UI.backBtn) return;
@@ -2252,6 +2252,7 @@ function updateStats() {
     else if (gameState.mode === "handoff_write") { value = gameState.handoffIndex; total = gameState.handoffPool ? gameState.handoffPool.length : HANDOFF_SESSION_SIZE; label = _t("status.handoffWrite", "인계 작성 실습"); }
     else if (gameState.mode === "triage") { value = gameState.triageIndex; total = NC.TRIAGE_CASES.length; label = _t("status.triage", "트리아지"); }
     else if (gameState.mode === "ecg_quiz") { value = gameState.ecgIndex; total = gameState.ecgPool ? gameState.ecgPool.length : 8; label = _t("ecg.title", "심전도 판독"); }
+    else if (gameState.mode === "site_quiz") { value = gameState.siteIndex; total = gameState.sitePool ? gameState.sitePool.length : 4; label = _t("site.title", "주사 부위 짚기"); }
     else if (gameState.mode === "scenario") {
         const s = NC.SCENARIOS.find(x => x.id === gameState.scenarioId);
         value = gameState.scenarioStep; total = s ? s.steps.length : 1; label = `${_t("status.scenario", "시나리오")} · ${s ? s.title : ""}`;
@@ -3302,6 +3303,11 @@ function renderDrillMenu() {
           <div class="row-body"><div class="row-title">${_t("ecg.title", "심전도 판독")} <span class="row-pill rec">NEW</span></div><div class="row-sub">${_t("ecg.sub", "리듬 스트립 보고 부정맥 판독")}</div></div>
           <div class="row-chev">›</div>
         </button>
+        <button class="row-card" data-action="startSiteQuiz">
+          <div class="row-icon" aria-hidden="true">🧍</div>
+          <div class="row-body"><div class="row-title">${_t("site.title", "주사 부위 짚기")} <span class="row-pill rec">NEW</span></div><div class="row-sub">${_t("site.sub", "IM · SubQ 주사 부위 해부 위치")}</div></div>
+          <div class="row-chev">›</div>
+        </button>
         <button class="row-card" data-action="renderImageQuizMenu">
           <div class="row-icon">${ICONS.scenario}</div>
           <div class="row-body"><div class="row-title">이미지 문제</div><div class="row-sub">ECG · 청진 · 산과 · 신경</div></div>
@@ -3500,6 +3506,112 @@ function renderEcgQuizSummary() {
         </div>
         <div class="choice-list">
           <button class="choice-btn primary" data-action="startEcgQuiz">${_t("action.retry", "다시 시도")}</button>
+          <button class="choice-btn" data-action="renderDrillMenu">${_t("action.back", "메뉴")}</button>
+        </div>
+      </div>`;
+}
+
+// =========================================================================
+// 주사 부위 짚기 — 클릭형 인체 SVG로 IM/SubQ 부위 해부 위치 판독
+// 임상 근거(KNCA/표준 간호술): ventrogluteal=성인 대량 IM 1순위, vastus lateralis=영아 IM,
+// deltoid=소량/백신 IM, 복부 피하=인슐린/헤파린 SubQ. 위치·적응증 지어내지 않음.
+// =========================================================================
+const SITE_REGIONS = {
+    deltoid: { ko: "삼각근", en: "Deltoid" },
+    ventrogluteal: { ko: "배둔근(볼기근)", en: "Ventrogluteal" },
+    vastus_lateralis: { ko: "외측광근", en: "Vastus lateralis" },
+    abdomen: { ko: "복부 피하", en: "Abdomen (SubQ)" },
+};
+const SITE_QUESTIONS = [
+    { region: "ventrogluteal", qKo: "성인에게 대량(≤3mL) 근육주사 — 가장 안전한 권장 부위를 짚으세요.", qEn: "Adult large-volume (≤3 mL) IM — tap the safest recommended site.",
+      teachKo: "배둔근(ventrogluteal) — 큰 신경·혈관이 없어 성인 대량 IM 1순위", teachEn: "Ventrogluteal — no major nerves/vessels; #1 for adult large-volume IM" },
+    { region: "vastus_lateralis", qKo: "영·유아에게 근육주사할 부위를 짚으세요.", qEn: "Tap the recommended IM site for infants.",
+      teachKo: "외측광근(vastus lateralis) — 근육량 충분, 영아 IM 1순위", teachEn: "Vastus lateralis — adequate muscle mass; #1 for infant IM" },
+    { region: "deltoid", qKo: "성인 백신 등 소량(≤1mL) 근육주사 부위를 짚으세요.", qEn: "Tap the site for small-volume (≤1 mL) IM such as adult vaccines.",
+      teachKo: "삼각근(deltoid) — 소량 IM·백신에 사용", teachEn: "Deltoid — used for small-volume IM and vaccines" },
+    { region: "abdomen", qKo: "인슐린·헤파린 피하주사(SubQ) 부위를 짚으세요.", qEn: "Tap the site for SubQ injection of insulin/heparin.",
+      teachKo: "복부 피하 — 흡수가 일정, 인슐린 대표 부위", teachEn: "Abdomen SubQ — consistent absorption; classic insulin site" },
+];
+function _bodySvg() {
+    // viewBox 200x400, 정면 인체 도식 + 4개 탭 존(부위)
+    return `
+    <svg viewBox="0 0 200 400" class="body-svg" role="img" aria-label="인체 정면 도식">
+      <g class="body-outline">
+        <circle cx="100" cy="34" r="20"/>
+        <rect x="90" y="52" width="20" height="12" rx="4"/>
+        <rect x="72" y="62" width="56" height="98" rx="16"/>
+        <rect x="52" y="66" width="18" height="88" rx="9"/>
+        <rect x="130" y="66" width="18" height="88" rx="9"/>
+        <rect x="74" y="150" width="52" height="34" rx="10"/>
+        <rect x="76" y="180" width="22" height="156" rx="10"/>
+        <rect x="102" y="180" width="22" height="156" rx="10"/>
+      </g>
+      <circle class="site-zone" data-action="siteAnswer" data-region="deltoid" cx="61" cy="78" r="12" tabindex="0" role="button" aria-label="삼각근"/>
+      <circle class="site-zone" data-action="siteAnswer" data-region="abdomen" cx="100" cy="132" r="15" tabindex="0" role="button" aria-label="복부"/>
+      <circle class="site-zone" data-action="siteAnswer" data-region="ventrogluteal" cx="82" cy="162" r="12" tabindex="0" role="button" aria-label="배둔근"/>
+      <circle class="site-zone" data-action="siteAnswer" data-region="vastus_lateralis" cx="80" cy="236" r="13" tabindex="0" role="button" aria-label="외측광근"/>
+    </svg>`;
+}
+function startSiteQuiz() {
+    gameState.mode = "site_quiz"; resetStateForMode();
+    const idx = SITE_QUESTIONS.map((_, i) => i);
+    for (let k = idx.length - 1; k > 0; k--) { const j = Math.floor(Math.random() * (k + 1)); [idx[k], idx[j]] = [idx[j], idx[k]]; }
+    gameState.sitePool = idx; gameState.siteIndex = 0; gameState.siteCorrect = 0; gameState.siteAnswered = false;
+    showCoreUI(); if (UI.logBar) UI.logBar.innerHTML = "";
+    renderSiteQuizCard(); track("site_quiz_start", { count: idx.length });
+}
+function renderSiteQuizCard() {
+    const pool = gameState.sitePool || []; const i = gameState.siteIndex || 0;
+    if (i >= pool.length) { renderSiteQuizSummary(); return; }
+    const q = SITE_QUESTIONS[pool[i]]; const L = _ecgLang();
+    gameState.siteAnswered = false;
+    showCoreUI(); updateStats();
+    UI.gameArea.innerHTML = `
+      <div class="scene-card card">
+        <div class="quiz-progress">🧍 ${_t("site.title", "주사 부위 짚기")} ${i + 1}/${pool.length}</div>
+        <h2 class="scene-title">${escapeHtml(L === "en" ? q.qEn : q.qKo)}</h2>
+        <div class="body-wrap">${_bodySvg()}</div>
+        <div id="site-feedback" class="image-quiz-feedback hidden"></div>
+        <button class="choice-btn subtle center hidden" id="site-next-btn" data-action="siteQuizNext">${_t("action.next", "다음 →")}</button>
+        <button class="choice-btn center" data-action="renderDrillMenu">${_t("nav.toMenu", "메뉴로")}</button>
+      </div>`;
+}
+function siteAnswer(t) {
+    if (gameState.siteAnswered) return;
+    const pool = gameState.sitePool || []; const i = gameState.siteIndex || 0;
+    const q = SITE_QUESTIONS[pool[i]]; if (!q) return;
+    const picked = t.dataset.region; if (!picked) return;
+    gameState.siteAnswered = true;
+    const isCorrect = picked === q.region; const L = _ecgLang();
+    if (isCorrect) { gameState.siteCorrect = (gameState.siteCorrect || 0) + 1; Sound.correct(); } else Sound.wrong();
+    document.querySelectorAll(".site-zone").forEach(z => {
+        const r = z.dataset.region;
+        if (r === q.region) z.classList.add("site-correct");
+        else if (r === picked) z.classList.add("site-wrong");
+    });
+    const nm = SITE_REGIONS[q.region] ? (L === "en" ? SITE_REGIONS[q.region].en : SITE_REGIONS[q.region].ko) : q.region;
+    const fb = document.getElementById("site-feedback");
+    if (fb) {
+        fb.innerHTML = `<div class="${isCorrect ? "feedback-good" : "feedback-bad"}">${isCorrect ? _t("common.correct", "✅ 정답") : _t("common.wrong", "❌ 오답")} — ${escapeHtml(nm)}</div><div class="feedback-log">${escapeHtml(L === "en" ? q.teachEn : q.teachKo)}</div>`;
+        fb.classList.remove("hidden");
+    }
+    const nb = document.getElementById("site-next-btn"); if (nb) nb.classList.remove("hidden");
+    track("site_quiz_answer", { correct: isCorrect, region: q.region });
+}
+function siteQuizNext() { gameState.siteIndex = (gameState.siteIndex || 0) + 1; renderSiteQuizCard(); }
+function renderSiteQuizSummary() {
+    const total = (gameState.sitePool || []).length; const correct = gameState.siteCorrect || 0;
+    const acc = total > 0 ? Math.round(correct / total * 100) : 0;
+    UI.gameArea.innerHTML = `
+      <div class="scene-card card" style="text-align:center;">
+        <h2 class="scene-title">${_t("site.done", "부위 짚기 완료")}</h2>
+        <div class="quiz-summary-stats">
+          <div class="quiz-stat-row"><span>${_t("quiz.total", "총 문제")}</span><strong>${total}</strong></div>
+          <div class="quiz-stat-row"><span>${_t("quiz.correct", "정답")}</span><strong>${correct}</strong></div>
+          <div class="quiz-stat-row"><span>${_t("acc.rate", "정답률")}</span><strong>${acc}%</strong></div>
+        </div>
+        <div class="choice-list">
+          <button class="choice-btn primary" data-action="startSiteQuiz">${_t("action.retry", "다시 시도")}</button>
           <button class="choice-btn" data-action="renderDrillMenu">${_t("action.back", "메뉴")}</button>
         </div>
       </div>`;
@@ -8816,6 +8928,9 @@ const DELEGATED_ACTIONS = {
     startEcgQuiz: () => startEcgQuiz(),
     ecgQuizAnswer: (t) => ecgQuizAnswer(t),
     ecgQuizNext: () => ecgQuizNext(),
+    startSiteQuiz: () => startSiteQuiz(),
+    siteAnswer: (t) => siteAnswer(t),
+    siteQuizNext: () => siteQuizNext(),
     startQuiz: (t) => startQuiz(t.dataset.arg),
     setQuizDifficulty: (t) => setQuizDifficulty(t.dataset.arg),
     quizContinue: () => quizContinue(),

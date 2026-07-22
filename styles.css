@@ -3386,6 +3386,15 @@ img.onboard-svg { display: block; }
     height: 190px;
 }
 
+/* 주사 부위 짚기 — 인체 SVG */
+.body-wrap { display: flex; justify-content: center; margin: 8px 0 14px; }
+.body-svg { width: 160px; max-width: 55%; height: auto; }
+.body-svg .body-outline { fill: var(--softer); stroke: var(--border); stroke-width: 1.5; }
+.site-zone { fill: rgba(127, 168, 129, 0.14); stroke: var(--primary); stroke-width: 1.6; stroke-dasharray: 3 2; cursor: pointer; transition: fill 0.15s; }
+.site-zone:hover, .site-zone:focus-visible { fill: rgba(127, 168, 129, 0.32); outline: none; }
+.site-zone.site-correct { fill: rgba(46, 160, 67, 0.55); stroke: #2ea043; stroke-dasharray: none; }
+.site-zone.site-wrong { fill: rgba(220, 80, 80, 0.5); stroke: #dc5050; stroke-dasharray: none; }
+
 /* 한국어 전용 콘텐츠 안내 (영어 모드) */
 .ko-content-badge {
     display: inline-block;
