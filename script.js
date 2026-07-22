@@ -3617,6 +3617,103 @@ function renderSiteQuizSummary() {
       </div>`;
 }
 
+// =========================================================================
+// AI 학습 튜터 (RAG) — 앱의 검증된 문항·해설을 근거로 답변 (Gemini 무료, 서버리스 프록시)
+// 검색: 임베딩 없이 토큰 겹침 스코어(무료·즉시). 답변: /api/tutor 그라운딩 프롬프트.
+// 환각 방지: context 밖 지식 금지 + 출처 표기 + 일 5회 무료 게이트(무료 쿼터 보호).
+// =========================================================================
+const TUTOR_DAILY_FREE = 5;
+function _tutorCorpus() {
+    const out = [];
+    try { if (typeof window !== "undefined" && Array.isArray(window.KOR_QUESTIONS)) out.push(...window.KOR_QUESTIONS); } catch {}
+    try { if (typeof window !== "undefined" && Array.isArray(window.NCLEX_QUESTIONS)) out.push(...window.NCLEX_QUESTIONS); } catch {}
+    return out.filter(q => q && q.desc && Array.isArray(q.choices));
+}
+function _tutorRetrieve(query, k) {
+    const corpus = _tutorCorpus();
+    const terms = String(query).toLowerCase().split(/\s+/).filter(t => t.length >= 2);
+    if (!terms.length) return [];
+    const scored = corpus.map(q => {
+        const hay = ((q.title || "") + " " + (q.desc || "") + " " + (q.choices || []).map(c => (c.text || "") + " " + (c.log || "")).join(" ")).toLowerCase();
+        let s = 0; terms.forEach(t => { if (hay.includes(t)) s++; });
+        return { q, s };
+    }).filter(x => x.s > 0).sort((a, b) => b.s - a.s).slice(0, k);
+    return scored.map(x => x.q);
+}
+function _tutorContext(items) {
+    return items.map(q => {
+        const correct = (q.choices || []).find(c => c.correct);
+        const logs = (q.choices || []).map(c => c.log).filter(Boolean).join(" / ");
+        return `[#${q.id}] ${q.title || ""}\nQ: ${q.desc}\n정답: ${correct ? correct.text : ""}\n해설: ${logs}`;
+    }).join("\n---\n");
+}
+function _tutorQuota() {
+    let d = { date: "", count: 0 };
+    try { d = JSON.parse(localStorage.getItem("nurseSim:tutor") || "{}") || {}; } catch {}
+    const today = todayKey();
+    if (d.date !== today) d = { date: today, count: 0 };
+    if (typeof d.count !== "number") d.count = 0;
+    return d;
+}
+function _tutorSaveQuota(d) { try { localStorage.setItem("nurseSim:tutor", JSON.stringify(d)); } catch {} }
+function renderTutor() {
+    gameState.mode = "tutor"; resetStateForMode();
+    showCoreUI(); if (UI.logBar) UI.logBar.innerHTML = "";
+    const q = _tutorQuota(); const left = Math.max(0, TUTOR_DAILY_FREE - q.count);
+    UI.gameArea.innerHTML = `
+      <div class="scene-card card">
+        <h2 class="scene-title">🤖 ${_t("tutor.title", "AI 학습 튜터")} <span class="row-pill rec">BETA</span></h2>
+        <p class="scene-desc">${_t("tutor.desc", "궁금한 걸 물어보면 앱의 검증된 문제·해설을 근거로 답해요. 진단·처방이 아닌 학습 참고용입니다.")}</p>
+        <textarea id="tutor-input" class="sbar-textarea" rows="2" placeholder="${escapeHtml(_t("tutor.ph", "예: 심부전 환자에게 반좌위를 취하는 이유는?"))}" aria-label="${_t("tutor.title", "AI 학습 튜터")}"></textarea>
+        <div class="tutor-quota" id="tutor-quota">${_t("tutor.left", "오늘 남은 무료 질문")}: ${left}/${TUTOR_DAILY_FREE}</div>
+        <div class="choice-list">
+          <button class="choice-btn primary" data-action="tutorAsk">${_t("tutor.ask", "질문하기")}</button>
+          <button class="choice-btn center" data-action="returnToMenu">${_t("action.back", "메뉴")}</button>
+        </div>
+        <div id="tutor-answer" class="tutor-answer hidden"></div>
+      </div>`;
+}
+async function tutorAsk() {
+    const input = document.getElementById("tutor-input");
+    const ans = document.getElementById("tutor-answer");
+    if (!input || !ans) return;
+    const question = (input.value || "").trim();
+    if (!question) { input.focus(); return; }
+    const quota = _tutorQuota();
+    if (quota.count >= TUTOR_DAILY_FREE) {
+        ans.classList.remove("hidden");
+        ans.innerHTML = `<div class="feedback-log">${_t("tutor.limit", "오늘 무료 질문을 모두 썼어요. 내일 다시 이용하거나 프리미엄에서 무제한으로 열려요.")}</div>`;
+        return;
+    }
+    ans.classList.remove("hidden");
+    ans.innerHTML = `<div class="tutor-loading">${_t("tutor.thinking", "근거 찾는 중…")}</div>`;
+    const items = _tutorRetrieve(question, 4);
+    if (!items.length) {
+        ans.innerHTML = `<div class="feedback-log">${_t("tutor.noctx", "관련 학습 자료를 찾지 못했어요. 다른 키워드로 물어봐 주세요.")}</div>`;
+        return;
+    }
+    try {
+        const resp = await fetch("/api/tutor", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ question, context: _tutorContext(items), lang: _ecgLang() }),
+        });
+        if (!resp.ok) throw new Error("bad");
+        const data = await resp.json();
+        const answer = (data && data.answer) || "";
+        if (!answer) throw new Error("empty");
+        quota.count += 1; _tutorSaveQuota(quota);
+        const ids = items.map(x => "#" + x.id).join(" ");
+        const left = Math.max(0, TUTOR_DAILY_FREE - quota.count);
+        ans.innerHTML = `<div class="tutor-reply">${escapeHtml(answer).replace(/\n/g, "<br>")}</div>`
+            + `<div class="tutor-src">${_t("tutor.src", "근거")}: ${escapeHtml(ids)}</div>`
+            + `<div class="tutor-quota">${_t("tutor.left", "오늘 남은 무료 질문")}: ${left}/${TUTOR_DAILY_FREE}</div>`;
+        track("tutor_ask", { ok: true });
+    } catch (e) {
+        ans.innerHTML = `<div class="feedback-log">${_t("tutor.err", "지금은 답할 수 없어요. 잠시 후 다시 시도해 주세요.")}</div>`;
+        track("tutor_ask", { ok: false });
+    }
+}
+
 function renderKorMenu() {
     gameState.mode = "kor_menu";
     resetStateForMode();
@@ -7521,6 +7618,14 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
           </div>
           <div class="row-chev">›</div>
         </button>
+        <button class="row-card big" data-action="renderTutor">
+          <div class="row-icon big" aria-hidden="true">🤖</div>
+          <div class="row-body">
+            <div class="row-title">${_t("tutor.title", "AI 학습 튜터")} <span class="row-pill rec">BETA</span></div>
+            <div class="row-sub">${_t("tutor.rowSub", "문제·해설 근거로 질문 답변")}</div>
+          </div>
+          <div class="row-chev">›</div>
+        </button>
       </div>`;
     };
 
@@ -8931,6 +9036,8 @@ const DELEGATED_ACTIONS = {
     startSiteQuiz: () => startSiteQuiz(),
     siteAnswer: (t) => siteAnswer(t),
     siteQuizNext: () => siteQuizNext(),
+    renderTutor: () => renderTutor(),
+    tutorAsk: () => tutorAsk(),
     startQuiz: (t) => startQuiz(t.dataset.arg),
     setQuizDifficulty: (t) => setQuizDifficulty(t.dataset.arg),
     quizContinue: () => quizContinue(),

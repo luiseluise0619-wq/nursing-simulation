@@ -3386,6 +3386,17 @@ img.onboard-svg { display: block; }
     height: 190px;
 }
 
+/* AI 학습 튜터 */
+.tutor-quota { font-size: 12px; color: var(--muted); margin: 6px 2px 10px; }
+.tutor-answer { margin-top: 8px; }
+.tutor-loading { color: var(--muted); font-size: 14px; padding: 8px 2px; }
+.tutor-reply {
+    background: var(--softer); border: 1px solid var(--border);
+    border-radius: var(--radius-md); padding: 14px 16px;
+    font-size: 0.95rem; line-height: 1.65; color: var(--text); white-space: normal;
+}
+.tutor-src { font-size: 11px; color: var(--muted); margin-top: 8px; letter-spacing: 0.02em; }
+
 /* 주사 부위 짚기 — 인체 SVG */
 .body-wrap { display: flex; justify-content: center; margin: 8px 0 14px; }
 .body-svg { width: 160px; max-width: 55%; height: auto; }
