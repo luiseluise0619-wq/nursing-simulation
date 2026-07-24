@@ -3195,17 +3195,17 @@ function renderPracticeMenu() {
     const nclexBtn = examMode === "nclex"
         ? `<button class="row-card" data-action="renderNclexMenuLazy">
               <div class="row-icon">${ICONS.training}</div>
-              <div class="row-body"><div class="row-title">NCLEX-RN</div><div class="row-sub">2,200 문제 · MCQ · SATA · Priority</div></div>
+              <div class="row-body"><div class="row-title">NCLEX-RN</div><div class="row-sub">2,200 ${_t("unit.q", "문제")} · MCQ · SATA · Priority</div></div>
               <div class="row-chev">›</div>
            </button>` : "";
     UI.gameArea.innerHTML = `
       <div class="tab-section">
         <h2 class="page-title">${_t("study.practice", "풀이")}</h2>
-        <p class="page-sub">빠른 풀이로 점수 만들기.</p>
+        <p class="page-sub">${_t("practice.pageSub", "빠른 풀이로 점수 만들기.")}</p>
         ${nclexBtn}
         <button class="row-card" data-action="renderSubjectStudyMenu">
           <div class="row-icon">${ICONS.training}</div>
-          <div class="row-body"><div class="row-title">과목별 학습</div><div class="row-sub">국시 7과목 · 정식 5지선다 + 무한 변형</div></div>
+          <div class="row-body"><div class="row-title">${_t("subject.title", "과목별 학습")}</div><div class="row-sub">${_t("subject.sub", "국시 7과목 · 정식 5지선다 + 무한 변형")}</div></div>
           <div class="row-chev">›</div>
         </button>
         <button class="row-card" data-action="startMockExam">
@@ -3230,20 +3230,20 @@ function renderSubjectStudyMenu() {
     const korBtn = korCount > 0
         ? `<button class="row-card" data-action="renderKorMenu">
              <div class="row-icon">${ICONS.training}</div>
-             <div class="row-body"><div class="row-title">정식 국시 (5지선다)</div><div class="row-sub">${korCount}문제 · 7과목 · KNCA 출제기준</div></div>
+             <div class="row-body"><div class="row-title">${_t("subject.official", "정식 국시 (5지선다)")}</div><div class="row-sub">${korCount}${_t("unit.q", "문제")} · ${_t("subject.official.sub", "7과목 · KNCA 출제기준")}</div></div>
              <div class="row-chev">›</div>
            </button>` : "";
     UI.gameArea.innerHTML = `
       <div class="tab-section">
-        <h2 class="page-title">과목별 학습</h2>
-        <p class="page-sub">시험 그대로 vs 무한 변형 연습.</p>
+        <h2 class="page-title">${_t("subject.title", "과목별 학습")}</h2>
+        <p class="page-sub">${_t("subject.pageSub", "시험 그대로 vs 무한 변형 연습.")}</p>
         ${korBtn}
         <button class="row-card" data-action="renderQuizMenu">
           <div class="row-icon">${ICONS.training}</div>
-          <div class="row-body"><div class="row-title">변형 연습 (무한 랜덤)</div><div class="row-sub">국시 7과목 · 같은 유형 다른 숫자/임상</div></div>
+          <div class="row-body"><div class="row-title">${_t("subject.variant", "변형 연습 (무한 랜덤)")}</div><div class="row-sub">${_t("subject.variant.sub", "국시 7과목 · 같은 유형 다른 숫자/임상")}</div></div>
           <div class="row-chev">›</div>
         </button>
-        <button class="choice-btn center" data-action="renderPracticeMenu">뒤로</button>
+        <button class="choice-btn center" data-action="renderPracticeMenu">${_t("action.prev", "뒤로")}</button>
       </div>`;
 }
 
@@ -3253,10 +3253,10 @@ function renderSimMenu() {
     UI.gameArea.innerHTML = `
       <div class="tab-section">
         <h2 class="page-title">${_t("study.simulation", "시뮬레이션")}</h2>
-        <p class="page-sub">실제 듀티처럼 한 사례를 끝까지.</p>
+        <p class="page-sub">${_t("sim.pageSub", "실제 듀티처럼 한 사례를 끝까지.")}</p>
         <button class="row-card" data-action="renderCaseMenu">
           <div class="row-icon">${ICONS.episode}</div>
-          <div class="row-body"><div class="row-title">사례 학습</div><div class="row-sub">에피소드 35편 + 짧은 시나리오</div></div>
+          <div class="row-body"><div class="row-title">${_t("case.title", "사례 학습")}</div><div class="row-sub">${_t("case.sub", "에피소드 35편 + 짧은 시나리오")}</div></div>
           <div class="row-chev">›</div>
         </button>
         <button class="choice-btn center" data-action="returnToMenu">${_t("action.back", "메뉴")}</button>
@@ -3269,19 +3269,19 @@ function renderCaseMenu() {
     showCoreUI(); if (UI.logBar) UI.logBar.innerHTML = ""; updateStats();
     UI.gameArea.innerHTML = `
       <div class="tab-section">
-        <h2 class="page-title">사례 학습</h2>
-        <p class="page-sub">시간 여유에 맞춰 골라.</p>
+        <h2 class="page-title">${_t("case.title", "사례 학습")}</h2>
+        <p class="page-sub">${_t("case.pageSub", "시간 여유에 맞춰 골라.")}</p>
         <button class="row-card" data-action="renderEpisodeMenu">
           <div class="row-icon">${ICONS.episode}</div>
-          <div class="row-body"><div class="row-title">에피소드 (장편)</div><div class="row-sub">한 듀티 전체 · 35편 · 30-60분</div></div>
+          <div class="row-body"><div class="row-title">${_t("case.episode", "에피소드 (장편)")}</div><div class="row-sub">${_t("case.episode.sub", "한 듀티 전체 · 35편 · 30-60분")}</div></div>
           <div class="row-chev">›</div>
         </button>
         <button class="row-card" data-action="renderScenarioMenu">
           <div class="row-icon">${ICONS.scenario}</div>
-          <div class="row-body"><div class="row-title">짧은 시나리오 (단편)</div><div class="row-sub">단편 임상 의사결정 · 10분 내</div></div>
+          <div class="row-body"><div class="row-title">${_t("case.scenario", "짧은 시나리오 (단편)")}</div><div class="row-sub">${_t("case.scenario.sub", "단편 임상 의사결정 · 10분 내")}</div></div>
           <div class="row-chev">›</div>
         </button>
-        <button class="choice-btn center" data-action="renderSimMenu">뒤로</button>
+        <button class="choice-btn center" data-action="renderSimMenu">${_t("action.prev", "뒤로")}</button>
       </div>`;
 }
 
@@ -3296,7 +3296,7 @@ function renderDrillMenu() {
     UI.gameArea.innerHTML = `
       <div class="tab-section">
         <h2 class="page-title">${_t("study.drills", "훈련")}</h2>
-        <p class="page-sub">한 가지를 깊이.</p>
+        <p class="page-sub">${_t("drill.pageSub", "한 가지를 깊이.")}</p>
         ${koHint}
         <button class="row-card" data-action="startEcgQuiz">
           <div class="row-icon" aria-hidden="true">🫀</div>
@@ -3310,27 +3310,27 @@ function renderDrillMenu() {
         </button>
         <button class="row-card" data-action="renderImageQuizMenu">
           <div class="row-icon">${ICONS.scenario}</div>
-          <div class="row-body"><div class="row-title">이미지 문제</div><div class="row-sub">ECG · 청진 · 산과 · 신경</div></div>
+          <div class="row-body"><div class="row-title">${_t("drill.image", "이미지 문제")}</div><div class="row-sub">${_t("drill.image.sub", "ECG · 청진 · 산과 · 신경")}</div></div>
           <div class="row-chev">›</div>
         </button>
         <button class="row-card" data-action="renderDrugDrill">
           <div class="row-icon">${ICONS.training}</div>
-          <div class="row-body"><div class="row-title">약물 드릴</div><div class="row-sub">핵심 약물 50종</div></div>
+          <div class="row-body"><div class="row-title">${_t("drill.drug", "약물 드릴")}</div><div class="row-sub">${_t("drill.drug.sub", "핵심 약물 50종")}</div></div>
           <div class="row-chev">›</div>
         </button>
         <button class="row-card" data-action="startHandoff">
           <div class="row-icon">${ICONS.handoff}</div>
-          <div class="row-body"><div class="row-title">인계 듣기${koBadge}</div><div class="row-sub">음성 인계 듣고 핵심 키워드 회상</div></div>
+          <div class="row-body"><div class="row-title">${_t("drill.handoff", "인계 듣기")}${koBadge}</div><div class="row-sub">${_t("drill.handoff.sub", "음성 인계 듣고 핵심 키워드 회상")}</div></div>
           <div class="row-chev">›</div>
         </button>
         <button class="row-card" data-action="startHandoffWrite">
           <div class="row-icon">${ICONS.handoff}</div>
-          <div class="row-body"><div class="row-title">인계 작성 실습 (SBAR)${koBadge}</div><div class="row-sub">케이스 보고 직접 SBAR 인계문 작성</div></div>
+          <div class="row-body"><div class="row-title">${_t("drill.sbar", "인계 작성 실습 (SBAR)")}${koBadge}</div><div class="row-sub">${_t("drill.sbar.sub", "케이스 보고 직접 SBAR 인계문 작성")}</div></div>
           <div class="row-chev">›</div>
         </button>
         <button class="row-card" data-action="startTriage">
           <div class="row-icon">${ICONS.triage}</div>
-          <div class="row-body"><div class="row-title">트리아지</div><div class="row-sub">응급실 다중환자 분류</div></div>
+          <div class="row-body"><div class="row-title">${_t("drill.triage", "트리아지")}</div><div class="row-sub">${_t("drill.triage.sub", "응급실 다중환자 분류")}</div></div>
           <div class="row-chev">›</div>
         </button>
         <button class="choice-btn center" data-action="returnToMenu">${_t("action.back", "메뉴")}</button>
@@ -7540,7 +7540,7 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
         ${weeklyHtml}
         ${resumeEp ? `
           <button class="resume-card" data-action="startEpisode" data-arg="${escapeHtml(resumeEp.ep.id)}">
-            <div class="resume-label">이어하기</div>
+            <div class="resume-label">${_t("home.resume", "이어하기")}</div>
             <div class="resume-title">${escapeHtml(resumeEp.ep.title)}</div>
             <div class="resume-sub">${resumeEp.progress.step} / ${resumeEp.ep.steps.length} 단계 · HP ${resumeEp.progress.hp} · REP ${resumeEp.progress.rep}</div>
           </button>` : ''}
@@ -7577,8 +7577,8 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
             </div>
             <div class="row-body">
-              <div class="row-title">검색</div>
-              <div class="row-sub">키워드로 시나리오·문제·약물 빠른 탐색</div>
+              <div class="row-title">${_t("home.search", "검색")}</div>
+              <div class="row-sub">${_t("home.search.sub", "키워드로 시나리오·문제·약물 빠른 탐색")}</div>
             </div>
             <div class="row-chev">›</div>
           </button>
@@ -7648,8 +7648,8 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
         <button class="row-card big" data-action="renderDashboard">
           <div class="row-icon big">${ICONS.dash}</div>
           <div class="row-body">
-            <div class="row-title">통계</div>
-            <div class="row-sub">과목별 정답률 · 약점 · 최고 기록</div>
+            <div class="row-title">${_t("record.stats", "통계")}</div>
+            <div class="row-sub">${_t("record.stats.sub", "과목별 정답률 · 약점 · 최고 기록")}</div>
           </div>
           <div class="row-chev">›</div>
         </button>
@@ -7668,8 +7668,8 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
         <button class="row-card big" data-action="renderPerksPage">
           <div class="row-icon big" aria-hidden="true">⚡</div>
           <div class="row-body">
-            <div class="row-title">특성 <span class="row-pill ${perkOwned > 0 ? 'done' : ''}">${perkOwned}/${perkTotal}</span></div>
-            <div class="row-sub">${perkOwned > 0 ? "활성 효과로 게임 보너스" : "정답·콤보·완주로 자동 획득"}</div>
+            <div class="row-title">${_t("record.perks", "특성")} <span class="row-pill ${perkOwned > 0 ? 'done' : ''}">${perkOwned}/${perkTotal}</span></div>
+            <div class="row-sub">${perkOwned > 0 ? _t("record.perks.on", "활성 효과로 게임 보너스") : _t("record.perks.off", "정답·콤보·완주로 자동 획득")}</div>
           </div>
           <div class="row-chev">›</div>
         </button>`;
@@ -7677,16 +7677,16 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
         <button class="row-card big" data-action="reviewWrongAnswers">
           <div class="row-icon big">${ICONS.wrong}</div>
           <div class="row-body">
-            <div class="row-title">오답노트 ${wrongCount > 0 ? `<span class="row-pill warn">${wrongCount}</span>` : ''}</div>
-            <div class="row-sub">${wrongCount > 0 ? `복습 대기 ${wrongCount}건` : 'Leitner 5박스 복습'}</div>
+            <div class="row-title">${_t("status.wrongNote", "오답노트")} ${wrongCount > 0 ? `<span class="row-pill warn">${wrongCount}</span>` : ''}</div>
+            <div class="row-sub">${wrongCount > 0 ? `${_t("record.wrong.pending", "복습 대기")} ${wrongCount}${_t("unit.cases", "건")}` : _t("record.wrong.empty", "Leitner 5박스 복습")}</div>
           </div>
           <div class="row-chev">›</div>
         </button>
         <button class="row-card big" data-action="renderBookmarks">
           <div class="row-icon big"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 15 9 22 9.5 17 14.5 18.5 22 12 18 5.5 22 7 14.5 2 9.5 9 9"/></svg></div>
           <div class="row-body">
-            <div class="row-title">북마크 ${bookmarkCount > 0 ? `<span class="row-pill">${bookmarkCount}</span>` : ''}</div>
-            <div class="row-sub">${bookmarkCount > 0 ? `별표 ${bookmarkCount}건` : '⭐ 로 즐겨찾기'}</div>
+            <div class="row-title">${_t("record.bookmarks", "북마크")} ${bookmarkCount > 0 ? `<span class="row-pill">${bookmarkCount}</span>` : ''}</div>
+            <div class="row-sub">${bookmarkCount > 0 ? `${_t("record.bookmarks.n", "별표")} ${bookmarkCount}${_t("unit.cases", "건")}` : _t("record.bookmarks.empty", "⭐ 로 즐겨찾기")}</div>
           </div>
           <div class="row-chev">›</div>
         </button>
