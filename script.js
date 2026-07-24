@@ -5964,6 +5964,16 @@ function renderTrendsChart() {
 // =========================================================================
 // 대시보드 (과목별 통계)
 // =========================================================================
+// 과목명 표시용 번역 — 저장 키(CATEGORIES 원문)는 그대로 두고 라벨만 번역
+const CATEGORY_I18N_KEY = {
+    "성인간호학": "cat.adult", "모성간호학": "cat.maternity", "아동간호학": "cat.peds",
+    "정신간호학": "cat.psych", "지역사회간호학": "cat.community",
+    "간호관리학": "cat.management", "기본간호학": "cat.fundamentals",
+};
+function catDisplayName(cat) {
+    const k = CATEGORY_I18N_KEY[cat];
+    return k ? _t(k, cat) : cat;
+}
 function renderDashboard() {
     gameState.mode = "dashboard";
     showCoreUI(); updateStats();
@@ -5973,51 +5983,54 @@ function renderDashboard() {
         const s = stats[cat] || { solved: 0, correct: 0 };
         const acc = s.solved > 0 ? Math.round((s.correct / s.solved) * 100) : 0;
         const tier = s.solved === 0 ? "none" : acc >= 80 ? "hi" : acc >= 50 ? "mid" : "lo";
+        const label = catDisplayName(cat);
         return `
           <div class="dashboard-row" style="animation-delay:${Math.min(i, 8) * 45}ms">
             <div class="dashboard-cat-cell">
-              <div class="cat-name">${escapeHtml(cat)}</div>
+              <div class="cat-name">${escapeHtml(label)}</div>
               <div class="cat-stats">${s.correct}/${s.solved} · ${acc}%</div>
             </div>
-            <div class="mini-bar" role="progressbar" aria-valuenow="${acc}" aria-valuemin="0" aria-valuemax="100" aria-label="${escapeHtml(cat)} 정답률"><div class="mini-bar-fill ${tier}" style="width:${acc}%"></div></div>
+            <div class="mini-bar" role="progressbar" aria-valuenow="${acc}" aria-valuemin="0" aria-valuemax="100" aria-label="${escapeHtml(label)} ${_t("acc.rate", "정답률")}"><div class="mini-bar-fill ${tier}" style="width:${acc}%"></div></div>
           </div>`;
     }).join("");
     const wrongCount = data.wrongQueue.length;
     const todayDaily = data.daily[todayKey()];
-    const dailyMsg = todayDaily?.completed ? `오늘 완료 (${todayDaily.correct}/${DAILY_CHALLENGE_TOTAL})` : "오늘 미완료";
+    const dailyMsg = todayDaily?.completed
+        ? `${_t("dash.todayDone", "오늘 완료")} (${todayDaily.correct}/${DAILY_CHALLENGE_TOTAL})`
+        : _t("dash.todayNotDone", "오늘 미완료");
 
     const summaryRows = [
-        { label: "최고 콤보",        value: data.bestCombo },
-        { label: "모의고사 최고점",   value: data.mockBest },
-        { label: "인계 정확도",       value: `${data.handoffBest || 0}%` },
-        { label: "트리아지 정확도",   value: `${data.triageBest || 0}%` },
-        { label: "오답노트",         value: `${wrongCount}건` },
-        { label: "오늘의 챌린지",     value: dailyMsg },
+        { label: _t("dash.bestCombo", "최고 콤보"),      value: data.bestCombo },
+        { label: _t("dash.mockBest", "모의고사 최고점"),  value: data.mockBest },
+        { label: _t("dash.handoffAcc", "인계 정확도"),    value: `${data.handoffBest || 0}%` },
+        { label: _t("dash.triageAcc", "트리아지 정확도"), value: `${data.triageBest || 0}%` },
+        { label: _t("status.wrongNote", "오답노트"),      value: `${wrongCount}${_t("unit.cases", "건")}` },
+        { label: _t("dash.todayChallenge", "오늘의 챌린지"), value: dailyMsg },
     ].map(s => `<div class="dash-stat"><span class="dash-stat-label">${escapeHtml(s.label)}</span><span class="dash-stat-value">${escapeHtml(String(s.value))}</span></div>`).join("");
 
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
-        <h2 class="scene-title">학습 대시보드</h2>
-        <p class="scene-desc">과목별 정답률과 누적 성과를 확인할 수 있습니다.</p>
+        <h2 class="scene-title">${_t("dash.title", "학습 대시보드")}</h2>
+        <p class="scene-desc">${_t("dash.desc", "과목별 정답률과 누적 성과를 확인할 수 있습니다.")}</p>
 
-        <h3 class="dash-section-title">과목별 정답률</h3>
+        <h3 class="dash-section-title">${_t("dash.byCategory", "과목별 정답률")}</h3>
         <div class="dashboard-grid">${rows}</div>
 
-        <h3 class="dash-section-title">누적 성과</h3>
+        <h3 class="dash-section-title">${_t("dash.cumulative", "누적 성과")}</h3>
         <div class="dash-stats-grid">${summaryRows}</div>
 
         <div class="choice-list dashboard-actions">
-          <button class="choice-btn primary" data-action="renderWeaknessAnalysis">🎯 약점 분석</button>
-          <button class="choice-btn primary" data-action="renderLeaderboard">📊 나의 최고 기록</button>
+          <button class="choice-btn primary" data-action="renderWeaknessAnalysis">🎯 ${_t("dash.weakness", "약점 분석")}</button>
+          <button class="choice-btn primary" data-action="renderLeaderboard">📊 ${_t("dash.records", "나의 최고 기록")}</button>
         </div>
 
-        <h3 class="dash-section-title">최근 5개년 출제 경향</h3>
+        <h3 class="dash-section-title">${_t("dash.trends", "최근 5개년 출제 경향")}</h3>
         ${renderTrendsChart()}
 
         <div class="choice-list dashboard-actions">
-          <button class="choice-btn" data-action="reviewWrongAnswers">오답 복습 (${wrongCount})</button>
-          <button class="choice-btn" data-action="printDashboard">PDF 인쇄</button>
-          <button class="choice-btn" data-action="confirmClearStats">통계 초기화</button>
+          <button class="choice-btn" data-action="reviewWrongAnswers">${_t("wrong.review", "오답 복습")} (${wrongCount})</button>
+          <button class="choice-btn" data-action="printDashboard">${_t("dash.print", "PDF 인쇄")}</button>
+          <button class="choice-btn" data-action="confirmClearStats">${_t("dash.clear", "통계 초기화")}</button>
         </div>
       </div>`;
 }
