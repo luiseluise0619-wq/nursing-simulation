@@ -6835,7 +6835,7 @@ function renderLeaderboard() {
             return `<div class="lb-row">
                 <div class="lb-medal">${medal}</div>
                 <div class="lb-body">
-                    <div class="lb-title">${escapeHtml(s.category || "전체")}</div>
+                    <div class="lb-title">${escapeHtml(s.category ? catDisplayName(s.category) : _t("lb.all", "전체"))}</div>
                     <div class="lb-sub">${s.correct}/${s.total} · ${dateStr}</div>
                 </div>
                 <div class="lb-acc">${acc}%</div>
@@ -6847,30 +6847,30 @@ function renderLeaderboard() {
                 <path d="M40 70 L55 55 L65 65 L80 50" stroke="var(--primary)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
                 <circle cx="80" cy="50" r="4" fill="var(--primary)"/>
             </svg>
-            <div class="empty-state-title">아직 기록이 없어요</div>
-            <div class="empty-state-sub">퀴즈 세트를 한 번 완주하면 여기에 기록돼요.</div>
+            <div class="empty-state-title">${_t("lb.emptyTitle", "아직 기록이 없어요")}</div>
+            <div class="empty-state-sub">${_t("lb.emptySub", "퀴즈 세트를 한 번 완주하면 여기에 기록돼요.")}</div>
           </div>`;
 
     UI.gameArea.innerHTML = `
       <div class="card">
-        <h2 class="scene-title">나의 기록</h2>
+        <h2 class="scene-title">${_t("lb.title", "나의 기록")}</h2>
         <div class="lb-summary">
             <div class="lb-summary-cell">
-                <div class="lb-summary-label">모의고사 최고</div>
-                <div class="lb-summary-value">${mockBest > 0 ? mockBest + "점" : "—"}</div>
+                <div class="lb-summary-label">${_t("lb.mockBest", "모의고사 최고")}</div>
+                <div class="lb-summary-value">${mockBest > 0 ? mockBest + _t("unit.point", "점") : "—"}</div>
             </div>
             <div class="lb-summary-cell">
-                <div class="lb-summary-label">연속 학습 최고</div>
-                <div class="lb-summary-value">${streak.best > 0 ? streak.best + "일" : "—"}</div>
+                <div class="lb-summary-label">${_t("lb.streakBest", "연속 학습 최고")}</div>
+                <div class="lb-summary-value">${streak.best > 0 ? streak.best + _t("unit.day", "일") : "—"}</div>
             </div>
             <div class="lb-summary-cell">
-                <div class="lb-summary-label">현재 연속</div>
-                <div class="lb-summary-value">${streak.count > 0 ? streak.count + "일" : "—"}</div>
+                <div class="lb-summary-label">${_t("lb.streakNow", "현재 연속")}</div>
+                <div class="lb-summary-value">${streak.count > 0 ? streak.count + _t("unit.day", "일") : "—"}</div>
             </div>
         </div>
-        <h3 class="settings-section">세트 정답률 TOP 10</h3>
+        <h3 class="settings-section">${_t("lb.top10", "세트 정답률 TOP 10")}</h3>
         <div class="lb-list">${topSetsHtml}</div>
-        <button class="choice-btn center" data-action="returnToMenu">메인 메뉴</button>
+        <button class="choice-btn center" data-action="returnToMenu">${_t("nav.mainMenu", "메인 메뉴")}</button>
       </div>`;
     track("leaderboard_view");
 }
@@ -8449,38 +8449,38 @@ function renderWeeklyReport() {
     (data.history || []).filter(h => h && (Date.now() - h.at) <= 7 * 24 * 60 * 60 * 1000).forEach(h => {
         modeCount[h.mode] = (modeCount[h.mode] || 0) + 1;
     });
-    const modeLines = Object.entries(modeCount).map(([m, n]) => `<li><strong>${escapeHtml(m)}</strong> · ${n}회</li>`).join("");
+    const modeLines = Object.entries(modeCount).map(([m, n]) => `<li><strong>${escapeHtml(m)}</strong> · ${n}${_t("unit.times", "회")}</li>`).join("");
     // 인사이트 박스 — 약점/강점/추천
     const insightHtml = `
         <div class="weekly-insights">
           <div class="wi-recommend">💡 ${escapeHtml(w.recommendation)}</div>
           ${w.weakest ? `
           <div class="wi-row wi-weak">
-            <div class="wi-label">약점 과목</div>
-            <div class="wi-value">${escapeHtml(w.weakest.name)}</div>
+            <div class="wi-label">${_t("weekly.weakSubject", "약점 과목")}</div>
+            <div class="wi-value">${escapeHtml(catDisplayName(w.weakest.name))}</div>
             <div class="wi-acc">${w.weakest.acc}%</div>
           </div>` : ''}
           ${w.strongest && w.strongest.name !== w.weakest?.name ? `
           <div class="wi-row wi-strong">
-            <div class="wi-label">강점 과목</div>
-            <div class="wi-value">${escapeHtml(w.strongest.name)}</div>
+            <div class="wi-label">${_t("weekly.strongSubject", "강점 과목")}</div>
+            <div class="wi-value">${escapeHtml(catDisplayName(w.strongest.name))}</div>
             <div class="wi-acc">${w.strongest.acc}%</div>
           </div>` : ''}
         </div>`;
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
-        <h2 class="scene-title">🗓 위클리 리포트</h2>
-        <p class="scene-desc">최근 7일 학습 요약 + 인사이트</p>
-        <div class="dashboard-row" role="group" aria-label="주간 통계">
-          <div class="dash-stat"><div class="ds-num">${w.totalSolved}</div><div class="ds-label">총 풀이</div></div>
-          <div class="dash-stat"><div class="ds-num">${w.accuracy}%</div><div class="ds-label">정답률</div></div>
-          <div class="dash-stat"><div class="ds-num">${w.daysActive}</div><div class="ds-label">학습 일수</div></div>
-          <div class="dash-stat"><div class="ds-num">${w.modesPlayed}</div><div class="ds-label">모드 완료</div></div>
+        <h2 class="scene-title">🗓 ${_t("weekly.title", "위클리 리포트")}</h2>
+        <p class="scene-desc">${_t("weekly.desc", "최근 7일 학습 요약 + 인사이트")}</p>
+        <div class="dashboard-row" role="group" aria-label="${_t("weekly.stats", "주간 통계")}">
+          <div class="dash-stat"><div class="ds-num">${w.totalSolved}</div><div class="ds-label">${_t("settings.data.total", "총 풀이")}</div></div>
+          <div class="dash-stat"><div class="ds-num">${w.accuracy}%</div><div class="ds-label">${_t("acc.rate", "정답률")}</div></div>
+          <div class="dash-stat"><div class="ds-num">${w.daysActive}</div><div class="ds-label">${_t("weekly.daysActive", "학습 일수")}</div></div>
+          <div class="dash-stat"><div class="ds-num">${w.modesPlayed}</div><div class="ds-label">${_t("weekly.modesDone", "모드 완료")}</div></div>
         </div>
         ${insightHtml}
-        ${modeLines ? `<h3 class="modal-section-title">모드별</h3><ul class="weekly-mode-list">${modeLines}</ul>` : ''}
+        ${modeLines ? `<h3 class="modal-section-title">${_t("weekly.byMode", "모드별")}</h3><ul class="weekly-mode-list">${modeLines}</ul>` : ''}
         <div class="choice-list">
-          ${w.weakest ? `<button class="choice-btn primary" data-action="startQuiz" data-arg="${escapeHtml(w.weakest.name)}">📚 ${escapeHtml(w.weakest.name)} 바로 연습</button>` : ''}
+          ${w.weakest ? `<button class="choice-btn primary" data-action="startQuiz" data-arg="${escapeHtml(w.weakest.name)}">📚 ${escapeHtml(catDisplayName(w.weakest.name))} ${_t("weekly.practiceNow", "바로 연습")}</button>` : ''}
           ${(() => {
             const _en = (typeof window !== "undefined" && window.I18N && window.I18N.getLang && window.I18N.getLang() === "en");
             const _title = _en ? `This week: ${w.totalSolved} questions` : `이번 주 ${w.totalSolved}문제 풀이`;
@@ -8490,7 +8490,7 @@ function renderWeeklyReport() {
             const _l4 = w.weakest ? (_en ? `|Weakest: ${w.weakest.name} ${w.weakest.acc}%` : `|약점: ${w.weakest.name} ${w.weakest.acc}%`) : '';
             return `<button class="choice-btn ${w.weakest ? '' : 'primary'}" data-action="shareResultCard" data-mode="weekly" data-title="${_title}" data-lines="${_l1}|${_l2}|${_l3}${_l4}">${_t("share.download", "결과 카드 다운로드")}</button>`;
           })()}
-          <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
+          <button class="choice-btn" data-action="returnToMenu">${_t("nav.mainMenu", "메인 메뉴")}</button>
         </div>
       </div>`;
 }
@@ -8935,10 +8935,10 @@ function renderWeaknessAnalysis() {
     if (startedEnough.length === 0) {
         UI.gameArea.innerHTML = renderEmptyState({
             illust: "dataEmpty",
-            title: "약점 분석 데이터 부족",
-            desc: "시나리오를 3회 이상 진행하면 자주 틀리는 패턴을 분석해드려요.",
-            primaryAction: "initSurvival", primaryLabel: "듀티 시작",
-            secondaryAction: "returnToMenu", secondaryLabel: "메뉴",
+            title: _t("weak.emptyTitle", "약점 분석 데이터 부족"),
+            desc: _t("weak.emptyDesc", "시나리오를 3회 이상 진행하면 자주 틀리는 패턴을 분석해드려요."),
+            primaryAction: "initSurvival", primaryLabel: _t("weak.startDuty", "듀티 시작"),
+            secondaryAction: "returnToMenu", secondaryLabel: _t("action.back", "메뉴"),
         });
         return;
     }
@@ -8975,33 +8975,33 @@ function renderWeaknessAnalysis() {
     const top5Html = top5.length > 0 ? top5.map(r => `
       <div class="weakness-row">
         <div class="wk-title">❌ ${escapeHtml(r.title)}</div>
-        <div class="wk-stat">정답률 ${r.rate}% (오답 ${r.wrongs}/${r.starts}) · ${escapeHtml(r.category)}</div>
-      </div>`).join("") : `<p class="scene-desc">아직 표시할 약점이 없어요.</p>`;
+        <div class="wk-stat">${_t("acc.rate", "정답률")} ${r.rate}% (${_t("weak.wrongN", "오답")} ${r.wrongs}/${r.starts}) · ${escapeHtml(catDisplayName(r.category))}</div>
+      </div>`).join("") : `<p class="scene-desc">${_t("weak.none", "아직 표시할 약점이 없어요.")}</p>`;
 
     const catHtml = catList.length > 0 ? `
-      <h3 class="episode-group-label">📂 카테고리별 약점</h3>
+      <h3 class="episode-group-label">📂 ${_t("weak.byCategory", "카테고리별 약점")}</h3>
       ${catList.map(c => {
           const isCat = knownCats.has(c.category);
           return `
         <div class="weakness-row">
-          <div class="wk-title">${escapeHtml(c.category)}</div>
-          <div class="wk-stat">정답률 ${c.rate}% (오답 ${c.wrongs}/${c.starts})</div>
-          ${isCat ? `<button class="choice-btn" data-action="startQuiz" data-arg="${escapeHtml(c.category)}" style="margin-top:8px">이 카테고리 집중 복습 →</button>` : ""}
+          <div class="wk-title">${escapeHtml(catDisplayName(c.category))}</div>
+          <div class="wk-stat">${_t("acc.rate", "정답률")} ${c.rate}% (${_t("weak.wrongN", "오답")} ${c.wrongs}/${c.starts})</div>
+          ${isCat ? `<button class="choice-btn" data-action="startQuiz" data-arg="${escapeHtml(c.category)}" style="margin-top:8px">${_t("weak.focusReview", "이 카테고리 집중 복습 →")}</button>` : ""}
         </div>`;
       }).join("")}` : "";
 
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
         
-        <h2 class="scene-title">약점 분석</h2>
-        <p class="scene-desc">자주 진행하지만 정답률이 낮은 시나리오를 모아봤어요. 집중 복습으로 점수를 끌어올리세요.</p>
+        <h2 class="scene-title">${_t("dash.weakness", "약점 분석")}</h2>
+        <p class="scene-desc">${_t("weak.desc", "자주 진행하지만 정답률이 낮은 시나리오를 모아봤어요. 집중 복습으로 점수를 끌어올리세요.")}</p>
 
-        <h3 class="episode-group-label">⚠️ 약점 시나리오 Top ${top5.length}</h3>
+        <h3 class="episode-group-label">⚠️ ${_t("weak.topScenarios", "약점 시나리오 Top")} ${top5.length}</h3>
         ${top5Html}
         ${catHtml}
 
         <div class="choice-list">
-          <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
+          <button class="choice-btn" data-action="returnToMenu">${_t("nav.mainMenu", "메인 메뉴")}</button>
         </div>
       </div>`;
 }
