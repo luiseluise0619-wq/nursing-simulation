@@ -4061,11 +4061,13 @@ function renderQuizSetSummary() {
     const setCorrect = gameState.quizCorrect - gameState.quizSetStartCorrect;
     const acc = Math.round((setCorrect / QUIZ_SET_SIZE) * 100);
     const catLabel = gameState.quizCategory || "7과목 통합 랜덤";
+    // 표시용(번역) — 저장 키는 catLabel 원문 유지
+    const catShown = gameState.quizCategory ? catDisplayName(gameState.quizCategory) : _t("quiz.allSubjects", "7과목 통합 랜덤");
     let msg, emoji;
-    if (acc >= 90) { emoji = "🏆"; msg = "완벽에 가까워요! 이 과목은 자신감 가져도 됩니다."; }
-    else if (acc >= 70) { emoji = "🌟"; msg = "안정적입니다. 틀린 문제는 오답노트에서 복습하세요."; }
-    else if (acc >= 50) { emoji = "📚"; msg = "절반은 맞췄어요. 오답노트 + 한 세트 더 권장."; }
-    else { emoji = "💪"; msg = "어려운 과목이네요. 오답노트 복습이 가장 빠른 길입니다."; }
+    if (acc >= 90) { emoji = "🏆"; msg = _t("quiz.msg90", "완벽에 가까워요! 이 과목은 자신감 가져도 됩니다."); }
+    else if (acc >= 70) { emoji = "🌟"; msg = _t("quiz.msg70", "안정적입니다. 틀린 문제는 오답노트에서 복습하세요."); }
+    else if (acc >= 50) { emoji = "📚"; msg = _t("quiz.msg50", "절반은 맞췄어요. 오답노트 + 한 세트 더 권장."); }
+    else { emoji = "💪"; msg = _t("quiz.msg0", "어려운 과목이네요. 오답노트 복습이 가장 빠른 길입니다."); }
     // 다음 세트 기준점 갱신
     gameState.quizSetStartCorrect = gameState.quizCorrect;
     gameState.quizSetStartSolved = gameState.quizSolved;
@@ -4082,27 +4084,27 @@ function renderQuizSetSummary() {
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
         
-        <h2 class="scene-title">세트 ${setNum} 완료 — ${escapeHtml(catLabel)}</h2>
-        <div class="dashboard-row" role="group" aria-label="세트 결과">
-          <div class="dash-stat"><div class="ds-num">${setCorrect}/${QUIZ_SET_SIZE}</div><div class="ds-label">이번 세트</div></div>
-          <div class="dash-stat"><div class="ds-num">${acc}%</div><div class="ds-label">세트 정답률</div></div>
-          <div class="dash-stat"><div class="ds-num">${gameState.quizSolved}</div><div class="ds-label">누적 풀이</div></div>
-          <div class="dash-stat"><div class="ds-num">${gameState.bestCombo}</div><div class="ds-label">최고 콤보</div></div>
+        <h2 class="scene-title">${_t("quiz.setDone", "세트 완료")} ${setNum} — ${escapeHtml(catShown)}</h2>
+        <div class="dashboard-row" role="group" aria-label="${_t("quiz.setResult", "세트 결과")}">
+          <div class="dash-stat"><div class="ds-num">${setCorrect}/${QUIZ_SET_SIZE}</div><div class="ds-label">${_t("quiz.thisSet", "이번 세트")}</div></div>
+          <div class="dash-stat"><div class="ds-num">${acc}%</div><div class="ds-label">${_t("quiz.setAcc", "세트 정답률")}</div></div>
+          <div class="dash-stat"><div class="ds-num">${gameState.quizSolved}</div><div class="ds-label">${_t("quiz.totalSolved", "누적 풀이")}</div></div>
+          <div class="dash-stat"><div class="ds-num">${gameState.bestCombo}</div><div class="ds-label">${_t("dash.bestCombo", "최고 콤보")}</div></div>
         </div>
         <p class="scene-desc">${msg}</p>
         <div class="choice-list">
-          <button class="choice-btn primary" data-action="quizContinue">한 세트 더 (${QUIZ_SET_SIZE}문제)</button>
-          ${gameState.quizWrong > 0 ? `<button class="choice-btn" data-action="reviewWrongAnswers">오답노트 복습 (${gameState.quizWrong})</button>` : ""}
+          <button class="choice-btn primary" data-action="quizContinue">${_t("quiz.oneMore", "한 세트 더")} (${QUIZ_SET_SIZE}${_t("unit.q", "문제")})</button>
+          ${gameState.quizWrong > 0 ? `<button class="choice-btn" data-action="reviewWrongAnswers">${_t("quiz.reviewWrong", "오답노트 복습")} (${gameState.quizWrong})</button>` : ""}
           ${(() => {
             const _en = (typeof window !== "undefined" && window.I18N && window.I18N.getLang && window.I18N.getLang() === "en");
-            const _title = _en ? `${escapeHtml(catLabel)} Set ${setNum}` : `${escapeHtml(catLabel)} 세트 ${setNum}`;
+            const _title = _en ? `${escapeHtml(catShown)} Set ${setNum}` : `${escapeHtml(catShown)} 세트 ${setNum}`;
             const _l1 = _en ? `This set ${setCorrect}/${QUIZ_SET_SIZE} (${acc}%)` : `이번 세트 ${setCorrect}/${QUIZ_SET_SIZE} (${acc}%)`;
             const _l2 = _en ? `Total ${gameState.quizSolved} Qs` : `누적 ${gameState.quizSolved}문제`;
             const _brand = _en ? "Nurse Simulator" : "간호사 시뮬레이터";
             return `<button class="choice-btn" data-action="shareResultCard" data-mode="quiz" data-title="${_title}" data-lines="${_l1}|${_l2}|${_brand}">${_t("share.card", "결과 카드")}</button>`;
           })()}
-          <button class="choice-btn" data-action="renderQuizMenu">과목 변경</button>
-          <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
+          <button class="choice-btn" data-action="renderQuizMenu">${_t("quiz.changeSubject", "과목 변경")}</button>
+          <button class="choice-btn" data-action="returnToMenu">${_t("nav.mainMenu", "메인 메뉴")}</button>
         </div>
       </div>`;
 }
@@ -4545,7 +4547,9 @@ function endMockExam(reason) {
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
         <h2 class="scene-title">${title}</h2>
-        <p class="scene-desc">총 ${total}문제 중 ${answered}문제 응답 / 정답 ${correct} (정답률 ${acc}%)</p>
+        <p class="scene-desc">${_ecgLang() === "en"
+            ? `${answered} of ${total} answered · ${correct} correct (${acc}%)`
+            : `총 ${total}문제 중 ${answered}문제 응답 / 정답 ${correct} (정답률 ${acc}%)`}</p>
         <div class="choice-list">
           <button class="choice-btn primary" data-action="startMockExam">${_t("res.moreOnce", "한 번 더")}</button>
           <button class="choice-btn" data-action="reviewWrongAnswers">${_t("wrong.review", "오답 복습")}</button>
