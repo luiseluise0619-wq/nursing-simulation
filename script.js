@@ -2253,6 +2253,8 @@ function updateStats() {
     else if (gameState.mode === "triage") { value = gameState.triageIndex; total = NC.TRIAGE_CASES.length; label = _t("status.triage", "트리아지"); }
     else if (gameState.mode === "ecg_quiz") { value = gameState.ecgIndex; total = gameState.ecgPool ? gameState.ecgPool.length : 8; label = _t("ecg.title", "심전도 판독"); }
     else if (gameState.mode === "site_quiz") { value = gameState.siteIndex; total = gameState.sitePool ? gameState.sitePool.length : 4; label = _t("site.title", "주사 부위 짚기"); }
+    else if (gameState.mode === "nclex_quiz") { value = gameState.nclexIndex; total = gameState.nclexQueue ? gameState.nclexQueue.length : 1; label = "NCLEX-RN"; }
+    else if (gameState.mode === "kor_quiz") { value = gameState.korIndex || 0; total = gameState.korPool ? gameState.korPool.length : 1; label = _t("subject.official", "정식 국시 (5지선다)"); }
     else if (gameState.mode === "scenario") {
         const s = NC.SCENARIOS.find(x => x.id === gameState.scenarioId);
         value = gameState.scenarioStep; total = s ? s.steps.length : 1; label = `${_t("status.scenario", "시나리오")} · ${s ? s.title : ""}`;
@@ -2281,6 +2283,8 @@ function updateStats() {
     const _stBody = ({
         survival: _t("badge.survival", "실전 모드"), quiz: _t("badge.quiz", "트레이닝"), mock: _t("mock.title", "모의고사"),
         daily: _t("daily.title", "일일 챌린지"), wrong_review: _t("wrong.review", "오답 복습"), dashboard: _t("badge.dashboard", "대시보드"),
+        nclex_quiz: "NCLEX-RN", kor_quiz: _t("subject.official", "정식 국시 (5지선다)"),
+        ecg_quiz: _t("ecg.title", "심전도 판독"), site_quiz: _t("site.title", "주사 부위 짚기"),
     })[gameState.mode] || _t("badge.idle", "대기");
     statusBadge.textContent = `${_t("status.label", "상태")}: ${_stBody}`;
     UI.inventory.appendChild(statusBadge);
@@ -4144,8 +4148,8 @@ async function renderNclexMenuLazy() {
     UI.gameArea.innerHTML = `
       <div class="scene-card card" style="text-align:center;padding:48px 24px;">
         <div class="loader-mark" style="margin: 0 auto 16px;">🇺🇸</div>
-        <h2 class="scene-title">NCLEX-RN 콘텐츠 로딩 중...</h2>
-        <p class="scene-desc">2,200 문제 준비 중 (첫 진입 시 1회만)</p>
+        <h2 class="scene-title">${_t("nclex.loading", "NCLEX-RN 콘텐츠 로딩 중...")}</h2>
+        <p class="scene-desc">${_t("nclex.loadingSub", "2,200 문제 준비 중 (첫 진입 시 1회만)")}</p>
       </div>`;
     const ok = await loadNclexContent();
     if (ok) renderNclexMenu();
@@ -4409,7 +4413,9 @@ function renderFeedback(ev, choice, opts = {}) {
     const box = document.createElement("div");
     box.className = `feedback-box ${isCorrect ? "correct" : "wrong"}`;
     const title = document.createElement("div");
-    title.textContent = isCorrect ? "✅ 정답" : `❌ 오답 (정답: ${correctChoice ? correctChoice.text : ""})`;
+    title.textContent = isCorrect
+        ? _t("common.correct", "✅ 정답")
+        : `${_t("common.wrong", "❌ 오답")} (${_t("fb.answerIs", "정답")}: ${correctChoice ? correctChoice.text : ""})`;
     const text = document.createElement("div");
     text.style.fontWeight = "normal"; text.style.marginTop = "6px";
     text.textContent = choice.log || "해설이 없습니다.";
@@ -6515,7 +6521,19 @@ function setExamMode(t) {
     }
     Storage.setExamMode(mode);
     track("exam_mode_changed", { mode });
-    addLog(mode === "nclex" ? "🇺🇸 NCLEX-RN mode activated — English questions enabled" : "🇰🇷 한국 국시 모드로 전환했습니다", "log-good");
+    // 시험 모드에 UI 언어를 맞춘다 — NCLEX는 영어 시험이라 문제만 영어이고 앱 셸이 한국어면
+    // 반쯤 번역된 화면이 된다. 언어는 설정 상단 토글로 언제든 되돌릴 수 있음.
+    try {
+        const wantLang = mode === "nclex" ? "en" : "ko";
+        if (window.I18N && window.I18N.getLang() !== wantLang) {
+            window.I18N.setLang(wantLang);
+            Storage.setSettings({ lang: wantLang });
+            document.documentElement.lang = wantLang;
+        }
+    } catch {}
+    addLog(mode === "nclex"
+        ? "🇺🇸 NCLEX-RN mode — English questions and interface enabled"
+        : "🇰🇷 한국 국시 모드로 전환했습니다 (화면도 한국어로)", "log-good");
     // 메뉴/설정 재렌더 — 새 상태 반영
     openSettings();
 }
@@ -7236,9 +7254,16 @@ function choosePersona(discipline) {
         }
         return;
     }
-    // NCLEX 선택 시 영어 모드를 자동 활성화 (사용자 의도 강한 신호)
+    // NCLEX 선택 시 영어 시험 모드 + UI 언어까지 함께 (문제만 영어이고 셸이 한국어면 반쪽)
     if (discipline === "nclex") {
         try { Storage.setExamMode("nclex"); } catch {}
+        try {
+            if (window.I18N && window.I18N.getLang() !== "en") {
+                window.I18N.setLang("en");
+                Storage.setSettings({ lang: "en" });
+                document.documentElement.lang = "en";
+            }
+        } catch {}
     }
     Storage.setPersona(discipline, null);
     track("persona_chosen", { discipline });
