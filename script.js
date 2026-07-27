@@ -6521,19 +6521,12 @@ function setExamMode(t) {
     }
     Storage.setExamMode(mode);
     track("exam_mode_changed", { mode });
-    // 시험 모드에 UI 언어를 맞춘다 — NCLEX는 영어 시험이라 문제만 영어이고 앱 셸이 한국어면
-    // 반쯤 번역된 화면이 된다. 언어는 설정 상단 토글로 언제든 되돌릴 수 있음.
-    try {
-        const wantLang = mode === "nclex" ? "en" : "ko";
-        if (window.I18N && window.I18N.getLang() !== wantLang) {
-            window.I18N.setLang(wantLang);
-            Storage.setSettings({ lang: wantLang });
-            document.documentElement.lang = wantLang;
-        }
-    } catch {}
+    // UI 언어는 건드리지 않는다 — 시험 모드(문제은행)와 화면 언어는 독립 설정.
+    // NCLEX 문항은 원본이 영어라 UI 언어와 무관하게 항상 영어로 나온다.
+    // (한국어 UI + NCLEX 영어 문제 조합을 쓰는 사용자를 위해 선택권 유지)
     addLog(mode === "nclex"
-        ? "🇺🇸 NCLEX-RN mode — English questions and interface enabled"
-        : "🇰🇷 한국 국시 모드로 전환했습니다 (화면도 한국어로)", "log-good");
+        ? "🇺🇸 NCLEX-RN mode activated — English questions enabled"
+        : "🇰🇷 한국 국시 모드로 전환했습니다", "log-good");
     // 메뉴/설정 재렌더 — 새 상태 반영
     openSettings();
 }
@@ -7254,16 +7247,9 @@ function choosePersona(discipline) {
         }
         return;
     }
-    // NCLEX 선택 시 영어 시험 모드 + UI 언어까지 함께 (문제만 영어이고 셸이 한국어면 반쪽)
+    // NCLEX 선택 시 문제은행만 영어 모드로 — UI 언어는 사용자 설정 그대로 둔다
     if (discipline === "nclex") {
         try { Storage.setExamMode("nclex"); } catch {}
-        try {
-            if (window.I18N && window.I18N.getLang() !== "en") {
-                window.I18N.setLang("en");
-                Storage.setSettings({ lang: "en" });
-                document.documentElement.lang = "en";
-            }
-        } catch {}
     }
     Storage.setPersona(discipline, null);
     track("persona_chosen", { discipline });
