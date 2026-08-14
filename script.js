@@ -3420,7 +3420,10 @@ function generateEcgSamples(id, durSec, fs) {
 function _drawEcg(canvas, id) {
     const ctx = canvas.getContext("2d"); if (!ctx) return;
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const cssW = canvas.clientWidth || 320, cssH = canvas.clientHeight || 180;
+    // 레이아웃 확정 전이면 clientWidth 가 0 → 부모 폭으로 보정 (스트립이 좁게 그려지는 문제)
+    const parentW = (canvas.parentElement && canvas.parentElement.clientWidth) || 0;
+    const cssW = canvas.clientWidth || parentW || 320;
+    const cssH = canvas.clientHeight || 190;
     canvas.width = cssW * dpr; canvas.height = cssH * dpr; ctx.scale(dpr, dpr);
     const pxMm = 6, big = pxMm * 5;
     ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, cssW, cssH);
@@ -3475,7 +3478,15 @@ function renderEcgQuizCard() {
         <button class="choice-btn subtle center hidden" id="ecg-next-btn" data-action="ecgQuizNext">${_t("action.next", "다음 →")}</button>
         <button class="choice-btn center" data-action="renderDrillMenu">${_t("nav.toMenu", "메뉴로")}</button>
       </div>`;
-    const cv = document.getElementById("ecg-canvas"); if (cv) _drawEcg(cv, id);
+    // 레이아웃 확정 후 그린다 (폭 0 방지). 화면 회전·리사이즈 시 재렌더.
+    const cv = document.getElementById("ecg-canvas");
+    if (cv) {
+        const draw = () => { try { _drawEcg(cv, id); } catch {} };
+        if (typeof requestAnimationFrame === "function") requestAnimationFrame(draw); else draw();
+        if (gameState._ecgResize) { try { window.removeEventListener("resize", gameState._ecgResize); } catch {} }
+        gameState._ecgResize = () => { if (gameState.mode === "ecg_quiz" && document.getElementById("ecg-canvas") === cv) draw(); };
+        try { window.addEventListener("resize", gameState._ecgResize); } catch {}
+    }
 }
 function ecgQuizAnswer(t) {
     const pool = gameState.ecgPool || []; const i = gameState.ecgIndex || 0; const id = pool[i];
@@ -3691,6 +3702,14 @@ async function tutorAsk() {
     }
     ans.classList.remove("hidden");
     ans.innerHTML = `<div class="tutor-loading">${_t("tutor.thinking", "근거 찾는 중…")}</div>`;
+    // NCLEX 문항은 지연 로딩(2MB) — NCLEX 모드/영어 사용자가 튜터를 먼저 열면 코퍼스가
+    // 국시 280문항뿐이라 "자료 없음"이 뜬다. 검색 전에 한 번 확보한다.
+    try {
+        const _mode = (typeof Storage !== "undefined" && Storage.getExamMode) ? Storage.getExamMode() : "korean";
+        if ((_mode === "nclex" || _ecgLang() === "en") && !_nclexAvailable()) {
+            await loadNclexContent();
+        }
+    } catch {}
     const items = _tutorRetrieve(question, 4);
     if (!items.length) {
         ans.innerHTML = `<div class="feedback-log">${_t("tutor.noctx", "관련 학습 자료를 찾지 못했어요. 다른 키워드로 물어봐 주세요.")}</div>`;
