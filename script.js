@@ -3781,6 +3781,7 @@ function renderTutor() {
         <p class="scene-desc">${_t("tutor.desc", "궁금한 걸 물어보면 앱의 검증된 문제·해설을 근거로 답해요. 진단·처방이 아닌 학습 참고용입니다.")}</p>
         <textarea id="tutor-input" class="sbar-textarea" rows="2" placeholder="${escapeHtml(_t("tutor.ph", "예: 심부전 환자에게 반좌위를 취하는 이유는?"))}" aria-label="${_t("tutor.title", "AI 학습 튜터")}"></textarea>
         <div class="tutor-quota" id="tutor-quota">${_t("tutor.left", "오늘 남은 무료 질문")}: ${left}/${TUTOR_DAILY_FREE}</div>
+        <p class="tutor-privacy">${_t("tutor.privacy", "입력한 질문은 답변 생성을 위해 외부 AI 서비스로 전송됩니다. 실명·환자 정보는 입력하지 마세요.")}</p>
         <div class="choice-list">
           <button class="choice-btn primary" data-action="tutorAsk">${_t("tutor.ask", "질문하기")}</button>
           <button class="choice-btn center" data-action="returnToMenu">${_t("action.back", "메뉴")}</button>
@@ -7016,6 +7017,7 @@ function renderPrivacy() {
         <section class="legal-section">
           <h3 class="legal-h">1. 수집·이용하는 정보</h3>
           <p>본 앱은 <strong>학습 데이터·개인 식별정보를 외부 서버로 전송하지 않습니다.</strong> 다음 항목만 사용자 기기의 브라우저 localStorage 에 저장됩니다:</p>
+          <p class="legal-note">단, <strong>AI 학습 튜터</strong>에 직접 질문을 입력해 전송한 경우에 한해 그 질문 내용이 답변 생성을 위해 외부 AI 서비스(Google Gemini)로 전달됩니다. 저장된 학습 데이터는 전송되지 않으며, 튜터를 쓰지 않으면 전송도 없습니다.</p>
           <ul class="legal-list">
             <li>학습 통계 (과목별 정답률·콤보 최고점)</li>
             <li>오답 노트 (틀린 문제 + spaced repetition 메타데이터)</li>
@@ -7040,6 +7042,7 @@ function renderPrivacy() {
           <h3 class="legal-h">4. 정보 보호 조치</h3>
           <ul class="legal-list">
             <li><strong>학습 데이터는 기기 내에만 저장</strong> — 외부 서버로 전송하지 않음 (PWA cache-first)</li>
+            <li>AI 튜터는 <strong>사용자가 질문을 보낼 때만</strong> 그 질문을 외부 AI 서비스로 전달 — 저장 데이터·식별정보는 미전송</li>
             <li>광고(Google AdMob)·익명 사용 통계(Plausible) 는 모바일 빌드에서 작동할 수 있으며, 개인 식별정보는 수집하지 않습니다</li>
             <li>Storage 스키마 검증 — 변조 시 안전 복구</li>
           </ul>
