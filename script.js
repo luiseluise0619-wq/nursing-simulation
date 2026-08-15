@@ -3732,13 +3732,25 @@ function _tutorCorpus() {
     try { if (typeof window !== "undefined" && Array.isArray(window.NCLEX_QUESTIONS)) out.push(...window.NCLEX_QUESTIONS); } catch {}
     return out.filter(q => q && q.desc && Array.isArray(q.choices));
 }
+// 한 단어의 일치 점수 — 한국어는 조사가 붙어 원형과 정확히 안 맞는다("심부전에" vs "심부전").
+// 어미를 한 글자씩 떼며 최장 일치를 찾되, 과잉 매칭을 막기 위해 절삭 폭을 제한한다
+// (한글 최대 2글자 = 조사, 영어 최대 3글자 = -ing/-ed/-s). 점수는 남은 길이 비율.
+function _tutorTermScore(hay, term) {
+    const hangul = /[가-힣]/.test(term);
+    const minLen = hangul ? Math.max(2, term.length - 2) : Math.max(4, term.length - 3);
+    for (let len = term.length; len >= minLen; len--) {
+        const stem = term.slice(0, len);
+        if (stem.length >= 2 && hay.includes(stem)) return len / term.length;
+    }
+    return 0;
+}
 function _tutorRetrieve(query, k) {
     const corpus = _tutorCorpus();
     const terms = String(query).toLowerCase().split(/\s+/).filter(t => t.length >= 2);
     if (!terms.length) return [];
     const scored = corpus.map(q => {
         const hay = ((q.title || "") + " " + (q.desc || "") + " " + (q.choices || []).map(c => (c.text || "") + " " + (c.log || "")).join(" ")).toLowerCase();
-        let s = 0; terms.forEach(t => { if (hay.includes(t)) s++; });
+        let s = 0; terms.forEach(t => { s += _tutorTermScore(hay, t); });
         return { q, s };
     }).filter(x => x.s > 0).sort((a, b) => b.s - a.s).slice(0, k);
     return scored.map(x => x.q);
