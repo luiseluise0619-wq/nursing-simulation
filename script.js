@@ -3366,6 +3366,30 @@ const ECG_RHYTHMS = [
       teachKo: "조직화된 QRS 없음 · 무질서 (즉시 제세동)", teachEn: "No organized QRS · chaotic (defibrillate now)" },
     { id: "asystole", ko: "무수축 (Asystole)", en: "Asystole",
       teachKo: "전기활동 없음(평탄선) · CPR", teachEn: "No electrical activity (flat line) · CPR" },
+    { id: "aflutter", ko: "심방조동 (A-Flutter)", en: "Atrial Flutter",
+      teachKo: "톱니 모양 조동파 · 심방 약 250~350회/분 · 전도 비율에 따라 심실은 규칙적",
+      teachEn: "Sawtooth flutter waves · atrial ~250–350/min · ventricular rate set by conduction ratio" },
+    { id: "avb1", ko: "1도 방실차단", en: "First-degree AV Block",
+      teachKo: "PR 간격이 0.20초를 넘게 일정하게 연장 · 탈락하는 QRS 없음",
+      teachEn: "PR interval constant and >0.20 s · no dropped QRS" },
+    { id: "mobitz1", ko: "2도 방실차단 1형 (벤케바흐)", en: "Second-degree AV Block, Mobitz I",
+      teachKo: "PR 간격이 점점 길어지다 QRS 하나가 탈락하고 다시 반복",
+      teachEn: "PR lengthens progressively until one QRS drops, then the cycle repeats" },
+    { id: "mobitz2", ko: "2도 방실차단 2형 (Mobitz II)", en: "Second-degree AV Block, Mobitz II",
+      teachKo: "PR 간격은 일정한데 QRS가 예고 없이 탈락 · 완전차단으로 진행 위험",
+      teachEn: "PR stays constant but QRS drops without warning · may progress to complete block" },
+    { id: "avb3", ko: "3도 완전 방실차단", en: "Third-degree (Complete) AV Block",
+      teachKo: "P파와 QRS가 서로 무관하게 각자 규칙적(방실 해리) · 서맥",
+      teachEn: "P waves and QRS are independent — AV dissociation · bradycardic" },
+    { id: "pvc", ko: "심실조기수축 (PVC)", en: "Premature Ventricular Contraction",
+      teachKo: "동율동 중 P파 없이 넓고 이른 QRS가 끼어듦",
+      teachEn: "A wide, early QRS with no preceding P interrupts sinus rhythm" },
+    { id: "junctional", ko: "접합부 리듬", en: "Junctional Rhythm",
+      teachKo: "좁은 QRS · 40~60회/분 · P파 소실 또는 역위",
+      teachEn: "Narrow QRS · 40–60/min · P wave absent or inverted" },
+    { id: "torsades", ko: "다형성 심실빈맥 (Torsades)", en: "Torsades de Pointes",
+      teachKo: "QRS 축이 기저선을 중심으로 비틀리는 다형성 VT · QT 연장과 연관",
+      teachEn: "Polymorphic VT twisting around the baseline · linked to QT prolongation" },
 ];
 
 // 가우시안 편향 — P/QRS/T 파형 조립용
@@ -3374,18 +3398,25 @@ function _ecgBump(s, fs, cSec, amp, wSec) {
     const lo = Math.max(0, Math.floor(c - 4 * w)), hi = Math.min(s.length - 1, Math.ceil(c + 4 * w));
     for (let i = lo; i <= hi; i++) { const d = (i - c) / w; s[i] += amp * Math.exp(-0.5 * d * d); }
 }
-function _ecgBeat(s, fs, t, wide) {
+// P파 단독 — 방실차단처럼 P와 QRS를 따로 배치해야 하는 리듬에서 사용
+function _ecgP(s, fs, t) { _ecgBump(s, fs, t, 0.12, 0.022); }
+// QRS-T 복합 — t 는 R파 정점 시각
+function _ecgQrs(s, fs, t, wide) {
     if (!wide) {
-        _ecgBump(s, fs, t + 0.00, 0.12, 0.022);  // P
-        _ecgBump(s, fs, t + 0.15, -0.05, 0.008);  // Q
-        _ecgBump(s, fs, t + 0.17, 1.05, 0.010);  // R
-        _ecgBump(s, fs, t + 0.19, -0.22, 0.010);  // S
-        _ecgBump(s, fs, t + 0.33, 0.30, 0.045);  // T
+        _ecgBump(s, fs, t - 0.02, -0.05, 0.008);  // Q
+        _ecgBump(s, fs, t + 0.00, 1.05, 0.010);  // R
+        _ecgBump(s, fs, t + 0.02, -0.22, 0.010);  // S
+        _ecgBump(s, fs, t + 0.16, 0.30, 0.045);  // T
     } else {
-        _ecgBump(s, fs, t + 0.10, 0.95, 0.045);  // 넓은 R
-        _ecgBump(s, fs, t + 0.19, -0.55, 0.045);  // 넓은 S
-        _ecgBump(s, fs, t + 0.34, -0.35, 0.060);  // 불일치 T
+        _ecgBump(s, fs, t + 0.00, 0.95, 0.045);  // 넓은 R
+        _ecgBump(s, fs, t + 0.09, -0.55, 0.045);  // 넓은 S
+        _ecgBump(s, fs, t + 0.24, -0.35, 0.060);  // 불일치 T
     }
+}
+// 한 박동 — t 는 P파 시작(넓은 QRS 리듬은 P 없음)
+function _ecgBeat(s, fs, t, wide) {
+    if (!wide) { _ecgP(s, fs, t); _ecgQrs(s, fs, t + 0.17, false); }
+    else { _ecgQrs(s, fs, t + 0.10, true); }
 }
 function generateEcgSamples(id, durSec, fs) {
     const n = Math.ceil(durSec * fs); const s = new Array(n).fill(0);
@@ -3414,6 +3445,54 @@ function generateEcgSamples(id, durSec, fs) {
         for (let i = 0; i < n; i++) { a += (Math.random() - 0.5) * 0.6; a *= 0.9; s[i] = a * 0.6 + 0.3 * Math.sin(i * 0.9 + Math.sin(i * 0.13)); }
     } else if (id === "asystole") {
         for (let i = 0; i < n; i++) s[i] = 0.015 * Math.sin(i * 0.02) + (Math.random() - 0.5) * 0.01;
+    } else if (id === "aflutter") {
+        // 톱니(sawtooth) 조동파 약 300/분 + 4:1 전도 → 심실 약 75/분
+        for (let i = 0; i < n; i++) { const ph = ((i / fs) * 5) % 1; s[i] += (ph - 0.5) * 0.30; }
+        for (let t = 0.35; t < durSec - 0.25; t += 60 / 75) _ecgQrs(s, fs, t, false);
+    } else if (id === "avb1") {
+        // 1도 방실차단 — PR 일정하게 연장(0.30초), 탈락 박동 없음
+        for (let t = 0.20; t < durSec - 0.35; t += 60 / 70) { _ecgP(s, fs, t); _ecgQrs(s, fs, t + 0.30, false); }
+    } else if (id === "mobitz1") {
+        // 벤케바흐 — PR 점진적 연장 후 QRS 한 번 탈락, 반복
+        const PRS = [0.16, 0.24, 0.34, null];
+        let t = 0.20, k = 0;
+        while (t < durSec - 0.35) {
+            _ecgP(s, fs, t);
+            const pr = PRS[k % PRS.length];
+            if (pr !== null) _ecgQrs(s, fs, t + pr, false);
+            k++; t += 60 / 75;
+        }
+    } else if (id === "mobitz2") {
+        // Mobitz II — PR 일정, QRS 가 예고 없이 탈락(3번째마다 비전도)
+        let t = 0.20, k = 0;
+        while (t < durSec - 0.35) {
+            _ecgP(s, fs, t);
+            if ((k + 1) % 3 !== 0) _ecgQrs(s, fs, t + 0.18, false);
+            k++; t += 60 / 80;
+        }
+    } else if (id === "avb3") {
+        // 완전 방실차단 — 심방(P)과 심실(QRS)이 서로 무관하게 각자 규칙적
+        for (let t = 0.15; t < durSec - 0.1; t += 60 / 90) _ecgP(s, fs, t);
+        for (let t = 0.45; t < durSec - 0.35; t += 60 / 38) _ecgQrs(s, fs, t, true);
+    } else if (id === "pvc") {
+        // 동율동 중 P파 없는 넓고 이른 QRS 가 끼어듦
+        let beat = 0;
+        for (let t = 0.20; t < durSec - 0.45; t += 60 / 72) {
+            if (beat === 3 || beat === 7) _ecgQrs(s, fs, t + 0.05, true);
+            else { _ecgP(s, fs, t); _ecgQrs(s, fs, t + 0.17, false); }
+            beat++;
+        }
+    } else if (id === "junctional") {
+        // 접합부 리듬 — P파 없음, 좁은 QRS, 40~60/분
+        for (let t = 0.35; t < durSec - 0.3; t += 60 / 50) _ecgQrs(s, fs, t, false);
+    } else if (id === "torsades") {
+        // 다형성 VT — 기저선을 중심으로 QRS 축이 비틀리며 진폭이 커졌다 작아짐
+        const step = 60 / 240;
+        for (let t = 0.10; t < durSec - step; t += step) {
+            const env = Math.sin((t / Math.max(durSec, 0.001)) * Math.PI * 3);
+            _ecgBump(s, fs, t, 0.9 * env, 0.05);
+            _ecgBump(s, fs, t + step / 2, -0.9 * env, 0.05);
+        }
     }
     return s;
 }
@@ -3451,7 +3530,8 @@ function startEcgQuiz() {
     gameState.mode = "ecg_quiz"; resetStateForMode();
     const ids = ECG_RHYTHMS.map(r => r.id);
     for (let k = ids.length - 1; k > 0; k--) { const j = Math.floor(Math.random() * (k + 1)); [ids[k], ids[j]] = [ids[j], ids[k]]; }
-    gameState.ecgPool = ids; gameState.ecgIndex = 0; gameState.ecgCorrect = 0;
+    // 16개 리듬 중 매 세션 10개 무작위 — 반복해도 같은 순서가 안 나오게
+    gameState.ecgPool = ids.slice(0, 10); gameState.ecgIndex = 0; gameState.ecgCorrect = 0;
     showCoreUI(); if (UI.logBar) UI.logBar.innerHTML = "";
     renderEcgQuizCard(); track("ecg_quiz_start", { count: ids.length });
 }
@@ -3546,6 +3626,14 @@ const SITE_QUESTIONS = [
       teachKo: "삼각근(deltoid) — 소량 IM·백신에 사용", teachEn: "Deltoid — used for small-volume IM and vaccines" },
     { region: "abdomen", qKo: "인슐린·헤파린 피하주사(SubQ) 부위를 짚으세요.", qEn: "Tap the site for SubQ injection of insulin/heparin.",
       teachKo: "복부 피하 — 흡수가 일정, 인슐린 대표 부위", teachEn: "Abdomen SubQ — consistent absorption; classic insulin site" },
+    { region: "ventrogluteal", qKo: "조직 자극이 강한 약물을 Z-track 기법으로 근육주사할 부위를 짚으세요.", qEn: "Tap the site for Z-track IM injection of an irritating medication.",
+      teachKo: "배둔근 — 피하지방을 당겨 약물 누출을 막는 Z-track 에 적합", teachEn: "Ventrogluteal — well suited to Z-track, which seals the drug in the muscle" },
+    { region: "abdomen", qKo: "헤파린 피하주사 시 배꼽에서 최소 5cm(2인치) 떨어뜨려야 하는 부위를 짚으세요.", qEn: "Tap the site where heparin SubQ must stay at least 2 inches (5 cm) from the umbilicus.",
+      teachKo: "복부 피하 — 배꼽 주변 5cm 는 피하고, 멍 방지를 위해 문지르지 않음", teachEn: "Abdomen SubQ — avoid 5 cm around the umbilicus and do not massage after (bruising)" },
+    { region: "deltoid", qKo: "성인에게 인플루엔자 백신을 접종할 부위를 짚으세요.", qEn: "Tap the site for an adult influenza vaccination.",
+      teachKo: "삼각근 — 성인 백신 표준 부위(1mL 이하 소량)", teachEn: "Deltoid — standard adult vaccine site for small volumes (≤1 mL)" },
+    { region: "vastus_lateralis", qKo: "생후 6개월 영아에게 예방접종할 부위를 짚으세요.", qEn: "Tap the immunization site for a 6-month-old infant.",
+      teachKo: "외측광근 — 삼각근은 영아기에 근육량이 부족해 부적합", teachEn: "Vastus lateralis — the deltoid lacks adequate muscle mass in infancy" },
 ];
 function _bodySvg() {
     // viewBox 200x400, 정면 인체 도식 + 4개 탭 존(부위)
