@@ -3275,14 +3275,20 @@ function renderSimMenu() {
         ${_koOnlyHint()}
         <button class="row-card" data-action="renderCaseMenu">
           <div class="row-icon">${ICONS.episode}</div>
-          <div class="row-body"><div class="row-title">${_t("case.title", "사례 학습")}${_koOnlyBadge()}</div><div class="row-sub">${_t("case.sub", "에피소드 35편 + 짧은 시나리오")}</div></div>
+          <div class="row-body"><div class="row-title">${_t("case.title", "사례 학습")}${_koOnlyBadge()}</div><div class="row-sub">${_caseCountSub()}</div></div>
           <div class="row-chev">›</div>
         </button>
         <button class="choice-btn center" data-action="returnToMenu">${_t("action.back", "메뉴")}</button>
       </div>`;
 }
 
-// 통합: 에피소드(35편 장편) + 짧은 시나리오(단편)
+// 사례 개수는 콘텐츠에서 직접 세어 표기 — 하드코딩하면 콘텐츠가 늘 때 숫자가 어긋난다
+function _epCount() { try { return (NC && NC.EPISODES) ? NC.EPISODES.length : 0; } catch { return 0; } }
+function _scCount() { try { return (NC && NC.SCENARIOS) ? NC.SCENARIOS.length : 0; } catch { return 0; } }
+function _caseCountSub() {
+    return `${_t("case.episodes", "에피소드")} ${_epCount()}${_t("unit.eps", "편")} + ${_t("case.shorts", "짧은 시나리오")} ${_scCount()}${_t("unit.items", "개")}`;
+}
+// 통합: 에피소드(장편) + 짧은 시나리오(단편)
 function renderCaseMenu() {
     gameState.mode = "case_menu"; resetStateForMode();
     showCoreUI(); if (UI.logBar) UI.logBar.innerHTML = ""; updateStats();
@@ -3293,12 +3299,12 @@ function renderCaseMenu() {
         ${_koOnlyHint()}
         <button class="row-card" data-action="renderEpisodeMenu">
           <div class="row-icon">${ICONS.episode}</div>
-          <div class="row-body"><div class="row-title">${_t("case.episode", "에피소드 (장편)")}${_koOnlyBadge()}</div><div class="row-sub">${_t("case.episode.sub", "한 듀티 전체 · 35편 · 30-60분")}</div></div>
+          <div class="row-body"><div class="row-title">${_t("case.episode", "에피소드 (장편)")}${_koOnlyBadge()}</div><div class="row-sub">${_t("case.episode.sub", "한 듀티 전체")} · ${_epCount()}${_t("unit.eps", "편")} · 30-60${_t("unit.min", "분")}</div></div>
           <div class="row-chev">›</div>
         </button>
         <button class="row-card" data-action="renderScenarioMenu">
           <div class="row-icon">${ICONS.scenario}</div>
-          <div class="row-body"><div class="row-title">${_t("case.scenario", "짧은 시나리오 (단편)")}${_koOnlyBadge()}</div><div class="row-sub">${_t("case.scenario.sub", "단편 임상 의사결정 · 10분 내")}</div></div>
+          <div class="row-body"><div class="row-title">${_t("case.scenario", "짧은 시나리오 (단편)")}${_koOnlyBadge()}</div><div class="row-sub">${_scCount()}${_t("unit.items", "개")} · ${_t("case.scenario.sub", "단편 임상 의사결정 · 10분 내")}</div></div>
           <div class="row-chev">›</div>
         </button>
         <button class="choice-btn center" data-action="renderSimMenu">${_t("action.prev", "뒤로")}</button>
@@ -5014,7 +5020,7 @@ function pickHandoffSession(n) {
     if (pool.length < n) {
         Storage.clearHandoffSeen();
         pool = all.slice();
-        addLog("100명 환자 한 사이클 완료 — 풀을 초기화합니다.", "log-important");
+        addLog(`${all.length}${_t("unit.patients", "명")} ${_t("handoff.cycleDone", "환자 한 사이클 완료 — 풀을 초기화합니다.")}`, "log-important");
     }
     return shuffle(pool).slice(0, n).map(p => p.id);
 }
