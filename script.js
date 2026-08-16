@@ -3575,7 +3575,7 @@ function renderEcgQuizCard() {
         <h2 class="scene-title">${_t("ecg.prompt", "이 리듬은?")}</h2>
         <div class="ecg-strip"><canvas id="ecg-canvas" class="ecg-canvas"></canvas></div>
         <div class="choice-list" id="ecg-choices">${choicesHtml}</div>
-        <div id="ecg-feedback" class="image-quiz-feedback hidden"></div>
+        <div id="ecg-feedback" class="image-quiz-feedback hidden" aria-live="polite"></div>
         <button class="choice-btn subtle center hidden" id="ecg-next-btn" data-action="ecgQuizNext">${_t("action.next", "다음 →")}</button>
         <button class="choice-btn center" data-action="renderDrillMenu">${_t("nav.toMenu", "메뉴로")}</button>
       </div>`;
@@ -3695,7 +3695,7 @@ function renderSiteQuizCard() {
         <div class="quiz-progress">🧍 ${_t("site.title", "주사 부위 짚기")} ${i + 1}/${pool.length}</div>
         <h2 class="scene-title">${escapeHtml(L === "en" ? q.qEn : q.qKo)} <button class="tts-btn" data-action="ttsSpeak" data-text="${escapeHtml(L === "en" ? q.qEn : q.qKo)}" aria-label="${_t("tts.readQ", "문제 읽어주기")}" title="${_t("tts.readQ", "문제 읽어주기")}">🔊</button></h2>
         <div class="body-wrap">${_bodySvg()}</div>
-        <div id="site-feedback" class="image-quiz-feedback hidden"></div>
+        <div id="site-feedback" class="image-quiz-feedback hidden" aria-live="polite"></div>
         <button class="choice-btn subtle center hidden" id="site-next-btn" data-action="siteQuizNext">${_t("action.next", "다음 →")}</button>
         <button class="choice-btn center" data-action="renderDrillMenu">${_t("nav.toMenu", "메뉴로")}</button>
       </div>`;
@@ -3939,7 +3939,7 @@ function renderKorCard() {
         <h2 class="scene-title">${escapeHtml(q.title)}</h2>
         <p class="scene-desc">${escapeHtml(q.desc)}</p>
         <div class="choice-list" id="kor-choices">${choicesHtml}</div>
-        <div id="kor-feedback" class="image-quiz-feedback hidden"></div>
+        <div id="kor-feedback" class="image-quiz-feedback hidden" aria-live="polite"></div>
         <button class="choice-btn subtle center hidden" id="kor-next-btn" data-action="korQuizNext">다음 →</button>
         <button class="choice-btn center" data-action="returnToMenu">중단하고 메뉴로</button>
       </div>`;
@@ -4112,7 +4112,7 @@ function renderImageQuizCard() {
         ${imgHtml}
         ${scene.prompt ? `<p class="scene-desc">${escapeHtml(scene.prompt)}</p>` : ""}
         <div class="choice-list" id="image-quiz-choices">${choicesHtml}</div>
-        <div id="image-quiz-feedback" class="image-quiz-feedback hidden"></div>
+        <div id="image-quiz-feedback" class="image-quiz-feedback hidden" aria-live="polite"></div>
         <button class="choice-btn subtle center hidden" id="image-quiz-next-btn" data-action="imageQuizNext">다음 →</button>
         <button class="choice-btn center" data-action="returnToMenu">중단하고 메뉴로</button>
       </div>`;
@@ -6242,21 +6242,21 @@ function openSettings() {
             <span class="settings-toggle-name">${_t("settings.sound", "사운드")}</span>
             <span class="settings-toggle-sub">${_t("settings.sound.sub", "정답·오답 효과음")}</span>
           </div>
-          <button class="toggle-switch ${settings.sound !== false ? 'on' : ''}" data-action="toggleSound" aria-pressed="${settings.sound !== false}"></button>
+          <button class="toggle-switch ${settings.sound !== false ? 'on' : ''}" data-action="toggleSound" aria-pressed="${settings.sound !== false}" aria-label="${_t("settings.sound", "사운드")}"></button>
         </div>
         <div class="settings-toggle-row">
           <div class="settings-toggle-label">
             <span class="settings-toggle-name">${_t("settings.haptics", "햅틱")}</span>
             <span class="settings-toggle-sub">${_t("settings.haptics.sub", "진동 피드백 (모바일)")}</span>
           </div>
-          <button class="toggle-switch ${settings.haptics !== false ? 'on' : ''}" data-action="toggleHaptics" aria-pressed="${settings.haptics !== false}"></button>
+          <button class="toggle-switch ${settings.haptics !== false ? 'on' : ''}" data-action="toggleHaptics" aria-pressed="${settings.haptics !== false}" aria-label="${_t("settings.haptics", "햅틱")}"></button>
         </div>
         <div class="settings-toggle-row">
           <div class="settings-toggle-label">
             <span class="settings-toggle-name">${_t("settings.tts", "음성 읽기")}</span>
             <span class="settings-toggle-sub">${_t("settings.tts.sub", "TTS 자동 읽기")}</span>
           </div>
-          <button class="toggle-switch ${settings.tts === true ? 'on' : ''}" data-action="toggleTts" aria-pressed="${settings.tts === true}"></button>
+          <button class="toggle-switch ${settings.tts === true ? 'on' : ''}" data-action="toggleTts" aria-pressed="${settings.tts === true}" aria-label="${_t("settings.tts", "음성 읽기")}"></button>
         </div>
         <div class="choice-list">
           <button class="choice-btn" data-action="renderTtsSettings">${_t("settings.tts.detail", "음성 상세 설정")}</button>
@@ -6907,7 +6907,7 @@ function renderDrugDrillCard() {
         <div class="quiz-progress">💊 약물 드릴 ${i + 1}/${pool.length}</div>
         <h2 class="scene-title">${escapeHtml(q.prompt)}</h2>
         <div class="choice-list" id="drug-drill-choices">${choicesHtml}</div>
-        <div id="drug-drill-feedback" class="image-quiz-feedback hidden"></div>
+        <div id="drug-drill-feedback" class="image-quiz-feedback hidden" aria-live="polite"></div>
         <button class="choice-btn subtle center hidden" id="drug-drill-next-btn" data-action="drugDrillNext">다음 →</button>
         <button class="choice-btn center" data-action="returnToMenu">중단하고 메뉴로</button>
       </div>`;
