@@ -36,6 +36,20 @@ const APP_VERSION = "1.1.0-beta";     // package.json 과 별개 표시 버전
 // i18n 전역 헬퍼 — 현재 언어(ko/en)로 핵심 UI 라벨 번역. I18N 없으면 폴백 문자열.
 const _t = (k, fb) => (typeof window !== "undefined" && window.I18N) ? window.I18N.t(k, fb) : fb;
 
+// 한국어 전용 콘텐츠 안내 — 에피소드·시나리오·인계·트리아지는 원문이 한국어라
+// 영어 UI 로 봐도 본문은 한국어로 나온다. 들어가기 전에 알리는 게 정직하다.
+function _isEnUi() {
+    return (typeof window !== "undefined" && window.I18N && window.I18N.getLang && window.I18N.getLang() === "en");
+}
+function _koOnlyBadge() {
+    return _isEnUi() ? ` <span class="ko-content-badge">🇰🇷 KO</span>` : "";
+}
+function _koOnlyHint() {
+    return _isEnUi()
+        ? `<p class="ko-content-hint">${_t("content.koOnly", "이 파트의 사례 본문은 한국어로 제공됩니다. 화면 언어와 무관하게 내용은 한국어예요.")}</p>`
+        : "";
+}
+
 // 분석 (Plausible) — 익명·쿠키리스·GDPR/PIPA 준수.
 // 배포 도메인을 여기 1줄 입력하면 자동 활성화. 비워두면 완전 no-op (외부 호출 0).
 const ANALYTICS_DOMAIN = ""; // 예: "luiseluise0619-wq.github.io"
@@ -3258,9 +3272,10 @@ function renderSimMenu() {
       <div class="tab-section">
         <h2 class="page-title">${_t("study.simulation", "시뮬레이션")}</h2>
         <p class="page-sub">${_t("sim.pageSub", "실제 듀티처럼 한 사례를 끝까지.")}</p>
+        ${_koOnlyHint()}
         <button class="row-card" data-action="renderCaseMenu">
           <div class="row-icon">${ICONS.episode}</div>
-          <div class="row-body"><div class="row-title">${_t("case.title", "사례 학습")}</div><div class="row-sub">${_t("case.sub", "에피소드 35편 + 짧은 시나리오")}</div></div>
+          <div class="row-body"><div class="row-title">${_t("case.title", "사례 학습")}${_koOnlyBadge()}</div><div class="row-sub">${_t("case.sub", "에피소드 35편 + 짧은 시나리오")}</div></div>
           <div class="row-chev">›</div>
         </button>
         <button class="choice-btn center" data-action="returnToMenu">${_t("action.back", "메뉴")}</button>
@@ -3275,14 +3290,15 @@ function renderCaseMenu() {
       <div class="tab-section">
         <h2 class="page-title">${_t("case.title", "사례 학습")}</h2>
         <p class="page-sub">${_t("case.pageSub", "시간 여유에 맞춰 골라.")}</p>
+        ${_koOnlyHint()}
         <button class="row-card" data-action="renderEpisodeMenu">
           <div class="row-icon">${ICONS.episode}</div>
-          <div class="row-body"><div class="row-title">${_t("case.episode", "에피소드 (장편)")}</div><div class="row-sub">${_t("case.episode.sub", "한 듀티 전체 · 35편 · 30-60분")}</div></div>
+          <div class="row-body"><div class="row-title">${_t("case.episode", "에피소드 (장편)")}${_koOnlyBadge()}</div><div class="row-sub">${_t("case.episode.sub", "한 듀티 전체 · 35편 · 30-60분")}</div></div>
           <div class="row-chev">›</div>
         </button>
         <button class="row-card" data-action="renderScenarioMenu">
           <div class="row-icon">${ICONS.scenario}</div>
-          <div class="row-body"><div class="row-title">${_t("case.scenario", "짧은 시나리오 (단편)")}</div><div class="row-sub">${_t("case.scenario.sub", "단편 임상 의사결정 · 10분 내")}</div></div>
+          <div class="row-body"><div class="row-title">${_t("case.scenario", "짧은 시나리오 (단편)")}${_koOnlyBadge()}</div><div class="row-sub">${_t("case.scenario.sub", "단편 임상 의사결정 · 10분 내")}</div></div>
           <div class="row-chev">›</div>
         </button>
         <button class="choice-btn center" data-action="renderSimMenu">${_t("action.prev", "뒤로")}</button>
@@ -3292,10 +3308,9 @@ function renderCaseMenu() {
 function renderDrillMenu() {
     gameState.mode = "drill_menu"; resetStateForMode();
     showCoreUI(); if (UI.logBar) UI.logBar.innerHTML = ""; updateStats();
-    // 영어 모드 안내 — 훈련(인계·트리아지)은 아직 한국어 전용 콘텐츠
-    const _curLang = (typeof window !== "undefined" && window.I18N && window.I18N.getLang) ? window.I18N.getLang() : "ko";
-    const koBadge = _curLang === "en" ? ` <span class="ko-content-badge">🇰🇷 KO</span>` : "";
-    const koHint = _curLang === "en"
+    // 영어 모드 안내 — 인계·트리아지 본문은 한국어 원문
+    const koBadge = _koOnlyBadge();
+    const koHint = _isEnUi()
         ? `<p class="ko-content-hint">${_t("drill.koHint", "인계 등 일부 훈련은 아직 한국어 전용이에요. 설정에서 한국어로 전환하면 전체 이용 가능합니다.")}</p>` : "";
     UI.gameArea.innerHTML = `
       <div class="tab-section">
@@ -3334,7 +3349,7 @@ function renderDrillMenu() {
         </button>
         <button class="row-card" data-action="startTriage">
           <div class="row-icon">${ICONS.triage}</div>
-          <div class="row-body"><div class="row-title">${_t("drill.triage", "트리아지")}</div><div class="row-sub">${_t("drill.triage.sub", "응급실 다중환자 분류")}</div></div>
+          <div class="row-body"><div class="row-title">${_t("drill.triage", "트리아지")}${koBadge}</div><div class="row-sub">${_t("drill.triage.sub", "응급실 다중환자 분류")}</div></div>
           <div class="row-chev">›</div>
         </button>
         <button class="choice-btn center" data-action="returnToMenu">${_t("action.back", "메뉴")}</button>
@@ -7697,7 +7712,7 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
 
         <button class="hero-card ${Storage.isFirstAction() ? 'hero-card-first' : ''}" data-action="initSurvival">
           ${Storage.isFirstAction() ? '<div class="hero-tooltip" aria-hidden="true">👇 여기 먼저 눌러보세요</div>' : ''}
-          <div class="hero-label">${_t("duty.start", "지금 시작")}</div>
+          <div class="hero-label">${_t("duty.start", "지금 시작")}${_koOnlyBadge()}</div>
           <div class="hero-title">${_t("duty.title", "오늘의 듀티")}</div>
           <div class="hero-sub">${_t("duty.sub", "환자 관리하며 점수 쌓기")}</div>
         </button>
