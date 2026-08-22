@@ -498,3 +498,69 @@ test("저장 데이터가 새로고침을 왕복해도 온전하다", async ({ p
     expect(after.streak.best).toBe(9);
     expect(after.bookmarks).toEqual(rich.bookmarks);
 });
+
+// 라이트 테마는 다크 우선 설계에서 자주 방치돼, 흰 배경에 흰 글씨 같은 사고가 난다.
+// 실제로 "오류 신고" 버튼이 1.06:1(사실상 안 보임), 정답 보기 텍스트가 3.56:1 이었다.
+function contrastRatio(fg, bg) {
+    const parse = s => {
+        const nums = (s.match(/-?\d*\.?\d+(e-?\d+)?/g) || []).map(Number);
+        if (/^color\(/.test(s)) return nums.slice(0, 3).map(v => Math.round(Math.max(0, Math.min(1, v)) * 255));
+        return nums.slice(0, 3);
+    };
+    const lum = ([r, g, b]) => {
+        const f = v => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+        return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+    };
+    const [a, z] = [lum(parse(fg)), lum(parse(bg))].sort((p, q) => q - p);
+    return (a + 0.05) / (z + 0.05);
+}
+for (const theme of ["light", "dark", "amoled"]) {
+    test(`${theme} 테마 — 핵심 텍스트가 WCAG AA 대비를 만족한다`, async ({ page }) => {
+        await page.addInitScript(t => {
+            localStorage.setItem("nurseSim:v1", JSON.stringify({
+                accepted: { version: "1.0", at: Date.now() }, onboarded: true,
+                settings: { lang: "ko", examMode: "korean", theme: t, sound: false },
+            }));
+            sessionStorage.setItem("nurseSim:cbIntroSeen", "1");
+        }, theme);
+        await page.goto("/");
+        await page.waitForSelector("h1.menu-title-v2", { timeout: 8000 });
+        await page.click('[data-action="setMenuTab"][data-tab="study"]');
+        await page.click('[data-action="renderPracticeMenu"]');
+        await page.click('[data-action="renderSubjectStudyMenu"]');
+        await page.click('[data-action="renderKorMenu"]');
+        await page.click('[data-action="startKorQuiz"][data-arg="__all__"]');
+        await page.locator("#kor-choices .choice-btn").first().click();
+        await expect(page.locator("#kor-choices .correct-flash")).toHaveCount(1);
+        const samples = await page.evaluate(() => {
+            const effBg = el => {
+                let n = el;
+                while (n) {
+                    const bg = getComputedStyle(n).backgroundColor;
+                    if (bg && !/rgba?\(0,\s*0,\s*0,\s*0\)|transparent/.test(bg)) return bg;
+                    n = n.parentElement;
+                }
+                return getComputedStyle(document.body).backgroundColor;
+            };
+            const pick = (label, sel) => {
+                const el = document.querySelector(sel);
+                if (!el) return null;
+                const cs = getComputedStyle(el);
+                return { label, fg: cs.color, bg: effBg(el), size: parseFloat(cs.fontSize), weight: parseInt(cs.fontWeight) };
+            };
+            return [
+                pick("정답 보기", "#kor-choices .correct-flash"),
+                pick("오답 보기", "#kor-choices .wrong-flash"),
+                pick("문제 본문", ".scene-desc"),
+                pick("면책 바", ".app-disclaimer"),
+                pick("오류신고 버튼", ".disclaimer-link"),
+            ].filter(Boolean);
+        });
+        for (const s of samples) {
+            const large = s.size >= 24 || (s.size >= 18.66 && s.weight >= 700);
+            const need = large ? 3.0 : 4.5;
+            const r = contrastRatio(s.fg, s.bg);
+            expect(r, `${theme} · ${s.label} (${r.toFixed(2)}:1, 기준 ${need})`).toBeGreaterThanOrEqual(need);
+        }
+    });
+}

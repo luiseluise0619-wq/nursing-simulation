@@ -14,7 +14,7 @@ body.app-hidden *::after {
 :root {
     /* === Sage Neumorphic — Light === */
     --primary:       #7fa881;   /* sage */
-    --primary-dark:  #6a9170;
+    --primary-dark:  #4c6b52;   /* 흰 배경 텍스트 대비 4.5:1 확보 (구 #6a9170 는 3.56:1) */
     --primary-soft:  #e8f0e9;
     --danger:  #c97070;          /* muted rose, never neon */
     --warning: #c9a25b;          /* muted mustard */
@@ -22,7 +22,7 @@ body.app-hidden *::after {
     --bg:        #eef2f5;        /* warm cool gray */
     --text:      #1e293b;
     --card:      #ffffff;
-    --muted:     #64748b;
+    --muted:     #57657c;
     --border:    #d1d9e0;
     --soft:      #e3e8ee;
     --softer:    #f6f8fa;
@@ -2658,8 +2658,9 @@ img.onboard-svg { display: block; }
 }
 .disclaimer-link {
     background: transparent;
-    border: 1px solid rgba(255,255,255,.45);
-    color: #fff;
+    /* 흰색을 하드코딩해 라이트 테마에서 흰 배경에 흰 글씨(1.06:1)가 됐다. 토큰으로 전환. */
+    border: 1px solid color-mix(in srgb, currentColor 45%, transparent);
+    color: var(--text);
     padding: 1px 7px;
     border-radius: var(--radius-pill);
     font-size: 11px;
