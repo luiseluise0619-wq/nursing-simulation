@@ -6228,6 +6228,10 @@ function renderDashboard() {
           <button class="choice-btn" data-action="printDashboard">${_t("dash.print", "PDF 인쇄")}</button>
           <button class="choice-btn" data-action="confirmClearStats">${_t("dash.clear", "통계 초기화")}</button>
         </div>
+
+        <div class="choice-list">
+          <button class="choice-btn primary" data-action="returnToMenu">${_t("nav.mainMenu", "메인 메뉴")}</button>
+        </div>
       </div>`;
 }
 // safeConfirm — Capacitor 일부 iOS 빌드에서 confirm() 비신뢰. 폴백 형식으로 보장.
@@ -7239,7 +7243,11 @@ function closeErrorReport() {
 // =========================================================================
 const LEGAL_VERSION = "1.0";
 
-function renderLegalGate(onAccept) {
+// onAccept 없이 호출하면(설정 → 약관 보기) 읽기 전용으로 연다.
+// 첫 실행용 동의 게이트를 그대로 재사용하면, 이미 동의한 사용자가 약관을 읽으려 들어왔다가
+// "동의 체크 → 동의하고 시작하기" 를 다시 거쳐야만 빠져나갈 수 있어 갇힌다.
+function renderLegalGate(onAccept, opts) {
+    const readOnly = !!(opts && opts.readOnly);
     hideCoreUI();
     UI.topBar.classList.remove("hidden"); // 테마/사운드 토글은 유지
     UI.gameArea.innerHTML = `
@@ -7275,14 +7283,16 @@ function renderLegalGate(onAccept) {
           </ul>
         </section>
 
-        <div class="legal-consent">
+        ${readOnly ? "" : `<div class="legal-consent">
           <input type="checkbox" id="legal-consent-check" aria-describedby="legal-consent-label">
           <label for="legal-consent-check" id="legal-consent-label">
             본 앱의 정보를 <strong>실제 환자에게 직접 적용하지 않을 것</strong>을 약속하며, 임상 의사결정에는 면허 의료인의 판단과 공식 가이드라인을 따를 것을 동의합니다.
           </label>
-        </div>
+        </div>`}
         <div class="choice-list">
-          <button class="choice-btn primary legal-accept-btn" data-action="legalAccept" disabled>동의하고 시작하기</button>
+          ${readOnly
+            ? `<button class="choice-btn primary" data-action="returnToMenu">${_t("nav.mainMenu", "메인 메뉴")}</button>`
+            : `<button class="choice-btn primary legal-accept-btn" data-action="legalAccept" disabled>${_t("onboard.consent", "동의하고 시작하기")}</button>`}
         </div>
       </div>`;
     UI._onLegalAccept = onAccept;
@@ -8502,7 +8512,7 @@ function openExternalLegal(type) {
     const inAppFallback = () => {
         try {
             if (type === "privacy" && typeof renderPrivacy === "function") { renderPrivacy(); return true; }
-            if (type === "terms") { renderLegalGate(() => returnToMenu()); return true; }
+            if (type === "terms") { renderLegalGate(null, { readOnly: true }); return true; }
         } catch {}
         return false;
     };
@@ -9318,7 +9328,7 @@ const DELEGATED_ACTIONS = {
     onboardNext: () => onboardNext(),
     onboardSkip: () => onboardSkip(),
     onboardFinish: () => onboardFinish(),
-    showLegal: () => renderLegalGate(() => returnToMenu()),
+    showLegal: () => renderLegalGate(null, { readOnly: true }),
     showOnboarding: () => renderOnboarding(0),
     openErrorReport: () => openErrorReport(),
     submitErrorReport: () => submitErrorReport(),

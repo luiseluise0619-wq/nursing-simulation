@@ -375,3 +375,34 @@ test.describe("상단바 모드 반영", () => {
         });
     }
 });
+
+// 하위 페이지에서 빠져나갈 수 없으면 사용자는 앱을 껐다 켜야 한다.
+// 대시보드는 탈출 버튼이 아예 없었고, 약관 보기는 첫 실행용 동의 게이트를 재사용해
+// "동의 체크 → 동의하고 시작하기"를 다시 거쳐야만 나올 수 있었다.
+test.describe("화면 탈출 경로", () => {
+    test.beforeEach(async ({ page }) => {
+        await seedLegalAccepted(page);
+        await page.goto("/");
+        await page.waitForSelector("h1.menu-title-v2", { timeout: 8000 });
+    });
+
+    test("대시보드에서 메인 메뉴로 돌아갈 수 있다", async ({ page }) => {
+        await page.click('[data-action="setMenuTab"][data-tab="my"]');
+        await page.click('[data-action="renderDashboard"]');
+        await expect(page.locator(".scene-title")).toContainText("대시보드");
+        await page.locator('[data-action="returnToMenu"]:visible').first().click();
+        await expect(page.locator("h1.menu-title-v2")).toBeVisible();
+    });
+
+    test("약관 보기는 재동의 없이 닫을 수 있다", async ({ page }) => {
+        await page.click("#kebab-btn");
+        await page.click('[data-action="openSettings"]');
+        await page.evaluate(() => document.querySelectorAll("details.settings-acc").forEach(d => { d.open = true; }));
+        await page.click('[data-action="showLegal"]');
+        // 읽기 전용 — 동의 체크박스와 동의 버튼이 없어야 한다
+        await expect(page.locator("#legal-consent-check")).toHaveCount(0);
+        await expect(page.locator(".legal-accept-btn")).toHaveCount(0);
+        await page.locator('[data-action="returnToMenu"]:visible').first().click();
+        await expect(page.locator("h1.menu-title-v2")).toBeVisible();
+    });
+});
