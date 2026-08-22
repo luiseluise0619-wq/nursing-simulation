@@ -323,3 +323,30 @@ test.describe("AI 학습 튜터", () => {
         await expect(page.locator("#tutor-quota")).toContainText("4");
     });
 });
+
+test.describe("국시 풀이 화면", () => {
+    test.beforeEach(async ({ page }) => {
+        await seedLegalAccepted(page);
+        await page.goto("/");
+        await page.waitForSelector("h1.menu-title-v2", { timeout: 8000 });
+        await page.click('[data-action="setMenuTab"][data-tab="study"]');
+        await page.click('[data-action="renderPracticeMenu"]');
+        await page.click('[data-action="renderSubjectStudyMenu"]');
+        await page.click('[data-action="renderKorMenu"]');
+        await page.click('[data-action="startKorQuiz"][data-arg="__all__"]');
+    });
+
+    test("상단바가 국시 모드로 갱신된다 (진행률·상태가 대기로 멈추지 않음)", async ({ page }) => {
+        await expect(page.locator("#progress-text")).toContainText("국시");
+        await expect(page.locator("#inventory-bar")).not.toContainText("대기");
+    });
+
+    test("정답 표시 배지가 보기 텍스트를 가리지 않는다", async ({ page }) => {
+        await page.locator("#kor-choices .choice-btn").first().click();
+        const marked = page.locator("#kor-choices .correct-flash");
+        await expect(marked).toHaveCount(1);
+        // 배지(우측 26px + 여백)가 앉을 자리를 확보했는지 — 확보 못 하면 긴 보기의 끝 글자가 잘린다
+        const pr = await marked.evaluate(el => parseFloat(getComputedStyle(el).paddingRight));
+        expect(pr).toBeGreaterThanOrEqual(48);
+    });
+});

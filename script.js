@@ -3968,6 +3968,9 @@ function renderKorCard() {
     const choicesHtml = q._shuffled.map((c, idx) => `
       <button class="choice-btn" data-action="korQuizAnswer" data-idx="${idx}">${escapeHtml(c.text)}</button>
     `).join("");
+    // 다른 모드와 달리 이 함수만 상단바 갱신을 빠뜨려, 국시를 푸는 내내 진행률이 0% 에
+    // 멈추고 상태 배지가 "대기"로 남아 있었다.
+    showCoreUI(); updateStats();
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
         <div class="quiz-progress">한국 국시 ${i + 1}/${pool.length} · ${escapeHtml(q.category)}</div>

@@ -2283,6 +2283,10 @@ body {
     font-weight: 700;
     position: relative;
 }
+/* 정답/오답 배지가 보기 텍스트 위에 겹쳐 긴 보기의 끝 글자를 가렸다.
+   배지 자리를 확보해 텍스트가 그 앞에서 줄바꿈되도록 한다. */
+.choice-btn.correct-flash,
+.choice-btn.wrong-flash { padding-right: 52px; }
 .choice-btn.correct-flash::after {
     content: "✓";
     position: absolute;
