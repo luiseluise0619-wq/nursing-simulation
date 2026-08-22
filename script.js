@@ -50,6 +50,8 @@ function syncDisclaimerLang() {
     try {
         const el = document.getElementById("app-disclaimer");
         if (!el) return;
+        const skip = document.getElementById("skip-link");
+        if (skip) skip.textContent = _t("a11y.skipToContent", "본문으로 건너뛰기");
         el.innerHTML = `${_t("disclaimer.bar", "교육 목적 · 임상 적용 금지")} · `
             + `<button class="disclaimer-link" data-action="openErrorReport">${_t("about.reportContent", "컨텐츠 오류 신고")}</button>`;
     } catch {}
@@ -1939,9 +1941,9 @@ function showInstallToast() {
     el.id = "install-toast";
     el.setAttribute("role", "status");
     el.innerHTML = `
-        <span style="margin-right:12px;">📱 홈 화면에 설치하시겠어요?</span>
+        <span>📱 ${_t("install.prompt", "홈 화면에 설치하시겠어요?")}</span>
         <button id="install-toast-yes" style="pointer-events:auto;background:#fff;color:#7fa881;border:none;padding:6px 12px;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px;">설치</button>
-        <button id="install-toast-no" style="pointer-events:auto;background:transparent;color:#fff;border:none;padding:6px 8px;cursor:pointer;font-family:inherit;font-size:13px;opacity:0.8;margin-left:4px;">나중에</button>`;
+        <button id="install-toast-no" style="pointer-events:auto;background:transparent;color:#fff;border:none;padding:6px 8px;cursor:pointer;font-family:inherit;font-size:13px;opacity:0.8;margin-left:4px;">${_t("update.later", "나중에")}</button>`;
     el.style.cssText = "position:fixed;bottom:calc(88px + env(safe-area-inset-bottom, 0px));left:50%;pointer-events:none;transform:translateX(-50%);background:#7fa881;color:#fff;padding:12px 18px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.3);z-index:99996;font-size:13px;font-family:inherit;display:flex;align-items:center;flex-wrap:wrap;justify-content:center;gap:6px;max-width:calc(100vw - 32px);animation:badgePop 400ms ease;max-width:calc(100vw - 32px);";
     document.body.appendChild(el);
     document.getElementById("install-toast-yes")?.addEventListener("click", async () => {
@@ -1992,7 +1994,7 @@ function showReviewToast() {
         <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;">
           <button id="review-toast-yes" style="pointer-events:auto;background:#fff;color:#7fa881;border:none;padding:8px 14px;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px;">⭐⭐⭐⭐⭐ 좋아요</button>
           <button id="review-toast-no" style="pointer-events:auto;background:transparent;color:#fff;border:1px solid rgba(255,255,255,0.5);padding:8px 14px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:13px;">개선 의견</button>
-          <button id="review-toast-dismiss" style="pointer-events:auto;background:transparent;color:#fff;border:none;padding:8px;cursor:pointer;font-family:inherit;font-size:12px;opacity:0.7;">나중에</button>
+          <button id="review-toast-dismiss" style="pointer-events:auto;background:transparent;color:#fff;border:none;padding:8px;cursor:pointer;font-family:inherit;font-size:12px;opacity:0.7;">${_t("update.later", "나중에")}</button>
         </div>`;
     el.style.cssText = "position:fixed;bottom:calc(88px + env(safe-area-inset-bottom, 0px));left:50%;pointer-events:none;transform:translateX(-50%);background:linear-gradient(135deg,#7fa881,#6a9170);color:#fff;padding:18px 24px;border-radius:14px;box-shadow:0 10px 32px rgba(0,0,0,0.35);z-index:99996;font-family:inherit;text-align:center;max-width:calc(100vw - 32px);animation:badgePop 500ms ease;";
     document.body.appendChild(el);
@@ -2022,9 +2024,9 @@ function showUpdateToast() {
     el.id = "update-toast";
     el.setAttribute("role", "status");
     el.innerHTML = `
-        <span>🔄 새 버전 준비됨</span>
-        <button id="update-toast-reload" style="pointer-events:auto;background:#fff;color:#7fa881;border:none;padding:6px 12px;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px;">새로고침</button>
-        <button id="update-toast-dismiss" style="pointer-events:auto;background:transparent;color:#fff;border:none;padding:6px 8px;cursor:pointer;font-family:inherit;font-size:13px;opacity:0.8;margin-left:4px;">나중에</button>`;
+        <span>🔄 ${_t("update.ready", "새 버전 준비됨")}</span>
+        <button id="update-toast-reload" style="pointer-events:auto;background:#fff;color:#7fa881;border:none;padding:6px 12px;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px;">${_t("update.reload", "새로고침")}</button>
+        <button id="update-toast-dismiss" style="pointer-events:auto;background:transparent;color:#fff;border:none;padding:6px 8px;cursor:pointer;font-family:inherit;font-size:13px;opacity:0.8;margin-left:4px;">${_t("update.later", "나중에")}</button>`;
     el.style.cssText = "position:fixed;bottom:calc(88px + env(safe-area-inset-bottom, 0px));left:50%;pointer-events:none;transform:translateX(-50%);background:#7fa881;color:#fff;padding:12px 18px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.3);z-index:99996;font-size:13px;font-family:inherit;display:flex;align-items:center;flex-wrap:wrap;justify-content:center;gap:6px;max-width:calc(100vw - 32px);animation:badgePop 400ms ease;";
     document.body.appendChild(el);
     document.getElementById("update-toast-reload")?.addEventListener("click", () => { location.reload(); });
@@ -3587,7 +3589,7 @@ function renderEcgQuizCard() {
     const correct = ECG_RHYTHMS.find(r => r.id === id);
     const others = ECG_RHYTHMS.filter(r => r.id !== id);
     for (let k = others.length - 1; k > 0; k--) { const j = Math.floor(Math.random() * (k + 1)); [others[k], others[j]] = [others[j], others[k]]; }
-    let choices = [correct, ...others.slice(0, 4)];
+    const choices = [correct, ...others.slice(0, 4)];
     for (let k = choices.length - 1; k > 0; k--) { const j = Math.floor(Math.random() * (k + 1)); [choices[k], choices[j]] = [choices[j], choices[k]]; }
     gameState.ecgChoices = choices.map(c => c.id);
     showCoreUI(); updateStats();
@@ -7653,8 +7655,8 @@ function renderStudyCalendar(data) {
     }
     return `<div class="study-calendar" aria-label="최근 30일 학습 캘린더">
         <div class="cal-header">
-            <span class="cal-title">최근 30일</span>
-            <span class="cal-meta">${activeCount}/30일 학습</span>
+            <span class="cal-title">${_t("cal.last30", "최근 30일")}</span>
+            <span class="cal-meta">${_ecgLang() === "en" ? `${activeCount}/30 days` : `${activeCount}/30일 학습`}</span>
         </div>
         <div class="cal-grid" role="grid">${cells.join("")}</div>
     </div>`;
@@ -7715,11 +7717,11 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
 
     const weeklyHtml = (weekly.modesPlayed > 0) ? `
       <button class="weekly-report-card" data-action="renderWeeklyReport" aria-label="이번 주 학습 요약 보기">
-        <div class="wr-label">${weekly.isSundayAfternoon ? '🗓 일요일 위클리 리포트' : '🗓 이번 주 요약'}</div>
-        <div class="wr-title">${weekly.totalSolved}문제 풀이 · 정답률 ${weekly.accuracy}%</div>
+        <div class="wr-label">🗓 ${weekly.isSundayAfternoon ? _t("weekly.sunday", "일요일 위클리 리포트") : _t("weekly.thisWeek", "이번 주 요약")}</div>
+        <div class="wr-title">${_ecgLang() === "en" ? `${weekly.totalSolved} questions · ${weekly.accuracy}% accuracy` : `${weekly.totalSolved}문제 풀이 · 정답률 ${weekly.accuracy}%`}</div>
         <div class="wr-stats">
-          <span><strong>${weekly.daysActive}</strong>일 학습</span>
-          <span><strong>${weekly.modesPlayed}</strong>회 모드 완료</span>
+          <span><strong>${weekly.daysActive}</strong>${_t("weekly.daysUnit", "일 학습")}</span>
+          <span><strong>${weekly.modesPlayed}</strong>${_t("weekly.modesUnit", "회 모드 완료")}</span>
         </div>
       </button>` : '';
 
@@ -7760,7 +7762,7 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
           </button>` : ''}
 
         <button class="hero-card ${Storage.isFirstAction() ? 'hero-card-first' : ''}" data-action="initSurvival">
-          ${Storage.isFirstAction() ? '<div class="hero-tooltip" aria-hidden="true">👇 여기 먼저 눌러보세요</div>' : ''}
+          ${Storage.isFirstAction() ? `<div class="hero-tooltip" aria-hidden="true">👇 ${_t("home.tapHere", "여기 먼저 눌러보세요")}</div>` : ''}
           <div class="hero-label">${_t("duty.start", "지금 시작")}${_koOnlyBadge()}</div>
           <div class="hero-title">${_t("duty.title", "오늘의 듀티")}</div>
           <div class="hero-sub">${_t("duty.sub", "환자 관리하며 점수 쌓기")}</div>
@@ -7771,7 +7773,9 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
             <div class="row-icon">${ICONS.daily}</div>
             <div class="row-body">
               <div class="row-title">${_t("daily.title", "일일 챌린지")} ${dailyDone ? `<span class="row-pill done">${_t("daily.done", "완료")}</span>` : ''}</div>
-              <div class="row-sub">${dailyDone ? `오늘 ${dailyCorrect}/${DAILY_CHALLENGE_TOTAL} 정답` : `매일 ${DAILY_CHALLENGE_TOTAL}문제`}</div>
+              <div class="row-sub">${dailyDone
+                ? (_ecgLang() === "en" ? `${dailyCorrect}/${DAILY_CHALLENGE_TOTAL} correct today` : `오늘 ${dailyCorrect}/${DAILY_CHALLENGE_TOTAL} 정답`)
+                : `${_t("daily.every", "매일")} ${DAILY_CHALLENGE_TOTAL}${_t("unit.q", "문제")}`}</div>
             </div>
             <div class="row-chev">›</div>
           </button>
@@ -7907,8 +7911,8 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
         <button class="row-card big" data-action="openSettings">
           <div class="row-icon big"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
           <div class="row-body">
-            <div class="row-title">설정</div>
-            <div class="row-sub">테마 · 사운드 · 데이터 백업·초기화</div>
+            <div class="row-title">${_t("settings.title", "설정")}</div>
+            <div class="row-sub">${_t("record.settings.sub", "테마 · 사운드 · 데이터 백업·초기화")}</div>
           </div>
           <div class="row-chev">›</div>
         </button>
