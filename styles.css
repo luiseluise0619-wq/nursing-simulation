@@ -181,7 +181,11 @@ body {
     .stat-gauge .sg-icon { animation: none !important; }
 }
 
-#top-bar .top-actions { display: flex; gap: 8px; }
+#top-bar .top-actions { display: flex; gap: 8px; margin-left: auto; }
+/* [hidden] 속성 존중 — .icon-btn/.back-btn 의 display 선언이 UA 기본 [hidden] 규칙을
+   덮어써서, 케밥 메뉴로 대체된 테마·사운드·설정 버튼이 top-bar 에 그대로 노출됐다.
+   시뮬레이션 화면에서 HP/평판 게이지까지 겹치면 상단바가 가로로 넘쳐 케밥이 잘렸음. */
+.icon-btn[hidden], .back-btn[hidden] { display: none; }
 .icon-btn {
     background: var(--card);
     border: none;
@@ -729,6 +733,9 @@ body {
 }
 @media (max-width: 360px) {
     .study-calendar .cal-grid { grid-template-columns: repeat(10, 1fr); }
+    /* 320px 급 화면: 뒤로가기 + HP/평판 게이지 + 케밥이 한 줄에 들어가도록 여백 축소 */
+    #top-bar { padding-left: 12px; padding-right: 12px; gap: 8px; }
+    #top-bar .stat-gauge { gap: 6px; padding: 7px 10px 7px 9px; }
 }
 
 /* D-day 카운트다운 — 국시 / NCLEX 콜아웃 (좌측 SVG 아이콘 + 우측 본문) */
@@ -2448,6 +2455,8 @@ body {
 .stat-gauge {
     display: inline-flex; align-items: center; gap: 8px;
     font-size: 14px; font-weight: 800;
+    /* 좁은 화면에서 게이지가 줄어들 수 있어야 상단바가 넘치지 않는다 */
+    min-width: 0; flex-shrink: 1;
     padding: 7px 14px 7px 12px;
     background: var(--card);
     border-radius: var(--radius-pill);
@@ -2469,8 +2478,9 @@ body {
     .stat-gauge.hp[data-level="mid"] { border-color: rgba(201, 162, 91, 0.3); }
     .stat-gauge.hp[data-level="lo"]  { border-color: rgba(201, 112, 112, 0.5); }
 }
+.stat-gauge > span:not(.sg-bar) { white-space: nowrap; }
 .stat-gauge .sg-bar {
-    width: 64px; height: 7px;
+    width: 64px; flex: 0 1 64px; min-width: 20px; height: 7px;
     background: var(--soft);
     border-radius: var(--radius-pill);
     overflow: hidden;

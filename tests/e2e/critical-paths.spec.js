@@ -81,7 +81,7 @@ test.describe("핵심 경로", () => {
     test("5) NCLEX 모드 전환 → NCLEX 메뉴 진입", async ({ page }) => {
         // 설정 페이지 진입
         await page.click("#kebab-btn");
-        await page.click('[data-action="openSettings"]');
+        await page.click('#kebab-menu [data-action="openSettings"]');
         await expect(page.locator(".scene-title")).toContainText("설정");
         // NCLEX 모드 활성화
         await page.click('[data-action="setExamMode"][data-mode="nclex"]');
@@ -202,7 +202,7 @@ test.describe("데이터 컨트롤 (GDPR)", () => {
 
     test("설정 → 내 데이터 페이지 진입 + 백업 버튼 노출", async ({ page }) => {
         await page.click("#kebab-btn");
-        await page.click('[data-action="openSettings"]');
+        await page.click('#kebab-menu [data-action="openSettings"]');
         await page.click('[data-action="renderDataControl"]');
         await expect(page.locator(".scene-title")).toContainText("내 데이터");
         await expect(page.locator('[data-action="exportData"]')).toBeVisible();
@@ -380,6 +380,49 @@ test.describe("상단바 모드 반영", () => {
     }
 });
 
+// 시뮬레이션 화면은 HP·평판 게이지가 상단바에 함께 뜬다. .icon-btn 의 display 선언이
+// [hidden] 속성을 덮어써서 케밥으로 대체된 테마·사운드·설정 버튼까지 같이 그려졌고,
+// 그 결과 상단바가 뷰포트를 넘쳐 케밥(유일한 메뉴 진입점)이 화면 밖으로 잘렸다.
+test.describe("시뮬레이션 상단바 레이아웃", () => {
+    for (const width of [320, 390]) {
+        test(`${width}px — 게이지가 떠도 상단바가 넘치지 않고 케밥을 누를 수 있다`, async ({ page }) => {
+            await page.setViewportSize({ width, height: 844 });
+            await seedLegalAccepted(page);
+            await page.goto("/");
+            await page.waitForSelector("h1.menu-title-v2", { timeout: 8000 });
+            await page.click('[data-action="setMenuTab"][data-tab="study"]');
+            await page.click('[data-action="renderSimMenu"]');
+            await page.click('[data-action="renderCaseMenu"]');
+            await page.click('[data-action="renderScenarioMenu"]');
+            await page.locator('[data-action="startScenario"]').first().click();
+            await expect(page.locator("#hp-gauge")).not.toHaveClass(/hidden/);
+
+            const overflow = await page.evaluate(() => {
+                const d = document.documentElement;
+                return d.scrollWidth - d.clientWidth;
+            });
+            expect(overflow).toBe(0);
+
+            // 케밥이 뷰포트 안에 온전히 들어와야 메뉴를 열 수 있다
+            const box = await page.locator("#kebab-btn").boundingBox();
+            expect(box.x).toBeGreaterThanOrEqual(0);
+            expect(box.x + box.width).toBeLessThanOrEqual(width);
+            await page.click("#kebab-btn");
+            await expect(page.locator("#kebab-menu")).not.toHaveClass(/hidden/);
+        });
+    }
+
+    test("케밥으로 대체된 아이콘 버튼은 상단바에 중복 노출되지 않는다", async ({ page }) => {
+        await seedLegalAccepted(page);
+        await page.goto("/");
+        await page.waitForSelector("h1.menu-title-v2", { timeout: 8000 });
+        for (const id of ["#theme-toggle", "#sound-toggle", "#settings-btn"]) {
+            await expect(page.locator(id)).toBeHidden();
+        }
+        await expect(page.locator("#kebab-btn")).toBeVisible();
+    });
+});
+
 // 하위 페이지에서 빠져나갈 수 없으면 사용자는 앱을 껐다 켜야 한다.
 // 대시보드는 탈출 버튼이 아예 없었고, 약관 보기는 첫 실행용 동의 게이트를 재사용해
 // "동의 체크 → 동의하고 시작하기"를 다시 거쳐야만 나올 수 있었다.
@@ -400,7 +443,7 @@ test.describe("화면 탈출 경로", () => {
 
     test("약관 보기는 재동의 없이 닫을 수 있다", async ({ page }) => {
         await page.click("#kebab-btn");
-        await page.click('[data-action="openSettings"]');
+        await page.click('#kebab-menu [data-action="openSettings"]');
         await page.evaluate(() => document.querySelectorAll("details.settings-acc").forEach(d => { d.open = true; }));
         await page.click('[data-action="showLegal"]');
         // 읽기 전용 — 동의 체크박스와 동의 버튼이 없어야 한다
@@ -693,7 +736,7 @@ test.describe("데이터 백업·복원", () => {
         await page.goto("/");
         await page.waitForSelector("h1.menu-title-v2", { timeout: 8000 });
         await page.click("#kebab-btn");
-        await page.click('[data-action="openSettings"]');
+        await page.click('#kebab-menu [data-action="openSettings"]');
         await page.evaluate(() => document.querySelectorAll("details.settings-acc").forEach(d => { d.open = true; }));
     });
 
