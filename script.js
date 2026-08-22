@@ -7748,12 +7748,10 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
           <div class="row-chev">›</div>
         </button>
       </div>`;
+      // 위계 2단 — ① 지금 할 행동(히어로 · 이어하기 · 오늘 할 일) ② 지나온 기록(D-day·연속·요약·캘린더).
+      // 정보 카드를 위에 두면 주 CTA 가 첫 화면 밖으로 밀려 매번 스크롤해야 한다.
       return `
       <div class="tab-section">
-        ${countdownHtml}
-        ${streakHtml}
-        ${calendarHtml}
-        ${weeklyHtml}
         ${resumeEp ? `
           <button class="resume-card" data-action="startEpisode" data-arg="${escapeHtml(resumeEp.ep.id)}">
             <div class="resume-label">${_t("home.resume", "이어하기")}</div>
@@ -7801,6 +7799,11 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
             <div class="row-chev">›</div>
           </button>
         </div>
+
+        ${countdownHtml}
+        ${streakHtml}
+        ${weeklyHtml}
+        ${calendarHtml}
       </div>`;
     };
 
