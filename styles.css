@@ -3431,10 +3431,13 @@ img.onboard-svg { display: block; }
 
 /* 주사 부위 짚기 — 인체 SVG */
 .body-wrap { display: flex; justify-content: center; margin: 8px 0 14px; }
-.body-svg { width: 160px; max-width: 55%; height: auto; }
+.body-svg { width: 210px; max-width: 72%; height: auto; }
 .body-svg .body-outline { fill: var(--softer); stroke: var(--border); stroke-width: 1.5; }
-.site-zone { fill: rgba(127, 168, 129, 0.14); stroke: var(--primary); stroke-width: 1.6; stroke-dasharray: 3 2; cursor: pointer; transition: fill 0.15s; }
-.site-zone:hover, .site-zone:focus-visible { fill: rgba(127, 168, 129, 0.32); outline: none; }
+.site-zone { fill: rgba(127, 168, 129, 0.14); stroke: var(--primary); stroke-width: 1.6; stroke-dasharray: 3 2; pointer-events: none; transition: fill 0.15s; }
+/* 투명 히트 영역 — 보이는 원보다 크게 잡아 손가락 터치 타깃을 확보 */
+.site-hit { fill: transparent; stroke: none; cursor: pointer; }
+.site-hit:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; border-radius: 50%; }
+.site-zone.hot { fill: rgba(127, 168, 129, 0.32); }
 .site-zone.site-correct { fill: rgba(46, 160, 67, 0.55); stroke: #2ea043; stroke-dasharray: none; }
 .site-zone.site-wrong { fill: rgba(220, 80, 80, 0.5); stroke: #dc5050; stroke-dasharray: none; }
 

@@ -44,6 +44,16 @@ function _isEnUi() {
 function _koOnlyBadge() {
     return _isEnUi() ? ` <span class="ko-content-badge">🇰🇷 KO</span>` : "";
 }
+// 상단 면책 바는 index.html 의 정적 마크업이라 언어 전환 시 따라오지 않는다.
+// 모든 화면 최상단에 늘 떠 있는 문구여서, 부팅·언어 전환 시 현재 언어로 다시 써준다.
+function syncDisclaimerLang() {
+    try {
+        const el = document.getElementById("app-disclaimer");
+        if (!el) return;
+        el.innerHTML = `${_t("disclaimer.bar", "교육 목적 · 임상 적용 금지")} · `
+            + `<button class="disclaimer-link" data-action="openErrorReport">${_t("about.reportContent", "컨텐츠 오류 신고")}</button>`;
+    } catch {}
+}
 function _koOnlyHint() {
     return _isEnUi()
         ? `<p class="ko-content-hint">${_t("content.koOnly", "이 파트의 사례 본문은 한국어로 제공됩니다. 화면 언어와 무관하게 내용은 한국어예요.")}</p>`
@@ -2189,6 +2199,7 @@ function toggleLang() {
     document.documentElement.lang = next;
     const LABELS = { ko: "🇰🇷 한국어", en: "🇺🇸 English" };
     addLog("🌐 " + LABELS[next], "log-good");
+    try { syncDisclaimerLang(); } catch {}
     try { returnToMenu(); } catch {}
 }
 
@@ -2296,10 +2307,14 @@ function updateStats() {
     updateBackButton();
 
     UI.inventory.innerHTML = "";
-    const shiftBadge = document.createElement("span");
-    shiftBadge.className = "badge accent";
-    shiftBadge.textContent = `${_t("status.shift", "근무")}: ${gameState.currentShift}`;
-    UI.inventory.appendChild(shiftBadge);
+    // 근무(시프트)는 듀티 시뮬레이션의 개념 — 심전도·부위짚기 같은 순수 학습 모드에선
+    // 아무 의미가 없어 혼란만 준다. HP/평판과 같은 기준으로 시뮬 모드에서만 노출.
+    if (isSimMode) {
+        const shiftBadge = document.createElement("span");
+        shiftBadge.className = "badge accent";
+        shiftBadge.textContent = `${_t("status.shift", "근무")}: ${gameState.currentShift}`;
+        UI.inventory.appendChild(shiftBadge);
+    }
 
     const statusBadge = document.createElement("span");
     statusBadge.className = "badge";
@@ -3679,10 +3694,15 @@ function _bodySvg() {
         <rect x="76" y="180" width="22" height="156" rx="10"/>
         <rect x="102" y="180" width="22" height="156" rx="10"/>
       </g>
-      <circle class="site-zone" data-action="siteAnswer" data-region="deltoid" cx="61" cy="78" r="12" tabindex="0" role="button" aria-label="삼각근"/>
-      <circle class="site-zone" data-action="siteAnswer" data-region="abdomen" cx="100" cy="132" r="15" tabindex="0" role="button" aria-label="복부"/>
-      <circle class="site-zone" data-action="siteAnswer" data-region="ventrogluteal" cx="82" cy="162" r="12" tabindex="0" role="button" aria-label="배둔근"/>
-      <circle class="site-zone" data-action="siteAnswer" data-region="vastus_lateralis" cx="80" cy="236" r="13" tabindex="0" role="button" aria-label="외측광근"/>
+      <circle class="site-zone" data-region="deltoid" cx="61" cy="78" r="13"/>
+      <circle class="site-zone" data-region="abdomen" cx="100" cy="134" r="13"/>
+      <circle class="site-zone" data-region="ventrogluteal" cx="82" cy="163" r="13"/>
+      <circle class="site-zone" data-region="vastus_lateralis" cx="80" cy="236" r="13"/>
+      <!-- 터치 영역은 보이는 원보다 크게 (손가락 44px 확보). 투명 원이 위에 올라간다. -->
+      <circle class="site-hit" data-action="siteAnswer" data-region="deltoid" cx="61" cy="78" r="24" tabindex="0" role="button" aria-label="삼각근"/>
+      <circle class="site-hit" data-action="siteAnswer" data-region="abdomen" cx="100" cy="134" r="24" tabindex="0" role="button" aria-label="복부"/>
+      <circle class="site-hit" data-action="siteAnswer" data-region="ventrogluteal" cx="82" cy="163" r="24" tabindex="0" role="button" aria-label="배둔근"/>
+      <circle class="site-hit" data-action="siteAnswer" data-region="vastus_lateralis" cx="80" cy="236" r="24" tabindex="0" role="button" aria-label="외측광근"/>
     </svg>`;
 }
 function startSiteQuiz() {
@@ -3702,7 +3722,8 @@ function renderSiteQuizCard() {
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
         <div class="quiz-progress">🧍 ${_t("site.title", "주사 부위 짚기")} ${i + 1}/${pool.length}</div>
-        <h2 class="scene-title">${escapeHtml(L === "en" ? q.qEn : q.qKo)} <button class="tts-btn" data-action="ttsSpeak" data-text="${escapeHtml(L === "en" ? q.qEn : q.qKo)}" aria-label="${_t("tts.readQ", "문제 읽어주기")}" title="${_t("tts.readQ", "문제 읽어주기")}">🔊</button></h2>
+        <h2 class="scene-title">${escapeHtml(L === "en" ? q.qEn : q.qKo)}</h2>
+        <div class="tutor-actions"><button class="tts-btn" data-action="ttsSpeak" data-text="${escapeHtml(L === "en" ? q.qEn : q.qKo)}" aria-label="${_t("tts.readQ", "문제 읽어주기")}" title="${_t("tts.readQ", "문제 읽어주기")}">🔊</button></div>
         <div class="body-wrap">${_bodySvg()}</div>
         <div id="site-feedback" class="image-quiz-feedback hidden" aria-live="polite"></div>
         <button class="choice-btn subtle center hidden" id="site-next-btn" data-action="siteQuizNext">${_t("action.next", "다음 →")}</button>
@@ -7910,7 +7931,7 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
     return `
       <div class="menu-shell">
         <header class="menu-header">
-          <h1 class="menu-title-v2">간호사 시뮬레이터</h1>
+          <h1 class="menu-title-v2">${_t("app.name", "간호사 시뮬레이터")}</h1>
           <span class="version-badge-v2">v${APP_VERSION || '1.0'}</span>
         </header>
 
@@ -8376,7 +8397,10 @@ function boot() {
     const afterReady = () => {
         handleShortcutUrl();
         const disclaimer = document.getElementById("app-disclaimer");
-        if (disclaimer && Storage.isAccepted(LEGAL_VERSION)) disclaimer.classList.remove("hidden");
+        if (disclaimer && Storage.isAccepted(LEGAL_VERSION)) {
+            syncDisclaimerLang();
+            disclaimer.classList.remove("hidden");
+        }
         removeLoader();
     };
     if (!Storage.isAccepted(LEGAL_VERSION)) {
