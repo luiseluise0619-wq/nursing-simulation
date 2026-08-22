@@ -1124,10 +1124,16 @@ const Storage = {
                 choseAt: Number.isFinite(raw.persona.choseAt) ? raw.persona.choseAt : 0,
             } : { discipline: null, year: null, choseAt: 0 },
         };
-        if (raw.stats && typeof raw.stats === "object") {
-            CATEGORIES.forEach(c => {
+        // 저장된 모든 과목을 살린다. 예전에는 CATEGORIES(국시 7과목)만 옮겨 담아,
+        // 그 밖의 카테고리(NCLEX 4개 client need, 생성기 문제 등)로 푼 기록이
+        // 다음 load 에서 통째로 사라졌다. 타입 검증은 그대로 유지한다.
+        if (raw.stats && typeof raw.stats === "object" && !Array.isArray(raw.stats)) {
+            Object.keys(raw.stats).forEach(c => {
                 const s = raw.stats[c];
-                if (s && Number.isFinite(s.solved) && Number.isFinite(s.correct)) out.stats[c] = { solved: s.solved, correct: s.correct };
+                if (s && typeof s === "object" && Number.isFinite(s.solved) && Number.isFinite(s.correct)
+                    && s.solved >= 0 && s.correct >= 0) {
+                    out.stats[c] = { solved: s.solved, correct: s.correct };
+                }
             });
         }
         return out;
@@ -4512,6 +4518,20 @@ function _nclexRenderFeedback(q, info) {
     if (list) list.querySelectorAll(".choice-btn").forEach(b => b.disabled = true);
     gameState.nclexAnswered = (gameState.nclexAnswered || 0) + 1;
     if (info.isCorrect) gameState.nclexCorrect = (gameState.nclexCorrect || 0) + 1;
+    // 통계에 기록 — 이게 없어서 NCLEX 만 푸는 사용자는 아무리 공부해도 대시보드가 0 이었다.
+    // 카테고리는 NCLEX client need 4종이며, 저장소가 국시 과목 외에도 보존하도록 고친 뒤에야
+    // 실제로 남는다(그 전엔 다음 load 에서 사라졌다).
+    try { if (q.category) Storage.incrementStat(q.category, !!info.isCorrect); } catch {}
+    // 틀린 문항은 오답노트로 — 간격 반복 대상에 NCLEX 도 포함
+    if (!info.isCorrect) {
+        try {
+            Storage.addWrong({
+                baseId: q.id, category: q.category, part: q.type || "mcq",
+                title: q.title || "", desc: q.desc || "",
+                choices: (q.choices || []).map(c => ({ text: c.text, correct: !!c.correct, log: c.log })),
+            });
+        } catch {}
+    }
     track("nclex_answered", { id: q.id, type: q.type, correct: !!info.isCorrect });
 
     // 각 보기에 정답/오답 표시
@@ -6175,7 +6195,12 @@ function renderDashboard() {
     showCoreUI(); updateStats();
     const stats = Storage.getStats();
     const data = Storage.load();
-    const rows = CATEGORIES.map((cat, i) => {
+    // 국시 7과목 + 실제로 푼 다른 카테고리(NCLEX client need 등)를 함께 보여준다.
+    // CATEGORIES 만 그리면 NCLEX 만 푸는 사용자에게는 0% 짜리 7줄만 남는다.
+    const extraCats = Object.keys(stats)
+        .filter(c => !CATEGORIES.includes(c) && stats[c] && (stats[c].solved || 0) > 0)
+        .sort();
+    const rows = [...CATEGORIES, ...extraCats].map((cat, i) => {
         const s = stats[cat] || { solved: 0, correct: 0 };
         const acc = s.solved > 0 ? Math.round((s.correct / s.solved) * 100) : 0;
         const tier = s.solved === 0 ? "none" : acc >= 80 ? "hi" : acc >= 50 ? "mid" : "lo";

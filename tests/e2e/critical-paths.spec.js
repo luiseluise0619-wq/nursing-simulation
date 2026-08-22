@@ -12,11 +12,15 @@ async function seedLegalAccepted(page) {
             // 언어·시험모드를 명시적으로 고정한다. 신규 사용자 기본값은 브라우저 언어를
             // 따르는데(영어권이면 en/NCLEX), 자동화 브라우저 로케일은 en-US 라
             // 시딩하지 않으면 이 스펙의 한국어 문자열 단정이 환경에 따라 흔들린다.
-            localStorage.setItem("nurseSim:v1", JSON.stringify({
-                accepted: { version: "1.0", at: Date.now() },
-                onboarded: true,
-                settings: { lang: "ko", examMode: "korean", theme: "dark", sound: false },
-            }));
+            // addInitScript 는 새로고침마다 다시 실행된다. 무조건 덮어쓰면 리로드 후
+            // 저장 상태를 검증하는 테스트가 항상 초기값을 보게 되므로, 없을 때만 심는다.
+            if (!localStorage.getItem("nurseSim:v1")) {
+                localStorage.setItem("nurseSim:v1", JSON.stringify({
+                    accepted: { version: "1.0", at: Date.now() },
+                    onboarded: true,
+                    settings: { lang: "ko", examMode: "korean", theme: "dark", sound: false },
+                }));
+            }
         } catch {}
         try { sessionStorage.setItem("nurseSim:cbIntroSeen", "1"); } catch {}
         // 서비스워커 업데이트 토스트는 테스트 환경 특성상(매 실행 sw.js 가 새 버전) 항상 뜬다.
@@ -404,5 +408,52 @@ test.describe("화면 탈출 경로", () => {
         await expect(page.locator(".legal-accept-btn")).toHaveCount(0);
         await page.locator('[data-action="returnToMenu"]:visible').first().click();
         await expect(page.locator("h1.menu-title-v2")).toBeVisible();
+    });
+});
+
+// 저장소 validate 가 국시 7과목만 옮겨 담아, 그 외 카테고리로 푼 기록이 다음 load 에서
+// 사라졌다. 일일 챌린지는 한 문항이 매번 유실됐고, NCLEX 는 아예 통계에 남지 않았다.
+test.describe("학습 기록 보존", () => {
+    test("일일 챌린지 10문항이 모두 집계된다", async ({ page }) => {
+        await seedLegalAccepted(page);
+        await page.goto("/");
+        await page.waitForSelector("h1.menu-title-v2", { timeout: 8000 });
+        await page.click('[data-action="startDailyChallenge"]');
+        for (let i = 0; i < 10; i++) {
+            const c = page.locator("#choice-list .choice-btn:not([disabled])").first();
+            if (await c.count() === 0) break;
+            await c.click();
+            const next = page.locator("#feedback-zone .choice-btn.primary").first();
+            if (await next.count() && await next.isVisible()) await next.click();
+        }
+        const solved = await page.evaluate(() => {
+            const d = JSON.parse(localStorage.getItem("nurseSim:v1") || "{}");
+            return Object.values(d.stats || {}).reduce((s, v) => s + (v.solved || 0), 0);
+        });
+        expect(solved).toBe(10);
+    });
+
+    test("국시 외 카테고리 기록이 새로고침 후에도 남는다", async ({ page }) => {
+        await seedLegalAccepted(page);
+        await page.goto("/");
+        await page.waitForSelector("h1.menu-title-v2", { timeout: 8000 });
+        // NCLEX client need 처럼 CATEGORIES 밖의 카테고리를 직접 심는다
+        await page.evaluate(() => {
+            const d = JSON.parse(localStorage.getItem("nurseSim:v1") || "{}");
+            d.stats = d.stats || {};
+            d.stats["Physiological Integrity"] = { solved: 7, correct: 5 };
+            localStorage.setItem("nurseSim:v1", JSON.stringify(d));
+        });
+        await page.reload();
+        await page.waitForSelector("h1.menu-title-v2", { timeout: 8000 });
+        const kept = await page.evaluate(() => {
+            const d = JSON.parse(localStorage.getItem("nurseSim:v1") || "{}");
+            return (d.stats || {})["Physiological Integrity"] || null;
+        });
+        expect(kept).toEqual({ solved: 7, correct: 5 });
+        // 대시보드에도 노출돼야 한다 — 기록만 남고 안 보이면 의미가 없다
+        await page.click('[data-action="setMenuTab"][data-tab="my"]');
+        await page.click('[data-action="renderDashboard"]');
+        await expect(page.locator(".dashboard-grid")).toContainText("Physiological Integrity");
     });
 });
