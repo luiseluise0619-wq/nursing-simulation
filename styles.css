@@ -4677,9 +4677,13 @@ img, svg {
 }
 
 /* === Touch target 44px 이상 보장 (Apple HIG) === */
-.icon-btn, .back-btn, .row-card, .choice-btn, .toggle-switch, .tts-btn {
+.icon-btn, .back-btn, .row-card, .choice-btn, .toggle-switch, .tts-btn,
+/* 케밥 메뉴 항목(38px)·난이도 세그먼트(36px)·트리아지 순위 버튼(40px)이 미달이었다 */
+.kebab-item, .difficulty-seg .diff-btn, .triage-num {
     min-height: 44px;
 }
+/* 예외: 본문에 섞여 흐르는 인라인 텍스트 링크(푸터 링크·면책 바 "오류 신고")는
+   44px 로 키우면 문단·상단 고지 바가 통째로 두꺼워져 화면 세로를 잡아먹는다. */
 /* 원형 아이콘 버튼 — 가로도 44px 보장 (이전 40px 고정 → HIG 미달) */
 .icon-btn, .back-btn { min-width: 44px; width: 44px; height: 44px; }
 .tts-btn { min-width: 32px; }  /* 단일 아이콘은 예외 */
