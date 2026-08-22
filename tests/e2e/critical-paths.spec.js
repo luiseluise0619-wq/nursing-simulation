@@ -725,3 +725,47 @@ test.describe("데이터 백업·복원", () => {
         expect(state.alive).toBe(true);
     });
 });
+
+test.describe("에피소드 진행·이어하기", () => {
+    test("중단한 에피소드가 홈 이어하기 카드로 복구된다", async ({ page }) => {
+        // 에피소드는 문제 풀이 통계를 남기지 않아, 에피소드만 시작한 사용자가
+        // "신규"로 판정되면서 홈이 빈 상태로 렌더돼 이어하기 카드가 사라졌었다.
+        await seedLegalAccepted(page);
+        await page.goto("/");
+        await page.waitForSelector("h1.menu-title-v2", { timeout: 8000 });
+        await page.click('[data-action="setMenuTab"][data-tab="study"]');
+        await page.click('[data-action="renderSimMenu"]');
+        await page.click('[data-action="renderCaseMenu"]');
+        await page.click('[data-action="renderEpisodeMenu"]');
+        await page.locator('[data-action="startEpisode"]').first().click();
+
+        // 에피소드는 autoAdvance — 다음 스텝의 보기가 살아날 때까지 기다린다
+        for (let i = 0; i < 2; i++) {
+            await page.locator("#choice-list .choice-btn:not([disabled])").first().click();
+            await page.waitForFunction(() => {
+                const b = [...document.querySelectorAll("#choice-list .choice-btn")];
+                return b.length > 0 && b.some(x => !x.disabled);
+            }, { timeout: 8000 });
+        }
+        const saved = await page.evaluate(() => {
+            const d = JSON.parse(localStorage.getItem("nurseSim:v1") || "{}");
+            const k = Object.keys(d.episodeProgress || {})[0];
+            return k ? d.episodeProgress[k] : null;
+        });
+        expect(saved).not.toBeNull();
+        expect(saved.step).toBeGreaterThan(0);
+
+        // 중단 → 홈 탭
+        await page.locator('[data-action="returnToMenu"]:visible').first().click();
+        await page.waitForSelector("h1.menu-title-v2");
+        await page.click('[data-action="setMenuTab"][data-tab="home"]');
+        await expect(page.locator(".resume-card")).toBeVisible();
+
+        // 이어하기 → 확인 화면 → 저장된 HP/평판 그대로 복구
+        await page.click(".resume-card");
+        await expect(page.locator('[data-action="episodeResume"]')).toBeVisible();
+        await page.click('[data-action="episodeResume"]');
+        await expect(page.locator("#hp")).toHaveText(String(saved.hp));
+        await expect(page.locator("#rep")).toHaveText(String(saved.rep));
+    });
+});

@@ -7750,7 +7750,12 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
     const bookmarkCount = Object.keys(data.bookmarks || {}).length;
     // 신규 유저(데이터 0) 판정 — 빈 상태 카피/CTA 노출용
     const _totalSolved = Object.values(data.stats || {}).reduce((s, v) => s + (v.solved || 0), 0);
-    const isNewUser = _totalSolved === 0 && (data.history || []).length === 0;
+    // "아무것도 안 한 사용자"만 빈 상태로 본다. 에피소드·시나리오는 문제 풀이 통계를 남기지
+    // 않으므로, 진행 중인 에피소드가 있는데도 신규로 판정돼 이어하기 카드가 사라지고 있었다.
+    const _hasEpisodeActivity = Object.keys(data.episodeProgress || {}).length > 0
+        || Object.keys(data.episodes || {}).length > 0
+        || Object.keys(data.scenarios || {}).length > 0;
+    const isNewUser = _totalSolved === 0 && (data.history || []).length === 0 && !_hasEpisodeActivity;
     const weekly = computeWeeklyReport(Date.now(), data);
     const streak = (data.streak && typeof data.streak === "object") ? data.streak : { count: 0, best: 0, lastDate: null };
     // 오늘 또는 어제 학습했으면 streak 유효, 아니면 끊긴 것으로 표시
