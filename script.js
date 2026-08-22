@@ -1020,6 +1020,8 @@ function renderEmptyState({ illust, title, desc, primaryAction, primaryLabel = "
 // =========================================================================
 // 저장소 (localStorage)
 // =========================================================================
+// 오답노트 최대 보관 수 — 저장·로드 양쪽에서 같은 상한을 쓴다
+const WRONG_QUEUE_MAX = 200;
 const Storage = {
     load() {
         try {
@@ -1074,7 +1076,12 @@ const Storage = {
         const out = {
             settings: (raw.settings && typeof raw.settings === "object") ? Object.assign(d.settings, raw.settings) : d.settings,
             stats: d.stats,
-            wrongQueue: Array.isArray(raw.wrongQueue) ? raw.wrongQueue.filter(e => e && typeof e === "object" && Array.isArray(e.choices)) : [],
+            // 오답 항목은 문제 스냅샷(제목·본문·보기 5개·해설)을 통째로 들고 있어 개당 1KB 안팎이다.
+            // addWrong 은 200개로 자르지만 백업 복원·변조로 들어온 값에는 그 상한이 걸리지 않아,
+            // 로드 시점에도 같은 불변식을 적용한다(오래된 것부터 버림 — addWrong 과 동일한 방향).
+            wrongQueue: Array.isArray(raw.wrongQueue)
+                ? raw.wrongQueue.filter(e => e && typeof e === "object" && Array.isArray(e.choices)).slice(-WRONG_QUEUE_MAX)
+                : [],
             bookmarks: (raw.bookmarks && typeof raw.bookmarks === "object" && !Array.isArray(raw.bookmarks)) ? raw.bookmarks : {},
             bestCombo: Number.isFinite(raw.bestCombo) ? raw.bestCombo : 0,
             mockBest: Number.isFinite(raw.mockBest) ? raw.mockBest : 0,
@@ -1174,7 +1181,7 @@ const Storage = {
             box: 1,
             interval: 0, repetitions: 0, easeFactor: 2.5, nextDue: Date.now(),
         };
-        if (data.wrongQueue.length >= 200) data.wrongQueue.shift();
+        if (data.wrongQueue.length >= WRONG_QUEUE_MAX) data.wrongQueue.shift();
         data.wrongQueue.push(entry);
         Storage.save(data);
         return entry.id;

@@ -651,3 +651,28 @@ test("변조된 저장소가 대시보드를 망가뜨리지 못한다", async (
     const overflowX = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     expect(overflowX).toBeLessThanOrEqual(1);
 });
+
+test("오답노트가 상한을 넘겨 저장돼도 로드 시 잘린다", async ({ page }) => {
+    // 오답 항목은 문제 스냅샷을 통째로 들고 있어 개당 1KB 안팎이다. addWrong 은 200개로
+    // 자르지만 백업 복원·변조로 들어온 값에는 그 상한이 걸리지 않았다.
+    await page.addInitScript(() => {
+        localStorage.setItem("nurseSim:v1", JSON.stringify({
+            accepted: { version: "1.0", at: Date.now() }, onboarded: true,
+            settings: { lang: "ko", examMode: "korean", theme: "dark", sound: false },
+            wrongQueue: Array.from({ length: 250 }, (_, i) => ({
+                id: "w" + i, baseId: "b" + i, category: "성인간호학", part: "1", title: "T" + i, desc: "D",
+                choices: [{ text: "A", correct: true }, { text: "B" }], ts: Date.now(),
+                box: 1, interval: 1, repetitions: 0, easeFactor: 2.5, nextDue: Date.now() - 1000,
+            })),
+        }));
+        sessionStorage.setItem("nurseSim:cbIntroSeen", "1");
+    });
+    await page.goto("/");
+    await page.waitForSelector("h1.menu-title-v2", { timeout: 8000 });
+    const n = await page.evaluate(() => (JSON.parse(localStorage.getItem("nurseSim:v1") || "{}").wrongQueue || []).length);
+    expect(n).toBe(200);
+    // 잘린 뒤에도 복습이 정상 동작해야 한다
+    await page.click('[data-action="setMenuTab"][data-tab="my"]');
+    await page.click('[data-action="reviewWrongAnswers"]');
+    await expect(page.locator("#choice-list .choice-btn").first()).toBeVisible();
+});
