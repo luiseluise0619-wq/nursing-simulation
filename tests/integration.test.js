@@ -519,12 +519,26 @@ describe("인계 시뮬레이터 (TTS)", () => {
         expect(stored.handoffSeen).toContain(firstPatient.id);
     });
 
-    test("handoffPlay 가 speechSynthesis.speak 를 호출한다", () => {
-        loadScript();
-        goto("startHandoff");
-        document.querySelector('[data-action="startHandoffRandom"]').click();
-        document.querySelector('[data-action="handoffPlay"]').click();
-        expect(window.speechSynthesis.speak).toHaveBeenCalled();
+    test("handoffPlay 가 음성 재생을 시도한다 (서버 Neural 또는 기기 폴백)", () => {
+        // 하이브리드 TTS: 온라인이면 /api/tts 오디오, 실패·오프라인이면 speechSynthesis.
+        // 어느 경로든 "재생을 시도했는지"가 이 테스트의 관심사다.
+        const realAudio = window.Audio;
+        const audioCalls = [];
+        window.Audio = function (src) {
+            audioCalls.push(src);
+            return { play: () => undefined, pause: () => {}, onended: null, onerror: null };
+        };
+        try {
+            loadScript();
+            goto("startHandoff");
+            document.querySelector('[data-action="startHandoffRandom"]').click();
+            document.querySelector('[data-action="handoffPlay"]').click();
+            const servedAudio = audioCalls.some(s => typeof s === "string" && s.includes("/api/tts"));
+            const spokeOnDevice = window.speechSynthesis.speak.mock.calls.length > 0;
+            expect(servedAudio || spokeOnDevice).toBe(true);
+        } finally {
+            window.Audio = realAudio;
+        }
     });
 
     test("handoffShow 가 본문을 노출시킨다", () => {
@@ -761,8 +775,8 @@ describe("약관 동의 / 온보딩 게이트", () => {
 
     test("온보딩 다음 버튼으로 마지막까지 진행", () => {
         loadScript({ legal: true, onboarded: false });
-        // 다음 → 다음 → ... 마지막 슬라이드까지
-        for (let i = 0; i < 4; i++) {
+        // 온보딩은 3장(환영 / 핵심가치 / 면책+동의) — 다음 2번이면 마지막 슬라이드
+        for (let i = 0; i < 2; i++) {
             const next = document.querySelector('[data-action="onboardNext"]');
             expect(next).not.toBeNull();
             next.click();
@@ -1006,9 +1020,9 @@ describe("온보딩 — 일러스트 사용 (이모지 제거 회귀 방지)", (
         expect(illust).not.toBeNull();
         expect(["svg", "img"]).toContain(illust.tagName.toLowerCase());
     });
-    test("5개 슬라이드 모두 일러스트를 가진다", () => {
+    test("3개 슬라이드 모두 일러스트를 가진다", () => {
         loadScript({ legal: true, onboarded: false });
-        for (let i = 0; i < 4; i++) {
+        for (let i = 0; i < 2; i++) {
             const illust = document.querySelector(".onboard-illust .onboard-svg");
             expect(illust).not.toBeNull();
             document.querySelector('[data-action="onboardNext"]').click();

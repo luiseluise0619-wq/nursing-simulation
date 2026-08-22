@@ -1156,8 +1156,17 @@ const Storage = {
         const item = data.wrongQueue.find(e => e.id === id);
         if (!item) return;
         let ef = (typeof item.easeFactor === "number" && item.easeFactor >= 1.3) ? item.easeFactor : 2.5;
-        let reps = (typeof item.repetitions === "number" && item.repetitions >= 0) ? item.repetitions : 0;
         let interval = (typeof item.interval === "number" && item.interval > 0) ? item.interval : 1;
+        // 구버전(Leitner 박스만 있던) 기록 마이그레이션 — repetitions 가 없으면 박스에서 유도한다.
+        // 이걸 안 하면 박스 5까지 올려둔 문항이 반복 0으로 취급돼 1일 간격으로 강등되고,
+        // 졸업도 못 하게 된다(기존 사용자 데이터 손상).
+        let reps;
+        if (typeof item.repetitions === "number" && item.repetitions >= 0) {
+            reps = item.repetitions;
+        } else {
+            const legacyBox = (typeof item.box === "number" && item.box >= 1 && item.box <= 5) ? item.box : 0;
+            reps = legacyBox;
+        }
         let graduate = false;
         if (quality < 3) {
             // 오답 — 반복 리셋, 최단 간격, ease 하향(최저 1.3)
@@ -4229,7 +4238,7 @@ function renderQuizSetSummary() {
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
         
-        <h2 class="scene-title">${_t("quiz.setDone", "세트 완료")} ${setNum} — ${escapeHtml(catShown)}</h2>
+        <h2 class="scene-title">${_ecgLang() === "en" ? `Set ${setNum} complete` : `세트 ${setNum} 완료`} — ${escapeHtml(catShown)}</h2>
         <div class="dashboard-row" role="group" aria-label="${_t("quiz.setResult", "세트 결과")}">
           <div class="dash-stat"><div class="ds-num">${setCorrect}/${QUIZ_SET_SIZE}</div><div class="ds-label">${_t("quiz.thisSet", "이번 세트")}</div></div>
           <div class="dash-stat"><div class="ds-num">${acc}%</div><div class="ds-label">${_t("quiz.setAcc", "세트 정답률")}</div></div>
@@ -7691,16 +7700,26 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
       </button>` : '';
 
     const renderHome = () => {
-      // 신규 유저 — 잡다한 카드 대신 단일 CTA 빈 상태 (첫 문제까지 마찰 최소화)
+      // 신규 유저 — 카드를 줄이고 첫 행동을 좁혀준다. 다만 앱의 간판인 듀티 시뮬레이션까지
+      // 감추면 첫 화면에서 앱의 정체가 안 보이므로, 히어로는 듀티로 두고
+      // 마찰이 가장 낮은 "몸풀기"(일일 챌린지)를 바로 아래에 크게 놓는다.
       if (isNewUser) return `
       <div class="tab-section home-empty">
         <img class="home-empty-svg" src="images/empty-no-data.svg" alt="" aria-hidden="true">
         <h2 class="home-empty-title">${_t("home.empty.title", "3문제만 풀면 여기가 채워져요")}</h2>
         <p class="home-empty-desc">${_t("home.empty.desc", "정답률 · 연속 학습 · 오답노트가 자동으로 쌓입니다.\n지금 가볍게 시작해요.")}</p>
-        <button class="hero-card hero-card-first" data-action="startDailyChallenge">
-          <div class="hero-label">${_t("home.empty.cta.label", "몸풀기")}</div>
-          <div class="hero-title">${_t("home.empty.cta.title", "지금 첫 문제 풀기")}</div>
-          <div class="hero-sub">${_t("home.empty.cta.sub", "하루 10문제 · 1분이면 충분")}</div>
+        <button class="hero-card hero-card-first" data-action="initSurvival">
+          <div class="hero-label">${_t("duty.start", "지금 시작")}${_koOnlyBadge()}</div>
+          <div class="hero-title">${_t("duty.title", "오늘의 듀티")}</div>
+          <div class="hero-sub">${_t("duty.sub", "환자 관리하며 점수 쌓기")}</div>
+        </button>
+        <button class="row-card" data-action="startDailyChallenge">
+          <div class="row-icon">${ICONS.daily}</div>
+          <div class="row-body">
+            <div class="row-title">${_t("home.empty.cta.title", "지금 첫 문제 풀기")} <span class="row-pill rec">${_t("home.empty.cta.label", "몸풀기")}</span></div>
+            <div class="row-sub">${_t("home.empty.cta.sub", "하루 10문제 · 1분이면 충분")}</div>
+          </div>
+          <div class="row-chev">›</div>
         </button>
       </div>`;
       return `
