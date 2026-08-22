@@ -1930,9 +1930,9 @@ function showInstallToast() {
     el.setAttribute("role", "status");
     el.innerHTML = `
         <span style="margin-right:12px;">📱 홈 화면에 설치하시겠어요?</span>
-        <button id="install-toast-yes" style="background:#fff;color:#7fa881;border:none;padding:6px 12px;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px;">설치</button>
-        <button id="install-toast-no" style="background:transparent;color:#fff;border:none;padding:6px 8px;cursor:pointer;font-family:inherit;font-size:13px;opacity:0.8;margin-left:4px;">나중에</button>`;
-    el.style.cssText = "position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#7fa881;color:#fff;padding:12px 18px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.3);z-index:99996;font-size:13px;font-family:inherit;display:flex;align-items:center;animation:badgePop 400ms ease;max-width:calc(100vw - 32px);";
+        <button id="install-toast-yes" style="pointer-events:auto;background:#fff;color:#7fa881;border:none;padding:6px 12px;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px;">설치</button>
+        <button id="install-toast-no" style="pointer-events:auto;background:transparent;color:#fff;border:none;padding:6px 8px;cursor:pointer;font-family:inherit;font-size:13px;opacity:0.8;margin-left:4px;">나중에</button>`;
+    el.style.cssText = "position:fixed;bottom:calc(88px + env(safe-area-inset-bottom, 0px));left:50%;pointer-events:none;transform:translateX(-50%);background:#7fa881;color:#fff;padding:12px 18px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.3);z-index:99996;font-size:13px;font-family:inherit;display:flex;align-items:center;flex-wrap:wrap;justify-content:center;gap:6px;max-width:calc(100vw - 32px);animation:badgePop 400ms ease;max-width:calc(100vw - 32px);";
     document.body.appendChild(el);
     document.getElementById("install-toast-yes")?.addEventListener("click", async () => {
         try {
@@ -1980,11 +1980,11 @@ function showReviewToast() {
     el.innerHTML = `
         <div style="margin-bottom:10px;font-weight:700;">⭐ 100문제 돌파! 어떠셨나요?</div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;">
-          <button id="review-toast-yes" style="background:#fff;color:#7fa881;border:none;padding:8px 14px;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px;">⭐⭐⭐⭐⭐ 좋아요</button>
-          <button id="review-toast-no" style="background:transparent;color:#fff;border:1px solid rgba(255,255,255,0.5);padding:8px 14px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:13px;">개선 의견</button>
-          <button id="review-toast-dismiss" style="background:transparent;color:#fff;border:none;padding:8px;cursor:pointer;font-family:inherit;font-size:12px;opacity:0.7;">나중에</button>
+          <button id="review-toast-yes" style="pointer-events:auto;background:#fff;color:#7fa881;border:none;padding:8px 14px;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px;">⭐⭐⭐⭐⭐ 좋아요</button>
+          <button id="review-toast-no" style="pointer-events:auto;background:transparent;color:#fff;border:1px solid rgba(255,255,255,0.5);padding:8px 14px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:13px;">개선 의견</button>
+          <button id="review-toast-dismiss" style="pointer-events:auto;background:transparent;color:#fff;border:none;padding:8px;cursor:pointer;font-family:inherit;font-size:12px;opacity:0.7;">나중에</button>
         </div>`;
-    el.style.cssText = "position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#7fa881,#6a9170);color:#fff;padding:18px 24px;border-radius:14px;box-shadow:0 10px 32px rgba(0,0,0,0.35);z-index:99996;font-family:inherit;text-align:center;max-width:calc(100vw - 32px);animation:badgePop 500ms ease;";
+    el.style.cssText = "position:fixed;bottom:calc(88px + env(safe-area-inset-bottom, 0px));left:50%;pointer-events:none;transform:translateX(-50%);background:linear-gradient(135deg,#7fa881,#6a9170);color:#fff;padding:18px 24px;border-radius:14px;box-shadow:0 10px 32px rgba(0,0,0,0.35);z-index:99996;font-family:inherit;text-align:center;max-width:calc(100vw - 32px);animation:badgePop 500ms ease;";
     document.body.appendChild(el);
     document.getElementById("review-toast-yes")?.addEventListener("click", () => {
         track("review_prompt_positive");
@@ -2012,10 +2012,10 @@ function showUpdateToast() {
     el.id = "update-toast";
     el.setAttribute("role", "status");
     el.innerHTML = `
-        <span style="margin-right:12px;">🔄 새 버전이 준비되었어요</span>
-        <button id="update-toast-reload" style="background:#fff;color:#7fa881;border:none;padding:6px 12px;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px;">새로고침</button>
-        <button id="update-toast-dismiss" style="background:transparent;color:#fff;border:none;padding:6px 8px;cursor:pointer;font-family:inherit;font-size:13px;opacity:0.8;margin-left:4px;">나중에</button>`;
-    el.style.cssText = "position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#7fa881;color:#fff;padding:12px 18px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.3);z-index:99996;font-size:13px;font-family:inherit;display:flex;align-items:center;animation:badgePop 400ms ease;";
+        <span>🔄 새 버전 준비됨</span>
+        <button id="update-toast-reload" style="pointer-events:auto;background:#fff;color:#7fa881;border:none;padding:6px 12px;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px;">새로고침</button>
+        <button id="update-toast-dismiss" style="pointer-events:auto;background:transparent;color:#fff;border:none;padding:6px 8px;cursor:pointer;font-family:inherit;font-size:13px;opacity:0.8;margin-left:4px;">나중에</button>`;
+    el.style.cssText = "position:fixed;bottom:calc(88px + env(safe-area-inset-bottom, 0px));left:50%;pointer-events:none;transform:translateX(-50%);background:#7fa881;color:#fff;padding:12px 18px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.3);z-index:99996;font-size:13px;font-family:inherit;display:flex;align-items:center;flex-wrap:wrap;justify-content:center;gap:6px;max-width:calc(100vw - 32px);animation:badgePop 400ms ease;";
     document.body.appendChild(el);
     document.getElementById("update-toast-reload")?.addEventListener("click", () => { location.reload(); });
     document.getElementById("update-toast-dismiss")?.addEventListener("click", () => { el.remove(); });
@@ -6300,7 +6300,7 @@ function openSettings() {
         </div>
 
         </details>
-        <details class="settings-acc"><summary class="settings-acc-sum">${_t("settings.sec.data", "데이터")}</summary>
+        <details class="settings-acc" open><summary class="settings-acc-sum">${_t("settings.sec.data", "데이터")}</summary>
         <div class="settings-row">
           <span>${_t("settings.data.total", "총 풀이")}</span>
           <span class="settings-value">${totalSolved}${_t("unit.q", "문제")} · ${_t("data.correct", "정답")} ${totalCorrect} (${acc}%)</span>
