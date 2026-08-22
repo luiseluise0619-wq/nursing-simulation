@@ -676,3 +676,52 @@ test("오답노트가 상한을 넘겨 저장돼도 로드 시 잘린다", async
     await page.click('[data-action="reviewWrongAnswers"]');
     await expect(page.locator("#choice-list .choice-btn").first()).toBeVisible();
 });
+
+// 백업·복원은 GDPR 사용자 권리(열람·이전) 기능이라 조용히 깨지면 안 된다.
+test.describe("데이터 백업·복원", () => {
+    test.beforeEach(async ({ page }) => {
+        await page.addInitScript(() => {
+            if (!localStorage.getItem("nurseSim:v1")) {
+                localStorage.setItem("nurseSim:v1", JSON.stringify({
+                    accepted: { version: "1.0", at: Date.now() }, onboarded: true,
+                    settings: { lang: "ko", examMode: "korean", theme: "dark", sound: false },
+                    stats: { "성인간호학": { solved: 9, correct: 7 } }, mockBest: 71,
+                }));
+            }
+            sessionStorage.setItem("nurseSim:cbIntroSeen", "1");
+        });
+        await page.goto("/");
+        await page.waitForSelector("h1.menu-title-v2", { timeout: 8000 });
+        await page.click("#kebab-btn");
+        await page.click('[data-action="openSettings"]');
+        await page.evaluate(() => document.querySelectorAll("details.settings-acc").forEach(d => { d.open = true; }));
+    });
+
+    test("백업이 파싱 가능한 JSON 으로 내려받아진다", async ({ page }) => {
+        const [download] = await Promise.all([
+            page.waitForEvent("download", { timeout: 10000 }),
+            page.click('[data-action="exportData"]'),
+        ]);
+        const fsPath = await download.path();
+        const parsed = JSON.parse(require("fs").readFileSync(fsPath, "utf8"));
+        const payload = parsed.data || parsed;
+        expect(payload.stats["성인간호학"]).toEqual({ solved: 9, correct: 7 });
+        expect(download.suggestedFilename()).toMatch(/\.json$/);
+    });
+
+    test("깨진 파일을 복원해도 앱이 죽지 않고 기존 데이터가 유지된다", async ({ page }) => {
+        page.on("dialog", d => d.accept());
+        const os = require("os"), path = require("path"), fs = require("fs");
+        const bad = path.join(os.tmpdir(), "nurse-bad-backup.json");
+        fs.writeFileSync(bad, "{not json");
+        await page.click('[data-action="triggerImportData"]');
+        await page.setInputFiles("#import-file-input", bad);
+        await page.waitForTimeout(800);
+        const state = await page.evaluate(() => {
+            const d = JSON.parse(localStorage.getItem("nurseSim:v1") || "{}");
+            return { mockBest: d.mockBest, alive: !!document.querySelector(".settings-card, h1.menu-title-v2") };
+        });
+        expect(state.mockBest).toBe(71);   // 기존 값 보존
+        expect(state.alive).toBe(true);
+    });
+});
