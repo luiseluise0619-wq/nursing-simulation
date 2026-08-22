@@ -608,6 +608,54 @@ for (const theme of ["light", "dark", "amoled"]) {
     });
 }
 
+// 컬러 칩(배지·필 버튼)은 배경이 --primary/--danger/--warning 인데 글자를 #fff 로 고정해
+// 두는 바람에 라이트 2.4~3.5:1, AMOLED 1.9:1 까지 떨어졌다. --on-fill 잉크로 통일한 뒤의 회귀 방지.
+for (const theme of ["light", "dark", "amoled"]) {
+    test(`${theme} 테마 — 컬러 칩·프라이머리 버튼 글자가 AA 를 만족한다`, async ({ page }) => {
+        await page.addInitScript(t => {
+            localStorage.setItem("nurseSim:v1", JSON.stringify({
+                accepted: { version: "1.0", at: Date.now() }, onboarded: true,
+                settings: { lang: "ko", examMode: "korean", theme: t, sound: false },
+            }));
+            sessionStorage.setItem("nurseSim:cbIntroSeen", "1");
+        }, theme);
+        await page.goto("/");
+        await page.waitForSelector("h1.menu-title-v2", { timeout: 8000 });
+        await page.click('[data-action="setMenuTab"][data-tab="study"]');
+        await page.click('[data-action="renderSimMenu"]');
+        await page.click('[data-action="renderCaseMenu"]');
+        await page.click('[data-action="renderEpisodeMenu"]');
+        // 호버는 프라이머리 버튼 색을 바꾸고 전환 애니메이션도 탄다 — 커서를 치우고 잰다
+        await page.mouse.move(2, 2);
+        await page.waitForTimeout(400);
+        const samples = await page.evaluate(() => {
+            const pick = (label, sel) => {
+                const el = document.querySelector(sel);
+                if (!el) return null;
+                const cs = getComputedStyle(el);
+                let bg = cs.backgroundColor, n = el;
+                while (n && /rgba?\(0,\s*0,\s*0,\s*0\)|transparent/.test(bg)) {
+                    n = n.parentElement;
+                    bg = n ? getComputedStyle(n).backgroundColor : "rgb(255,255,255)";
+                }
+                return { label, fg: cs.color, bg, size: parseFloat(cs.fontSize), weight: parseInt(cs.fontWeight) };
+            };
+            return [
+                pick("프라이머리 버튼", ".choice-btn.primary"),
+                pick("에피소드 묶음 개수", ".episode-group-count"),
+                pick("민감 컨텐츠 배지", ".mc-badge"),
+            ].filter(Boolean);
+        });
+        expect(samples.length).toBeGreaterThanOrEqual(2);
+        for (const s of samples) {
+            const large = s.size >= 24 || (s.size >= 18.66 && s.weight >= 700);
+            const need = large ? 3.0 : 4.5;
+            const r = contrastRatio(s.fg, s.bg);
+            expect(r, `${theme} · ${s.label} (${r.toFixed(2)}:1, 기준 ${need})`).toBeGreaterThanOrEqual(need);
+        }
+    });
+}
+
 // 정식 국시 280문항은 한국 시장의 핵심 콘텐츠인데 채점 결과를 아무 데도 남기지 않았다.
 // 과목별 정답률에도, 오답노트(간격 반복)에도 들어가지 않아 "풀어도 아무 일도 안 일어나는" 상태였다.
 test.describe("국시 학습 기록", () => {

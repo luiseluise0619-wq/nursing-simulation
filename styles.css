@@ -40,6 +40,12 @@ body.app-hidden *::after {
     --glow-sage-strong:   0 14px 28px -8px rgba(127, 168, 129, 0.55);
     --gradient-primary:   linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
     --glass-blur:         saturate(180%) blur(16px);
+
+    /* 컬러 칩·프라이머리 버튼 위 글자색.
+       --primary/--danger/--warning 는 테마마다 밝기가 크게 다른데 #fff 를 고정으로 쓰던 탓에
+       라이트 2.4~3.5:1, AMOLED 1.9:1 까지 떨어졌다. 세 테마 모두 5:1 이상 나오는 잉크로 통일. */
+    --on-fill: #111827;
+    --on-primary-dark: #ffffff;   /* 라이트의 --primary-dark 만 어두워서 흰 글자가 맞다 */
 }
 
 [data-theme="dark"] {
@@ -63,6 +69,8 @@ body.app-hidden *::after {
     --log-text:   #dfeee8;
     --log-border: #16211b;
     --modal-bg: rgba(7, 11, 15, 0.97);
+    /* 다크·AMOLED 는 --primary-dark 도 밝아서 흰 글자가 아니라 어두운 잉크가 맞다 */
+    --on-primary-dark: #111827;
     /* 다크 모드 보정 — 토큰 오버라이드 (그린 글로우) */
     --inset-light:        0 1px 0 rgba(255, 255, 255, 0.05) inset;
     --inset-light-soft:   0 1px 0 rgba(255, 255, 255, 0.035) inset;
@@ -276,11 +284,11 @@ body {
     font-weight: 700;
     box-shadow: var(--shadow-sm);
 }
-.badge.warn { background: var(--warning); color: #fff; }
-.badge.accent { background: var(--primary); color: #fff; }
-.badge.success { background: var(--success); color: #fff; }
-.badge.danger { background: var(--danger); color: #fff; }
-.badge.combo { background: var(--primary-dark); color: #fff; }
+.badge.warn { background: var(--warning); color: var(--on-fill); }
+.badge.accent { background: var(--primary); color: var(--on-fill); }
+.badge.success { background: var(--success); color: var(--on-fill); }
+.badge.danger { background: var(--danger); color: var(--on-fill); }
+.badge.combo { background: var(--primary-dark); color: var(--on-primary-dark); }
 
 #game-area {
     padding: 15px;
@@ -1744,7 +1752,7 @@ button.countdown-card:active { transform: translateY(0); }
 .timer-pill {
     display: inline-block;
     background: var(--danger);
-    color: #fff;
+    color: var(--on-fill);
     padding: 6px 14px;
     border-radius: var(--radius-pill);
     font-weight: bold;
@@ -1799,7 +1807,8 @@ button.countdown-card:active { transform: translateY(0); }
     margin-bottom: 20px;
 }
 .modal-section-title {
-    color: var(--primary);
+    /* 라이트에서 --primary(#7fa881) 는 흰 카드 위 2.69:1 — 큰 글자 기준 3:1 미달 */
+    color: var(--primary-dark);
 }
 /* 에피소드 그룹 라벨 — 임상 영역별 묶음 헤더 */
 /* 인계 케이스 선택 목록 */
@@ -1904,7 +1913,7 @@ button.countdown-card:active { transform: translateY(0); }
 .episode-group-count {
     font-size: 11px;
     font-weight: 600;
-    color: #fff;
+    color: var(--on-fill);
     background: var(--primary);
     border-radius: var(--radius-pill);
     padding: 1px 8px;
@@ -2274,13 +2283,12 @@ body {
 }
 .choice-btn.primary {
     background: var(--primary);
-    color: #fff;
+    color: var(--on-fill);
     box-shadow: var(--shadow-sm);
     border: none;
 }
-.choice-btn.primary:hover { background: var(--primary-dark); }
+.choice-btn.primary:hover { background: var(--primary-dark); color: var(--on-primary-dark); }
 .choice-btn.primary:active { box-shadow: var(--shadow-press); }
-[data-theme="dark"] .choice-btn.primary { background: var(--primary); color: #1a1f2b; }
 /* 정답/오답 — 플래시 (즉시 피드백) + 영구 상태 (피드백 화면 유지) */
 .choice-btn.correct-flash {
     animation: pulseGood 700ms var(--ease-spring);
@@ -2426,11 +2434,15 @@ body {
     line-height: 1.3;
 }
 .mode-card.hero .mc-sub { color: rgba(255,255,255,.85); }
-.mode-card .mc-badge {
+/* .mode-card 는 현재 렌더되지 않는다(레거시). 에피소드 목록의 "진행 중"·민감 컨텐츠
+   배지가 이 규칙을 못 받아 패딩·라운드 없는 맨 텍스트로 그려지고 있었다.
+   호출부가 인라인으로 position:static 을 넘기는 것부터가 이 규칙을 기대한 흔적이라
+   선택자를 .mc-badge 단독으로 내린다. (.mode-card.hero 변형들은 그대로 둠) */
+.mc-badge {
     position: absolute;
     top: 10px; right: 10px;
     background: var(--primary);
-    color: #fff;
+    color: var(--on-fill);
     padding: 2px 7px;
     border-radius: var(--radius-pill);
     font-size: 10px;
@@ -3371,7 +3383,7 @@ img.onboard-svg { display: block; }
 }
 .row-pill.done { background: var(--success); color: #fff; }
 .row-pill.warn { background: var(--warning); color: #fff; }
-.row-pill.rec { background: var(--primary); color: #fff; }
+.row-pill.rec { background: var(--primary); color: var(--on-fill); }
 /* 학습 탭 추천 행 강조 */
 .row-card.big.recommended { border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary) inset, var(--shadow-sm); }
 
@@ -3870,6 +3882,7 @@ body:has(.tab-bar) #game-area { padding-bottom: 90px; }
     --log-text:   #e5e7eb;
     --log-border: #1f1f1f;
     --modal-bg: rgba(0, 0, 0, 0.98);
+    --on-primary-dark: #111827;
 }
 
 /* ===== 페이지 진입 트랜지션 (게임 영역 카드) ===== */
