@@ -1058,7 +1058,7 @@ const Storage = {
             daily: {},
             history: [],
             // 배지(achievements) — { unlocked: [{ id, at }], lastChecked, hintUsedCount, graduatedCount }
-            achievements: { unlocked: [], lastChecked: 0, hintUsedCount: 0, graduatedCount: 0 },
+            achievements: { unlocked: [], lastChecked: 0, hintUsedCount: 0, graduatedCount: 0, counters: {} },
             // 친구 초대 — 양쪽 보너스 메커니즘 (?ref=ABC123)
             referral: { myCode: null, invitedBy: null, invitesSent: 0, bonusGranted: false, bonusAwardedOnce: false, bonusAwardedDate: null },
             // 약점 분석 funnel — 어떤 시나리오/카테고리에서 자주 틀리는지
@@ -1099,7 +1099,11 @@ const Storage = {
                 lastChecked: Number.isFinite(raw.achievements.lastChecked) ? raw.achievements.lastChecked : 0,
                 hintUsedCount: Number.isFinite(raw.achievements.hintUsedCount) ? raw.achievements.hintUsedCount : 0,
                 graduatedCount: Number.isFinite(raw.achievements.graduatedCount) ? raw.achievements.graduatedCount : 0,
-            } : { unlocked: [], lastChecked: 0, hintUsedCount: 0, graduatedCount: 0 },
+                // 마일스톤 카운터(이미지 정답·NCLEX 정답·시나리오 완주·퍼펙트 세트·모의고사 최고점 등).
+                // 이걸 빠뜨리면 매 load 마다 0 으로 돌아가, 이를 조건으로 하는 배지("완벽한 세트" 등)가
+                // 같은 세션 안에서만 잠깐 성립하고 새로고침하면 영영 해금되지 않는다.
+                counters: (raw.achievements.counters && typeof raw.achievements.counters === "object" && !Array.isArray(raw.achievements.counters)) ? raw.achievements.counters : {},
+            } : { unlocked: [], lastChecked: 0, hintUsedCount: 0, graduatedCount: 0, counters: {} },
             // 특성(perks) — 마일스톤 자동 잠금해제 + 게임 효과
             perks: (raw.perks && typeof raw.perks === "object" && !Array.isArray(raw.perks)) ? {
                 unlocked: Array.isArray(raw.perks.unlocked) ? raw.perks.unlocked.filter(x => typeof x === "string") : [],

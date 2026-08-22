@@ -457,3 +457,44 @@ test.describe("학습 기록 보존", () => {
         await expect(page.locator(".dashboard-grid")).toContainText("Physiological Integrity");
     });
 });
+
+test("저장 데이터가 새로고침을 왕복해도 온전하다", async ({ page }) => {
+    // validate() 가 필드를 하나라도 빠뜨리면 그 기능은 "세션 안에서만 동작"하게 된다.
+    // 실제로 통계(국시 외 과목)와 배지 마일스톤 카운터가 그렇게 사라지고 있었다.
+    await seedLegalAccepted(page);
+    await page.goto("/");
+    await page.waitForSelector("h1.menu-title-v2", { timeout: 8000 });
+    const rich = {
+        accepted: { version: "1.0", at: 1700000000000 }, onboarded: true, firstActionDone: true,
+        settings: { lang: "ko", examMode: "korean", theme: "dark", sound: false, haptics: true, tts: false },
+        stats: { "성인간호학": { solved: 12, correct: 9 }, "Physiological Integrity": { solved: 5, correct: 4 } },
+        bookmarks: { bm1: { type: "kor", label: "L", ts: 1700000000000 } },
+        bestCombo: 11, mockBest: 88, handoffBest: 77, triageBest: 66,
+        scenarios: { sc1: { bestHp: 90, bestRep: 20, completed: true } },
+        episodes: { ep1: { completed: true, at: 1700000000000 } },
+        episodeProgress: { ep2: { step: 3, hp: 80, rep: 10 } },
+        streak: { count: 4, best: 9, lastDate: "2026-08-20", freezeUsedAt: null },
+        daily: { "2026-08-20": { completed: true, correct: 8 } },
+        achievements: { unlocked: [{ id: "first-step", at: 1700000000000 }], lastChecked: 1,
+                        hintUsedCount: 2, graduatedCount: 1, counters: { perfectSets: 1, imageCorrect: 4 } },
+        perks: { unlocked: ["p1"] },
+        referral: { myCode: "ABC123", invitedBy: "XYZ123", invitesSent: 2,
+                    bonusGranted: true, bonusAwardedOnce: true, bonusAwardedDate: "2026-08-20" },
+        persona: { discipline: "nclex", year: null, choseAt: 1700000000000 },
+        notifyOptIn: true,
+    };
+    await page.evaluate(d => localStorage.setItem("nurseSim:v1", JSON.stringify(d)), rich);
+    await page.reload();
+    await page.waitForSelector("h1.menu-title-v2", { timeout: 8000 });
+    const after = await page.evaluate(() => JSON.parse(localStorage.getItem("nurseSim:v1") || "{}"));
+    // defaults() 가 국시 7과목을 0 으로 채워두므로, 심어둔 항목만 확인한다
+    expect(after.stats["성인간호학"]).toEqual({ solved: 12, correct: 9 });
+    expect(after.stats["Physiological Integrity"]).toEqual({ solved: 5, correct: 4 });
+    // 앱이 부팅 시 nightStudy 같은 항목을 추가할 수 있으므로, 심어둔 값의 보존만 본다
+    expect(after.achievements.counters.perfectSets).toBe(1);
+    expect(after.achievements.counters.imageCorrect).toBe(4);
+    expect(after.referral.invitedBy).toBe("XYZ123");
+    expect(after.episodeProgress).toEqual(rich.episodeProgress);
+    expect(after.streak.best).toBe(9);
+    expect(after.bookmarks).toEqual(rich.bookmarks);
+});
