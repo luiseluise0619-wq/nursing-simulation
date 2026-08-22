@@ -564,3 +564,67 @@ for (const theme of ["light", "dark", "amoled"]) {
         }
     });
 }
+
+// 정식 국시 280문항은 한국 시장의 핵심 콘텐츠인데 채점 결과를 아무 데도 남기지 않았다.
+// 과목별 정답률에도, 오답노트(간격 반복)에도 들어가지 않아 "풀어도 아무 일도 안 일어나는" 상태였다.
+test.describe("국시 학습 기록", () => {
+    test.beforeEach(async ({ page }) => {
+        await seedLegalAccepted(page);
+        await page.goto("/");
+        await page.waitForSelector("h1.menu-title-v2", { timeout: 8000 });
+        await page.click('[data-action="setMenuTab"][data-tab="study"]');
+        await page.click('[data-action="renderPracticeMenu"]');
+        await page.click('[data-action="renderSubjectStudyMenu"]');
+        await page.click('[data-action="renderKorMenu"]');
+        await page.click('[data-action="startKorQuiz"][data-arg="__all__"]');
+    });
+
+    test("정답·오답이 과목별 통계와 오답노트에 남는다", async ({ page }) => {
+        for (let i = 0; i < 4; i++) {
+            const n = await page.locator("#kor-choices .choice-btn").count();
+            if (!n) break;
+            await page.locator("#kor-choices .choice-btn").nth(n - 1).click(); // 대체로 오답
+            const next = page.locator('[data-action="korQuizNext"]');
+            if (await next.count() && await next.isVisible()) await next.click();
+        }
+        const state = await page.evaluate(() => {
+            const d = JSON.parse(localStorage.getItem("nurseSim:v1") || "{}");
+            return {
+                solved: Object.values(d.stats || {}).reduce((s, v) => s + (v.solved || 0), 0),
+                wrong: (d.wrongQueue || []).length,
+                sampleHasChoices: (d.wrongQueue || [])[0] ? ((d.wrongQueue[0].choices || []).length >= 2) : false,
+            };
+        });
+        expect(state.solved).toBe(4);
+        expect(state.wrong).toBeGreaterThan(0);
+        // 복습 화면이 렌더되려면 보기가 함께 저장돼 있어야 한다
+        expect(state.sampleHasChoices).toBe(true);
+    });
+
+    test("국시 오답이 복습 화면에서 5지선다로 열린다", async ({ page }) => {
+        for (let i = 0; i < 4; i++) {
+            const n = await page.locator("#kor-choices .choice-btn").count();
+            if (!n) break;
+            await page.locator("#kor-choices .choice-btn").nth(n - 1).click();
+            const next = page.locator('[data-action="korQuizNext"]');
+            if (await next.count() && await next.isVisible()) await next.click();
+        }
+        await page.locator('[data-action="returnToMenu"]:visible').first().click();
+        await page.waitForSelector("h1.menu-title-v2");
+        await page.click('[data-action="setMenuTab"][data-tab="my"]');
+        await page.click('[data-action="reviewWrongAnswers"]');
+        await expect(page.locator("#choice-list .choice-btn")).toHaveCount(5);
+    });
+
+    test("보기를 연타해도 한 번만 채점된다", async ({ page }) => {
+        const first = page.locator("#kor-choices .choice-btn").first();
+        await first.click({ force: true });
+        await first.click({ force: true }).catch(() => {});
+        await first.click({ force: true }).catch(() => {});
+        const solved = await page.evaluate(() => {
+            const d = JSON.parse(localStorage.getItem("nurseSim:v1") || "{}");
+            return Object.values(d.stats || {}).reduce((s, v) => s + (v.solved || 0), 0);
+        });
+        expect(solved).toBe(1);
+    });
+});

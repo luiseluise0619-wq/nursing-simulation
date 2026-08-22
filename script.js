@@ -4010,6 +4010,18 @@ function korQuizAnswer(t) {
     const isCorrect = !!choice.correct;
     if (isCorrect) { gameState.korCorrect = (gameState.korCorrect || 0) + 1; Sound.correct(); }
     else { Sound.wrong(); }
+    // 정식 국시는 카테고리가 국시 7과목과 그대로 일치하므로 과목별 정답률에 반영한다.
+    // 이게 없어서 280문항을 다 풀어도 통계와 오답노트가 비어 있었다.
+    try { if (q.category) Storage.incrementStat(q.category, isCorrect); } catch {}
+    if (!isCorrect) {
+        try {
+            Storage.addWrong({
+                baseId: q.id, category: q.category, part: q.type || "mcq",
+                title: q.title || "", desc: q.desc || "",
+                choices: (q._shuffled || q.choices || []).map(c => ({ text: c.text, correct: !!c.correct, log: c.log })),
+            });
+        } catch {}
+    }
     document.querySelectorAll("#kor-choices .choice-btn").forEach((btn, bi) => {
         btn.disabled = true;
         const c = q._shuffled[bi];
@@ -4019,7 +4031,7 @@ function korQuizAnswer(t) {
     const fb = document.getElementById("kor-feedback");
     if (fb) {
         fb.innerHTML = `
-          <div class="${isCorrect ? "feedback-good" : "feedback-bad"}">${isCorrect ? "✅ 정답" : "❌ 오답"}</div>
+          <div class="${isCorrect ? "feedback-good" : "feedback-bad"}">${isCorrect ? _t("common.correct", "✅ 정답") : _t("common.wrong", "❌ 오답")}</div>
           <div class="feedback-log">${escapeHtml(choice.log || "")}</div>`;
         fb.classList.remove("hidden");
     }
