@@ -628,3 +628,26 @@ test.describe("국시 학습 기록", () => {
         expect(solved).toBe(1);
     });
 });
+
+test("변조된 저장소가 대시보드를 망가뜨리지 못한다", async ({ page }) => {
+    // 국시 외 카테고리를 보존하도록 완화한 뒤, 조작된 localStorage 가 수백 줄을
+    // 밀어넣을 수 있게 됐다. 이름 길이·개수 상한으로 막는다.
+    await page.addInitScript(() => {
+        const big = "가".repeat(3000);
+        const stats = { [big]: { solved: 5, correct: 3 } };
+        for (let i = 0; i < 300; i++) stats["cat" + i] = { solved: 1, correct: 1 };
+        localStorage.setItem("nurseSim:v1", JSON.stringify({
+            accepted: { version: "1.0", at: Date.now() }, onboarded: true,
+            settings: { lang: "ko", examMode: "korean", theme: "dark", sound: false }, stats,
+        }));
+        sessionStorage.setItem("nurseSim:cbIntroSeen", "1");
+    });
+    await page.goto("/");
+    await page.waitForSelector("h1.menu-title-v2", { timeout: 8000 });
+    await page.click('[data-action="setMenuTab"][data-tab="my"]');
+    await page.click('[data-action="renderDashboard"]');
+    const rows = await page.locator(".dashboard-row").count();
+    expect(rows).toBeLessThanOrEqual(30);
+    const overflowX = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    expect(overflowX).toBeLessThanOrEqual(1);
+});

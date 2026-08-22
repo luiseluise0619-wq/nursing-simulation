@@ -1132,12 +1132,22 @@ const Storage = {
         // 그 밖의 카테고리(NCLEX 4개 client need, 생성기 문제 등)로 푼 기록이
         // 다음 load 에서 통째로 사라졌다. 타입 검증은 그대로 유지한다.
         if (raw.stats && typeof raw.stats === "object" && !Array.isArray(raw.stats)) {
+            // 국시 7과목 외의 카테고리(NCLEX client need 등)도 보존하되, 변조된 저장소가
+            // 대시보드를 수백 줄로 불려놓지 못하도록 이름 길이와 개수에 상한을 둔다.
+            const MAX_NAME = 60, MAX_EXTRA = 20;   // 실제로는 NCLEX 4개 + 생성기 몇 개면 충분
+            let extra = 0;
             Object.keys(raw.stats).forEach(c => {
                 const s = raw.stats[c];
-                if (s && typeof s === "object" && Number.isFinite(s.solved) && Number.isFinite(s.correct)
-                    && s.solved >= 0 && s.correct >= 0) {
-                    out.stats[c] = { solved: s.solved, correct: s.correct };
+                if (!s || typeof s !== "object") return;
+                if (!Number.isFinite(s.solved) || !Number.isFinite(s.correct)) return;
+                if (s.solved < 0 || s.correct < 0) return;
+                const known = CATEGORIES.includes(c);
+                if (!known) {
+                    if (typeof c !== "string" || c.length > MAX_NAME) return;
+                    if (extra >= MAX_EXTRA) return;
+                    extra += 1;
                 }
+                out.stats[c] = { solved: s.solved, correct: s.correct };
             });
         }
         return out;
