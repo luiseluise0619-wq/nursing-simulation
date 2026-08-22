@@ -418,7 +418,7 @@ function renderSearchResults(query) {
     if (matches.length === 0) {
         resultsEl.innerHTML = `<div class="search-empty">
           <div class="empty-state-illust">${EMPTY_ILLUST.searchEmpty}</div>
-          "${escapeHtml(q)}" 결과 없음
+          ${_ecgLang() === "en" ? `No results for "${escapeHtml(q)}"` : `"${escapeHtml(q)}" 결과 없음`}
         </div>`;
         return;
     }
@@ -435,11 +435,11 @@ function openSearch() {
     showCoreUI(); updateStats();
     UI.gameArea.innerHTML = `
       <div class="card search-card">
-        <h2 class="scene-title">🔍 컨텐츠 검색</h2>
-        <input type="search" id="search-input" class="search-input" placeholder="에피소드·환자·시나리오·문제 키워드 (예: 자간증, 흡입화상, MgSO4)" autocomplete="off" aria-label="검색">
+        <h2 class="scene-title">🔍 ${_t("search.title", "컨텐츠 검색")}</h2>
+        <input type="search" id="search-input" class="search-input" placeholder="${escapeHtml(_t("search.ph", "에피소드·환자·시나리오·문제 키워드 (예: 자간증, 흡입화상, MgSO4)"))}" autocomplete="off" aria-label="${_t("home.search", "검색")}">
         <div id="search-results" class="search-results-list" aria-live="polite"></div>
         <div class="choice-list">
-          <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
+          <button class="choice-btn" data-action="returnToMenu">${_t("nav.mainMenu", "메인 메뉴")}</button>
         </div>
       </div>`;
     const input = document.getElementById("search-input");
