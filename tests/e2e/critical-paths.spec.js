@@ -205,3 +205,121 @@ test.describe("데이터 컨트롤 (GDPR)", () => {
         await expect(page.locator('[data-action="exportErrLog"]')).toBeVisible();
     });
 });
+
+// =========================================================================
+// 차별화 기능 — 심전도 판독 · 주사 부위 짚기 · AI 학습 튜터
+// 경쟁 시험앱에 없는 기능이라 회귀 시 타격이 크다. 실브라우저에서만 검증 가능한
+// 요소(canvas 실제 렌더, SVG 히트 영역, 네트워크 실패 폴백)를 다룬다.
+// =========================================================================
+test.describe("심전도 판독", () => {
+    test.beforeEach(async ({ page }) => {
+        await seedLegalAccepted(page);
+        await page.goto("/");
+        await page.waitForSelector("h1.menu-title-v2", { timeout: 8000 });
+        await page.click('[data-action="setMenuTab"][data-tab="study"]');
+        await page.click('[data-action="renderDrillMenu"]');
+        await page.click('[data-action="startEcgQuiz"]');
+    });
+
+    test("임상용지 위에 파형이 실제로 그려지고 5지선다로 판독한다", async ({ page }) => {
+        const canvas = page.locator("#ecg-canvas");
+        await expect(canvas).toBeVisible();
+
+        // 캔버스가 부모 폭을 채우고 세로가 붕괴하지 않아야 한다 (레이아웃 전 렌더 회귀 방지)
+        const box = await canvas.boundingBox();
+        expect(box.width).toBeGreaterThan(200);
+        expect(box.height).toBeGreaterThan(100);
+
+        // 흰 종이만 있고 파형이 없는 상태를 걸러낸다 — 어두운 픽셀이 실제로 존재해야 함
+        const inkRatio = await page.evaluate(() => {
+            const c = document.getElementById("ecg-canvas");
+            const ctx = c.getContext("2d");
+            const d = ctx.getImageData(0, 0, c.width, c.height).data;
+            let ink = 0;
+            for (let i = 0; i < d.length; i += 4) {
+                if (d[i] < 90 && d[i + 1] < 90 && d[i + 2] < 90) ink++;
+            }
+            return ink / (d.length / 4);
+        });
+        expect(inkRatio).toBeGreaterThan(0.001);
+
+        // 5지선다 → 답하면 정답 표시와 해설이 뜬다
+        const choices = page.locator("#ecg-choices .choice-btn");
+        await expect(choices).toHaveCount(5);
+        await choices.first().click();
+        await expect(page.locator("#ecg-feedback")).toBeVisible();
+        await expect(page.locator("#ecg-choices .correct-flash")).toHaveCount(1);
+        await expect(page.locator('[data-action="ecgQuizNext"]')).toBeVisible();
+    });
+
+    test("순수 학습 모드라 HP·평판·근무 배지가 뜨지 않는다", async ({ page }) => {
+        await expect(page.locator("#hp-gauge")).toHaveClass(/hidden/);
+        await expect(page.locator("#rep-gauge")).toHaveClass(/hidden/);
+        await expect(page.locator("#inventory-bar")).not.toContainText("근무");
+    });
+});
+
+test.describe("주사 부위 짚기", () => {
+    test.beforeEach(async ({ page }) => {
+        await seedLegalAccepted(page);
+        await page.goto("/");
+        await page.waitForSelector("h1.menu-title-v2", { timeout: 8000 });
+        await page.click('[data-action="setMenuTab"][data-tab="study"]');
+        await page.click('[data-action="renderDrillMenu"]');
+        await page.click('[data-action="startSiteQuiz"]');
+    });
+
+    test("인체 도식의 부위를 탭하면 정답 위치가 표시된다", async ({ page }) => {
+        await expect(page.locator(".body-svg")).toBeVisible();
+        const hits = page.locator(".site-hit");
+        await expect(hits).toHaveCount(4);
+        await hits.first().click();
+        await expect(page.locator("#site-feedback")).toBeVisible();
+        // 정답 부위는 항상 하나 강조된다 (오답을 골랐어도 정답 위치를 알려줘야 학습이 된다)
+        await expect(page.locator(".site-zone.site-correct")).toHaveCount(1);
+    });
+
+    test("터치 타깃이 손가락 크기(44px)에 가깝다", async ({ page }) => {
+        const box = await page.locator(".site-hit").first().boundingBox();
+        expect(Math.min(box.width, box.height)).toBeGreaterThanOrEqual(40);
+    });
+});
+
+test.describe("AI 학습 튜터", () => {
+    test.beforeEach(async ({ page }) => {
+        await seedLegalAccepted(page);
+        await page.goto("/");
+        await page.waitForSelector("h1.menu-title-v2", { timeout: 8000 });
+        await page.click('[data-action="setMenuTab"][data-tab="study"]');
+        await page.click('[data-action="renderTutor"]');
+    });
+
+    test("전송 고지와 무료 질문 잔여 횟수를 입력 전에 보여준다", async ({ page }) => {
+        await expect(page.locator("#tutor-input")).toBeVisible();
+        // 외부 AI 전송은 개인정보 고지 대상 — 입력하기 전에 보여야 한다
+        await expect(page.locator(".tutor-privacy")).toBeVisible();
+        await expect(page.locator("#tutor-quota")).toContainText("5");
+    });
+
+    test("서버가 실패해도 앱이 죽지 않고 안내로 폴백한다", async ({ page }) => {
+        // API 키 미설정 등으로 /api/tutor 가 실패하는 실제 상황을 재현
+        await page.route("**/api/tutor", route => route.fulfill({ status: 500, body: "{}" }));
+        await page.fill("#tutor-input", "심부전 환자에게 반좌위를 취하는 이유는?");
+        await page.click('[data-action="tutorAsk"]');
+        await expect(page.locator("#tutor-answer")).toBeVisible();
+        await expect(page.locator("#tutor-answer")).toContainText("다시 시도");
+        // 실패한 질문은 무료 횟수를 소모하지 않아야 한다
+        await expect(page.locator("#tutor-quota")).toContainText("5");
+    });
+
+    test("답변은 근거로 삼은 문항 번호와 함께 표시된다", async ({ page }) => {
+        await page.route("**/api/tutor", route =>
+            route.fulfill({ status: 200, contentType: "application/json",
+                body: JSON.stringify({ answer: "반좌위는 정맥 환류를 줄여 폐 울혈을 완화합니다. [출처: #kor-001]" }) }));
+        await page.fill("#tutor-input", "심부전 환자에게 반좌위를 취하는 이유는?");
+        await page.click('[data-action="tutorAsk"]');
+        await expect(page.locator(".tutor-reply")).toContainText("정맥 환류");
+        await expect(page.locator(".tutor-src")).toContainText("#kor-");
+        await expect(page.locator("#tutor-quota")).toContainText("4");
+    });
+});

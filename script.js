@@ -3881,8 +3881,11 @@ async function tutorAsk() {
         const left = Math.max(0, TUTOR_DAILY_FREE - quota.count);
         ans.innerHTML = `<div class="tutor-reply">${escapeHtml(answer).replace(/\n/g, "<br>")}</div>`
             + `<div class="tutor-actions"><button class="tts-btn" data-action="ttsSpeak" data-text="${escapeHtml(answer)}" aria-label="${_t("tutor.read", "답변 읽어주기")}" title="${_t("tutor.read", "답변 읽어주기")}">🔊</button></div>`
-            + `<div class="tutor-src">${_t("tutor.src", "근거")}: ${escapeHtml(ids)}</div>`
-            + `<div class="tutor-quota">${_t("tutor.left", "오늘 남은 무료 질문")}: ${left}/${TUTOR_DAILY_FREE}</div>`;
+            + `<div class="tutor-src">${_t("tutor.src", "근거")}: ${escapeHtml(ids)}</div>`;
+        // 잔여 횟수는 입력창 위의 기존 표시를 갱신한다. 답변 블록에 또 찍으면
+        // 화면에 5/5 와 4/5 가 동시에 보여 어느 쪽이 맞는지 알 수 없게 된다.
+        const quotaEl = document.getElementById("tutor-quota");
+        if (quotaEl) quotaEl.textContent = `${_t("tutor.left", "오늘 남은 무료 질문")}: ${left}/${TUTOR_DAILY_FREE}`;
         track("tutor_ask", { ok: true });
     } catch (e) {
         ans.innerHTML = `<div class="feedback-log">${_t("tutor.err", "지금은 답할 수 없어요. 잠시 후 다시 시도해 주세요.")}</div>`;
