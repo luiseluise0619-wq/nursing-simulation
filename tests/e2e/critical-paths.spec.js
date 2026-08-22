@@ -350,3 +350,28 @@ test.describe("국시 풀이 화면", () => {
         expect(pr).toBeGreaterThanOrEqual(48);
     });
 });
+
+// 상단바(진행률·상태)는 모드마다 갱신돼야 한다. renderKorCard 처럼 updateStats 호출을
+// 빠뜨리거나 라벨/배지 목록에서 누락되면 학습 내내 "진행도 0% · 대기"로 멈춘다.
+const TOPBAR_MODES = [
+    ["약물 드릴", [['[data-action="setMenuTab"][data-tab="study"]'], ['[data-action="renderDrillMenu"]'],
+                 ['[data-action="renderDrugDrill"]'], ['[data-action="startDrugDrill"]']]],
+    ["이미지 문제", [['[data-action="setMenuTab"][data-tab="study"]'], ['[data-action="renderDrillMenu"]'],
+                 ['[data-action="renderImageQuizMenu"]'], ['[data-action="startImageQuiz"][data-bucket="__all__"]']]],
+    ["트리아지", [['[data-action="setMenuTab"][data-tab="study"]'], ['[data-action="renderDrillMenu"]'],
+                ['[data-action="startTriage"]']]],
+    ["인계 듣기", [['[data-action="setMenuTab"][data-tab="study"]'], ['[data-action="renderDrillMenu"]'],
+                ['[data-action="startHandoff"]'], ['[data-action="startHandoffRandom"]']]],
+];
+test.describe("상단바 모드 반영", () => {
+    for (const [name, steps] of TOPBAR_MODES) {
+        test(`${name} — 진행률·상태가 대기로 멈추지 않는다`, async ({ page }) => {
+            await seedLegalAccepted(page);
+            await page.goto("/");
+            await page.waitForSelector("h1.menu-title-v2", { timeout: 8000 });
+            for (const [sel] of steps) await page.click(sel);
+            await expect(page.locator("#progress-text")).not.toHaveText("진행도");
+            await expect(page.locator("#inventory-bar")).not.toContainText("대기");
+        });
+    }
+});

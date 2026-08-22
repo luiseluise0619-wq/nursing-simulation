@@ -2291,6 +2291,8 @@ function updateStats() {
     else if (gameState.mode === "site_quiz") { value = gameState.siteIndex; total = gameState.sitePool ? gameState.sitePool.length : 4; label = _t("site.title", "주사 부위 짚기"); }
     else if (gameState.mode === "nclex_quiz") { value = gameState.nclexIndex; total = gameState.nclexQueue ? gameState.nclexQueue.length : 1; label = "NCLEX-RN"; }
     else if (gameState.mode === "kor_quiz") { value = gameState.korIndex || 0; total = gameState.korPool ? gameState.korPool.length : 1; label = _t("subject.official", "정식 국시 (5지선다)"); }
+    else if (gameState.mode === "image_quiz") { value = gameState.imageQuizIndex || 0; total = gameState.imageQuizPool ? gameState.imageQuizPool.length : 1; label = _t("drill.image", "이미지 문제"); }
+    else if (gameState.mode === "drug_drill") { value = gameState.drugIndex || 0; total = gameState.drugPool ? gameState.drugPool.length : 1; label = _t("drill.drug", "약물 드릴"); }
     else if (gameState.mode === "scenario") {
         const s = NC.SCENARIOS.find(x => x.id === gameState.scenarioId);
         value = gameState.scenarioStep; total = s ? s.steps.length : 1; label = `${_t("status.scenario", "시나리오")} · ${s ? s.title : ""}`;
@@ -2325,6 +2327,10 @@ function updateStats() {
         daily: _t("daily.title", "일일 챌린지"), wrong_review: _t("wrong.review", "오답 복습"), dashboard: _t("badge.dashboard", "대시보드"),
         nclex_quiz: "NCLEX-RN", kor_quiz: _t("subject.official", "정식 국시 (5지선다)"),
         ecg_quiz: _t("ecg.title", "심전도 판독"), site_quiz: _t("site.title", "주사 부위 짚기"),
+        image_quiz: _t("drill.image", "이미지 문제"), drug_drill: _t("drill.drug", "약물 드릴"),
+        triage: _t("drill.triage", "트리아지"), handoff: _t("drill.handoff", "인계 듣기"),
+        handoff_write: _t("drill.sbar", "인계 작성 실습 (SBAR)"),
+        scenario: _t("case.scenario", "짧은 시나리오 (단편)"), episode: _t("case.episode", "에피소드 (장편)"),
     })[gameState.mode] || _t("badge.idle", "대기");
     statusBadge.textContent = `${_t("status.label", "상태")}: ${_stBody}`;
     UI.inventory.appendChild(statusBadge);
@@ -5119,6 +5125,7 @@ function startHandoffSingle(id) {
 }
 
 function renderHandoffPatient() {
+    showCoreUI(); updateStats();
     if (gameState.handoffIndex >= gameState.handoffPool.length) { endHandoff(); return; }
     const id = gameState.handoffPool[gameState.handoffIndex];
     const p = NC.HANDOFF_PATIENTS.find(x => x.id === id);
@@ -6933,6 +6940,7 @@ function buildDrugQuestion(drug, qType) {
 }
 
 function renderDrugDrillCard() {
+    showCoreUI(); updateStats();
     const pool = gameState.drugPool || [];
     const i = gameState.drugIndex || 0;
     if (i >= pool.length) { renderDrugDrillSummary(); return; }
