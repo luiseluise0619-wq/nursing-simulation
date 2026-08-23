@@ -644,6 +644,28 @@ test.describe("영어 모드 — 한국어 콘텐츠 고지", () => {
         }
     });
 
+    // 문항·케이스 본문이 아니라 화면 셸(제목·버튼·라벨)만 있는 화면들.
+    // 여기 한국어가 남아 있으면 번역 누락이지 콘텐츠가 아니다.
+    const SHELL_ONLY = [
+        ["풀이 메뉴", ['[data-action="renderPracticeMenu"]']],
+        ["과목별 학습", ['[data-action="renderPracticeMenu"]', '[data-action="renderSubjectStudyMenu"]']],
+        ["변형 연습", ['[data-action="renderPracticeMenu"]', '[data-action="renderSubjectStudyMenu"]', '[data-action="renderQuizMenu"]']],
+        ["훈련 메뉴", ['[data-action="renderDrillMenu"]']],
+        ["이미지 문제 메뉴", ['[data-action="renderDrillMenu"]', '[data-action="renderImageQuizMenu"]']],
+        ["심전도", ['[data-action="renderDrillMenu"]', '[data-action="startEcgQuiz"]']],
+        ["주사 부위", ['[data-action="renderDrillMenu"]', '[data-action="startSiteQuiz"]']],
+    ];
+    for (const [name, path] of SHELL_ONLY) {
+        test(`${name} — 화면 셸에 한국어가 남지 않는다`, async ({ page }) => {
+            for (const sel of path) await page.click(sel);
+            const hangul = await page.evaluate(() => {
+                const t = document.getElementById("game-area").textContent || "";
+                return [...new Set(t.match(/[가-힣][가-힣\s·()]*/g) || [])].map(x => x.trim()).filter(Boolean);
+            });
+            expect(hangul, `남은 한국어: ${JSON.stringify(hangul)}`).toEqual([]);
+        });
+    }
+
     test("케밥 메뉴 라벨도 영어로 바뀐다", async ({ page }) => {
         await page.click("#kebab-btn");
         // 테마·설정은 index.html 의 정적 한국어라 언어를 바꿔도 한국어로 남아 있었다
