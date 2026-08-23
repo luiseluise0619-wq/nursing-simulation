@@ -2077,7 +2077,7 @@ function renderTtsSettings() {
           <div class="card">
             <h2 class="scene-title">음성 설정</h2>
             <p class="scene-desc">이 브라우저는 음성 합성을 지원하지 않습니다.</p>
-            <button class="choice-btn center" data-action="openSettings">설정으로</button>
+            <button class="choice-btn center" data-action="openSettings">${_t("about.toSettings", "설정으로")}</button>
           </div>`;
         return;
     }
@@ -2136,7 +2136,7 @@ function renderTtsSettings() {
 
         <div class="choice-list" style="margin-top: 18px;">
           <button class="choice-btn primary" data-action="ttsPreview">▶ 현재 설정 미리듣기</button>
-          <button class="choice-btn center" data-action="openSettings">설정으로</button>
+          <button class="choice-btn center" data-action="openSettings">${_t("about.toSettings", "설정으로")}</button>
         </div>
       </div>`;
 
@@ -2546,7 +2546,7 @@ function renderSceneCard(ev, options = {}) {
     const hintEligible = HINT_MODES.has(mode) && choicesLen >= 3 && !!(ADS_UNITS.hint || ADS_UNITS.rewarded);
     const hintUsed = !!ev._hintUsed;
     const hintBtnHtml = hintEligible
-        ? `<button class="choice-btn hint-btn" data-action="useHint" data-hint-used="${hintUsed ? '1' : '0'}"${hintUsed ? ' disabled' : ''}>💡 광고 보고 힌트 — 오답 1개 제거 (1회만)</button>`
+        ? `<button class="choice-btn hint-btn" data-action="useHint" data-hint-used="${hintUsed ? '1' : '0'}"${hintUsed ? ' disabled' : ''}>💡 ${_t("hint.watchAd", "광고 보고 힌트 — 오답 1개 제거 (1회만)")}</button>`
         : "";
 
     // 임상 근거 (clinical source attribution) — ev.sourceKey 가 있으면 출처 표시
@@ -2764,7 +2764,7 @@ function renderShiftPicker() {
             <div class="shift-picker-mult">× 1.5</div>
           </button>
         </div>
-        <button class="choice-btn center" data-action="returnToMenu">메뉴</button>
+        <button class="choice-btn center" data-action="returnToMenu">${_t("action.back", "메뉴")}</button>
       </div>`;
 }
 
@@ -3129,7 +3129,7 @@ function renderPerksPage() {
     }
     html += `
         <div class="choice-list">
-          <button class="choice-btn center" data-action="returnToMenu">메인 메뉴</button>
+          <button class="choice-btn center" data-action="returnToMenu">${_t("nav.mainMenu", "메인 메뉴")}</button>
         </div>
       </div>`;
     UI.gameArea.innerHTML = html;
@@ -3194,28 +3194,28 @@ function handleSurvivalChoice(choice) {
 function renderQuizMenu() {
     gameState.mode = "quiz_menu"; resetStateForMode();
     showCoreUI(); UI.logBar.innerHTML = "";
-    addLog("국가고시 7과목 트레이닝 모드입니다.", "log-important");
+    addLog(_t("quiz.menuTitle", "국가고시 7과목 트레이닝"), "log-important");
     updateStats();
     const diff = gameState.quizDifficulty || "basic";
     const diffDesc = diff === "advanced"
-        ? "🔥 심화 — 케이스 기반 임상 판단·우선순위 문제 (현직·고득점 대비)."
-        : "숫자와 상황이 계속 변하는 무한 랜덤 문제. 체력은 감소하지 않습니다.";
+        ? _t("quiz.diffAdvDesc", "🔥 심화 — 케이스 기반 임상 판단·우선순위 문제 (현직·고득점 대비).")
+        : _t("quiz.diffBasicDesc", "숫자와 상황이 계속 변하는 무한 랜덤 문제. 체력은 감소하지 않습니다.");
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
-        <h2 class="scene-title">국가고시 7과목 트레이닝</h2>
-        <div class="difficulty-seg" role="group" aria-label="난이도 선택">
-          <button class="diff-btn ${diff === 'basic' ? 'active' : ''}" data-action="setQuizDifficulty" data-arg="basic">📗 기본</button>
-          <button class="diff-btn ${diff === 'advanced' ? 'active' : ''}" data-action="setQuizDifficulty" data-arg="advanced">🔥 심화</button>
+        <h2 class="scene-title">${_t("quiz.menuTitle", "국가고시 7과목 트레이닝")}</h2>
+        <div class="difficulty-seg" role="group" aria-label="${escapeHtml(_t("a11y.difficulty", "난이도 선택"))}">
+          <button class="diff-btn ${diff === 'basic' ? 'active' : ''}" data-action="setQuizDifficulty" data-arg="basic">${_t("quiz.diffBasic", "📗 기본")}</button>
+          <button class="diff-btn ${diff === 'advanced' ? 'active' : ''}" data-action="setQuizDifficulty" data-arg="advanced">${_t("quiz.diffAdv", "🔥 심화")}</button>
         </div>
         <p class="scene-desc">${diffDesc}</p>
-        <h3 class="episode-group-label">🎲 전체 랜덤</h3>
+        <h3 class="episode-group-label">${_t("quiz.groupRandom", "🎲 전체 랜덤")}</h3>
         <div class="choice-list">
-          <button class="choice-btn primary" data-action="startQuiz" data-arg="__random__">🎲 7과목 통합 랜덤</button>
+          <button class="choice-btn primary" data-action="startQuiz" data-arg="__random__">🎲 ${_t("quiz.allSubjects", "7과목 통합 랜덤")}</button>
         </div>
-        <h3 class="episode-group-label">📚 과목별</h3>
+        <h3 class="episode-group-label">${_t("quiz.groupBySubject", "📚 과목별")}</h3>
         <div class="choice-list">
-          ${CATEGORIES.map(c => `<button class="choice-btn primary" data-action="startQuiz" data-arg="${escapeHtml(c)}">${c}</button>`).join("")}
-          <button class="choice-btn center" data-action="returnToMenu">메인 메뉴</button>
+          ${CATEGORIES.map(c => `<button class="choice-btn primary" data-action="startQuiz" data-arg="${escapeHtml(c)}">${escapeHtml(catDisplayName(c))}</button>`).join("")}
+          <button class="choice-btn center" data-action="returnToMenu">${_t("nav.mainMenu", "메인 메뉴")}</button>
         </div>
       </div>`;
 }
@@ -3950,9 +3950,9 @@ function renderKorMenu() {
     if (qs.length === 0) {
         UI.gameArea.innerHTML = `
           <div class="scene-card card">
-            <h2 class="scene-title">한국 국시 정적 문제</h2>
-            <p class="scene-desc">문제 데이터를 불러올 수 없습니다.</p>
-            <button class="choice-btn center" data-action="returnToMenu">메뉴</button>
+            <h2 class="scene-title">${_t("kor.title", "한국 국시 정적 문제")}</h2>
+            <p class="scene-desc">${_t("kor.loadFail", "문제 데이터를 불러올 수 없습니다.")}</p>
+            <button class="choice-btn center" data-action="returnToMenu">${_t("action.back", "메뉴")}</button>
           </div>`;
         return;
     }
@@ -3961,16 +3961,16 @@ function renderKorMenu() {
     qs.forEach(q => counts[q.category] = (counts[q.category] || 0) + 1);
     const catBtns = cats.map(c => `
       <button class="choice-btn primary" data-action="startKorQuiz" data-arg="${escapeHtml(c)}">
-        ${escapeHtml(c)} (${counts[c] || 0})
+        ${escapeHtml(catDisplayName(c))} (${counts[c] || 0})
       </button>`).join("");
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
-        <h2 class="scene-title">한국 국시 정적 문제</h2>
-        <p class="scene-desc">정식 5지선다 ${qs.length}문제. 출처 인용 포함 (KNCA / 대한○○학회 / 의료법). 카테고리 또는 무작위 선택.</p>
+        <h2 class="scene-title">${_t("kor.title", "한국 국시 정적 문제")}${_koOnlyBadge()}</h2>
+        <p class="scene-desc">${_t("kor.desc", "정식 5지선다 {n}문제. 출처 인용 포함 (KNCA / 대한○○학회 / 의료법). 카테고리 또는 무작위 선택.").replace("{n}", qs.length)}</p>
         <div class="choice-list">
-          <button class="choice-btn primary" data-action="startKorQuiz" data-arg="__all__">🎯 전체 무작위 (${qs.length})</button>
+          <button class="choice-btn primary" data-action="startKorQuiz" data-arg="__all__">🎯 ${_t("kor.allRandom", "전체 무작위")} (${qs.length})</button>
           ${catBtns}
-          <button class="choice-btn center" data-action="returnToMenu">메뉴</button>
+          <button class="choice-btn center" data-action="returnToMenu">${_t("action.back", "메뉴")}</button>
         </div>
       </div>`;
     track("kor_menu_open", { total: qs.length });
@@ -4023,8 +4023,8 @@ function renderKorCard() {
         <p class="scene-desc">${escapeHtml(q.desc)}</p>
         <div class="choice-list" id="kor-choices">${choicesHtml}</div>
         <div id="kor-feedback" class="image-quiz-feedback hidden" aria-live="polite"></div>
-        <button class="choice-btn subtle center hidden" id="kor-next-btn" data-action="korQuizNext">다음 →</button>
-        <button class="choice-btn center" data-action="returnToMenu">중단하고 메뉴로</button>
+        <button class="choice-btn subtle center hidden" id="kor-next-btn" data-action="korQuizNext">${_t("action.next", "다음 →")}</button>
+        <button class="choice-btn center" data-action="returnToMenu">${_t("action.stopToMenu", "중단하고 메뉴로")}</button>
       </div>`;
 }
 
@@ -4093,13 +4093,23 @@ function renderKorSummary() {
           <div class="quiz-stat-row"><span>정답률</span><strong>${acc}%</strong></div>
         </div>
         <div class="choice-list">
-          <button class="choice-btn primary" data-action="renderKorMenu">다시 풀기</button>
-          <button class="choice-btn center" data-action="returnToMenu">메뉴</button>
+          <button class="choice-btn primary" data-action="renderKorMenu">${_t("action.retryQuiz", "다시 풀기")}</button>
+          <button class="choice-btn center" data-action="returnToMenu">${_t("action.back", "메뉴")}</button>
         </div>
       </div>`;
     track("kor_quiz_complete", { total, correct, acc });
 }
 
+// 이미지 문제 카테고리 표시명 — 버킷 키(= data-bucket 필터 값)는 유지하고 라벨만 번역
+const IMAGE_BUCKET_I18N = {
+    "ECG": "image.bucket.ecg", "청진": "image.bucket.ausc", "산과": "image.bucket.ob",
+    "신경": "image.bucket.neuro", "화상상처": "image.bucket.wound",
+    "영상": "image.bucket.imaging", "기타": "image.bucket.other",
+};
+function imageBucketName(name) {
+    const k = IMAGE_BUCKET_I18N[name];
+    return k ? _t(k, name) : name;
+}
 function renderImageQuizMenu() {
     gameState.mode = "image_quiz_menu";
     resetStateForMode();
@@ -4110,9 +4120,9 @@ function renderImageQuizMenu() {
     if (scenes.length === 0) {
         UI.gameArea.innerHTML = `
           <div class="scene-card card">
-            <h2 class="scene-title">이미지 문제</h2>
-            <p class="scene-desc">아직 이미지 문제가 없어요.</p>
-            <button class="choice-btn center" data-action="returnToMenu">메인 메뉴</button>
+            <h2 class="scene-title">${_t("drill.image", "이미지 문제")}</h2>
+            <p class="scene-desc">${_t("image.empty", "아직 이미지 문제가 없어요.")}</p>
+            <button class="choice-btn center" data-action="returnToMenu">${_t("nav.mainMenu", "메인 메뉴")}</button>
           </div>`;
         return;
     }
@@ -4127,20 +4137,21 @@ function renderImageQuizMenu() {
         else if (k.startsWith("cxr:") || k.startsWith("aed:")) buckets.영상.push(s);
         else buckets.기타.push(s);
     });
+    // data-bucket 값은 필터 키라 그대로 두고, 표시 라벨만 번역한다
     const bucketBtns = Object.entries(buckets)
         .filter(([_, list]) => list.length > 0)
         .map(([name, list]) => `
           <button class="choice-btn primary" data-action="startImageQuiz" data-bucket="${escapeHtml(name)}">
-            ${name} (${list.length}문제)
+            ${escapeHtml(imageBucketName(name))} (${list.length}${_t("unit.q", "문제")})
           </button>`).join("");
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
-        <h2 class="scene-title">이미지 문제</h2>
-        <p class="scene-desc">에피소드·시나리오의 임상 이미지 문제 ${scenes.length}개를 모았어요. 카테고리를 선택하세요.</p>
+        <h2 class="scene-title">${_t("drill.image", "이미지 문제")}${_koOnlyBadge()}</h2>
+        <p class="scene-desc">${_t("image.desc", "에피소드·시나리오의 임상 이미지 문제 {n}개를 모았어요. 카테고리를 선택하세요.").replace("{n}", scenes.length)}</p>
         <div class="choice-list">
-          <button class="choice-btn primary" data-action="startImageQuiz" data-bucket="__all__">🎯 전체 (${scenes.length}문제, 무작위)</button>
+          <button class="choice-btn primary" data-action="startImageQuiz" data-bucket="__all__">🎯 ${_t("image.all", "전체")} (${scenes.length}${_t("unit.q", "문제")}, ${_t("image.random", "무작위")})</button>
           ${bucketBtns}
-          <button class="choice-btn center" data-action="returnToMenu">메인 메뉴</button>
+          <button class="choice-btn center" data-action="returnToMenu">${_t("nav.mainMenu", "메인 메뉴")}</button>
         </div>
       </div>`;
     track("image_quiz_menu_open", { total: scenes.length });
@@ -4208,8 +4219,8 @@ function renderImageQuizCard() {
         ${scene.prompt ? `<p class="scene-desc">${escapeHtml(scene.prompt)}</p>` : ""}
         <div class="choice-list" id="image-quiz-choices">${choicesHtml}</div>
         <div id="image-quiz-feedback" class="image-quiz-feedback hidden" aria-live="polite"></div>
-        <button class="choice-btn subtle center hidden" id="image-quiz-next-btn" data-action="imageQuizNext">다음 →</button>
-        <button class="choice-btn center" data-action="returnToMenu">중단하고 메뉴로</button>
+        <button class="choice-btn subtle center hidden" id="image-quiz-next-btn" data-action="imageQuizNext">${_t("action.next", "다음 →")}</button>
+        <button class="choice-btn center" data-action="returnToMenu">${_t("action.stopToMenu", "중단하고 메뉴로")}</button>
       </div>`;
 }
 
@@ -4264,8 +4275,8 @@ function renderImageQuizSummary() {
             <div class="quiz-stat-row"><span>정답률</span><strong>${acc}%</strong></div>
         </div>
         <div class="choice-list">
-          <button class="choice-btn primary" data-action="renderImageQuizMenu">다시 풀기</button>
-          <button class="choice-btn center" data-action="returnToMenu">메인 메뉴</button>
+          <button class="choice-btn primary" data-action="renderImageQuizMenu">${_t("action.retryQuiz", "다시 풀기")}</button>
+          <button class="choice-btn center" data-action="returnToMenu">${_t("nav.mainMenu", "메인 메뉴")}</button>
         </div>
       </div>`;
     track("image_quiz_complete", { total, correct, acc });
@@ -4769,7 +4780,7 @@ function renderNextMockQuestion() {
     renderSceneCard(ev, {
         mode: "mock",
         questionIndex: gameState.mockAnswered + 1,
-        meta: [ev.category, `진행 ${gameState.mockAnswered + 1}/${gameState.mockTotal}`]
+        meta: [ev.category, `${_t("status.progress", "진행도")} ${gameState.mockAnswered + 1}/${gameState.mockTotal}`]
     });
 }
 function handleMockChoice(choice, ev) {
@@ -5163,7 +5174,7 @@ function startHandoff() {
         <button class="choice-btn primary" data-action="startHandoffRandom">🎲 랜덤 세션 (${HANDOFF_SESSION_SIZE}명 무작위)</button>
         <h3 class="episode-group-label">📋 케이스 선택</h3>
         ${groups}
-        <div class="choice-list"><button class="choice-btn center" data-action="returnToMenu">메뉴</button></div>
+        <div class="choice-list"><button class="choice-btn center" data-action="returnToMenu">${_t("action.back", "메뉴")}</button></div>
       </div>`;
 }
 
@@ -5196,25 +5207,25 @@ function renderHandoffPatient() {
     const p = NC.HANDOFF_PATIENTS.find(x => x.id === id);
     if (!p) { endHandoff(); return; }
     Storage.addHandoffSeen(id);
-    const ttsHint = Speech.supported() ? "" : "\n⚠ 이 환경은 음성합성을 지원하지 않습니다. '본문 보기' 로 학습하세요.";
+    const ttsHint = Speech.supported() ? "" : "\n" + _t("handoff.noTts", "⚠ 이 환경은 음성합성을 지원하지 않습니다. '본문 보기' 로 학습하세요.");
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
         <div class="handoff-header">
           ${renderPatientAvatar(p.id, p.title, { cls: "handoff-avatar" })}
-          <h2 class="scene-title">[인계 ${gameState.handoffIndex + 1}/${gameState.handoffPool.length}] ${escapeHtml(p.title)}</h2>
+          <h2 class="scene-title">[${_t("handoff.unit", "인계")} ${gameState.handoffIndex + 1}/${gameState.handoffPool.length}] ${escapeHtml(p.title)}${_koOnlyBadge()}</h2>
         </div>
-        <p class="scene-desc">음성 인계를 듣고 핵심 키워드 ${p.keywords.length}개를 떠올려 답변창에 쉼표/공백으로 구분해 입력하세요.
-힌트: ${escapeHtml(p.hint)}${ttsHint}</p>
+        <p class="scene-desc">${_t("handoff.desc", "음성 인계를 듣고 핵심 키워드 {n}개를 떠올려 답변창에 쉼표/공백으로 구분해 입력하세요.").replace("{n}", p.keywords.length)}
+${_t("handoff.hint", "힌트")}: ${escapeHtml(p.hint)}${ttsHint}</p>
         <div class="handoff-controls">
-          <button class="choice-btn primary" data-action="handoffPlay">▶ 인계 듣기</button>
-          <button class="choice-btn" data-action="handoffStop">⏹ 중지</button>
-          <button class="choice-btn" data-action="handoffShow">📄 본문 보기</button>
+          <button class="choice-btn primary" data-action="handoffPlay">▶ ${_t("handoff.play", "인계 듣기")}</button>
+          <button class="choice-btn" data-action="handoffStop">⏹ ${_t("handoff.stop", "중지")}</button>
+          <button class="choice-btn" data-action="handoffShow">📄 ${_t("handoff.showText", "본문 보기")}</button>
         </div>
         <div id="handoff-narration" class="handoff-narration hidden" aria-live="polite"></div>
-        <textarea id="handoff-answer" class="handoff-answer" rows="4" placeholder="기억나는 핵심 키워드를 적으세요" aria-label="인계 답변"></textarea>
+        <textarea id="handoff-answer" class="handoff-answer" rows="4" placeholder="${escapeHtml(_t("handoff.ph", "기억나는 핵심 키워드를 적으세요"))}" aria-label="${escapeHtml(_t("handoff.answerLabel", "인계 답변"))}"></textarea>
         <div class="choice-list">
-          <button class="choice-btn primary" data-action="handoffSubmit">제출</button>
-          <button class="choice-btn" data-action="returnToMenu">메뉴로</button>
+          <button class="choice-btn primary" data-action="handoffSubmit">${_t("action.submit", "제출")}</button>
+          <button class="choice-btn" data-action="returnToMenu">${_t("nav.toMenu", "메뉴로")}</button>
         </div>
         <div id="handoff-feedback" aria-live="polite"></div>
       </div>`;
@@ -5292,8 +5303,8 @@ function endHandoff() {
         <h2 class="scene-title">인계 시뮬레이션 완료</h2>
         <p class="scene-desc">키워드 정확도: ${correct}/${total} (${acc}%)</p>
         <div class="choice-list">
-          <button class="choice-btn primary" data-action="startHandoff">다시 시작</button>
-          <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
+          <button class="choice-btn primary" data-action="startHandoff">${_t("action.restartRun", "다시 시작")}</button>
+          <button class="choice-btn" data-action="returnToMenu">${_t("nav.mainMenu", "메인 메뉴")}</button>
         </div>
       </div>`;
 }
@@ -5303,12 +5314,15 @@ function endHandoff() {
 // 기존 인계(듣고 회상)와 반대: 정보를 스스로 구조화하는 능동적 훈련.
 // 데이터는 HANDOFF_PATIENTS 재활용 (title=환자, hint=담을 항목, keywords=채점, narration=모범답안)
 // =========================================================================
+// 라벨/플레이스홀더는 렌더 시점에 번역한다 (모듈 로드 시엔 언어가 확정되기 전일 수 있다)
 const SBAR_FIELDS = [
     { key: "s", label: "S — Situation (상황)", ph: "지금 이 환자의 현재 상황·주호소를 한두 문장으로" },
     { key: "b", label: "B — Background (배경)", ph: "진단명·입원 경위·관련 병력·투약" },
     { key: "a", label: "A — Assessment (사정)", ph: "현재 V/S·검사 수치·간호사 판단" },
     { key: "r", label: "R — Recommendation (권고)", ph: "다음 근무자가 관찰·조치·보고할 기준" },
 ];
+function sbarFieldLabel(f) { return _t(`sbar.field.${f.key}`, f.label); }
+function sbarFieldPh(f) { return _t(`sbar.ph.${f.key}`, f.ph); }
 
 function startHandoffWrite() {
     resetStateForMode();
@@ -5332,21 +5346,21 @@ function renderHandoffWrite() {
         : "";
     const fields = SBAR_FIELDS.map(f => `
         <label class="sbar-field">
-          <span class="sbar-field-label">${escapeHtml(f.label)}</span>
-          <textarea id="sbar-${f.key}" class="sbar-textarea" rows="2" placeholder="${escapeHtml(f.ph)}" aria-label="${escapeHtml(f.label)}"></textarea>
+          <span class="sbar-field-label">${escapeHtml(sbarFieldLabel(f))}</span>
+          <textarea id="sbar-${f.key}" class="sbar-textarea" rows="2" placeholder="${escapeHtml(sbarFieldPh(f))}" aria-label="${escapeHtml(sbarFieldLabel(f))}"></textarea>
         </label>`).join("");
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
         <div class="handoff-header">
           ${renderPatientAvatar(p.id, p.title, { cls: "handoff-avatar" })}
-          <h2 class="scene-title">[작성 ${gameState.handoffIndex + 1}/${gameState.handoffPool.length}] ${escapeHtml(p.title)}</h2>
+          <h2 class="scene-title">[${_t("sbar.unit", "작성")} ${gameState.handoffIndex + 1}/${gameState.handoffPool.length}] ${escapeHtml(p.title)}${_koOnlyBadge()}</h2>
         </div>
-        <p class="scene-desc">이 환자를 다음 근무자에게 <strong>SBAR</strong> 형식으로 인계하세요. 아래 항목을 빠짐없이 담으면 좋아요.</p>
-        ${checklistHtml ? `<div class="sbar-hint-box"><div class="sbar-hint-title">📋 인계에 담을 핵심</div>${checklistHtml}</div>` : ""}
+        <p class="scene-desc">${_t("sbar.desc", "이 환자를 다음 근무자에게 <strong>SBAR</strong> 형식으로 인계하세요. 아래 항목을 빠짐없이 담으면 좋아요.")}</p>
+        ${checklistHtml ? `<div class="sbar-hint-box"><div class="sbar-hint-title">📋 ${_t("sbar.checklist", "인계에 담을 핵심")}</div>${checklistHtml}</div>` : ""}
         <div class="sbar-form">${fields}</div>
         <div class="choice-list">
-          <button class="choice-btn primary" data-action="handoffWriteSubmit">제출 · 채점</button>
-          <button class="choice-btn" data-action="returnToMenu">메뉴로</button>
+          <button class="choice-btn primary" data-action="handoffWriteSubmit">${_t("action.submitGrade", "제출 · 채점")}</button>
+          <button class="choice-btn" data-action="returnToMenu">${_t("nav.toMenu", "메뉴로")}</button>
         </div>
         <div id="handoff-write-feedback" aria-live="polite"></div>
       </div>`;
@@ -5416,8 +5430,8 @@ function endHandoffWrite() {
         <h2 class="scene-title">인계 작성 실습 완료</h2>
         <p class="scene-desc">핵심 요소 포함도: ${correct}/${total} (${acc}%)\nSBAR로 스스로 인계문을 구성하는 훈련을 마쳤어요.</p>
         <div class="choice-list">
-          <button class="choice-btn primary" data-action="startHandoffWrite">다시 시작</button>
-          <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
+          <button class="choice-btn primary" data-action="startHandoffWrite">${_t("action.restartRun", "다시 시작")}</button>
+          <button class="choice-btn" data-action="returnToMenu">${_t("nav.mainMenu", "메인 메뉴")}</button>
         </div>
       </div>`;
 }
@@ -5429,7 +5443,7 @@ function startTriage() {
     resetStateForMode();
     gameState.mode = "triage";
     showCoreUI(); UI.logBar.innerHTML = "";
-    addLog("응급실 트리아지 — 5명 환자에게 1(최우선)~5(후순위)를 매기세요.", "log-important");
+    addLog(_t("triage.log", "응급실 트리아지 — 5명 환자에게 1(최우선)~5(후순위)를 매기세요."), "log-important");
     renderTriageCase();
 }
 
@@ -5445,18 +5459,18 @@ function renderTriageCase() {
             <span class="triage-emoji" aria-hidden="true">${p.emoji}</span>
             <span class="triage-desc">${escapeHtml(p.desc)}</span>
           </div>
-          <div class="triage-pick" role="radiogroup" aria-label="${escapeHtml(p.desc)} 우선순위">
-            ${[1,2,3,4,5].map(n => `<button class="triage-num" data-action="triagePick" data-patient="${escapeHtml(p.id)}" data-num="${n}" aria-label="${n}순위">${n}</button>`).join("")}
+          <div class="triage-pick" role="radiogroup" aria-label="${escapeHtml(p.desc)} ${escapeHtml(_t("triage.priority", "우선순위"))}">
+            ${[1,2,3,4,5].map(n => `<button class="triage-num" data-action="triagePick" data-patient="${escapeHtml(p.id)}" data-num="${n}" aria-label="${_t("triage.rankN", "{n}순위").replace("{n}", n)}">${n}</button>`).join("")}
           </div>
         </div>`).join("");
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
-        <h2 class="scene-title">[케이스 ${gameState.triageIndex + 1}/${cases.length}] ${escapeHtml(c.title)}</h2>
-        <p class="scene-desc">각 환자에게 1(최우선)~5(후순위)를 부여하세요. 같은 번호 중복 불가.</p>
+        <h2 class="scene-title">[${_t("triage.case", "케이스")} ${gameState.triageIndex + 1}/${cases.length}] ${escapeHtml(c.title)}${_koOnlyBadge()}</h2>
+        <p class="scene-desc">${_t("triage.desc", "각 환자에게 1(최우선)~5(후순위)를 부여하세요. 같은 번호 중복 불가.")}</p>
         <div class="triage-list">${cards}</div>
         <div class="choice-list">
-          <button class="choice-btn primary" data-action="triageSubmit">제출</button>
-          <button class="choice-btn" data-action="returnToMenu">메뉴로</button>
+          <button class="choice-btn primary" data-action="triageSubmit">${_t("action.submit", "제출")}</button>
+          <button class="choice-btn" data-action="returnToMenu">${_t("nav.toMenu", "메뉴로")}</button>
         </div>
         <div id="triage-feedback" aria-live="polite"></div>
       </div>`;
@@ -5534,8 +5548,8 @@ function endTriage() {
         <h2 class="scene-title">트리아지 완료</h2>
         <p class="scene-desc">정답률: ${correct}/${total} (${acc}%)</p>
         <div class="choice-list">
-          <button class="choice-btn primary" data-action="startTriage">다시 시작</button>
-          <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
+          <button class="choice-btn primary" data-action="startTriage">${_t("action.restartRun", "다시 시작")}</button>
+          <button class="choice-btn" data-action="returnToMenu">${_t("nav.mainMenu", "메인 메뉴")}</button>
         </div>
       </div>`;
 }
@@ -5567,17 +5581,17 @@ function sensitiveLabelFor(episodeId) {
 
 // 에피소드 임상 영역 그룹 — 61개를 8개 카테고리로 묶어 탐색 용이
 const EPISODE_GROUPS = [
-    { label: "🚨 응급·외상", ids: ["ep-peds-ed", "ep-er-codeblue", "ep-air-evac", "ep-ed-overdose", "ep-ems-ambulance", "ep-ed-elder-abuse", "ep-ed-code-black", "ep-ob-er", "ep-er-pesticide", "ep-er-opioid-od", "ep-er-sepsis-bundle", "ep-trauma-ortho", "ep-trauma-center-week"] },
-    { label: "🫀 중환자 (ICU)", ids: ["ep-icu-sepsis", "ep-ccu-stemi", "ep-nsicu-ich", "ep-picu-sepsis", "ep-icu-dnr", "ep-neuro-gbs"] },
-    { label: "🔪 외과·수술", ids: ["ep-surgical-night", "ep-or-shift", "ep-pacu-week", "ep-urology-tx"] },
-    { label: "🤰 산과·분만", ids: ["ep-ob-night", "ep-ob-hellp", "ep-ob-eclampsia", "ep-ldr-first-birth", "ep-postpartum-center", "ep-teen-mother", "ep-ob-clinic-abortion"] },
-    { label: "👶 소아·신생아", ids: ["ep-nicu-week", "ep-peds-hospice"] },
-    { label: "🧠 정신간호", ids: ["ep-psych-closed", "ep-adolescent-psych", "ep-psych-outpatient"] },
-    { label: "🧪 종양·혈액", ids: ["ep-onco-week", "ep-outpatient-chemo", "ep-bmt-week"] },
-    { label: "🏥 외래·클리닉", ids: ["ep-hospice-home", "ep-eye-ent", "ep-neuro-clinic", "ep-hiv-clinic", "ep-hospice-inpatient"] },
-    { label: "🌍 지역사회·공중보건", ids: ["ep-school-health", "ep-occupational-health", "ep-multicultural", "ep-covid-ward", "ep-home-chronic", "ep-tb-isolation", "ep-health-center", "ep-rural-clinic"] },
-    { label: "📋 전문·특수", ids: ["ep-geri-week", "ep-hd-center", "ep-burn-week", "ep-handoff-conflict", "ep-narcotics-incident", "ep-clinical-research", "ep-military-hosp", "ep-rehab-stroke", "ep-trial-1-event", "ep-newgrad-year"] },
-    { label: "🌙 일상 (틈새 이야기)", ids: ["life-breakroom", "life-meal", "life-clockout", "life-rooftop", "life-locker-chat"] },
+    { label: "🚨 응급·외상", key: "epgrp.er", ids: ["ep-peds-ed", "ep-er-codeblue", "ep-air-evac", "ep-ed-overdose", "ep-ems-ambulance", "ep-ed-elder-abuse", "ep-ed-code-black", "ep-ob-er", "ep-er-pesticide", "ep-er-opioid-od", "ep-er-sepsis-bundle", "ep-trauma-ortho", "ep-trauma-center-week"] },
+    { label: "🫀 중환자 (ICU)", key: "epgrp.icu", ids: ["ep-icu-sepsis", "ep-ccu-stemi", "ep-nsicu-ich", "ep-picu-sepsis", "ep-icu-dnr", "ep-neuro-gbs"] },
+    { label: "🔪 외과·수술", key: "epgrp.surgery", ids: ["ep-surgical-night", "ep-or-shift", "ep-pacu-week", "ep-urology-tx"] },
+    { label: "🤰 산과·분만", key: "epgrp.ob", ids: ["ep-ob-night", "ep-ob-hellp", "ep-ob-eclampsia", "ep-ldr-first-birth", "ep-postpartum-center", "ep-teen-mother", "ep-ob-clinic-abortion"] },
+    { label: "👶 소아·신생아", key: "epgrp.peds", ids: ["ep-nicu-week", "ep-peds-hospice"] },
+    { label: "🧠 정신간호", key: "epgrp.psych", ids: ["ep-psych-closed", "ep-adolescent-psych", "ep-psych-outpatient"] },
+    { label: "🧪 종양·혈액", key: "epgrp.onco", ids: ["ep-onco-week", "ep-outpatient-chemo", "ep-bmt-week"] },
+    { label: "🏥 외래·클리닉", key: "epgrp.clinic", ids: ["ep-hospice-home", "ep-eye-ent", "ep-neuro-clinic", "ep-hiv-clinic", "ep-hospice-inpatient"] },
+    { label: "🌍 지역사회·공중보건", key: "epgrp.community", ids: ["ep-school-health", "ep-occupational-health", "ep-multicultural", "ep-covid-ward", "ep-home-chronic", "ep-tb-isolation", "ep-health-center", "ep-rural-clinic"] },
+    { label: "📋 전문·특수", key: "epgrp.special", ids: ["ep-geri-week", "ep-hd-center", "ep-burn-week", "ep-handoff-conflict", "ep-narcotics-incident", "ep-clinical-research", "ep-military-hosp", "ep-rehab-stroke", "ep-trial-1-event", "ep-newgrad-year"] },
+    { label: "🌙 일상 (틈새 이야기)", key: "epgrp.life", ids: ["life-breakroom", "life-meal", "life-clockout", "life-rooftop", "life-locker-chat"] },
 ];
 
 function episodeButtonHtml(e) {
@@ -5594,7 +5608,7 @@ function renderEpisodeMenu() {
     resetStateForMode();
     gameState.mode = "episode_menu";
     showCoreUI(); UI.logBar.innerHTML = "";
-    addLog("에피소드 — 한 듀티 전체를 따라가는 장편 스토리.", "log-important");
+    addLog(_t("episode.log", "에피소드 — 한 듀티 전체를 따라가는 장편 스토리."), "log-important");
     updateStats();
 
     const byId = {};
@@ -5606,29 +5620,29 @@ function renderEpisodeMenu() {
         eps.forEach(e => grouped.add(e.id));
         if (eps.length === 0) return;
         groupsHtml += `
-          <h3 class="episode-group-label">${grp.label} <span class="episode-group-count">${eps.length}</span></h3>
+          <h3 class="episode-group-label">${_t(grp.key, grp.label)} <span class="episode-group-count">${eps.length}</span></h3>
           <div class="choice-list episode-group-list">${eps.map(episodeButtonHtml).join("")}</div>`;
     });
     // 미분류 에피소드 (신규 추가 시 누락 방지) → "기타"
     const ungrouped = NC.EPISODES.filter(e => !grouped.has(e.id));
     if (ungrouped.length > 0) {
         groupsHtml += `
-          <h3 class="episode-group-label">📦 기타 <span class="episode-group-count">${ungrouped.length}</span></h3>
+          <h3 class="episode-group-label">📦 ${_t("episode.groupOther", "기타")} <span class="episode-group-count">${ungrouped.length}</span></h3>
           <div class="choice-list episode-group-list">${ungrouped.map(episodeButtonHtml).join("")}</div>`;
     }
 
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
-        <h2 class="scene-title">에피소드 (${NC.EPISODES.length})</h2>
-        <p class="scene-desc">한 듀티 10~21단계의 연결된 스토리. 같은 환자·동료·의사가 계속 등장하고, 각 결정이 HP·평판에 누적되어 커리어 엔딩으로 이어집니다.\n\n⚠️ 표시된 에피소드는 자해·약물·폭력 등 민감 컨텐츠를 포함합니다.</p>
+        <h2 class="scene-title">${_t("case.episodes", "에피소드")} (${NC.EPISODES.length})${_koOnlyBadge()}</h2>
+        <p class="scene-desc">${_t("episode.desc", "한 듀티 10~21단계의 연결된 스토리. 같은 환자·동료·의사가 계속 등장하고, 각 결정이 HP·평판에 누적되어 커리어 엔딩으로 이어집니다.\n\n⚠️ 표시된 에피소드는 자해·약물·폭력 등 민감 컨텐츠를 포함합니다.")}</p>
         <div class="choice-list">
-          <button class="choice-btn primary" data-action="renderCampaign">📖 커리어 스토리 (4막 13화 — 소설처럼 이어보기)</button>
-          <button class="choice-btn primary" data-action="initSurvival">🎲 랜덤 에피소드 (오늘의 듀티)</button>
-          <button class="choice-btn primary" data-action="initCrisisDuty">🚨 위기 듀티 (랜덤 · 보스전 3회)</button>
+          <button class="choice-btn primary" data-action="renderCampaign">📖 ${_t("campaign.entry", "커리어 스토리 (4막 13화 — 소설처럼 이어보기)")}</button>
+          <button class="choice-btn primary" data-action="initSurvival">🎲 ${_t("episode.random", "랜덤 에피소드 (오늘의 듀티)")}</button>
+          <button class="choice-btn primary" data-action="initCrisisDuty">🚨 ${_t("episode.crisis", "위기 듀티 (랜덤 · 보스전 3회)")}</button>
         </div>
         ${groupsHtml}
         <div class="choice-list">
-          <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
+          <button class="choice-btn" data-action="returnToMenu">${_t("nav.mainMenu", "메인 메뉴")}</button>
         </div>
       </div>`;
 }
@@ -5654,9 +5668,9 @@ function renderEpisodeResumeChoice(ep, progress) {
         <h2 class="scene-title">이어하기? — ${escapeHtml(ep.title)}</h2>
         <p class="scene-desc">진행 중인 에피소드가 있습니다.\nStep ${progress.step + 1}/${ep.steps.length} (${pctDone}% 완료)\nHP ${progress.hp} · 평판 ${progress.rep}</p>
         <div class="choice-list">
-          <button class="choice-btn primary" data-action="episodeResume" data-arg="${escapeHtml(ep.id)}">이어하기</button>
-          <button class="choice-btn" data-action="episodeRestart" data-arg="${escapeHtml(ep.id)}">처음부터 다시</button>
-          <button class="choice-btn" data-action="renderEpisodeMenu">에피소드 목록</button>
+          <button class="choice-btn primary" data-action="episodeResume" data-arg="${escapeHtml(ep.id)}">${_t("home.resume", "이어하기")}</button>
+          <button class="choice-btn" data-action="episodeRestart" data-arg="${escapeHtml(ep.id)}">${_t("action.restart", "처음부터 다시")}</button>
+          <button class="choice-btn" data-action="renderEpisodeMenu">${_t("nav.episodeList", "에피소드 목록")}</button>
         </div>
       </div>`;
 }
@@ -5878,8 +5892,8 @@ function renderCampaign() {
                 const _l3 = _en ? `Avg reputation ${avgRep}` : `평균 평판 ${avgRep}`;
                 return `<button class="choice-btn" data-action="shareResultCard" data-mode="campaign" data-title="${_title}" data-lines="${_l1}|${_l2}|${_l3}">${_t("share.download", "결과 카드 다운로드")}</button>`;
               })()}
-              <button class="choice-btn" data-action="resetCampaignConfirm">처음부터 다시</button>
-              <button class="choice-btn primary" data-action="returnToMenu">메인 메뉴</button>
+              <button class="choice-btn" data-action="resetCampaignConfirm">${_t("action.restart", "처음부터 다시")}</button>
+              <button class="choice-btn primary" data-action="returnToMenu">${_t("nav.mainMenu", "메인 메뉴")}</button>
             </div>
           </div>`;
         return;
@@ -5902,8 +5916,8 @@ function renderCampaign() {
         <p class="scene-desc"><strong>${escapeHtml(ep ? ep.title : "")}</strong> ${sensitiveLabelFor(ep ? ep.id : "") ? `<span class="mc-badge" style="position:static;background:var(--danger);">⚠️ ${escapeHtml(sensitiveLabelFor(ep.id))}</span>` : ""}</p>
         <div class="choice-list">
           <button class="choice-btn primary" data-action="startCampaignEpisode">${c.started ? "이어서 진행" : "이야기 시작"}</button>
-          <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
-          ${c.started ? `<button class="choice-btn" data-action="resetCampaignConfirm">처음부터 다시</button>` : ""}
+          <button class="choice-btn" data-action="returnToMenu">${_t("nav.mainMenu", "메인 메뉴")}</button>
+          ${c.started ? `<button class="choice-btn" data-action="resetCampaignConfirm">${_t("action.restart", "처음부터 다시")}</button>` : ""}
         </div>
       </div>`;
 }
@@ -5964,7 +5978,7 @@ function renderCampaignInterlude(prevChapterIdx, chapterCleared, endingKey) {
         <p class="about-meta">누적 평판 ${c.cumulativeRep} · ${campaignDoneCount(c)}/${campaignTotalEpisodes()}화 완주</p>
         <div class="choice-list">
           <button class="choice-btn primary" data-action="${nextAction}">${nextLabel}</button>
-          <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
+          <button class="choice-btn" data-action="returnToMenu">${_t("nav.mainMenu", "메인 메뉴")}</button>
         </div>
       </div>`;
 }
@@ -5975,8 +5989,8 @@ function resetCampaignConfirm() {
         <h2 class="scene-title">커리어를 처음부터?</h2>
         <p class="scene-desc">지금까지의 커리어 진행과 누적 평판이 모두 초기화됩니다. 계속할까요?</p>
         <div class="choice-list">
-          <button class="choice-btn primary" data-action="resetCampaignDo">처음부터 다시 시작</button>
-          <button class="choice-btn" data-action="renderCampaign">취소</button>
+          <button class="choice-btn primary" data-action="resetCampaignDo">${_t("action.restart", "처음부터 다시")}</button>
+          <button class="choice-btn" data-action="renderCampaign">${_t("action.cancel", "취소")}</button>
         </div>
       </div>`;
 }
@@ -6041,13 +6055,13 @@ function endEpisode() {
         <p class="scene-desc">최종 HP <strong>${gameState.hp}</strong> · 평판 <strong>${gameState.rep}</strong> · 듀티 종료.</p>
         <div class="choice-list">
           <button class="choice-btn primary" data-action="initSurvival">다음 듀티 (랜덤 에피소드)</button>
-          <button class="choice-btn" data-action="renderEpisodeMenu">에피소드 목록</button>
+          <button class="choice-btn" data-action="renderEpisodeMenu">${_t("nav.episodeList", "에피소드 목록")}</button>
           ${(() => {
             const _en = (typeof window !== "undefined" && window.I18N && window.I18N.getLang && window.I18N.getLang() === "en");
             const _l2 = _en ? `Reputation ${gameState.rep}` : `평판 ${gameState.rep}`;
             return `<button class="choice-btn" data-action="shareResultCard" data-mode="career" data-title="${escapeHtml(career.title)}" data-lines="HP ${gameState.hp}|${_l2}|${escapeHtml(ep.title)}">${_t("share.download", "결과 카드 다운로드")}</button>`;
           })()}
-          <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
+          <button class="choice-btn" data-action="returnToMenu">${_t("nav.mainMenu", "메인 메뉴")}</button>
         </div>
       </div>`;
 }
@@ -6059,20 +6073,20 @@ function renderScenarioMenu() {
     resetStateForMode();
     gameState.mode = "scenario_menu";
     showCoreUI(); UI.logBar.innerHTML = "";
-    addLog("멀티스텝 임상 시나리오 — 한 환자의 의사결정을 끝까지 따라가세요.", "log-important");
+    addLog(_t("scenario.log", "멀티스텝 임상 시나리오 — 한 환자의 의사결정을 끝까지 따라가세요."), "log-important");
     updateStats();
     const data = Storage.load();
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
-        <h2 class="scene-title">임상 시나리오 챔버</h2>
-        <p class="scene-desc">한 환자의 입실 → 사정 → 처치 → 평가까지 3~5단계 의사결정을 진행합니다.\n각 결정이 환자 상태(HP)에 누적됩니다.</p>
+        <h2 class="scene-title">${_t("scenario.title", "임상 시나리오 챔버")}${_koOnlyBadge()}</h2>
+        <p class="scene-desc">${_t("scenario.desc", "한 환자의 입실 → 사정 → 처치 → 평가까지 3~5단계 의사결정을 진행합니다.\n각 결정이 환자 상태(HP)에 누적됩니다.")}</p>
         <div class="choice-list">
           ${NC.SCENARIOS.map(s => {
               const rec = data.scenarios[s.id];
-              const tag = rec?.completed ? ` ✅ 최고 HP ${rec.bestHp}` : "";
+              const tag = rec?.completed ? ` ✅ ${_t("scenario.bestHp", "최고 HP")} ${rec.bestHp}` : "";
               return `<button class="choice-btn primary" data-action="startScenario" data-arg="${escapeHtml(s.id)}">${escapeHtml(s.title)}${tag}</button>`;
           }).join("")}
-          <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
+          <button class="choice-btn" data-action="returnToMenu">${_t("nav.mainMenu", "메인 메뉴")}</button>
         </div>
       </div>`;
 }
@@ -6135,8 +6149,8 @@ function endScenario(failReason) {
         <h2 class="scene-title">${escapeHtml(title)}</h2>
         <p class="scene-desc">${escapeHtml(s ? s.title : "")}\n최종 HP ${gameState.hp} · 평판 ${gameState.rep}</p>
         <div class="choice-list">
-          <button class="choice-btn primary" data-action="renderScenarioMenu">시나리오 목록</button>
-          <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
+          <button class="choice-btn primary" data-action="renderScenarioMenu">${_t("nav.scenarioList", "시나리오 목록")}</button>
+          <button class="choice-btn" data-action="returnToMenu">${_t("nav.mainMenu", "메인 메뉴")}</button>
         </div>
       </div>`;
 }
@@ -6209,12 +6223,13 @@ function renderTrendsChart() {
     const max = Math.max(...totals);
     const barH = 22, gap = 6, labelW = 130;
     const W = 360, H = cats.length * (barH + gap) + 20;
-    let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="최근 5개년 과목별 평균 문항 수" class="trends-svg">`;
+    let svg = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${escapeHtml(_t("dash.trends", "최근 5개년 출제 경향"))}" class="trends-svg">`;
     cats.forEach((cat, i) => {
         const v = totals[i];
         const w = (v / max) * (W - labelW - 30);
         const y = i * (barH + gap) + 5;
-        svg += `<text x="0" y="${y + 15}" class="trend-label">${escapeHtml(cat)}</text>`;
+        // 과목명은 번역 키가 이미 있는데 원문 그대로 찍고 있었다 (영어 모드 대시보드에만 한국어가 남던 원인)
+        svg += `<text x="0" y="${y + 15}" class="trend-label">${escapeHtml(catDisplayName(cat))}</text>`;
         svg += `<rect x="${labelW}" y="${y}" width="${w}" height="${barH}" rx="4" class="trend-bar"/>`;
         svg += `<text x="${labelW + w + 4}" y="${y + 15}" class="trend-value">${Math.round(v)}</text>`;
     });
@@ -6962,7 +6977,7 @@ function renderDrugDrill() {
         </div>
         <div class="choice-list">
             <button class="choice-btn primary" data-action="startDrugDrill">🎯 10문제 시작</button>
-            <button class="choice-btn center" data-action="returnToMenu">메인 메뉴</button>
+            <button class="choice-btn center" data-action="returnToMenu">${_t("nav.mainMenu", "메인 메뉴")}</button>
         </div>
       </div>`;
     track("drug_drill_menu");
@@ -6991,10 +7006,10 @@ function startDrugDrill() {
 
 function buildDrugQuestion(drug, qType) {
     const LABELS = {
-        action: { q: "다음 약물의 작용 기전은?", field: "action" },
-        class: { q: "다음 약물의 계열은?", field: "class" },
-        se: { q: "다음 약물의 주요 부작용은?", field: "se" },
-        monitor: { q: "다음 약물 투여 시 모니터링 항목은?", field: "monitor" },
+        action: { q: _t("drug.q.action", "다음 약물의 작용 기전은?"), field: "action" },
+        class: { q: _t("drug.q.class", "다음 약물의 계열은?"), field: "class" },
+        se: { q: _t("drug.q.se", "다음 약물의 주요 부작용은?"), field: "se" },
+        monitor: { q: _t("drug.q.monitor", "다음 약물 투여 시 모니터링 항목은?"), field: "monitor" },
     };
     const label = LABELS[qType];
     const correctText = drug[label.field];
@@ -7028,8 +7043,8 @@ function renderDrugDrillCard() {
         <h2 class="scene-title">${escapeHtml(q.prompt)}</h2>
         <div class="choice-list" id="drug-drill-choices">${choicesHtml}</div>
         <div id="drug-drill-feedback" class="image-quiz-feedback hidden" aria-live="polite"></div>
-        <button class="choice-btn subtle center hidden" id="drug-drill-next-btn" data-action="drugDrillNext">다음 →</button>
-        <button class="choice-btn center" data-action="returnToMenu">중단하고 메뉴로</button>
+        <button class="choice-btn subtle center hidden" id="drug-drill-next-btn" data-action="drugDrillNext">${_t("action.next", "다음 →")}</button>
+        <button class="choice-btn center" data-action="returnToMenu">${_t("action.stopToMenu", "중단하고 메뉴로")}</button>
       </div>`;
 }
 
@@ -7081,8 +7096,8 @@ function renderDrugDrillSummary() {
             <div class="quiz-stat-row"><span>정답률</span><strong>${acc}%</strong></div>
         </div>
         <div class="choice-list">
-          <button class="choice-btn primary" data-action="renderDrugDrill">다시 풀기</button>
-          <button class="choice-btn center" data-action="returnToMenu">메인 메뉴</button>
+          <button class="choice-btn primary" data-action="renderDrugDrill">${_t("action.retryQuiz", "다시 풀기")}</button>
+          <button class="choice-btn center" data-action="returnToMenu">${_t("nav.mainMenu", "메인 메뉴")}</button>
         </div>
       </div>`;
     track("drug_drill_complete", { total, correct, acc });
@@ -7200,8 +7215,8 @@ function renderPrivacy() {
         </section>
 
         <div class="choice-list">
-          <button class="choice-btn primary" data-action="openSettings">설정으로</button>
-          <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
+          <button class="choice-btn primary" data-action="openSettings">${_t("about.toSettings", "설정으로")}</button>
+          <button class="choice-btn" data-action="returnToMenu">${_t("nav.mainMenu", "메인 메뉴")}</button>
         </div>
       </div>`;
 }
@@ -7245,7 +7260,7 @@ function openErrorReport() {
         <div class="report-button-row">
           <button class="choice-btn primary" data-action="submitErrorReport">로컬 저장</button>
           <button class="choice-btn" data-action="submitErrorReportGithub">GitHub 이슈로 보내기 ↗</button>
-          <button class="choice-btn" data-action="closeErrorReport">취소</button>
+          <button class="choice-btn" data-action="closeErrorReport">${_t("action.cancel", "취소")}</button>
         </div>
       </div>`;
 }
@@ -7261,7 +7276,7 @@ function submitErrorReport() {
         <h2 class="menu-title">✓ 신고 접수</h2>
         <p class="menu-tagline">로컬에 저장됐습니다 (${Storage.getErrorReports().length}건). 검토 후 다음 버전에 반영됩니다. 감사합니다.</p>
         <div class="choice-list">
-          <button class="choice-btn primary" data-action="closeErrorReport">계속</button>
+          <button class="choice-btn primary" data-action="closeErrorReport">${_t("action.go", "계속")}</button>
         </div>
       </div>`;
 }
@@ -8381,7 +8396,7 @@ function installErrorBoundary() {
                 <h2 class="scene-title">일시적 오류가 발생했어요</h2>
                 <p class="scene-desc">화면을 복구했습니다. 학습 기록은 안전하게 저장되어 있어요.\n계속하려면 아래 버튼을 누르세요.</p>
                 <div class="choice-list">
-                  <button class="choice-btn primary" data-action="returnToMenu">메인 메뉴로</button>
+                  <button class="choice-btn primary" data-action="returnToMenu">${_t("nav.mainMenuTo", "메인 메뉴로")}</button>
                   <button class="choice-btn" data-action="openErrorReport">오류 신고 (자동 첨부)</button>
                 </div>
               </div>`;
@@ -8846,7 +8861,7 @@ function renderBookmarks() {
         <h2 class="scene-title">북마크 (${ids.length})</h2>
         <div class="bookmark-list" role="list">${items}</div>
         <div class="choice-list">
-          <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
+          <button class="choice-btn" data-action="returnToMenu">${_t("nav.mainMenu", "메인 메뉴")}</button>
         </div>
       </div>`;
 }
@@ -8950,7 +8965,7 @@ function renderAchievements() {
         <p class="scene-desc">획득 ${got} / ${total}</p>
         <div class="badge-grid">${cards}</div>
         <div class="choice-list">
-          <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
+          <button class="choice-btn" data-action="returnToMenu">${_t("nav.mainMenu", "메인 메뉴")}</button>
         </div>
       </div>`;
 }
@@ -9217,7 +9232,7 @@ function renderInviteScreen() {
 
         <div class="choice-list">
           <button class="choice-btn primary" data-action="inviteFriend">🔗 초대 링크 공유하기</button>
-          <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
+          <button class="choice-btn" data-action="returnToMenu">${_t("nav.mainMenu", "메인 메뉴")}</button>
         </div>
       </div>`;
 }
