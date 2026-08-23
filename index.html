@@ -372,6 +372,27 @@
         var seen = false;
         try { seen = sessionStorage.getItem("nurseSim:cbIntroSeen") === "1"; } catch (e) {}
 
+        /* 이 인트로와 스플래시는 i18n.js·script.js 보다 먼저 그려진다. 영어 사용자에게
+           첫 6초가 통째로 한국어로 보이던 문제 — 저장된 언어(없으면 브라우저 언어)로 직접 고른다.
+           판정 규칙은 i18n.js detectLang() 과 동일: 저장값 ko/en, 없으면 ko 로케일만 ko. */
+        var lang = "ko";
+        try {
+            var raw = localStorage.getItem("nurseSim:v1");
+            var saved = raw ? ((JSON.parse(raw) || {}).settings || {}).lang : null;
+            lang = (saved === "ko" || saved === "en") ? saved
+                : (((navigator.language || "ko").toLowerCase().indexOf("ko") === 0) ? "ko" : "en");
+        } catch (e) {}
+        if (lang === "en") {
+            var warnT = intro.querySelector(".cb-warn .t");
+            if (warnT) warnT.innerHTML = "<b>WARNING</b> · Room 3 deteriorating";
+            var subT = intro.querySelector(".cb-logo .sub");
+            if (subT) subT.textContent = "Nurse Simulator";
+            var tapT = intro.querySelector(".cb-tap");
+            if (tapT) tapT.textContent = "Tap to start";
+            var loadT = document.querySelector(".loader-title");
+            if (loadT) loadT.textContent = "Nurse Simulator";
+        }
+
         function dismiss() {
             if (intro.classList.contains("cb-done")) return;
             clearTimeout(intro._t);
@@ -442,10 +463,10 @@
             <button class="icon-btn" id="settings-btn" data-action="openSettings" title="설정" aria-label="설정" hidden>⚙️</button>
         </div>
         <div id="kebab-menu" class="kebab-menu hidden" role="menu" aria-labelledby="kebab-btn">
-            <button class="kebab-item" data-action="toggleTheme" role="menuitem"><span class="kebab-icon">🌙</span><span>테마</span></button>
+            <button class="kebab-item" data-action="toggleTheme" role="menuitem"><span class="kebab-icon">🌙</span><span id="kebab-theme-label">테마</span></button>
             <button class="kebab-item" data-action="toggleSound" role="menuitem"><span class="kebab-icon">🔊</span><span id="kebab-sound-label">사운드</span></button>
             <button class="kebab-item" data-action="toggleLang" role="menuitem"><span class="kebab-icon">🌐</span><span id="kebab-lang-label">언어 / Language</span></button>
-            <button class="kebab-item" data-action="openSettings" role="menuitem"><span class="kebab-icon">⚙️</span><span>설정</span></button>
+            <button class="kebab-item" data-action="openSettings" role="menuitem"><span class="kebab-icon">⚙️</span><span id="kebab-settings-label">설정</span></button>
         </div>
     </div>
 

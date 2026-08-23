@@ -2254,6 +2254,12 @@ function closeKebab() {
 function _syncKebabSoundLabel() {
     const el = document.getElementById("kebab-sound-label");
     if (el) el.textContent = Sound.enabled ? _t("kebab.soundOff", "사운드 끄기") : _t("kebab.soundOn", "사운드 켜기");
+    // 테마·설정 라벨은 index.html 의 정적 한국어라 언어를 바꿔도 그대로 남아 있었다.
+    // 케밥은 시뮬레이션 중 유일한 메뉴 진입점이라 영어 사용자에게 계속 노출된다.
+    const th = document.getElementById("kebab-theme-label");
+    if (th) th.textContent = _t("kebab.theme", "테마");
+    const st = document.getElementById("kebab-settings-label");
+    if (st) st.textContent = _t("settings.title", "설정");
 }
 
 // =========================================================================

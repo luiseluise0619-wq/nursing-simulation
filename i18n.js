@@ -249,6 +249,7 @@
             "kebab.soundOn": "사운드 켜기",
             // 설정
             "settings.title": "설정",
+            "kebab.theme": "테마",
             "settings.sec.general": "일반",
             "settings.language": "언어 / Language",
             "settings.theme": "테마",
@@ -658,6 +659,7 @@
             "kebab.soundOff": "Turn off sound",
             "kebab.soundOn": "Turn on sound",
             "settings.title": "Settings",
+            "kebab.theme": "Theme",
             "settings.sec.general": "General",
             "settings.language": "Language",
             "settings.theme": "Theme",

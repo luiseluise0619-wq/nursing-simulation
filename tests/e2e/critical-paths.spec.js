@@ -644,6 +644,16 @@ test.describe("영어 모드 — 한국어 콘텐츠 고지", () => {
         }
     });
 
+    test("케밥 메뉴 라벨도 영어로 바뀐다", async ({ page }) => {
+        await page.click("#kebab-btn");
+        // 테마·설정은 index.html 의 정적 한국어라 언어를 바꿔도 한국어로 남아 있었다
+        await expect(page.locator("#kebab-theme-label")).toHaveText("Theme");
+        await expect(page.locator("#kebab-settings-label")).toHaveText("Settings");
+        await expect(page.locator("#kebab-sound-label")).not.toHaveText(/[가-힣]/);
+        // 언어 항목만 "언어 / Language" 로 양쪽 표기 — 어느 언어에 갇혀도 찾을 수 있어야 한다
+        await expect(page.locator("#kebab-lang-label")).toContainText("Language");
+    });
+
     test("한국어 UI 에서는 KO 배지가 뜨지 않는다", async ({ page }) => {
         await page.click('#kebab-btn');
         await page.click('[data-action="toggleLang"]');
