@@ -3275,24 +3275,30 @@ function renderPracticeMenu() {
               <div class="row-body"><div class="row-title">NCLEX-RN</div><div class="row-sub">2,200 ${_t("unit.q", "문제")} · MCQ · SATA · Priority</div></div>
               <div class="row-chev">›</div>
            </button>` : "";
+    // 과목별·모의고사·일일 챌린지는 전부 한국 국시 문항이라 영어 모드에서도 본문이 한국어다.
+    // 훈련 메뉴와 같은 방식으로 KO 배지 + 안내문을 달아 들어가기 전에 알 수 있게 한다.
+    const koBadge = _koOnlyBadge();
+    const koHint = _isEnUi()
+        ? `<p class="ko-content-hint">${_t("practice.koHint", "🇰🇷 표시된 문제는 한국 국시 문항이라 본문이 한국어예요. 영어 문항은 NCLEX-RN 에 있습니다.")}</p>` : "";
     UI.gameArea.innerHTML = `
       <div class="tab-section">
         <h2 class="page-title">${_t("study.practice", "풀이")}</h2>
         <p class="page-sub">${_t("practice.pageSub", "빠른 풀이로 점수 만들기.")}</p>
         ${nclexBtn}
+        ${koHint}
         <button class="row-card" data-action="renderSubjectStudyMenu">
           <div class="row-icon">${ICONS.training}</div>
-          <div class="row-body"><div class="row-title">${_t("subject.title", "과목별 학습")}</div><div class="row-sub">${_t("subject.sub", "국시 7과목 · 정식 5지선다 + 무한 변형")}</div></div>
+          <div class="row-body"><div class="row-title">${_t("subject.title", "과목별 학습")}${koBadge}</div><div class="row-sub">${_t("subject.sub", "국시 7과목 · 정식 5지선다 + 무한 변형")}</div></div>
           <div class="row-chev">›</div>
         </button>
         <button class="row-card" data-action="startMockExam">
           <div class="row-icon">${ICONS.mock}</div>
-          <div class="row-body"><div class="row-title">${_t("mock.title", "모의고사")}</div><div class="row-sub">${MOCK_EXAM_TOTAL}${_t("unit.q", "문제")} · ${MOCK_EXAM_SECONDS / 60}${_t("unit.min", "분")}</div></div>
+          <div class="row-body"><div class="row-title">${_t("mock.title", "모의고사")}${koBadge}</div><div class="row-sub">${MOCK_EXAM_TOTAL}${_t("unit.q", "문제")} · ${MOCK_EXAM_SECONDS / 60}${_t("unit.min", "분")}</div></div>
           <div class="row-chev">›</div>
         </button>
         <button class="row-card" data-action="startDailyChallenge">
           <div class="row-icon">${ICONS.daily}</div>
-          <div class="row-body"><div class="row-title">${_t("daily.title", "일일 챌린지")}</div><div class="row-sub">${_t("daily.every", "매일")} ${DAILY_CHALLENGE_TOTAL}${_t("unit.q", "문제")}</div></div>
+          <div class="row-body"><div class="row-title">${_t("daily.title", "일일 챌린지")}${koBadge}</div><div class="row-sub">${_t("daily.every", "매일")} ${DAILY_CHALLENGE_TOTAL}${_t("unit.q", "문제")}</div></div>
           <div class="row-chev">›</div>
         </button>
         <button class="choice-btn center" data-action="returnToMenu">${_t("action.back", "메뉴")}</button>
@@ -3394,12 +3400,12 @@ function renderDrillMenu() {
         </button>
         <button class="row-card" data-action="renderImageQuizMenu">
           <div class="row-icon">${ICONS.scenario}</div>
-          <div class="row-body"><div class="row-title">${_t("drill.image", "이미지 문제")}</div><div class="row-sub">${_t("drill.image.sub", "ECG · 청진 · 산과 · 신경")}</div></div>
+          <div class="row-body"><div class="row-title">${_t("drill.image", "이미지 문제")}${koBadge}</div><div class="row-sub">${_t("drill.image.sub", "ECG · 청진 · 산과 · 신경")}</div></div>
           <div class="row-chev">›</div>
         </button>
         <button class="row-card" data-action="renderDrugDrill">
           <div class="row-icon">${ICONS.training}</div>
-          <div class="row-body"><div class="row-title">${_t("drill.drug", "약물 드릴")}</div><div class="row-sub">${_t("drill.drug.sub", "핵심 약물 50종")}</div></div>
+          <div class="row-body"><div class="row-title">${_t("drill.drug", "약물 드릴")}${koBadge}</div><div class="row-sub">${_t("drill.drug.sub", "핵심 약물 50종")}</div></div>
           <div class="row-chev">›</div>
         </button>
         <button class="row-card" data-action="startHandoff">

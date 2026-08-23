@@ -608,6 +608,52 @@ for (const theme of ["light", "dark", "amoled"]) {
     });
 }
 
+// 영어 UI 로 써도 국시 문항·인계·트리아지 본문은 한국어 원문 그대로다(삭제하지 않는 게 정책).
+// 들어가기 전에 알 수 있도록 진입 행에 🇰🇷 KO 배지와 안내문을 단다. NCLEX 는 영어 콘텐츠라 안 단다.
+test.describe("영어 모드 — 한국어 콘텐츠 고지", () => {
+    test.beforeEach(async ({ page }) => {
+        await page.addInitScript(() => {
+            localStorage.setItem("nurseSim:v1", JSON.stringify({
+                accepted: { version: "1.0", at: Date.now() }, onboarded: true,
+                settings: { lang: "en", examMode: "nclex", theme: "dark", sound: false },
+            }));
+            sessionStorage.setItem("nurseSim:cbIntroSeen", "1");
+        });
+        await page.goto("/");
+        await page.waitForSelector("h1.menu-title-v2", { timeout: 8000 });
+        await page.click('[data-action="setMenuTab"][data-tab="study"]');
+    });
+
+    test("풀이 메뉴 — 국시 기반 3개 행에만 KO 배지가 붙는다", async ({ page }) => {
+        await page.click('[data-action="renderPracticeMenu"]');
+        await expect(page.locator(".ko-content-hint")).toBeVisible();
+        await expect(page.locator(".ko-content-badge")).toHaveCount(3);
+        // NCLEX 는 영어 콘텐츠 — 배지가 붙으면 안 된다
+        await expect(page.locator('[data-action="renderNclexMenuLazy"] .ko-content-badge')).toHaveCount(0);
+        for (const action of ["renderSubjectStudyMenu", "startMockExam", "startDailyChallenge"]) {
+            await expect(page.locator(`[data-action="${action}"] .ko-content-badge`)).toHaveCount(1);
+        }
+    });
+
+    test("훈련 메뉴 — 한국어 본문 훈련 5개에 KO 배지가 붙는다", async ({ page }) => {
+        await page.click('[data-action="renderDrillMenu"]');
+        await expect(page.locator(".ko-content-badge")).toHaveCount(5);
+        // 심전도·주사부위는 언어 중립(도식·영문 리듬명) — 배지 없음
+        for (const action of ["startEcgQuiz", "startSiteQuiz"]) {
+            await expect(page.locator(`[data-action="${action}"] .ko-content-badge`)).toHaveCount(0);
+        }
+    });
+
+    test("한국어 UI 에서는 KO 배지가 뜨지 않는다", async ({ page }) => {
+        await page.click('#kebab-btn');
+        await page.click('[data-action="toggleLang"]');
+        await page.click('[data-action="setMenuTab"][data-tab="study"]');
+        await page.click('[data-action="renderPracticeMenu"]');
+        await expect(page.locator(".ko-content-badge")).toHaveCount(0);
+        await expect(page.locator(".ko-content-hint")).toHaveCount(0);
+    });
+});
+
 // 컬러 칩(배지·필 버튼)은 배경이 --primary/--danger/--warning 인데 글자를 #fff 로 고정해
 // 두는 바람에 라이트 2.4~3.5:1, AMOLED 1.9:1 까지 떨어졌다. --on-fill 잉크로 통일한 뒤의 회귀 방지.
 for (const theme of ["light", "dark", "amoled"]) {
