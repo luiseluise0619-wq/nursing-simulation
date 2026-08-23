@@ -54,6 +54,18 @@ function syncDisclaimerLang() {
         if (skip) skip.textContent = _t("a11y.skipToContent", "본문으로 건너뛰기");
         el.innerHTML = `${_t("disclaimer.bar", "교육 목적 · 임상 적용 금지")} · `
             + `<button class="disclaimer-link" data-action="openErrorReport">${_t("about.reportContent", "컨텐츠 오류 신고")}</button>`;
+        // 상단바 아이콘 버튼의 접근성 이름도 정적 한국어라 스크린리더에서만 한국어가 남았다
+        const setAria = (id, label, title) => {
+            const b = document.getElementById(id);
+            if (!b) return;
+            b.setAttribute("aria-label", label);
+            if (title != null) b.setAttribute("title", title);
+        };
+        setAria("back-btn", _t("a11y.backToMenu", "메인 메뉴로 돌아가기"));
+        setAria("kebab-btn", _t("a11y.menu", "메뉴"), _t("a11y.menu", "메뉴"));
+        setAria("theme-toggle", _t("a11y.toggleTheme", "테마 전환"), _t("kebab.theme", "테마"));
+        setAria("sound-toggle", _t("a11y.toggleSound", "사운드 전환"), _t("settings.sound", "사운드"));
+        setAria("settings-btn", _t("settings.title", "설정"), _t("settings.title", "설정"));
     } catch {}
 }
 function _koOnlyHint() {
@@ -2532,7 +2544,7 @@ function renderSceneCard(ev, options = {}) {
     if (BOOKMARKABLE_MODES.has(mode) && ev.baseId) {
         const bmId = bookmarkIdFor(ev);
         const on = Storage.isBookmarked(bmId);
-        bookmarkBtnHtml = `<button class="bookmark-toggle ${on ? 'on' : ''}" data-action="toggleSceneBookmark" data-bm-id="${escapeHtml(bmId)}" aria-pressed="${on}" aria-label="${on ? '북마크 해제' : '북마크 추가'}" title="${on ? '북마크 해제' : '북마크 추가'}">
+        bookmarkBtnHtml = `<button class="bookmark-toggle ${on ? 'on' : ''}" data-action="toggleSceneBookmark" data-bm-id="${escapeHtml(bmId)}" aria-pressed="${on}" aria-label="${on ? _t("bm.remove", "북마크 해제") : _t("bm.add", "북마크 추가")}" title="${on ? _t("bm.remove", "북마크 해제") : _t("bm.add", "북마크 추가")}">
           <svg viewBox="0 0 24 24" fill="${on ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 15 9 22 9.5 17 14.5 18.5 22 12 18 5.5 22 7 14.5 2 9.5 9 9"/></svg>
         </button>`;
     }
@@ -2561,7 +2573,7 @@ function renderSceneCard(ev, options = {}) {
     // TTS 읽어주기 버튼 — TTS 사용 가능 + 텍스트가 있을 때만
     const ttsText = (ev.desc || ev.narration || ev.prompt || ev.title || "").slice(0, 500);
     const ttsBtnHtml = (TTS.available && ttsText)
-        ? `<button class="tts-btn" data-action="ttsSpeak" data-text="${escapeHtml(ttsText)}" aria-label="장면 읽어주기" title="음성 읽기">🔊</button>`
+        ? `<button class="tts-btn" data-action="ttsSpeak" data-text="${escapeHtml(ttsText)}" aria-label="${escapeHtml(_t("tts.readScene", "장면 읽어주기"))}" title="${escapeHtml(_t("settings.tts", "음성 읽기"))}">🔊</button>`
         : "";
 
     UI.gameArea.innerHTML = `
@@ -3709,6 +3721,12 @@ const SITE_REGIONS = {
     vastus_lateralis: { ko: "외측광근", en: "Vastus lateralis" },
     abdomen: { ko: "복부 피하", en: "Abdomen (SubQ)" },
 };
+// 스크린리더 라벨도 화면 언어를 따라간다 (영어 모드에서 부위명만 한국어로 읽히던 문제)
+function siteRegionName(region) {
+    const r = SITE_REGIONS[region];
+    if (!r) return region;
+    return _isEnUi() ? r.en : r.ko;
+}
 const SITE_QUESTIONS = [
     { region: "ventrogluteal", qKo: "성인에게 대량(≤3mL) 근육주사 — 가장 안전한 권장 부위를 짚으세요.", qEn: "Adult large-volume (≤3 mL) IM — tap the safest recommended site.",
       teachKo: "배둔근(ventrogluteal) — 큰 신경·혈관이 없어 성인 대량 IM 1순위", teachEn: "Ventrogluteal — no major nerves/vessels; #1 for adult large-volume IM" },
@@ -3746,10 +3764,10 @@ function _bodySvg() {
       <circle class="site-zone" data-region="ventrogluteal" cx="82" cy="163" r="13"/>
       <circle class="site-zone" data-region="vastus_lateralis" cx="80" cy="236" r="13"/>
       <!-- 터치 영역은 보이는 원보다 크게 (손가락 44px 확보). 투명 원이 위에 올라간다. -->
-      <circle class="site-hit" data-action="siteAnswer" data-region="deltoid" cx="61" cy="78" r="24" tabindex="0" role="button" aria-label="삼각근"/>
-      <circle class="site-hit" data-action="siteAnswer" data-region="abdomen" cx="100" cy="134" r="24" tabindex="0" role="button" aria-label="복부"/>
-      <circle class="site-hit" data-action="siteAnswer" data-region="ventrogluteal" cx="82" cy="163" r="24" tabindex="0" role="button" aria-label="배둔근"/>
-      <circle class="site-hit" data-action="siteAnswer" data-region="vastus_lateralis" cx="80" cy="236" r="24" tabindex="0" role="button" aria-label="외측광근"/>
+      <circle class="site-hit" data-action="siteAnswer" data-region="deltoid" cx="61" cy="78" r="24" tabindex="0" role="button" aria-label="${escapeHtml(siteRegionName("deltoid"))}"/>
+      <circle class="site-hit" data-action="siteAnswer" data-region="abdomen" cx="100" cy="134" r="24" tabindex="0" role="button" aria-label="${escapeHtml(siteRegionName("abdomen"))}"/>
+      <circle class="site-hit" data-action="siteAnswer" data-region="ventrogluteal" cx="82" cy="163" r="24" tabindex="0" role="button" aria-label="${escapeHtml(siteRegionName("ventrogluteal"))}"/>
+      <circle class="site-hit" data-action="siteAnswer" data-region="vastus_lateralis" cx="80" cy="236" r="24" tabindex="0" role="button" aria-label="${escapeHtml(siteRegionName("vastus_lateralis"))}"/>
     </svg>`;
 }
 function startSiteQuiz() {
@@ -8823,7 +8841,7 @@ function toggleSceneBookmark(target) {
     const nowOn = Storage.toggleBookmark(bmId, ev);
     target.classList.toggle("on", nowOn);
     target.setAttribute("aria-pressed", String(nowOn));
-    target.setAttribute("aria-label", nowOn ? "북마크 해제" : "북마크 추가");
+    target.setAttribute("aria-label", nowOn ? _t("bm.remove", "북마크 해제") : _t("bm.add", "북마크 추가"));
     const svg = target.querySelector("svg");
     if (svg) svg.setAttribute("fill", nowOn ? "currentColor" : "none");
 }
@@ -8853,7 +8871,7 @@ function renderBookmarks() {
               <div class="bm-cat">${cat}</div>
               <div class="bm-title">${title}</div>
             </button>
-            <button class="bookmark-remove icon-btn" data-action="removeBookmark" data-bm-id="${escapeHtml(id)}" aria-label="북마크 해제">✕</button>
+            <button class="bookmark-remove icon-btn" data-action="removeBookmark" data-bm-id="${escapeHtml(id)}" aria-label="${escapeHtml(_t("bm.remove", "북마크 해제"))}">✕</button>
           </div>`;
     }).join("");
     UI.gameArea.innerHTML = `
