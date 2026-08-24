@@ -585,15 +585,66 @@ test.describe("영어 모드 — 한국어 콘텐츠 고지", () => {
         await page.click('[data-action="setMenuTab"][data-tab="study"]');
     });
 
-    test("풀이 메뉴 — 국시 기반 3개 행에만 KO 배지가 붙는다", async ({ page }) => {
+    test("풀이 메뉴 — 국시 전용인 과목별 학습에만 KO 배지가 붙는다", async ({ page }) => {
         await page.click('[data-action="renderPracticeMenu"]');
         await expect(page.locator(".ko-content-hint")).toBeVisible();
-        await expect(page.locator(".ko-content-badge")).toHaveCount(3);
-        // NCLEX 는 영어 콘텐츠 — 배지가 붙으면 안 된다
-        await expect(page.locator('[data-action="renderNclexMenuLazy"] .ko-content-badge')).toHaveCount(0);
-        for (const action of ["renderSubjectStudyMenu", "startMockExam", "startDailyChallenge"]) {
-            await expect(page.locator(`[data-action="${action}"] .ko-content-badge`)).toHaveCount(1);
+        await expect(page.locator(".ko-content-badge")).toHaveCount(1);
+        await expect(page.locator('[data-action="renderSubjectStudyMenu"] .ko-content-badge')).toHaveCount(1);
+        // NCLEX 모드의 모의고사·일일 챌린지는 영어 문항이라 배지가 붙으면 안 된다
+        for (const action of ["renderNclexMenuLazy", "startMockExam", "startDailyChallenge"]) {
+            await expect(page.locator(`[data-action="${action}"] .ko-content-badge`)).toHaveCount(0);
         }
+        await expect(page.locator('[data-action="startMockExam"]')).toContainText("NCLEX-RN");
+        await expect(page.locator('[data-action="startDailyChallenge"]')).toContainText("NCLEX-RN");
+    });
+
+    // NCLEX 모드 사용자는 매일 하는 습관(일일)과 실전 점검(모의고사)이 한국어 문항이라
+    // 2,200문항이 있어도 "카테고리 연습" 하나로만 접근 가능했다.
+    test("NCLEX 모드 일일 챌린지는 영어 문항 10개로 출제되고 연속 학습일에 기록된다", async ({ page }) => {
+        await page.click('[data-action="renderPracticeMenu"]');
+        await page.click('[data-action="startDailyChallenge"]');
+        await page.waitForSelector("#nclex-choices", { timeout: 20000 });
+        await expect(page.locator(".scene-meta-row")).toContainText("1 / 10");
+        await expect(page.locator("#game-area")).not.toContainText(/[가-힣]/);
+        for (let i = 0; i < 12; i++) {
+            if (!(await page.locator("#nclex-choices").count())) break;
+            if (await page.locator('[data-action="nclexSataSubmit"]').count()) {
+                await page.locator(".sata-choice").first().click();
+                await page.locator('[data-action="nclexSataSubmit"]').click();
+            } else {
+                await page.locator("#nclex-choices .choice-btn").first().click();
+            }
+            const next = page.locator('[data-action="nclexNext"]');
+            if (await next.count()) await next.first().click();
+            await page.waitForTimeout(120);
+        }
+        await expect(page.locator(".scene-title")).toContainText("Daily Challenge");
+        const saved = await page.evaluate(() => JSON.parse(localStorage.getItem("nurseSim:v1")));
+        const today = Object.values(saved.daily || {})[0];
+        expect(today && today.completed).toBe(true);
+        expect(saved.streak.count).toBeGreaterThanOrEqual(1);
+        // client need 4종이 과목별 통계에 남아야 대시보드가 채워진다
+        const cats = Object.keys(saved.stats).filter(k => saved.stats[k].solved > 0);
+        expect(cats.length).toBeGreaterThanOrEqual(3);
+    });
+
+    test("NCLEX 모드 모의고사는 영어 30문항 + 제한시간 타이머로 시작된다", async ({ page }) => {
+        await page.click('[data-action="renderPracticeMenu"]');
+        await page.click('[data-action="startMockExam"]');
+        await page.waitForSelector("#nclex-choices", { timeout: 20000 });
+        await expect(page.locator(".scene-meta-row")).toContainText("1 / 30");
+        await expect(page.locator("#game-area")).not.toContainText(/[가-힣]/);
+        // 첫 화면부터 타이머가 보여야 한다 (예전엔 1초 뒤 첫 tick 때야 떴다)
+        await expect(page.locator("#inventory-bar .timer-pill")).toBeVisible();
+        const dist = await page.evaluate(() => {
+            const d = {};
+            gameState.nclexQueue.forEach(q => { d[q.category] = (d[q.category] || 0) + 1; });
+            return { dist: d, ids: new Set(gameState.nclexQueue.map(q => q.id)).size, total: gameState.nclexQueue.length };
+        });
+        expect(dist.total).toBe(30);
+        expect(dist.ids).toBe(30);                       // 중복 출제 없음
+        expect(Object.keys(dist.dist).length).toBe(4);   // 4개 client need 고르게
+        for (const n of Object.values(dist.dist)) expect(n).toBeGreaterThanOrEqual(7);
     });
 
     test("훈련 메뉴 — 한국어 본문 훈련 5개에 KO 배지가 붙는다", async ({ page }) => {

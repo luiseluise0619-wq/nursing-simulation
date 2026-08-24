@@ -166,6 +166,8 @@ const gameState = {
     bossesCleared: 0,      // 위기상황(보스) 인카운터 클리어 수 — 듀티당 리셋
     // mock
     mockTotal: 0, mockAnswered: 0, mockCorrect: 0, mockDeadlineTs: 0, mockTimerId: null, mockWrong: [],
+    // NCLEX 세션 종류 — 연습(카테고리별) / 일일 챌린지 / 모의고사. 결과 화면과 상단바가 이걸 본다.
+    nclexSession: null,
     // daily
     dailySeed: 0, dailyIndex: 0, dailyCorrect: 0, dailySolved: 0,
     // wrong review
@@ -2396,7 +2398,9 @@ function updateStats() {
         b.textContent = `정답률 ${acc}% (${gameState.quizCorrect}/${gameState.quizCorrect + gameState.quizWrong})`;
         UI.inventory.appendChild(b);
     }
-    if (gameState.mode === "mock") {
+    const _timedNclex = gameState.mode === "nclex_quiz"
+        && gameState.nclexSession && gameState.nclexSession.kind === "mock";
+    if (gameState.mode === "mock" || _timedNclex) {
         const remain = Math.max(0, Math.ceil((gameState.mockDeadlineTs - Date.now()) / 1000));
         const mm = String(Math.floor(remain / 60)).padStart(2, "0");
         const ss = String(remain % 60).padStart(2, "0");
@@ -2744,6 +2748,7 @@ function resetStateForMode() {
     gameState.recentIds = []; gameState.combo = 0;
     gameState.mockTotal = 0; gameState.mockAnswered = 0; gameState.mockCorrect = 0;
     gameState.mockDeadlineTs = 0; gameState.mockWrong = [];
+    gameState.nclexSession = null;
     gameState.dailySeed = 0; gameState.dailyIndex = 0;
     gameState.dailyCorrect = 0; gameState.dailySolved = 0;
     gameState.dailyQuestions = null;
@@ -3319,8 +3324,8 @@ function renderPracticeMenu() {
               <div class="row-body"><div class="row-title">NCLEX-RN</div><div class="row-sub">2,200 ${_t("unit.q", "문제")} · MCQ · SATA · Priority</div></div>
               <div class="row-chev">›</div>
            </button>` : "";
-    // 과목별·모의고사·일일 챌린지는 전부 한국 국시 문항이라 영어 모드에서도 본문이 한국어다.
-    // 훈련 메뉴와 같은 방식으로 KO 배지 + 안내문을 달아 들어가기 전에 알 수 있게 한다.
+    // 모의고사·일일 챌린지는 시험 모드를 따라간다(NCLEX 면 영어 문항). 과목별 학습만
+    // 한국 국시 전용이라, 영어 모드에서 KO 배지가 붙는 건 그 한 줄뿐이다.
     const koBadge = _koOnlyBadge();
     const koHint = _isEnUi()
         ? `<p class="ko-content-hint">${_t("practice.koHint", "🇰🇷 표시된 문제는 한국 국시 문항이라 본문이 한국어예요. 영어 문항은 NCLEX-RN 에 있습니다.")}</p>` : "";
@@ -3337,12 +3342,12 @@ function renderPracticeMenu() {
         </button>
         <button class="row-card" data-action="startMockExam">
           <div class="row-icon">${ICONS.mock}</div>
-          <div class="row-body"><div class="row-title">${_t("mock.title", "모의고사")}${koBadge}</div><div class="row-sub">${MOCK_EXAM_TOTAL}${_t("unit.q", "문제")} · ${MOCK_EXAM_SECONDS / 60}${_t("unit.min", "분")}</div></div>
+          <div class="row-body"><div class="row-title">${_t("mock.title", "모의고사")}</div><div class="row-sub">${MOCK_EXAM_TOTAL}${_t("unit.q", "문제")} · ${MOCK_EXAM_SECONDS / 60}${_t("unit.min", "분")}${examMode === "nclex" ? " · NCLEX-RN" : ""}</div></div>
           <div class="row-chev">›</div>
         </button>
         <button class="row-card" data-action="startDailyChallenge">
           <div class="row-icon">${ICONS.daily}</div>
-          <div class="row-body"><div class="row-title">${_t("daily.title", "일일 챌린지")}${koBadge}</div><div class="row-sub">${_t("daily.every", "매일")} ${DAILY_CHALLENGE_TOTAL}${_t("unit.q", "문제")}</div></div>
+          <div class="row-body"><div class="row-title">${_t("daily.title", "일일 챌린지")}</div><div class="row-sub">${_t("daily.every", "매일")} ${DAILY_CHALLENGE_TOTAL}${_t("unit.q", "문제")}${examMode === "nclex" ? " · NCLEX-RN" : ""}</div></div>
           <div class="row-chev">›</div>
         </button>
         <button class="choice-btn center" data-action="returnToMenu">${_t("action.back", "메뉴")}</button>
@@ -4399,6 +4404,7 @@ function startNclexQuiz(category) {
         return;
     }
     gameState.nclexQueue = _nclexShuffle(pool);
+    gameState.nclexSession = { kind: "practice" };
     gameState.nclexCategory = isRandom ? null : category;
     gameState.nclexIndex = 0;
     gameState.nclexCorrect = 0;
@@ -4410,10 +4416,94 @@ function startNclexQuiz(category) {
     renderNclexQuestion();
 }
 
+// =========================================================================
+// NCLEX 일일 챌린지 · 모의고사
+// 지금까지 두 기능 모두 NQ.allGenerators(한국 국시 생성기)만 썼다. NCLEX 모드 사용자는
+// 매일 하는 습관(일일)과 실전 점검(모의고사)을 한국어 문항으로 보게 되어, 2,200문항이
+// 있어도 "카테고리 연습" 하나로만 접근 가능했다. 같은 NCLEX 엔진을 큐만 바꿔 재사용한다.
+// =========================================================================
+
+// 4개 client need 에서 고르게 뽑는다. NCSBN 시험계획의 세부 비중을 임의로 지어내지 않고,
+// 문항 은행이 카테고리당 550개로 균등하므로 균등 추출을 그대로 쓴다.
+function _nclexPickBalanced(count, rng) {
+    const cats = (window.NCLEX_CATEGORIES || []).slice();
+    const all = window.NCLEX_QUESTIONS || [];
+    if (!all.length) return [];
+    const byCat = {};
+    cats.forEach(c => { byCat[c] = all.filter(q => q.category === c); });
+    const out = [];
+    const used = new Set();
+    for (let i = 0; i < count; i++) {
+        const pool = byCat[cats[i % cats.length]] || all;
+        if (!pool.length) continue;
+        // 같은 문항 중복 방지 — 최대 12회까지 재시도 후 포기(풀이 작아도 진행은 된다)
+        let q = null;
+        for (let t = 0; t < 12; t++) {
+            const cand = pool[Math.floor(rng() * pool.length)];
+            if (cand && !used.has(cand.id)) { q = cand; break; }
+        }
+        if (!q) q = pool[Math.floor(rng() * pool.length)];
+        if (!q) continue;
+        used.add(q.id);
+        out.push(q);
+    }
+    return out;
+}
+
+function _nclexSessionInit(kind, queue) {
+    resetStateForMode();
+    gameState.mode = "nclex_quiz";
+    gameState.nclexQueue = queue;
+    gameState.nclexSession = { kind };
+    gameState.nclexCategory = null;
+    gameState.nclexIndex = 0;
+    gameState.nclexCorrect = 0;
+    gameState.nclexAnswered = 0;
+    gameState.nclexSataPick = new Set();
+    showCoreUI();
+    UI.logBar.innerHTML = "";
+}
+
+async function startNclexDaily() {
+    if (!(await loadNclexContent())) { renderNclexMenuLazy(); return; }
+    const rng = seededRng(dailySeed(todayKey()));
+    const queue = _nclexPickBalanced(DAILY_CHALLENGE_TOTAL, rng);
+    if (!queue.length) { renderNclexMenuLazy(); return; }
+    _nclexSessionInit("daily", queue);
+    addLog(`Daily Challenge — ${queue.length} NCLEX items`, "log-important");
+    track("nclex_daily_started", { total: queue.length });
+    renderNclexQuestion();
+}
+
+async function startNclexMock() {
+    if (!(await loadNclexContent())) { renderNclexMenuLazy(); return; }
+    const queue = _nclexPickBalanced(MOCK_EXAM_TOTAL, Math.random);
+    if (!queue.length) { renderNclexMenuLazy(); return; }
+    _nclexSessionInit("mock", queue);
+    gameState.mockDeadlineTs = Date.now() + MOCK_EXAM_SECONDS * 1000;
+    if (gameState.mockTimerId) clearInterval(gameState.mockTimerId);
+    gameState.mockTimerId = setInterval(() => {
+        // 세션이 끝났거나 화면을 떠났으면 타이머를 반드시 회수한다
+        if (!gameState.nclexSession || gameState.nclexSession.kind !== "mock") {
+            clearInterval(gameState.mockTimerId); gameState.mockTimerId = null; return;
+        }
+        updateStats();
+        if (Date.now() >= gameState.mockDeadlineTs) {
+            clearInterval(gameState.mockTimerId); gameState.mockTimerId = null;
+            renderNclexSummary("timeout");
+        }
+    }, 1000);
+    addLog(`Mock Exam — ${queue.length} items / ${MOCK_EXAM_SECONDS / 60} min`, "log-important");
+    track("nclex_mock_started", { total: queue.length });
+    renderNclexQuestion();
+}
+
 function renderNclexQuestion() {
     const q = gameState.nclexQueue && gameState.nclexQueue[gameState.nclexIndex];
     if (!q) { renderNclexSummary(); return; }
-    showCoreUI();
+    // updateStats 가 없어 첫 문항에서는 상단바가 "대기"로 남고 모의고사 타이머도
+    // 1초 뒤 첫 tick 때야 나타났다.
+    showCoreUI(); updateStats();
     const idx = gameState.nclexIndex + 1;
     const total = gameState.nclexQueue.length;
     const typeLabel = q.type === "sata" ? "SATA — Select all that apply"
@@ -4557,19 +4647,47 @@ function nclexNext() {
     renderNclexQuestion();
 }
 
-function renderNclexSummary() {
+function renderNclexSummary(reason) {
+    const kind = (gameState.nclexSession && gameState.nclexSession.kind) || "practice";
+    if (gameState.mockTimerId) { clearInterval(gameState.mockTimerId); gameState.mockTimerId = null; }
     const total = (gameState.nclexQueue || []).length;
     const correct = gameState.nclexCorrect || 0;
     const answered = gameState.nclexAnswered || 0;
     const acc = answered ? Math.round((correct / answered) * 100) : 0;
-    const catLabel = gameState.nclexCategory || "All Categories";
+    const catLabel = kind === "daily" ? "Daily Challenge"
+        : kind === "mock" ? (reason === "timeout" ? "Mock Exam — Time's up" : "Mock Exam")
+        : (gameState.nclexCategory || "All Categories");
     let msg, emoji;
     if (acc >= 85) { emoji = "🏆"; msg = "Excellent — you are at passing level for this domain."; }
     else if (acc >= 65) { emoji = "🌟"; msg = "Solid. Review the missed rationales for full retention."; }
     else if (acc >= 50) { emoji = "📚"; msg = "Halfway there. Re-run this category after reviewing wrong rationales."; }
     else { emoji = "💪"; msg = "Tough domain. Review each rationale and retry — repetition builds NCLEX recall."; }
-    track("nclex_quiz_completed", { category: gameState.nclexCategory || "__random__", total, correct, accuracy: acc });
-    try { Storage.addHistory({ mode: "nclex", at: Date.now(), category: gameState.nclexCategory || "__random__", total, answered, correct, accuracy: acc }); } catch {}
+    track("nclex_quiz_completed", { category: gameState.nclexCategory || "__random__", kind, total, correct, accuracy: acc });
+    try { Storage.addHistory({ mode: kind === "practice" ? "nclex" : `nclex_${kind}`, at: Date.now(), category: gameState.nclexCategory || "__random__", total, answered, correct, accuracy: acc }); } catch {}
+    // 일일·모의고사는 국시 모드와 같은 기록 체계에 남긴다 — 연속 학습일·최고점이 모드에 따라
+    // 끊기면 NCLEX 사용자는 배지도 스트릭도 영영 못 받는다.
+    if (kind === "daily") {
+        try {
+            Storage.setDaily(todayKey(), { solved: total, correct, completed: true, ts: Date.now() });
+            Storage.addHistory({ mode: "daily", at: Date.now(), total, correct, date: todayKey() });
+            Storage.bumpStreak();
+            checkAndNotifyAchievements();
+        } catch {}
+    } else if (kind === "mock") {
+        try {
+            Storage.setMockBest(correct);
+            Storage.updateMockBest(correct); Storage.markModeUsed("mock");
+            checkAndNotifyAchievements();
+        } catch {}
+    }
+    const actions = kind === "daily"
+        ? `<button class="choice-btn primary" data-action="returnToMenu">Done for today</button>
+           <button class="choice-btn" data-action="renderNclexMenuLazy">Practice more</button>`
+        : kind === "mock"
+        ? `<button class="choice-btn primary" data-action="startNclexMock">Retake mock exam</button>
+           <button class="choice-btn" data-action="returnToMenu">Main Menu</button>`
+        : `<button class="choice-btn primary" data-action="renderNclexMenu">Practice Another Category</button>
+           <button class="choice-btn" data-action="returnToMenu">Main Menu</button>`;
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
         
@@ -4580,10 +4698,7 @@ function renderNclexSummary() {
           <div class="dash-stat"><div class="ds-num">${answered}</div><div class="ds-label">Answered</div></div>
         </div>
         <p class="scene-desc">${msg}</p>
-        <div class="choice-list">
-          <button class="choice-btn primary" data-action="renderNclexMenu">Practice Another Category</button>
-          <button class="choice-btn" data-action="returnToMenu">Main Menu</button>
-        </div>
+        <div class="choice-list">${actions}</div>
       </div>`;
 }
 
@@ -4678,6 +4793,7 @@ function handleQuizChoice(choice, ev) {
 // 모의고사 (시간제한 + 결과 채점표)
 // =========================================================================
 function startMockExam() {
+    if (Storage.getExamMode() === "nclex") { startNclexMock(); return; }
     resetStateForMode();
     gameState.mode = "mock";
     gameState._mockEnded = false;
@@ -4785,6 +4901,11 @@ function pickDailyGenerators(seed, count) {
 function startDailyChallenge() {
     // 첫 액션 완료 (메인 메뉴 hero-card tooltip 제거)
     try { Storage.setFirstActionDone(); } catch {}
+    // NCLEX 모드면 영어 문항으로 — "완료 여부"는 모드와 무관하게 같은 daily 기록을 쓴다
+    if (Storage.getExamMode() === "nclex") {
+        const d = Storage.load();
+        if (!(d.daily && d.daily[todayKey()] && d.daily[todayKey()].completed)) { startNclexDaily(); return; }
+    }
     // 이미 오늘 완료한 경우 → 빈 상태 (재도전은 명시적 선택)
     const data = Storage.load();
     const today = data.daily?.[todayKey()];
@@ -9336,6 +9457,8 @@ const DELEGATED_ACTIONS = {
     startSiteQuiz: () => startSiteQuiz(),
     siteAnswer: (t) => siteAnswer(t),
     siteQuizNext: () => siteQuizNext(),
+    startNclexDaily: () => startNclexDaily(),
+    startNclexMock: () => startNclexMock(),
     startQuiz: (t) => startQuiz(t.dataset.arg),
     setQuizDifficulty: (t) => setQuizDifficulty(t.dataset.arg),
     quizContinue: () => quizContinue(),
