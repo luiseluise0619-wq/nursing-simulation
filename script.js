@@ -3788,7 +3788,7 @@ function renderSiteQuizCard() {
       <div class="scene-card card">
         <div class="quiz-progress">🧍 ${_t("site.title", "주사 부위 짚기")} ${i + 1}/${pool.length}</div>
         <h2 class="scene-title">${escapeHtml(L === "en" ? q.qEn : q.qKo)}</h2>
-        <div class="tutor-actions"><button class="tts-btn" data-action="ttsSpeak" data-text="${escapeHtml(L === "en" ? q.qEn : q.qKo)}" aria-label="${_t("tts.readQ", "문제 읽어주기")}" title="${_t("tts.readQ", "문제 읽어주기")}">🔊</button></div>
+        <div class="tts-row"><button class="tts-btn" data-action="ttsSpeak" data-text="${escapeHtml(L === "en" ? q.qEn : q.qKo)}" aria-label="${_t("tts.readQ", "문제 읽어주기")}" title="${_t("tts.readQ", "문제 읽어주기")}">🔊</button></div>
         <div class="body-wrap">${_bodySvg()}</div>
         <div id="site-feedback" class="image-quiz-feedback hidden" aria-live="polite"></div>
         <button class="choice-btn subtle center hidden" id="site-next-btn" data-action="siteQuizNext">${_t("action.next", "다음 →")}</button>
@@ -3834,128 +3834,6 @@ function renderSiteQuizSummary() {
           <button class="choice-btn" data-action="renderDrillMenu">${_t("action.back", "메뉴")}</button>
         </div>
       </div>`;
-}
-
-// =========================================================================
-// AI 학습 튜터 (RAG) — 앱의 검증된 문항·해설을 근거로 답변 (Gemini 무료, 서버리스 프록시)
-// 검색: 임베딩 없이 토큰 겹침 스코어(무료·즉시). 답변: /api/tutor 그라운딩 프롬프트.
-// 환각 방지: context 밖 지식 금지 + 출처 표기 + 일 5회 무료 게이트(무료 쿼터 보호).
-// =========================================================================
-const TUTOR_DAILY_FREE = 5;
-function _tutorCorpus() {
-    const out = [];
-    try { if (typeof window !== "undefined" && Array.isArray(window.KOR_QUESTIONS)) out.push(...window.KOR_QUESTIONS); } catch {}
-    try { if (typeof window !== "undefined" && Array.isArray(window.NCLEX_QUESTIONS)) out.push(...window.NCLEX_QUESTIONS); } catch {}
-    return out.filter(q => q && q.desc && Array.isArray(q.choices));
-}
-// 한 단어의 일치 점수 — 한국어는 조사가 붙어 원형과 정확히 안 맞는다("심부전에" vs "심부전").
-// 어미를 한 글자씩 떼며 최장 일치를 찾되, 과잉 매칭을 막기 위해 절삭 폭을 제한한다
-// (한글 최대 2글자 = 조사, 영어 최대 3글자 = -ing/-ed/-s). 점수는 남은 길이 비율.
-function _tutorTermScore(hay, term) {
-    const hangul = /[가-힣]/.test(term);
-    const minLen = hangul ? Math.max(2, term.length - 2) : Math.max(4, term.length - 3);
-    for (let len = term.length; len >= minLen; len--) {
-        const stem = term.slice(0, len);
-        if (stem.length >= 2 && hay.includes(stem)) return len / term.length;
-    }
-    return 0;
-}
-function _tutorRetrieve(query, k) {
-    const corpus = _tutorCorpus();
-    const terms = String(query).toLowerCase().split(/\s+/).filter(t => t.length >= 2);
-    if (!terms.length) return [];
-    const scored = corpus.map(q => {
-        const hay = ((q.title || "") + " " + (q.desc || "") + " " + (q.choices || []).map(c => (c.text || "") + " " + (c.log || "")).join(" ")).toLowerCase();
-        let s = 0; terms.forEach(t => { s += _tutorTermScore(hay, t); });
-        return { q, s };
-    }).filter(x => x.s > 0).sort((a, b) => b.s - a.s).slice(0, k);
-    return scored.map(x => x.q);
-}
-function _tutorContext(items) {
-    return items.map(q => {
-        const correct = (q.choices || []).find(c => c.correct);
-        const logs = (q.choices || []).map(c => c.log).filter(Boolean).join(" / ");
-        return `[#${q.id}] ${q.title || ""}\nQ: ${q.desc}\n정답: ${correct ? correct.text : ""}\n해설: ${logs}`;
-    }).join("\n---\n");
-}
-function _tutorQuota() {
-    let d = { date: "", count: 0 };
-    try { d = JSON.parse(localStorage.getItem("nurseSim:tutor") || "{}") || {}; } catch {}
-    const today = todayKey();
-    if (d.date !== today) d = { date: today, count: 0 };
-    if (typeof d.count !== "number") d.count = 0;
-    return d;
-}
-function _tutorSaveQuota(d) { try { localStorage.setItem("nurseSim:tutor", JSON.stringify(d)); } catch {} }
-function renderTutor() {
-    gameState.mode = "tutor"; resetStateForMode();
-    showCoreUI(); if (UI.logBar) UI.logBar.innerHTML = "";
-    const q = _tutorQuota(); const left = Math.max(0, TUTOR_DAILY_FREE - q.count);
-    UI.gameArea.innerHTML = `
-      <div class="scene-card card">
-        <h2 class="scene-title">🤖 ${_t("tutor.title", "AI 학습 튜터")} <span class="row-pill rec">BETA</span></h2>
-        <p class="scene-desc">${_t("tutor.desc", "궁금한 걸 물어보면 앱의 검증된 문제·해설을 근거로 답해요. 진단·처방이 아닌 학습 참고용입니다.")}</p>
-        <textarea id="tutor-input" class="sbar-textarea" rows="2" placeholder="${escapeHtml(_t("tutor.ph", "예: 심부전 환자에게 반좌위를 취하는 이유는?"))}" aria-label="${_t("tutor.title", "AI 학습 튜터")}"></textarea>
-        <div class="tutor-quota" id="tutor-quota">${_t("tutor.left", "오늘 남은 무료 질문")}: ${left}/${TUTOR_DAILY_FREE}</div>
-        <p class="tutor-privacy">${_t("tutor.privacy", "입력한 질문은 답변 생성을 위해 외부 AI 서비스로 전송됩니다. 실명·환자 정보는 입력하지 마세요.")}</p>
-        <div class="choice-list">
-          <button class="choice-btn primary" data-action="tutorAsk">${_t("tutor.ask", "질문하기")}</button>
-          <button class="choice-btn center" data-action="returnToMenu">${_t("action.back", "메뉴")}</button>
-        </div>
-        <div id="tutor-answer" class="tutor-answer hidden"></div>
-      </div>`;
-}
-async function tutorAsk() {
-    const input = document.getElementById("tutor-input");
-    const ans = document.getElementById("tutor-answer");
-    if (!input || !ans) return;
-    const question = (input.value || "").trim();
-    if (!question) { input.focus(); return; }
-    const quota = _tutorQuota();
-    if (quota.count >= TUTOR_DAILY_FREE) {
-        ans.classList.remove("hidden");
-        ans.innerHTML = `<div class="feedback-log">${_t("tutor.limit", "오늘 무료 질문을 모두 썼어요. 내일 다시 이용하거나 프리미엄에서 무제한으로 열려요.")}</div>`;
-        return;
-    }
-    ans.classList.remove("hidden");
-    ans.innerHTML = `<div class="tutor-loading">${_t("tutor.thinking", "근거 찾는 중…")}</div>`;
-    // NCLEX 문항은 지연 로딩(2MB) — NCLEX 모드/영어 사용자가 튜터를 먼저 열면 코퍼스가
-    // 국시 280문항뿐이라 "자료 없음"이 뜬다. 검색 전에 한 번 확보한다.
-    try {
-        const _mode = (typeof Storage !== "undefined" && Storage.getExamMode) ? Storage.getExamMode() : "korean";
-        if ((_mode === "nclex" || _ecgLang() === "en") && !_nclexAvailable()) {
-            await loadNclexContent();
-        }
-    } catch {}
-    const items = _tutorRetrieve(question, 4);
-    if (!items.length) {
-        ans.innerHTML = `<div class="feedback-log">${_t("tutor.noctx", "관련 학습 자료를 찾지 못했어요. 다른 키워드로 물어봐 주세요.")}</div>`;
-        return;
-    }
-    try {
-        const resp = await fetch("/api/tutor", {
-            method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ question, context: _tutorContext(items), lang: _ecgLang() }),
-        });
-        if (!resp.ok) throw new Error("bad");
-        const data = await resp.json();
-        const answer = (data && data.answer) || "";
-        if (!answer) throw new Error("empty");
-        quota.count += 1; _tutorSaveQuota(quota);
-        const ids = items.map(x => "#" + x.id).join(" ");
-        const left = Math.max(0, TUTOR_DAILY_FREE - quota.count);
-        ans.innerHTML = `<div class="tutor-reply">${escapeHtml(answer).replace(/\n/g, "<br>")}</div>`
-            + `<div class="tutor-actions"><button class="tts-btn" data-action="ttsSpeak" data-text="${escapeHtml(answer)}" aria-label="${_t("tutor.read", "답변 읽어주기")}" title="${_t("tutor.read", "답변 읽어주기")}">🔊</button></div>`
-            + `<div class="tutor-src">${_t("tutor.src", "근거")}: ${escapeHtml(ids)}</div>`;
-        // 잔여 횟수는 입력창 위의 기존 표시를 갱신한다. 답변 블록에 또 찍으면
-        // 화면에 5/5 와 4/5 가 동시에 보여 어느 쪽이 맞는지 알 수 없게 된다.
-        const quotaEl = document.getElementById("tutor-quota");
-        if (quotaEl) quotaEl.textContent = `${_t("tutor.left", "오늘 남은 무료 질문")}: ${left}/${TUTOR_DAILY_FREE}`;
-        track("tutor_ask", { ok: true });
-    } catch (e) {
-        ans.innerHTML = `<div class="feedback-log">${_t("tutor.err", "지금은 답할 수 없어요. 잠시 후 다시 시도해 주세요.")}</div>`;
-        track("tutor_ask", { ok: false });
-    }
 }
 
 function renderKorMenu() {
@@ -7191,7 +7069,6 @@ function renderPrivacy() {
         <section class="legal-section">
           <h3 class="legal-h">1. 수집·이용하는 정보</h3>
           <p>본 앱은 <strong>학습 데이터·개인 식별정보를 외부 서버로 전송하지 않습니다.</strong> 다음 항목만 사용자 기기의 브라우저 localStorage 에 저장됩니다:</p>
-          <p class="legal-note">단, <strong>AI 학습 튜터</strong>에 직접 질문을 입력해 전송한 경우에 한해 그 질문 내용이 답변 생성을 위해 외부 AI 서비스(Google Gemini)로 전달됩니다. 저장된 학습 데이터는 전송되지 않으며, 튜터를 쓰지 않으면 전송도 없습니다.</p>
           <ul class="legal-list">
             <li>학습 통계 (과목별 정답률·콤보 최고점)</li>
             <li>오답 노트 (틀린 문제 + spaced repetition 메타데이터)</li>
@@ -7216,7 +7093,6 @@ function renderPrivacy() {
           <h3 class="legal-h">4. 정보 보호 조치</h3>
           <ul class="legal-list">
             <li><strong>학습 데이터는 기기 내에만 저장</strong> — 외부 서버로 전송하지 않음 (PWA cache-first)</li>
-            <li>AI 튜터는 <strong>사용자가 질문을 보낼 때만</strong> 그 질문을 외부 AI 서비스로 전달 — 저장 데이터·식별정보는 미전송</li>
             <li>광고(Google AdMob)·익명 사용 통계(Plausible) 는 모바일 빌드에서 작동할 수 있으며, 개인 식별정보는 수집하지 않습니다</li>
             <li>Storage 스키마 검증 — 변조 시 안전 복구</li>
           </ul>
@@ -7967,14 +7843,6 @@ function renderMenuTabs(data, dailyDone, wrongCount) {
           <div class="row-body">
             <div class="row-title">${_t("study.drills", "훈련")}</div>
             <div class="row-sub">${_t("study.drills.sub", "이미지 · 약물 · 인계 · 트리아지")}</div>
-          </div>
-          <div class="row-chev">›</div>
-        </button>
-        <button class="row-card big" data-action="renderTutor">
-          <div class="row-icon big" aria-hidden="true">🤖</div>
-          <div class="row-body">
-            <div class="row-title">${_t("tutor.title", "AI 학습 튜터")} <span class="row-pill rec">BETA</span></div>
-            <div class="row-sub">${_t("tutor.rowSub", "문제·해설 근거로 질문 답변")}</div>
           </div>
           <div class="row-chev">›</div>
         </button>
@@ -9391,8 +9259,6 @@ const DELEGATED_ACTIONS = {
     startSiteQuiz: () => startSiteQuiz(),
     siteAnswer: (t) => siteAnswer(t),
     siteQuizNext: () => siteQuizNext(),
-    renderTutor: () => renderTutor(),
-    tutorAsk: () => tutorAsk(),
     startQuiz: (t) => startQuiz(t.dataset.arg),
     setQuizDifficulty: (t) => setQuizDifficulty(t.dataset.arg),
     quizContinue: () => quizContinue(),

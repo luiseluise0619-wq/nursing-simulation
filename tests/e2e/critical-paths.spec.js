@@ -211,7 +211,7 @@ test.describe("데이터 컨트롤 (GDPR)", () => {
 });
 
 // =========================================================================
-// 차별화 기능 — 심전도 판독 · 주사 부위 짚기 · AI 학습 튜터
+// 차별화 기능 — 심전도 판독 · 주사 부위 짚기
 // 경쟁 시험앱에 없는 기능이라 회귀 시 타격이 크다. 실브라우저에서만 검증 가능한
 // 요소(canvas 실제 렌더, SVG 히트 영역, 네트워크 실패 폴백)를 다룬다.
 // =========================================================================
@@ -286,45 +286,6 @@ test.describe("주사 부위 짚기", () => {
     test("터치 타깃이 손가락 크기(44px)에 가깝다", async ({ page }) => {
         const box = await page.locator(".site-hit").first().boundingBox();
         expect(Math.min(box.width, box.height)).toBeGreaterThanOrEqual(40);
-    });
-});
-
-test.describe("AI 학습 튜터", () => {
-    test.beforeEach(async ({ page }) => {
-        await seedLegalAccepted(page);
-        await page.goto("/");
-        await page.waitForSelector("h1.menu-title-v2", { timeout: 8000 });
-        await page.click('[data-action="setMenuTab"][data-tab="study"]');
-        await page.click('[data-action="renderTutor"]');
-    });
-
-    test("전송 고지와 무료 질문 잔여 횟수를 입력 전에 보여준다", async ({ page }) => {
-        await expect(page.locator("#tutor-input")).toBeVisible();
-        // 외부 AI 전송은 개인정보 고지 대상 — 입력하기 전에 보여야 한다
-        await expect(page.locator(".tutor-privacy")).toBeVisible();
-        await expect(page.locator("#tutor-quota")).toContainText("5");
-    });
-
-    test("서버가 실패해도 앱이 죽지 않고 안내로 폴백한다", async ({ page }) => {
-        // API 키 미설정 등으로 /api/tutor 가 실패하는 실제 상황을 재현
-        await page.route("**/api/tutor", route => route.fulfill({ status: 500, body: "{}" }));
-        await page.fill("#tutor-input", "심부전 환자에게 반좌위를 취하는 이유는?");
-        await page.click('[data-action="tutorAsk"]');
-        await expect(page.locator("#tutor-answer")).toBeVisible();
-        await expect(page.locator("#tutor-answer")).toContainText("다시 시도");
-        // 실패한 질문은 무료 횟수를 소모하지 않아야 한다
-        await expect(page.locator("#tutor-quota")).toContainText("5");
-    });
-
-    test("답변은 근거로 삼은 문항 번호와 함께 표시된다", async ({ page }) => {
-        await page.route("**/api/tutor", route =>
-            route.fulfill({ status: 200, contentType: "application/json",
-                body: JSON.stringify({ answer: "반좌위는 정맥 환류를 줄여 폐 울혈을 완화합니다. [출처: #kor-001]" }) }));
-        await page.fill("#tutor-input", "심부전 환자에게 반좌위를 취하는 이유는?");
-        await page.click('[data-action="tutorAsk"]');
-        await expect(page.locator(".tutor-reply")).toContainText("정맥 환류");
-        await expect(page.locator(".tutor-src")).toContainText("#kor-");
-        await expect(page.locator("#tutor-quota")).toContainText("4");
     });
 });
 
