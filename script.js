@@ -1983,7 +1983,7 @@ function showInstallToast() {
         <span>📱 ${_t("install.prompt", "홈 화면에 설치하시겠어요?")}</span>
         <button id="install-toast-yes" style="pointer-events:auto;background:#fff;color:#7fa881;border:none;padding:6px 12px;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px;">설치</button>
         <button id="install-toast-no" style="pointer-events:auto;background:transparent;color:#fff;border:none;padding:6px 8px;cursor:pointer;font-family:inherit;font-size:13px;opacity:0.8;margin-left:4px;">${_t("update.later", "나중에")}</button>`;
-    el.style.cssText = "position:fixed;bottom:calc(88px + env(safe-area-inset-bottom, 0px));left:50%;pointer-events:none;transform:translateX(-50%);background:#7fa881;color:#fff;padding:12px 18px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.3);z-index:99996;font-size:13px;font-family:inherit;display:flex;align-items:center;flex-wrap:wrap;justify-content:center;gap:6px;max-width:calc(100vw - 32px);animation:badgePop 400ms ease;max-width:calc(100vw - 32px);";
+    el.style.cssText = "position:fixed;bottom:calc(88px + var(--banner-space, 0px) + env(safe-area-inset-bottom, 0px));left:50%;pointer-events:none;transform:translateX(-50%);background:#7fa881;color:#fff;padding:12px 18px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.3);z-index:99996;font-size:13px;font-family:inherit;display:flex;align-items:center;flex-wrap:wrap;justify-content:center;gap:6px;max-width:calc(100vw - 32px);animation:badgePop 400ms ease;max-width:calc(100vw - 32px);";
     document.body.appendChild(el);
     document.getElementById("install-toast-yes")?.addEventListener("click", async () => {
         try {
@@ -2035,7 +2035,7 @@ function showReviewToast() {
           <button id="review-toast-no" style="pointer-events:auto;background:transparent;color:#fff;border:1px solid rgba(255,255,255,0.5);padding:8px 14px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:13px;">개선 의견</button>
           <button id="review-toast-dismiss" style="pointer-events:auto;background:transparent;color:#fff;border:none;padding:8px;cursor:pointer;font-family:inherit;font-size:12px;opacity:0.7;">${_t("update.later", "나중에")}</button>
         </div>`;
-    el.style.cssText = "position:fixed;bottom:calc(88px + env(safe-area-inset-bottom, 0px));left:50%;pointer-events:none;transform:translateX(-50%);background:linear-gradient(135deg,#7fa881,#6a9170);color:#fff;padding:18px 24px;border-radius:14px;box-shadow:0 10px 32px rgba(0,0,0,0.35);z-index:99996;font-family:inherit;text-align:center;max-width:calc(100vw - 32px);animation:badgePop 500ms ease;";
+    el.style.cssText = "position:fixed;bottom:calc(88px + var(--banner-space, 0px) + env(safe-area-inset-bottom, 0px));left:50%;pointer-events:none;transform:translateX(-50%);background:linear-gradient(135deg,#7fa881,#6a9170);color:#fff;padding:18px 24px;border-radius:14px;box-shadow:0 10px 32px rgba(0,0,0,0.35);z-index:99996;font-family:inherit;text-align:center;max-width:calc(100vw - 32px);animation:badgePop 500ms ease;";
     document.body.appendChild(el);
     document.getElementById("review-toast-yes")?.addEventListener("click", () => {
         track("review_prompt_positive");
@@ -2066,7 +2066,7 @@ function showUpdateToast() {
         <span>🔄 ${_t("update.ready", "새 버전 준비됨")}</span>
         <button id="update-toast-reload" style="pointer-events:auto;background:#fff;color:#7fa881;border:none;padding:6px 12px;border-radius:8px;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px;">${_t("update.reload", "새로고침")}</button>
         <button id="update-toast-dismiss" style="pointer-events:auto;background:transparent;color:#fff;border:none;padding:6px 8px;cursor:pointer;font-family:inherit;font-size:13px;opacity:0.8;margin-left:4px;">${_t("update.later", "나중에")}</button>`;
-    el.style.cssText = "position:fixed;bottom:calc(88px + env(safe-area-inset-bottom, 0px));left:50%;pointer-events:none;transform:translateX(-50%);background:#7fa881;color:#fff;padding:12px 18px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.3);z-index:99996;font-size:13px;font-family:inherit;display:flex;align-items:center;flex-wrap:wrap;justify-content:center;gap:6px;max-width:calc(100vw - 32px);animation:badgePop 400ms ease;";
+    el.style.cssText = "position:fixed;bottom:calc(88px + var(--banner-space, 0px) + env(safe-area-inset-bottom, 0px));left:50%;pointer-events:none;transform:translateX(-50%);background:#7fa881;color:#fff;padding:12px 18px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.3);z-index:99996;font-size:13px;font-family:inherit;display:flex;align-items:center;flex-wrap:wrap;justify-content:center;gap:6px;max-width:calc(100vw - 32px);animation:badgePop 400ms ease;";
     document.body.appendChild(el);
     document.getElementById("update-toast-reload")?.addEventListener("click", () => { location.reload(); });
     document.getElementById("update-toast-dismiss")?.addEventListener("click", () => { el.remove(); });
@@ -2294,6 +2294,7 @@ function rememberQuestion(baseId) {
 function recentlyUsed(baseId) { return gameState.recentIds.includes(baseId); }
 
 function updateStats() {
+    syncAdBanner();
     const shownHp = clamp(gameState.hp, 0, 100);
     const prevRep = updateStats._prevRep;
     UI.hp.textContent = shownHp;
@@ -2404,6 +2405,31 @@ function updateStats() {
         b.textContent = `⏰ ${mm}:${ss}`;
         UI.inventory.appendChild(b);
     }
+}
+
+// 배너 노출 규칙 — "답을 고르는 UI 가 화면에 없을 때만".
+// mode 목록으로 걸면 새 문제 화면이 추가될 때 빠뜨리기 쉽고, 결과 화면은 문제 화면과
+// 같은 mode 를 쓴다. 화면에 선택지가 떠 있는지로 판정하면 둘 다 자동으로 맞는다.
+// AdMob 정책상 가장 위험한 게 보기 버튼 옆 광고(오클릭)라 기본값은 "숨김"이다.
+const ANSWER_UI_SELECTOR = [
+    "#choice-list", "#kor-choices", "#nclex-choices", "#drug-drill-choices",
+    "#image-quiz-choices", "#ecg-choices", "#handoff-answer", ".sbar-form",
+    ".triage-pick", ".site-hit",
+].join(", ");
+function bannerAllowed() {
+    try { return !document.querySelector(ANSWER_UI_SELECTOR); } catch { return false; }
+}
+// updateStats() 는 innerHTML 을 채우기 *전에* 호출되는 렌더러가 있어, 그 시점에 DOM 을
+// 보면 직전 화면을 읽는다. 다음 프레임으로 미뤄 확정된 DOM 을 보고, 연속 호출은 합친다.
+function syncAdBanner() {
+    if (syncAdBanner._queued) return;
+    syncAdBanner._queued = true;
+    const run = () => {
+        syncAdBanner._queued = false;
+        try { Ads.syncBanner(bannerAllowed()); } catch {}
+    };
+    if (typeof requestAnimationFrame === "function") requestAnimationFrame(run);
+    else setTimeout(run, 0);
 }
 
 function showCoreUI() {
@@ -7309,7 +7335,7 @@ const ONBOARDING_ILLUSTRATIONS = [
 // ⚠️ 면책 슬라이드(마지막) 문구는 의료 신뢰성상 verbatim 보존.
 const ONBOARDING_SLIDES = [
     { illust: 0, title: "간호사 시뮬레이터에 오신 것을 환영합니다",
-      body: "국시부터 NCLEX까지, 실전처럼 준비하는 무료 간호 학습앱.\n가입 없음, 광고는 보상형만 사용합니다." },
+      body: "국시부터 NCLEX까지, 실전처럼 준비하는 무료 간호 학습앱.\n가입 없음. 전면 광고 없음 — 문제 푸는 화면엔 광고가 뜨지 않습니다." },
     { illust: 2, title: "국시 280 · NCLEX 2,200 · 듀티 시뮬레이션",
       body: "한국 국시 280문항 + NCLEX-RN 2,200문항 + 실전 듀티 시뮬레이션.\n과목별 정답률·오답 자동 저장·연속 학습 배지로 약점까지 관리합니다." },
     { illust: 4, title: "학습 도구로만 사용하세요",
@@ -8535,6 +8561,54 @@ const Ads = {
             // 광고 SDK 부재/에러는 조용히 무시 (앱 정상 동작 유지)
         }
     },
+    // ── 배너 ────────────────────────────────────────────────────────────
+    // 화면 최하단 고정(margin 0). 탭바·본문 여백은 CSS(.has-banner + --banner-h)가
+    // 밀어내므로 네이티브 margin 을 다시 계산할 일이 없다 → 재노출 로직 불필요.
+    bannerShown: false,
+    _bannerSizeBound: false,
+    _bindBannerSize(p) {
+        if (Ads._bannerSizeBound) return;
+        Ads._bannerSizeBound = true;
+        // 어댑티브 배너는 기기 폭마다 높이가 달라 실제 값을 받아 CSS 변수에 반영한다
+        try {
+            p.addListener("bannerAdSizeChanged", (info) => {
+                const h = info && info.size && Number(info.size.height);
+                if (Number.isFinite(h) && h > 0) {
+                    document.documentElement.style.setProperty("--banner-h", h + "px");
+                }
+            });
+        } catch { /* 리스너 미지원 버전 — 기본 높이(CSS)로 동작 */ }
+    },
+    async syncBanner(allowed) {
+        const p = Ads.plugin;
+        if (!p || !ADS_UNITS.banner) return;          // 웹/PWA·단위 ID 미발급 → 완전 no-op
+        if (allowed === Ads.bannerShown) return;      // 상태 동일 → 네이티브 호출 없음
+        try {
+            if (allowed) {
+                await Ads.init();
+                Ads._bindBannerSize(p);
+                await p.showBanner({
+                    adId: ADS_UNITS.banner,
+                    adSize: "ADAPTIVE_BANNER",
+                    position: "BOTTOM_CENTER",
+                    margin: 0,
+                    isTesting: !!window.NURSESIM_ADS_TESTING,
+                });
+                Ads.bannerShown = true;
+                document.body.classList.add("has-banner");
+                track("banner_shown");
+            } else {
+                await p.hideBanner();
+                Ads.bannerShown = false;
+                document.body.classList.remove("has-banner");
+            }
+        } catch (e) {
+            // 실패 시 레이아웃만이라도 원복 — 빈 공간이 남으면 안 된다
+            Ads.bannerShown = false;
+            try { document.body.classList.remove("has-banner"); } catch {}
+            track("banner_error");
+        }
+    },
     // 보상형 광고 — 시청 완료 시 true resolve, 미시청·미지원·실패 시 false.
     // 게임 오버 → 광고 시청 → HP 회복 부활 시나리오에만 사용.
     async showRewarded(adUnitId) {
@@ -8554,7 +8628,7 @@ const Ads = {
         }
     },
 };
-// AdMob unit IDs — 보상형 광고 2종 (부활 + 힌트). 전면/배너 없음.
+// AdMob unit IDs — 보상형 2종(부활·힌트) + 배너 1종. 전면 광고는 쓰지 않는다.
 // App ID: ca-app-pub-3894575898077880~9738094108 (capacitor.config.json + AndroidManifest.xml)
 // 정책: 사용자가 명시적으로 "광고 보고 부활" / "광고 보고 힌트" 선택 시에만 표시
 // (Incentivized reward, AdMob 정책 준수)
@@ -8563,6 +8637,9 @@ const ADS_UNITS = {
     rewarded: "ca-app-pub-3894575898077880/6895318664",
     // 힌트 (오답 1개 제거) — 시나리오 카드에서 사용자 선택 시
     hint: "ca-app-pub-3894575898077880/5934580467",
+    // 배너 — 메뉴·기록·결과 화면 전용. AdMob 콘솔에서 배너 단위를 만든 뒤 여기에 넣는다.
+    // 비워두면 배너 코드 경로가 통째로 no-op (지금 상태로 출시해도 안전).
+    banner: "",
 };
 
 // 부활(revive) 설정 — 게임 오버 시 보상형 광고로 HP 회복

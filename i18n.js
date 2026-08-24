@@ -411,7 +411,7 @@
             "onboard.start": "시작하기",
             "onboard.consent": "동의하고 시작하기",
             "onboard.s1.title": "간호사 시뮬레이터에 오신 것을 환영합니다",
-            "onboard.s1.body": "국시부터 NCLEX까지, 실전처럼 준비하는 무료 간호 학습앱.\n가입 없음, 광고는 보상형만 사용합니다.",
+            "onboard.s1.body": "국시부터 NCLEX까지, 실전처럼 준비하는 무료 간호 학습앱.\n가입 없음. 전면 광고 없음 — 문제 푸는 화면엔 광고가 뜨지 않습니다.",
             "onboard.s2.title": "국시 280 · NCLEX 2,200 · 듀티 시뮬레이션",
             "onboard.s2.body": "한국 국시 280문항 + NCLEX-RN 2,200문항 + 실전 듀티 시뮬레이션.\n과목별 정답률·오답 자동 저장·연속 학습 배지로 약점까지 관리합니다.",
             "onboard.s3.title": "학습 도구로만 사용하세요",
@@ -779,7 +779,7 @@
             "nclex.hero.sub": "Study anywhere · No signup · No paywall",
             // Marketing taglines (visible in NCLEX mode)
             "marketing.usp.free": "Completely Free",
-            "marketing.usp.noads": "Rewarded ads only (optional)",
+            "marketing.usp.noads": "No popup ads, none while you answer",
             "marketing.usp.offline": "Works offline (PWA)",
             // D-day
             "countdown.exam": "Until Exam",
@@ -896,7 +896,7 @@
             "onboard.start": "Get started",
             "onboard.consent": "Agree & start",
             "onboard.s1.title": "Welcome to Nurse Simulator",
-            "onboard.s1.body": "From the Korean RN exam to the NCLEX — a free nursing prep app that feels like the real thing.\nNo signup, rewarded ads only.",
+            "onboard.s1.body": "From the Korean RN exam to the NCLEX — a free nursing prep app that feels like the real thing.\nNo signup, no popup ads — and none while you answer.",
             "onboard.s2.title": "280 Korean · 2,200 NCLEX · Duty Sim",
             "onboard.s2.body": "280 Korean RN exam Qs + 2,200 NCLEX-RN Qs + hands-on duty simulation.\nPer-subject accuracy, auto-saved mistakes, and streak badges pinpoint your weak spots.",
             "onboard.s3.title": "Use as a study tool only",

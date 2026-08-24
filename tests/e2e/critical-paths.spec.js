@@ -647,6 +647,67 @@ test.describe("영어 모드 — 한국어 콘텐츠 고지", () => {
     });
 });
 
+// AdMob 정책에서 가장 위험한 배치가 "보기 버튼 옆 광고"(오클릭 유도)다.
+// 배너는 모드 목록이 아니라 "답을 고르는 UI 가 화면에 있는지"로 켜고 끈다 —
+// 결과 화면은 문제 화면과 같은 mode 를 쓰고, 새 문제 화면이 추가돼도 자동으로 막힌다.
+test.describe("배너 광고 노출 규칙", () => {
+    // [이름, 진입 경로, 배너가 떠도 되는가]
+    const CASES = [
+        ["홈", [], true],
+        ["학습 탭", [['[data-action="setMenuTab"][data-tab="study"]']], true],
+        ["풀이 메뉴", [['[data-action="setMenuTab"][data-tab="study"]'], ['[data-action="renderPracticeMenu"]']], true],
+        ["내 기록", [['[data-action="setMenuTab"][data-tab="my"]']], true],
+        ["대시보드", [['[data-action="setMenuTab"][data-tab="my"]'], ['[data-action="renderDashboard"]']], true],
+        ["국시 풀이", [['[data-action="setMenuTab"][data-tab="study"]'], ['[data-action="renderPracticeMenu"]'],
+                    ['[data-action="renderSubjectStudyMenu"]'], ['[data-action="renderKorMenu"]'],
+                    ['[data-action="startKorQuiz"][data-arg="__all__"]']], false],
+        ["변형 연습 풀이", [['[data-action="setMenuTab"][data-tab="study"]'], ['[data-action="renderPracticeMenu"]'],
+                       ['[data-action="renderSubjectStudyMenu"]'], ['[data-action="renderQuizMenu"]'],
+                       ['[data-action="startQuiz"][data-arg="__random__"]']], false],
+        ["모의고사", [['[data-action="setMenuTab"][data-tab="study"]'], ['[data-action="renderPracticeMenu"]'],
+                   ['[data-action="startMockExam"]']], false],
+        ["심전도", [['[data-action="setMenuTab"][data-tab="study"]'], ['[data-action="renderDrillMenu"]'],
+                  ['[data-action="startEcgQuiz"]']], false],
+        ["주사 부위", [['[data-action="setMenuTab"][data-tab="study"]'], ['[data-action="renderDrillMenu"]'],
+                    ['[data-action="startSiteQuiz"]']], false],
+        ["트리아지", [['[data-action="setMenuTab"][data-tab="study"]'], ['[data-action="renderDrillMenu"]'],
+                    ['[data-action="startTriage"]']], false],
+        ["SBAR 작성", [['[data-action="setMenuTab"][data-tab="study"]'], ['[data-action="renderDrillMenu"]'],
+                     ['[data-action="startHandoffWrite"]']], false],
+        ["약물 드릴", [['[data-action="setMenuTab"][data-tab="study"]'], ['[data-action="renderDrillMenu"]'],
+                    ['[data-action="renderDrugDrill"]'], ['[data-action="startDrugDrill"]']], false],
+    ];
+    for (const [name, path, allowed] of CASES) {
+        test(`${name} — 배너 ${allowed ? "허용" : "금지"}`, async ({ page }) => {
+            await seedLegalAccepted(page);
+            await page.goto("/");
+            await page.waitForSelector("h1.menu-title-v2", { timeout: 8000 });
+            for (const [sel] of path) await page.click(sel);
+            await page.waitForTimeout(300);
+            expect(await page.evaluate(() => window.bannerAllowed())).toBe(allowed);
+        });
+    }
+
+    test("문제를 풀고 결과 화면으로 넘어가면 다시 허용된다", async ({ page }) => {
+        await seedLegalAccepted(page);
+        await page.goto("/");
+        await page.waitForSelector("h1.menu-title-v2", { timeout: 8000 });
+        await page.click('[data-action="setMenuTab"][data-tab="study"]');
+        await page.click('[data-action="renderPracticeMenu"]');
+        await page.click('[data-action="startDailyChallenge"]');
+        expect(await page.evaluate(() => window.bannerAllowed())).toBe(false);
+        // 10문항 소진 → 완료 화면. 다음 버튼은 data-action 없이 onclick 으로 붙는다.
+        for (let i = 0; i < 12; i++) {
+            if (!(await page.locator("#choice-list").count())) break;
+            await page.locator("#choice-list .choice-btn").first().click();
+            const next = page.getByRole("button", { name: "다음 문제", exact: true });
+            if (await next.count()) await next.first().click();
+            await page.waitForTimeout(150);
+        }
+        expect(await page.evaluate(() => window.bannerAllowed())).toBe(true);
+    });
+});
+
 // 컬러 칩(배지·필 버튼)은 배경이 --primary/--danger/--warning 인데 글자를 #fff 로 고정해
 // 두는 바람에 라이트 2.4~3.5:1, AMOLED 1.9:1 까지 떨어졌다. --on-fill 잉크로 통일한 뒤의 회귀 방지.
 for (const theme of ["light", "dark", "amoled"]) {

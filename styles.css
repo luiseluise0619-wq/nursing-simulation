@@ -3569,6 +3569,19 @@ img.onboard-svg { display: block; }
 body.has-tabbar #game-area,
 body:has(.tab-bar) #game-area { padding-bottom: 90px; }
 
+/* ── AdMob 배너 자리 ────────────────────────────────────────────────
+   배너는 네이티브 뷰라 화면 최하단에 겹쳐 뜬다. 탭바를 배너 높이만큼 올리고
+   본문 여백도 같이 늘려, 배너가 탭바나 버튼을 가리지 않게 한다.
+   --banner-h 는 실제 어댑티브 배너 높이로 런타임에 덮어쓴다 (기본값은 흔한 50~60dp).
+   .has-banner 는 배너가 실제로 떴을 때만 붙으므로 웹/PWA 에는 아무 영향이 없다. */
+:root { --banner-h: 60px; --banner-space: 0px; }
+body.has-banner { --banner-space: var(--banner-h); }
+body.has-banner .tab-bar { bottom: var(--banner-space); }
+body.has-banner #game-area,
+body.has-banner.has-tabbar #game-area,
+body.has-banner:has(.tab-bar) #game-area { padding-bottom: calc(90px + var(--banner-space)); }
+/* 하단 고정 토스트 3종은 script.js 에서 inline style 로 붙으므로 거기서 --banner-space 를 더한다 */
+
 /* =========================================================================
    힌트 / 임상 근거 / 배지 — 신규 기능
    ========================================================================= */
