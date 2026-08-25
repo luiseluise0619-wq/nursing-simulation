@@ -21,7 +21,9 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
-        versionName "1.0.0"
+        // script.js 의 APP_VERSION 과 반드시 같은 값 — 스토어에는 1.0.0, 앱 안에는 1.1.0-beta 가
+        // 표시되고 있었다. 콘텐츠가 아직 외부 RN/MD 감수 전이라 -beta 표기는 그대로 둔다.
+        versionName "1.1.0-beta"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
             ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
