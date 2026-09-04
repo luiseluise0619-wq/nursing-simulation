@@ -3871,19 +3871,37 @@ function _tutorQuota() {
     return d;
 }
 function _tutorSaveQuota(d) { try { localStorage.setItem("nurseSim:tutor", JSON.stringify(d)); } catch {} }
+// 튜터는 서버 함수(/api/tutor)가 있어야 답한다.
+// 앱(Capacitor) 빌드는 로컬 파일에서 뜨므로 상대경로 /api/* 가 존재하지 않고,
+// 오프라인에서도 호출이 실패한다. 두 경우엔 "잠시 후 다시"가 아니라
+// 왜 못 쓰는지를 정확히 알려주고 헛되이 호출하지 않는다.
+function _tutorUnavailableReason() {
+    try {
+        const native = !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === "function"
+            && window.Capacitor.isNativePlatform());
+        if (native) return "native";
+    } catch {}
+    if (typeof navigator !== "undefined" && navigator.onLine === false) return "offline";
+    return null;
+}
 function renderTutor() {
     gameState.mode = "tutor"; resetStateForMode();
     showCoreUI(); if (UI.logBar) UI.logBar.innerHTML = "";
     const q = _tutorQuota(); const left = Math.max(0, TUTOR_DAILY_FREE - q.count);
+    const _reason = _tutorUnavailableReason();
+    const _unavail = !!_reason;
+    const _unavailMsg = _reason === "native"
+        ? _t("tutor.naOffline", "AI 튜터는 인터넷에 연결된 웹에서만 이용할 수 있어요. 다른 학습 기능은 모두 오프라인에서 그대로 쓸 수 있습니다.")
+        : _t("tutor.naNet", "오프라인 상태예요. 인터넷에 연결하면 AI 튜터를 쓸 수 있고, 나머지 학습 기능은 지금도 그대로 됩니다.");
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
         <h2 class="scene-title">🤖 ${_t("tutor.title", "AI 학습 튜터")} <span class="row-pill rec">BETA</span></h2>
         <p class="scene-desc">${_t("tutor.desc", "궁금한 걸 물어보면 앱의 검증된 문제·해설을 근거로 답해요. 진단·처방이 아닌 학습 참고용입니다.")}</p>
-        <textarea id="tutor-input" class="sbar-textarea" rows="2" placeholder="${escapeHtml(_t("tutor.ph", "예: 심부전 환자에게 반좌위를 취하는 이유는?"))}" aria-label="${_t("tutor.title", "AI 학습 튜터")}"></textarea>
-        <div class="tutor-quota" id="tutor-quota">${_t("tutor.left", "오늘 남은 무료 질문")}: ${left}/${TUTOR_DAILY_FREE}</div>
+        <textarea id="tutor-input" class="sbar-textarea" rows="2" ${_unavail ? "disabled" : ""} placeholder="${escapeHtml(_t("tutor.ph", "예: 심부전 환자에게 반좌위를 취하는 이유는?"))}" aria-label="${_t("tutor.title", "AI 학습 튜터")}"></textarea>
+        ${_unavail ? `<div class="feedback-log" role="status">${_unavailMsg}</div>` : `<div class="tutor-quota" id="tutor-quota">${_t("tutor.left", "오늘 남은 무료 질문")}: ${left}/${TUTOR_DAILY_FREE}</div>`}
         <p class="tutor-privacy">${_t("tutor.privacy", "입력한 질문은 답변 생성을 위해 외부 AI 서비스로 전송됩니다. 실명·환자 정보는 입력하지 마세요.")}</p>
         <div class="choice-list">
-          <button class="choice-btn primary" data-action="tutorAsk">${_t("tutor.ask", "질문하기")}</button>
+          <button class="choice-btn primary" data-action="tutorAsk" ${_unavail ? "disabled" : ""}>${_t("tutor.ask", "질문하기")}</button>
           <button class="choice-btn center" data-action="returnToMenu">${_t("action.back", "메뉴")}</button>
         </div>
         <div id="tutor-answer" class="tutor-answer hidden"></div>
@@ -3895,6 +3913,14 @@ async function tutorAsk() {
     if (!input || !ans) return;
     const question = (input.value || "").trim();
     if (!question) { input.focus(); return; }
+    const _reason = _tutorUnavailableReason();
+    if (_reason) {
+        ans.classList.remove("hidden");
+        ans.innerHTML = `<div class="feedback-log">${_reason === "native"
+            ? _t("tutor.naOffline", "AI 튜터는 인터넷에 연결된 웹에서만 이용할 수 있어요. 다른 학습 기능은 모두 오프라인에서 그대로 쓸 수 있습니다.")
+            : _t("tutor.naNet", "오프라인 상태예요. 인터넷에 연결하면 AI 튜터를 쓸 수 있고, 나머지 학습 기능은 지금도 그대로 됩니다.")}</div>`;
+        return;
+    }
     const quota = _tutorQuota();
     if (quota.count >= TUTOR_DAILY_FREE) {
         ans.classList.remove("hidden");

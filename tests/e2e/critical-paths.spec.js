@@ -769,3 +769,161 @@ test.describe("에피소드 진행·이어하기", () => {
         await expect(page.locator("#rep")).toHaveText(String(saved.rep));
     });
 });
+
+// 게임 중 상단바 가로 넘침 회귀 방지
+// 서바이벌처럼 HP/평판 게이지가 함께 뜨는 화면에서 뒤로+게이지2+아이콘4 가
+// 한 줄에 들어가지 못해 문서 전체가 가로로 밀리던 버그(557px)를 막는다.
+test.describe("게임 화면 가로 넘침", () => {
+    const WIDTHS = [320, 360, 390, 412, 430, 480, 540, 559, 560, 600, 768];
+    test("서바이벌 진행 중 어떤 폭에서도 가로 스크롤이 생기지 않는다", async ({ page }) => {
+        await seedLegalAccepted(page);
+        await page.goto("/");
+        await page.waitForSelector("h1.menu-title-v2", { timeout: 8000 });
+        await page.click('[data-action="initSurvival"]');
+        const shift = page.locator('[data-action="pickShift"]').first();
+        if (await shift.count()) { await shift.click(); }
+        await page.waitForSelector("#top-bar:not(.hidden)", { timeout: 8000 });
+
+        for (const w of WIDTHS) {
+            await page.setViewportSize({ width: w, height: 800 });
+            const m = await page.evaluate(() => ({
+                scrollW: document.documentElement.scrollWidth,
+                inner: window.innerWidth,
+            }));
+            expect(m.scrollW, `viewport ${w}px 에서 가로 넘침`).toBeLessThanOrEqual(m.inner + 1);
+        }
+    });
+
+    test("좁은 폭에서도 뒤로·설정·케밥은 계속 눌러야 한다", async ({ page }) => {
+        await seedLegalAccepted(page);
+        await page.goto("/");
+        await page.waitForSelector("h1.menu-title-v2", { timeout: 8000 });
+        await page.click('[data-action="initSurvival"]');
+        const shift = page.locator('[data-action="pickShift"]').first();
+        if (await shift.count()) { await shift.click(); }
+        await page.waitForSelector("#top-bar:not(.hidden)", { timeout: 8000 });
+        await page.setViewportSize({ width: 320, height: 800 });
+
+        // 상단바에 남은 버튼은 전부 화면 안에 있고 터치 가능한 크기여야 한다
+        const bad = await page.evaluate(() => {
+            const vw = window.innerWidth;
+            return [...document.querySelectorAll("#top-bar button")]
+                .filter(b => b.getBoundingClientRect().width > 0)
+                .filter(b => {
+                    const r = b.getBoundingClientRect();
+                    return r.right > vw + 1 || r.left < -1 || r.width < 40 || r.height < 40;
+                })
+                .map(b => b.id || b.className);
+        });
+        expect(bad).toEqual([]);
+
+        // 테마/사운드는 케밥 메뉴로 접히지만 여전히 접근 가능해야 한다
+        await page.click('[data-action="toggleKebab"]');
+        await expect(page.locator('#kebab-menu [data-action="toggleTheme"]')).toBeVisible();
+        await expect(page.locator('#kebab-menu [data-action="toggleSound"]')).toBeVisible();
+    });
+});
+
+// 서비스워커 — 최초 설치와 실제 업데이트를 구분해야 한다
+// (구버전은 activate 마다 NEW_VERSION 을 보내 첫 방문자에게 "새 버전 준비됨"이 떴다)
+test.describe("PWA 업데이트 알림", () => {
+    test("최초 설치에서는 업데이트 토스트를 띄우지 않는다", async ({ page, context }) => {
+        // seedLegalAccepted 는 업데이트 토스트를 CSS 로 숨기므로 여기선 쓰지 않는다
+        await context.clearCookies();
+        await page.goto("/");
+        await page.waitForTimeout(3000);
+        const visible = await page.evaluate(() => {
+            const el = document.getElementById("update-toast");
+            return el ? !el.classList.contains("hidden") : false;
+        });
+        expect(visible, "첫 방문에 업데이트 토스트가 뜨면 안 된다").toBe(false);
+    });
+
+    test("이전 버전 캐시가 있으면 업데이트로 보고 알린 뒤 옛 캐시를 지운다", async ({ page }) => {
+        await page.goto("/");
+        await page.waitForTimeout(2500);
+        // 옛 버전 캐시를 심고 SW 를 다시 설치시킨다
+        await page.evaluate(async () => {
+            const c = await caches.open("nurse-sim-v0-test");
+            await c.put("/marker", new Response("x"));
+            const r = await navigator.serviceWorker.getRegistration();
+            if (r) await r.unregister();
+        });
+        await page.reload();
+        await page.waitForTimeout(3500);
+        const keys = await page.evaluate(() => caches.keys());
+        expect(keys, "옛 캐시는 정리되어야 한다").not.toContain("nurse-sim-v0-test");
+        const visible = await page.evaluate(() => {
+            const el = document.getElementById("update-toast");
+            return el ? !el.classList.contains("hidden") : false;
+        });
+        expect(visible, "실제 업데이트에서는 알려야 한다").toBe(true);
+    });
+
+    test("오프라인에서도 앱이 뜨고 학습 기록이 저장된다", async ({ page, context }) => {
+        await seedLegalAccepted(page);
+        await page.goto("/");
+        await page.waitForSelector("h1.menu-title-v2", { timeout: 8000 });
+        await page.waitForTimeout(2000);           // SW 캐싱 완료 대기
+        await context.setOffline(true);
+        try {
+            await page.reload();
+            await expect(page.locator("h1.menu-title-v2")).toBeVisible({ timeout: 8000 });
+            const stored = await page.evaluate(() => !!localStorage.getItem("nurseSim:v1"));
+            expect(stored).toBe(true);
+        } finally { await context.setOffline(false); }
+    });
+});
+
+// 터치 타깃 최소 크기 (WCAG 2.2 2.5.8 — 24x24 CSS px)
+test.describe("접근성 — 터치 타깃", () => {
+    test("주요 화면의 조작 요소가 모두 24px 이상이다", async ({ page }) => {
+        await seedLegalAccepted(page);
+        await page.goto("/");
+        await page.waitForSelector("h1.menu-title-v2", { timeout: 8000 });
+
+        const SCREENS = ["home", "study", "my"];
+        const tooSmall = [];
+        for (const tab of SCREENS) {
+            await page.click(`[data-action="setMenuTab"][data-tab="${tab}"]`);
+            await page.waitForTimeout(250);
+            const bad = await page.evaluate((t) => {
+                return [...document.querySelectorAll('button,a[href],[role="button"]')]
+                    .filter(el => {
+                        const r = el.getBoundingClientRect();
+                        return r.width > 0 && r.height > 0 && (r.width < 24 || r.height < 24);
+                    })
+                    .map(el => `${t}:${el.className || el.tagName}:${Math.round(el.getBoundingClientRect().width)}x${Math.round(el.getBoundingClientRect().height)}`);
+            }, tab);
+            tooSmall.push(...bad);
+        }
+        expect(tooSmall).toEqual([]);
+    });
+
+    test("키보드만으로 주 CTA 에 도달하고 포커스가 보인다", async ({ page }) => {
+        await seedLegalAccepted(page);
+        await page.goto("/");
+        await page.waitForSelector("h1.menu-title-v2", { timeout: 8000 });
+
+        let reachedCta = false;
+        let focusVisible = false;
+        for (let i = 0; i < 12; i++) {
+            await page.keyboard.press("Tab");
+            const f = await page.evaluate(() => {
+                const el = document.activeElement;
+                if (!el || el === document.body) return null;
+                const cs = getComputedStyle(el);
+                return {
+                    action: el.dataset ? el.dataset.action : "",
+                    ring: (cs.outlineStyle !== "none" && parseFloat(cs.outlineWidth) > 0)
+                        || (cs.boxShadow && cs.boxShadow !== "none"),
+                };
+            });
+            if (!f) continue;
+            if (f.action === "initSurvival") reachedCta = true;
+            if (f.ring) focusVisible = true;
+        }
+        expect(reachedCta, "키보드로 주 CTA 에 도달해야 한다").toBe(true);
+        expect(focusVisible, "포커스 표시가 보여야 한다").toBe(true);
+    });
+});

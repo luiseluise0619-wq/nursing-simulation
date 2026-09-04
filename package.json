@@ -83,7 +83,8 @@
         "testEnvironment": "node",
         "testMatch": [
           "<rootDir>/tests/questions.test.js",
-          "<rootDir>/tests/content.test.js"
+          "<rootDir>/tests/content.test.js",
+          "<rootDir>/tests/api.test.js"
         ]
       },
       {

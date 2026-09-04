@@ -158,6 +158,7 @@ function goto(action) {
         startHandoffWrite: ["renderDrillMenu"],
         startTriage: ["renderDrillMenu"],
         startMedRights: ["renderDrillMenu"],
+        renderTutor: [],
     };
     const path = STUDY_ROUTES[action];
     if (path) {
@@ -600,6 +601,64 @@ describe("트리아지 (다중환자 우선순위)", () => {
         const fb = document.getElementById("triage-feedback");
         expect(fb.textContent).toMatch(/5\/5/);
         expect(fb.querySelector(".feedback-box.correct")).not.toBeNull();
+    });
+});
+
+describe("AI 튜터 — 쓸 수 없는 환경에서 정직하게 안내한다", () => {
+    function openTutor() { goto("renderTutor"); }
+
+    test("웹·온라인에서는 평소대로 질문할 수 있다", () => {
+        loadScript();
+        openTutor();
+        expect(document.querySelector('[data-action="tutorAsk"]').disabled).toBe(false);
+        expect(document.getElementById("tutor-input").disabled).toBe(false);
+        expect(document.getElementById("tutor-quota")).not.toBeNull();
+    });
+
+    test("앱(네이티브) 빌드에서는 서버 함수가 없으므로 이유를 밝히고 막는다", () => {
+        loadScript();
+        window.Capacitor = { isNativePlatform: () => true, Plugins: {} };
+        try {
+            openTutor();
+            expect(document.querySelector('[data-action="tutorAsk"]').disabled).toBe(true);
+            expect(document.getElementById("tutor-input").disabled).toBe(true);
+            const notice = document.querySelector(".feedback-log").textContent;
+            expect(notice).toMatch(/웹에서만|only works on the web/);
+            // "잠시 후 다시 시도" 같은 거짓 기대를 주지 않는다
+            expect(notice).not.toMatch(/잠시 후 다시/);
+        } finally { delete window.Capacitor; }
+    });
+
+    test("오프라인에서는 오프라인이라고 말한다", () => {
+        loadScript();
+        const spy = jest.spyOn(window.navigator, "onLine", "get").mockReturnValue(false);
+        try {
+            openTutor();
+            expect(document.querySelector('[data-action="tutorAsk"]').disabled).toBe(true);
+            expect(document.querySelector(".feedback-log").textContent).toMatch(/오프라인|offline/i);
+        } finally { spy.mockRestore(); }
+    });
+
+    test("쓸 수 없는 환경에서는 네트워크 호출도 하지 않고 무료 횟수도 그대로다", async () => {
+        loadScript();
+        const fetchSpy = jest.fn(() => Promise.reject(new Error("must not be called")));
+        const origFetch = global.fetch;
+        global.fetch = fetchSpy;
+        window.Capacitor = { isNativePlatform: () => true, Plugins: {} };
+        try {
+            openTutor();
+            const before = localStorage.getItem("nurseSim:tutor");
+            const input = document.getElementById("tutor-input");
+            input.disabled = false;
+            input.value = "심부전 반좌위 이유";
+            const btn = document.querySelector('[data-action="tutorAsk"]');
+            btn.disabled = false;
+            btn.click();
+            await Promise.resolve();
+            expect(fetchSpy).not.toHaveBeenCalled();
+            expect(localStorage.getItem("nurseSim:tutor")).toBe(before);
+            expect(document.getElementById("tutor-answer").textContent).toMatch(/웹에서만|only works on the web/);
+        } finally { delete window.Capacitor; global.fetch = origFetch; }
     });
 });
 

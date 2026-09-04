@@ -9,8 +9,36 @@
 // 의존성 없음 — Vercel Node 18+ 전역 fetch 사용.
 const MODEL = "gemini-2.0-flash";
 
+// --- 남용 방지 (의존성 없음) -------------------------------------------
+// 이 함수는 인증이 없다. 클라이언트의 하루 5회 제한은 localStorage 기반이라
+// 지우거나 직접 호출하면 그만이므로, 서버에서도 최소한의 방어선을 둔다.
+//   1) 교차 사이트 호출 차단 — 다른 웹사이트가 이 엔드포인트를 자기 기능처럼
+//      쓰면서 소유자의 API 쿼터를 태우는 것을 막는다.
+//   2) IP 기준 슬라이딩 윈도우 — 웜 인스턴스 안에서만 유효한 best-effort.
+//      완전한 차단이 아니라 무료 티어를 즉시 소진시키는 반복 호출을 늦춘다.
+const RATE = new Map();
+function rateLimited(req, limit, windowMs) {
+    const ip = String(req.headers["x-forwarded-for"] || "").split(",")[0].trim()
+        || req.socket?.remoteAddress || "unknown";
+    const now = Date.now();
+    const hits = (RATE.get(ip) || []).filter(t => now - t < windowMs);
+    hits.push(now);
+    RATE.set(ip, hits);
+    if (RATE.size > 5000) { for (const [k, v] of RATE) { if (!v.some(t => now - t < windowMs)) RATE.delete(k); } }
+    return hits.length > limit;
+}
+function crossSite(req) {
+    const origin = req.headers.origin;
+    if (!origin) return false;              // 브라우저 외 호출은 여기서 거르지 않는다
+    const host = req.headers["x-forwarded-host"] || req.headers.host || "";
+    try { return new URL(origin).host !== host; } catch { return true; }
+}
+
+
 module.exports = async (req, res) => {
     if (req.method !== "POST") { res.status(405).json({ error: "POST only" }); return; }
+    if (crossSite(req)) { res.status(403).json({ error: "forbidden" }); return; }
+    if (rateLimited(req, 20, 60 * 60 * 1000)) { res.status(429).json({ error: "rate_limited" }); return; }
     const key = process.env.GEMINI_API_KEY;
     if (!key) { res.status(500).json({ error: "GEMINI_API_KEY not configured" }); return; }
     try {

@@ -2629,7 +2629,10 @@ img.onboard-svg { display: block; }
     text-decoration: underline;
     cursor: pointer;
     font-size: 11px;
-    padding: 4px 6px;
+    /* WCAG 2.2 최소 타깃 24px — 23px 로 1px 모자랐다 */
+    padding: 5px 6px;
+    min-height: 24px;
+    box-sizing: border-box;
     font-family: inherit;
 }
 .text-link:hover { color: var(--text); }
@@ -2661,9 +2664,14 @@ img.onboard-svg { display: block; }
     /* 흰색을 하드코딩해 라이트 테마에서 흰 배경에 흰 글씨(1.06:1)가 됐다. 토큰으로 전환. */
     border: 1px solid color-mix(in srgb, currentColor 45%, transparent);
     color: var(--text);
-    padding: 1px 7px;
+    /* 세로 19px 이라 모바일에서 누르기 어려웠다. WCAG 2.2 최소 타깃(24px) 확보 —
+       인라인 흐름과 알약 모양은 그대로 두고 세로 여백만 넓힌다. */
+    padding: 4px 8px;
+    min-height: 24px;
+    box-sizing: border-box;
     border-radius: var(--radius-pill);
     font-size: 11px;
+    line-height: 1.3;
     cursor: pointer;
     margin-left: 4px;
     font-family: inherit;
@@ -5024,4 +5032,29 @@ button:focus:not(:focus-visible) { outline: none; }
     font-weight: normal;
     color: var(--muted);
     line-height: 1.5;
+}
+
+/* ── 게임 중 상단바 가로 넘침 방지 (~559px) ──────────────────────────
+   서바이벌·듀티처럼 HP/평판 게이지가 함께 뜨는 화면에서
+   뒤로 + 게이지 2개 + 아이콘 4개가 한 줄에 들어가지 못해
+   문서 전체가 가로로 밀리던 문제.
+   테마·사운드는 케밥(⋮) 메뉴에 같은 항목이 이미 있으므로
+   좁은 화면에서는 케밥으로 접고, 게이지는 줄어들 수 있게 한다. */
+@media (max-width: 559px) {
+    #top-bar { gap: 6px; padding-left: 10px; padding-right: 10px; }
+    #top-bar .top-actions > #theme-toggle,
+    #top-bar .top-actions > #sound-toggle { display: none; }
+    #top-bar .stat-gauge {
+        padding: 7px 9px;
+        gap: 5px;
+        min-width: 0;
+        flex: 0 1 auto;
+    }
+    /* 게이지 막대는 숫자와 같은 정보를 반복하는 장식 —
+       자리가 없는 폭에서는 접고, 여유가 생기면 다시 보여준다.
+       HP 위험 단계는 막대가 없어도 게이지 테두리 색으로 계속 전달된다. */
+    #top-bar .stat-gauge .sg-bar { display: none; }
+}
+@media (min-width: 401px) and (max-width: 559px) {
+    #top-bar .stat-gauge .sg-bar { display: block; width: 40px; }
 }
