@@ -8655,9 +8655,30 @@ function installErrorBoundary() {
     window.addEventListener("unhandledrejection", (e) => handler((e.reason && e.reason.message) || "promise", "promise"));
 }
 
+// Android 하드웨어 뒤로가기 — 리스너가 없으면 어느 화면에서든 앱이 바로 종료된다.
+// (앱은 단일 페이지라 WebView 히스토리가 비어 있음)
+// 화면 안에서 한 단계씩 물러나게 하고, 메인 메뉴에서만 종료한다.
+// returnToMenu 가 모의고사 중단·에피소드 진행 저장까지 처리하므로 그대로 재사용한다.
+function installHardwareBackHandler() {
+    try {
+        const App = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App;
+        if (!App || typeof App.addListener !== "function") return;
+        App.addListener("backButton", () => {
+            try {
+                const kebab = document.getElementById("kebab-menu");
+                if (kebab && !kebab.classList.contains("hidden")) { closeKebab(); return; }
+                if (UI.modal && UI.modal.classList.contains("active")) { UI.modal.classList.remove("active"); return; }
+                if (gameState.mode !== "menu") { returnToMenu(); return; }
+                if (typeof App.exitApp === "function") App.exitApp();
+            } catch { /* 뒤로가기가 예외로 앱을 멈추게 두지 않는다 */ }
+        });
+    } catch { /* 네이티브가 아니면 무시 */ }
+}
+
 function boot() {
     cacheUI();
     installErrorBoundary();
+    installHardwareBackHandler();
     initAnalytics();
     track("app_open");
     const settings = Storage.getSettings();

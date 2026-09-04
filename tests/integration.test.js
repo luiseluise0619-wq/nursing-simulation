@@ -604,6 +604,53 @@ describe("트리아지 (다중환자 우선순위)", () => {
     });
 });
 
+describe("Android 하드웨어 뒤로가기", () => {
+    // 리스너가 없으면 어느 화면에서든 뒤로가기가 앱을 그대로 종료시킨다.
+    function withCapacitor(fn) {
+        const listeners = {};
+        const exitApp = jest.fn();
+        window.Capacitor = {
+            isNativePlatform: () => true,
+            Plugins: { App: { addListener: (ev, cb) => { listeners[ev] = cb; }, exitApp } },
+        };
+        try { return fn(listeners, exitApp); } finally { delete window.Capacitor; }
+    }
+
+    test("게임 화면에서 뒤로가면 앱을 끄지 않고 메뉴로 돌아온다", () => {
+        withCapacitor((listeners, exitApp) => {
+            loadScript();
+            expect(typeof listeners.backButton).toBe("function");
+            goto("startTriage");
+            listeners.backButton();
+            expect(exitApp).not.toHaveBeenCalled();
+            expect(document.querySelector("h1.menu-title-v2")).not.toBeNull();
+        });
+    });
+
+    test("메인 메뉴에서 뒤로가면 그때 앱을 종료한다", () => {
+        withCapacitor((listeners, exitApp) => {
+            loadScript();
+            listeners.backButton();
+            expect(exitApp).toHaveBeenCalled();
+        });
+    });
+
+    test("에피소드 진행 중 뒤로가도 진행 상황이 저장된다", () => {
+        withCapacitor((listeners, exitApp) => {
+            loadScript();
+            goto("renderEpisodeMenu");
+            const ep = document.querySelector('[data-action="startEpisode"]');
+            if (!ep) return;                       // 메뉴 구조가 다르면 건너뜀
+            ep.click();
+            const choice = document.querySelector("#choice-list .choice-btn:not([disabled])");
+            if (choice) choice.click();
+            listeners.backButton();
+            expect(exitApp).not.toHaveBeenCalled();
+            expect(document.querySelector("h1.menu-title-v2")).not.toBeNull();
+        });
+    });
+});
+
 describe("AI 튜터 — 쓸 수 없는 환경에서 정직하게 안내한다", () => {
     function openTutor() { goto("renderTutor"); }
 

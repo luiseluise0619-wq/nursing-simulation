@@ -927,3 +927,108 @@ test.describe("접근성 — 터치 타깃", () => {
         expect(focusVisible, "포커스 표시가 보여야 한다").toBe(true);
     });
 });
+
+// 채점 산술 — 기존 테스트는 solved 개수만 봤고, 정답/오답 분리는 아무도 검증하지 않았다
+test.describe("채점 산술", () => {
+    test("정답만 correct 로 세고, 오답만 오답노트에 남는다", async ({ page }) => {
+        await seedLegalAccepted(page);
+        await page.goto("/");
+        await page.waitForSelector("h1.menu-title-v2", { timeout: 8000 });
+        await page.click('[data-action="setMenuTab"][data-tab="study"]');
+        await page.click('[data-action="renderPracticeMenu"]');
+        await page.click('[data-action="renderSubjectStudyMenu"]');
+        await page.click('[data-action="renderKorMenu"]');
+        await page.click('[data-action="startKorQuiz"][data-arg="__all__"]');
+        await page.waitForSelector("#kor-choices .choice-btn", { timeout: 8000 });
+
+        let wantSolved = 0, wantCorrect = 0;
+        for (let i = 0; i < 6; i++) {
+            if (!(await page.locator("#kor-choices .choice-btn").count())) break;
+            const pickCorrect = i % 2 === 0;
+            // 보기는 셔플될 수 있으므로 화면 텍스트로 정답 위치를 찾는다
+            const idx = await page.evaluate((pc) => {
+                const btns = [...document.querySelectorAll("#kor-choices .choice-btn")];
+                const texts = btns.map(b => b.textContent.replace(/\s+/g, " ").trim());
+                const norm = t => t.replace(/\s+/g, " ").trim();
+                for (const q of (window.KOR_QUESTIONS || [])) {
+                    if (!q.choices.every(c => texts.some(t => t.includes(norm(c.text))))) continue;
+                    const ct = (q.choices.find(c => c.correct) || {}).text;
+                    if (!ct) continue;
+                    const at = texts.findIndex(t => t.includes(norm(ct)));
+                    if (at < 0) continue;
+                    return pc ? at : (at === 0 ? 1 : 0);
+                }
+                return -1;
+            }, pickCorrect);
+            if (idx < 0) break;
+            await page.locator("#kor-choices .choice-btn").nth(idx).click();
+            wantSolved++;
+            if (pickCorrect) wantCorrect++;
+            const next = page.locator('[data-action="korQuizNext"]');
+            if (await next.count() && await next.isVisible()) await next.click();
+        }
+        expect(wantSolved, "문제를 하나도 못 풀었으면 검증이 무의미하다").toBeGreaterThan(3);
+
+        const got = await page.evaluate(() => {
+            const d = JSON.parse(localStorage.getItem("nurseSim:v1") || "{}");
+            const vals = Object.values(d.stats || {});
+            return {
+                solved: vals.reduce((s, v) => s + (v.solved || 0), 0),
+                correct: vals.reduce((s, v) => s + (v.correct || 0), 0),
+                wrong: (d.wrongQueue || []).length,
+            };
+        });
+        expect(got.solved).toBe(wantSolved);
+        expect(got.correct).toBe(wantCorrect);
+        expect(got.wrong).toBe(wantSolved - wantCorrect);
+    });
+});
+
+// Android 하드웨어 뒤로가기 — 리스너가 없으면 어느 화면에서든 앱이 즉시 종료된다
+test.describe("하드웨어 뒤로가기", () => {
+    async function seedNative(page) {
+        await page.addInitScript(() => {
+            window.__exitCalls = 0;
+            window.__back = null;
+            window.Capacitor = {
+                isNativePlatform: () => true,
+                Plugins: {
+                    App: {
+                        addListener: (ev, cb) => { if (ev === "backButton") window.__back = cb; },
+                        exitApp: () => { window.__exitCalls++; },
+                    },
+                },
+            };
+        });
+    }
+
+    test("케밥 메뉴가 열려 있으면 메뉴만 닫고 앱은 살아 있다", async ({ page }) => {
+        await seedNative(page);
+        await seedLegalAccepted(page);
+        await page.goto("/");
+        await page.waitForSelector("h1.menu-title-v2", { timeout: 8000 });
+        await page.click('[data-action="toggleKebab"]');
+        await expect(page.locator("#kebab-menu")).toBeVisible();
+        await page.evaluate(() => window.__back && window.__back());
+        await expect(page.locator("#kebab-menu")).toBeHidden();
+        expect(await page.evaluate(() => window.__exitCalls)).toBe(0);
+    });
+
+    test("게임 화면에서는 메뉴로 돌아가고, 메뉴에서 한 번 더 눌러야 종료된다", async ({ page }) => {
+        await seedNative(page);
+        await seedLegalAccepted(page);
+        await page.goto("/");
+        await page.waitForSelector("h1.menu-title-v2", { timeout: 8000 });
+        await page.click('[data-action="setMenuTab"][data-tab="study"]');
+        await page.click('[data-action="renderDrillMenu"]');
+        await page.click('[data-action="startMedRights"]');
+        await expect(page.locator(".mar-order")).toBeVisible();
+
+        await page.evaluate(() => window.__back && window.__back());
+        await expect(page.locator("h1.menu-title-v2")).toBeVisible();
+        expect(await page.evaluate(() => window.__exitCalls)).toBe(0);
+
+        await page.evaluate(() => window.__back && window.__back());
+        expect(await page.evaluate(() => window.__exitCalls)).toBe(1);
+    });
+});
