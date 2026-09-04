@@ -157,6 +157,7 @@ function goto(action) {
         startHandoff: ["renderDrillMenu"],
         startHandoffWrite: ["renderDrillMenu"],
         startTriage: ["renderDrillMenu"],
+        startMedRights: ["renderDrillMenu"],
     };
     const path = STUDY_ROUTES[action];
     if (path) {
@@ -599,6 +600,143 @@ describe("트리아지 (다중환자 우선순위)", () => {
         const fb = document.getElementById("triage-feedback");
         expect(fb.textContent).toMatch(/5\/5/);
         expect(fb.querySelector(".feedback-box.correct")).not.toBeNull();
+    });
+});
+
+describe("투약 5 Rights 드릴", () => {
+    const MC = require("../content.js").MED_ADMIN_CASES;
+
+    function currentCase() {
+        const title = document.querySelector(".scene-title").textContent;
+        return MC.find(m => title.includes(m.title));
+    }
+
+    test("처방·팔찌·준비된 약 3개 패널과 5R 버튼·행동 버튼이 렌더된다", () => {
+        loadScript();
+        goto("startMedRights");
+        expect(document.querySelector(".mar-order")).not.toBeNull();
+        expect(document.querySelector(".mar-band")).not.toBeNull();
+        expect(document.querySelector(".mar-supply")).not.toBeNull();
+        expect(document.querySelectorAll(".mar-right-btn").length).toBe(5);
+        expect(document.querySelectorAll(".mar-action-btn").length).toBe(3);
+    });
+
+    test("행동을 고르지 않고 제출하면 안내를 보여주고 채점하지 않는다", () => {
+        loadScript();
+        goto("startMedRights");
+        document.querySelector('[data-action="medSubmit"]').click();
+        const fb = document.getElementById("med-feedback");
+        expect(fb.textContent).toMatch(/최종 행동을 선택/);
+        expect(fb.querySelector('[data-action="medNext"]')).toBeNull();
+    });
+
+    test("5R 버튼은 눌러서 켜고 다시 눌러 끌 수 있다", () => {
+        loadScript();
+        goto("startMedRights");
+        const btn = document.querySelector('.mar-right-btn[data-arg="dose"]');
+        btn.click();
+        expect(btn.classList.contains("active")).toBe(true);
+        expect(btn.getAttribute("aria-checked")).toBe("true");
+        btn.click();
+        expect(btn.classList.contains("active")).toBe(false);
+        expect(btn.getAttribute("aria-checked")).toBe("false");
+    });
+
+    test("행동 버튼은 하나만 선택된다 (라디오 동작)", () => {
+        loadScript();
+        goto("startMedRights");
+        document.querySelector('.mar-action-btn[data-arg="give"]').click();
+        document.querySelector('.mar-action-btn[data-arg="hold"]').click();
+        const active = document.querySelectorAll(".mar-action-btn.active");
+        expect(active.length).toBe(1);
+        expect(active[0].dataset.arg).toBe("hold");
+    });
+
+    test("정답을 고르면 완전 정답 피드백과 해설·근거가 표시된다", () => {
+        loadScript();
+        goto("startMedRights");
+        const c = currentCase();
+        expect(c).toBeTruthy();
+        c.flags.forEach(f => document.querySelector(`.mar-right-btn[data-arg="${f}"]`).click());
+        document.querySelector(`.mar-action-btn[data-arg="${c.action}"]`).click();
+        document.querySelector('[data-action="medSubmit"]').click();
+        const fb = document.getElementById("med-feedback");
+        expect(fb.querySelector(".feedback-box.correct")).not.toBeNull();
+        expect(fb.textContent).toMatch(/완전 정답/);
+        expect(fb.textContent).toContain(c.why);
+        expect(fb.textContent).toContain(c.watch);
+        expect(fb.textContent).toContain(c.source);
+    });
+
+    test("오답이어도 정답 항목이 표시되어 대조 학습이 가능하다", () => {
+        loadScript();
+        goto("startMedRights");
+        const c = currentCase();
+        const wrong = ["give", "hold", "verify"].find(a => a !== c.action);
+        document.querySelector(`.mar-action-btn[data-arg="${wrong}"]`).click();
+        document.querySelector('[data-action="medSubmit"]').click();
+        const fb = document.getElementById("med-feedback");
+        expect(fb.querySelector(".feedback-box.wrong")).not.toBeNull();
+        expect(document.querySelector(`.mar-action-btn[data-arg="${c.action}"]`).classList.contains("truth")).toBe(true);
+        expect(document.querySelector(`.mar-action-btn[data-arg="${wrong}"]`).classList.contains("falsepick")).toBe(true);
+    });
+
+    test("채점 후 제출 버튼은 사라진다 (역할이 끝난 버튼을 남기지 않음)", () => {
+        loadScript();
+        goto("startMedRights");
+        const c = currentCase();
+        document.querySelector(`.mar-action-btn[data-arg="${c.action}"]`).click();
+        const submit = document.querySelector('[data-action="medSubmit"]');
+        expect(submit.classList.contains("hidden")).toBe(false);
+        submit.click();
+        expect(submit.classList.contains("hidden")).toBe(true);
+    });
+
+    test("채점 후에는 선택을 바꿀 수 없다 (중복 제출 방지)", () => {
+        loadScript();
+        goto("startMedRights");
+        const c = currentCase();
+        document.querySelector(`.mar-action-btn[data-arg="${c.action}"]`).click();
+        document.querySelector('[data-action="medSubmit"]').click();
+        const before = document.getElementById("med-feedback").innerHTML;
+        const rb = document.querySelector('.mar-right-btn[data-arg="time"]');
+        rb.click();
+        expect(rb.classList.contains("active")).toBe(false);
+        document.querySelector('[data-action="medSubmit"]').click();
+        expect(document.getElementById("med-feedback").innerHTML).toBe(before);
+    });
+
+    test("케이스를 모두 끝내면 결과 화면과 다시 시작 버튼이 나온다", () => {
+        loadScript();
+        goto("startMedRights");
+        for (let i = 0; i < 40; i++) {
+            const next = document.querySelector('[data-action="medNext"]');
+            if (next) { next.click(); continue; }
+            const submit = document.querySelector('[data-action="medSubmit"]');
+            if (!submit) break;
+            const c = currentCase();
+            document.querySelector(`.mar-action-btn[data-arg="${c.action}"]`).click();
+            submit.click();
+        }
+        expect(document.querySelector(".scene-title").textContent).toMatch(/투약 5 Rights 완료/);
+        expect(document.querySelector('[data-action="startMedRights"]')).not.toBeNull();
+    });
+
+    test("결과가 저장소 최고 기록에 반영된다", () => {
+        loadScript();
+        goto("startMedRights");
+        for (let i = 0; i < 40; i++) {
+            const next = document.querySelector('[data-action="medNext"]');
+            if (next) { next.click(); continue; }
+            const submit = document.querySelector('[data-action="medSubmit"]');
+            if (!submit) break;
+            const c = currentCase();
+            c.flags.forEach(f => document.querySelector(`.mar-right-btn[data-arg="${f}"]`).click());
+            document.querySelector(`.mar-action-btn[data-arg="${c.action}"]`).click();
+            submit.click();
+        }
+        const saved = JSON.parse(localStorage.getItem("nurseSim:v1"));
+        expect(saved.medRightsBest).toBe(100);
     });
 });
 

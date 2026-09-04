@@ -191,7 +191,7 @@ function cacheUI() {
 const BACK_BUTTON_MODES = new Set([
     "survival", "episode", "scenario", "quiz", "mock", "daily", "wrong_review",
     "handoff", "handoff_write", "triage", "image_quiz", "drug_drill",
-    "nclex_quiz", "kor_quiz", "crisis", "ecg_quiz", "site_quiz",
+    "nclex_quiz", "kor_quiz", "crisis", "ecg_quiz", "site_quiz", "med_rights",
 ]);
 function updateBackButton() {
     if (!UI.backBtn) return;
@@ -1056,6 +1056,7 @@ const Storage = {
             mockBest: 0,
             handoffBest: 0,
             triageBest: 0,
+            medRightsBest: 0,
             scenarios: {},     // { scenarioId: { bestHp, bestRep, completed } }
             daily: {},
             history: [],
@@ -1088,6 +1089,7 @@ const Storage = {
             handoffBest: Number.isFinite(raw.handoffBest) ? raw.handoffBest : 0,
             handoffSeen: Array.isArray(raw.handoffSeen) ? raw.handoffSeen.filter(x => typeof x === "string") : [],
             triageBest: Number.isFinite(raw.triageBest) ? raw.triageBest : 0,
+            medRightsBest: Number.isFinite(raw.medRightsBest) ? Math.min(100, Math.max(0, Math.round(raw.medRightsBest))) : 0,
             accepted: (raw.accepted && typeof raw.accepted === "object") ? raw.accepted : null,
             onboarded: raw.onboarded === true,
             firstActionDone: raw.firstActionDone === true,
@@ -1377,6 +1379,10 @@ const Storage = {
         const data = Storage.load();
         data.handoffSeen = [];
         Storage.save(data);
+    },
+    setMedRightsBest(acc) {
+        const data = Storage.load();
+        if (!Number.isFinite(data.medRightsBest) || acc > data.medRightsBest) { data.medRightsBest = acc; Storage.save(data); }
     },
     setTriageBest(acc) {
         const data = Storage.load();
@@ -2709,6 +2715,9 @@ function resetStateForMode() {
     gameState.handoffPool = null;
     gameState.triageIndex = 0; gameState.triageCorrect = 0; gameState.triageTotal = 0;
     gameState.triagePicks = {};
+    gameState.medPool = null; gameState.medIndex = 0;
+    gameState.medCorrect = 0; gameState.medTotal = 0; gameState.medActionCorrect = 0;
+    gameState.medFlags = []; gameState.medAction = null; gameState.medLocked = false;
     gameState.scenarioId = null; gameState.scenarioStep = 0;
     gameState.episodeId = null; gameState.episodeStep = 0;
     gameState.firedStoryBeats = [];
@@ -3410,6 +3419,11 @@ function renderDrillMenu() {
         <button class="row-card" data-action="startHandoffWrite">
           <div class="row-icon">${ICONS.handoff}</div>
           <div class="row-body"><div class="row-title">${_t("drill.sbar", "인계 작성 실습 (SBAR)")}${koBadge}</div><div class="row-sub">${_t("drill.sbar.sub", "케이스 보고 직접 SBAR 인계문 작성")}</div></div>
+          <div class="row-chev">›</div>
+        </button>
+        <button class="row-card" data-action="startMedRights">
+          <div class="row-icon" aria-hidden="true">💊</div>
+          <div class="row-body"><div class="row-title">${_t("drill.medRights", "투약 5 Rights")}${koBadge} <span class="row-pill rec">NEW</span></div><div class="row-sub">${_t("drill.medRights.sub", "처방·팔찌·약 라벨 대조하고 투여 여부 판단")}</div></div>
           <div class="row-chev">›</div>
         </button>
         <button class="row-card" data-action="startTriage">
@@ -5529,6 +5543,240 @@ function endTriage() {
 }
 
 // =========================================================================
+// 투약 5 Rights 검증 드릴 — 처방·팔찌·준비된 약·사정소견을 대조
+//   1단계: 5R 중 어긋난 항목을 모두 고른다 (없으면 '이상 없음')
+//   2단계: 최종 행동 결정 (그대로 투여 / 보류 후 보고 / 중단 후 재확인)
+//   두 단계를 모두 맞혀야 완전 정답. 부분 정답은 피드백에서 따로 알려준다.
+// =========================================================================
+const MED_RIGHTS = [
+    { key: "patient", label: "환자", icon: "🧑" },
+    { key: "drug", label: "약물", icon: "💊" },
+    { key: "dose", label: "용량", icon: "⚖️" },
+    { key: "route", label: "경로·방법", icon: "💉" },
+    { key: "time", label: "시간", icon: "🕐" },
+];
+const MED_ACTIONS = [
+    { key: "give", label: "그대로 투여", sub: "5R 일치, 보류 기준 해당 없음" },
+    { key: "hold", label: "투여 보류 후 보고", sub: "처방은 맞으나 환자 상태가 기준 미달" },
+    { key: "verify", label: "중단하고 처방·라벨 재확인", sub: "5R 자체가 어긋남" },
+];
+const MED_SESSION_SIZE = 8;
+
+function startMedRights() {
+    resetStateForMode();
+    gameState.mode = "med_rights";
+    const all = (NC.MED_ADMIN_CASES || []).map(c => c.id);
+    gameState.medPool = shuffle(all.slice()).slice(0, Math.min(MED_SESSION_SIZE, all.length));
+    showCoreUI(); if (UI.logBar) UI.logBar.innerHTML = "";
+    addLog("투약 5 Rights — 처방·팔찌·준비된 약을 대조하고, 어긋난 항목과 최종 행동을 고르세요.", "log-important");
+    renderMedRightsCase();
+}
+
+function renderMedRightsCase() {
+    if (!gameState.medPool || gameState.medIndex >= gameState.medPool.length) { endMedRights(); return; }
+    const id = gameState.medPool[gameState.medIndex];
+    const c = (NC.MED_ADMIN_CASES || []).find(x => x.id === id);
+    if (!c) { endMedRights(); return; }
+    gameState.medFlags = [];
+    gameState.medAction = null;
+    gameState.medLocked = false;
+
+    const o = c.order, b = c.band, s = c.supply;
+    const row = (k, v) => `<div class="mar-row"><span class="mar-k">${escapeHtml(k)}</span><span class="mar-v">${escapeHtml(v)}</span></div>`;
+    const allergyDanger = b.allergy && b.allergy !== "없음";
+    const checksHtml = (c.checks || []).map(x => `<li>${escapeHtml(x)}</li>`).join("");
+
+    const rightsHtml = MED_RIGHTS.map(r => `
+        <button class="mar-right-btn" data-action="medToggleRight" data-arg="${r.key}"
+                role="checkbox" aria-checked="false" aria-label="${escapeHtml(r.label)} 불일치로 표시">
+          <span class="mar-right-icon" aria-hidden="true">${r.icon}</span>
+          <span class="mar-right-label">${escapeHtml(r.label)}</span>
+        </button>`).join("");
+
+    const actionsHtml = MED_ACTIONS.map(a => `
+        <button class="mar-action-btn" data-action="medPickAction" data-arg="${a.key}"
+                role="radio" aria-checked="false">
+          <span class="mar-action-label">${escapeHtml(a.label)}</span>
+          <span class="mar-action-sub">${escapeHtml(a.sub)}</span>
+        </button>`).join("");
+
+    UI.gameArea.innerHTML = `
+      <div class="scene-card card">
+        <h2 class="scene-title">[투약 ${gameState.medIndex + 1}/${gameState.medPool.length}] ${escapeHtml(c.title)}</h2>
+        <p class="scene-desc">아래 세 가지를 서로 대조하세요. 현재 시각 <strong>${escapeHtml(c.clock)}</strong></p>
+
+        <div class="mar-grid">
+          <div class="mar-panel mar-order">
+            <div class="mar-panel-title">📋 처방 (MAR)</div>
+            ${row("환자", o.patient)}${row("등록번호", o.mrn)}${row("약물", o.drug)}
+            ${row("용량", o.dose)}${row("경로", o.route)}${row("시간", o.time)}
+            ${o.note ? `<div class="mar-note">⚠️ ${escapeHtml(o.note)}</div>` : ""}
+          </div>
+          <div class="mar-panel mar-band">
+            <div class="mar-panel-title">🏷️ 환자 팔찌</div>
+            ${row("이름", b.name)}${row("등록번호", b.mrn)}
+            <div class="mar-row"><span class="mar-k">알레르기</span><span class="mar-v ${allergyDanger ? "mar-allergy" : ""}">${escapeHtml(b.allergy)}</span></div>
+          </div>
+          <div class="mar-panel mar-supply">
+            <div class="mar-panel-title">💊 준비된 약</div>
+            ${row("라벨", s.label)}${row("준비량", s.amount)}
+          </div>
+        </div>
+
+        <div class="mar-checks">
+          <div class="mar-panel-title">🔎 투약 전 사정</div>
+          <ul>${checksHtml}</ul>
+        </div>
+
+        <div class="mar-step">
+          <div class="mar-step-title">1단계 — 어긋난 항목을 모두 고르세요</div>
+          <div class="mar-rights" role="group" aria-label="5 Rights 불일치 항목">${rightsHtml}</div>
+          <p class="mar-step-hint">어긋난 항목이 없으면 아무것도 고르지 마세요.</p>
+        </div>
+
+        <div class="mar-step">
+          <div class="mar-step-title">2단계 — 최종 행동</div>
+          <div class="mar-actions" role="radiogroup" aria-label="최종 행동 선택">${actionsHtml}</div>
+        </div>
+
+        <div class="choice-list">
+          <button class="choice-btn primary" data-action="medSubmit">제출 · 채점</button>
+          <button class="choice-btn" data-action="returnToMenu">메뉴로</button>
+        </div>
+        <div id="med-feedback" aria-live="polite"></div>
+      </div>`;
+    updateStats();
+}
+
+function medToggleRight(target) {
+    if (gameState.medLocked) return;
+    const key = target && target.dataset ? target.dataset.arg : null;
+    if (!key) return;
+    const i = gameState.medFlags.indexOf(key);
+    if (i >= 0) gameState.medFlags.splice(i, 1); else gameState.medFlags.push(key);
+    const on = gameState.medFlags.includes(key);
+    target.classList.toggle("active", on);
+    target.setAttribute("aria-checked", on ? "true" : "false");
+}
+
+function medPickAction(target) {
+    if (gameState.medLocked) return;
+    const key = target && target.dataset ? target.dataset.arg : null;
+    if (!key) return;
+    gameState.medAction = key;
+    const wrap = target.closest(".mar-actions");
+    if (!wrap) return;
+    wrap.querySelectorAll(".mar-action-btn").forEach(b => {
+        const on = b.dataset.arg === key;
+        b.classList.toggle("active", on);
+        b.setAttribute("aria-checked", on ? "true" : "false");
+    });
+}
+
+function medSubmit() {
+    if (gameState.medLocked) return;
+    const id = gameState.medPool && gameState.medPool[gameState.medIndex];
+    const c = id ? (NC.MED_ADMIN_CASES || []).find(x => x.id === id) : null;
+    if (!c) return;
+    const fb = document.getElementById("med-feedback");
+    if (!fb) return;
+    fb.innerHTML = "";
+    if (!gameState.medAction) {
+        const w = document.createElement("div");
+        w.className = "feedback-box wrong";
+        w.textContent = "2단계 — 최종 행동을 선택해 주세요.";
+        fb.appendChild(w);
+        return;
+    }
+    gameState.medLocked = true;
+
+    const picked = new Set(gameState.medFlags);
+    const truth = new Set(c.flags);
+    const flagsOk = picked.size === truth.size && [...truth].every(f => picked.has(f));
+    const actionOk = gameState.medAction === c.action;
+    const perfect = flagsOk && actionOk;
+
+    gameState.medTotal += 1;
+    if (perfect) gameState.medCorrect += 1;
+    if (actionOk) gameState.medActionCorrect += 1;
+
+    // 선택 결과를 버튼에 반영 — 정답/오답을 눈으로 대조
+    document.querySelectorAll(".mar-right-btn").forEach(btn => {
+        const k = btn.dataset.arg;
+        btn.disabled = true;
+        if (truth.has(k)) btn.classList.add("truth");
+        if (picked.has(k) && !truth.has(k)) btn.classList.add("falsepick");
+    });
+    document.querySelectorAll(".mar-action-btn").forEach(btn => {
+        btn.disabled = true;
+        if (btn.dataset.arg === c.action) btn.classList.add("truth");
+        if (btn.dataset.arg === gameState.medAction && !actionOk) btn.classList.add("falsepick");
+    });
+    // 채점이 끝나면 제출 버튼은 역할이 끝났으므로 숨긴다 — 눌러도 아무 일이 없는 버튼을 남기지 않음
+    const submitBtn = document.querySelector('[data-action="medSubmit"]');
+    if (submitBtn) submitBtn.classList.add("hidden");
+
+    const labelOf = k => (MED_RIGHTS.find(r => r.key === k) || {}).label || k;
+    const actionLabel = k => (MED_ACTIONS.find(a => a.key === k) || {}).label || k;
+    const truthText = c.flags.length ? c.flags.map(labelOf).join(", ") : "이상 없음 (5R 모두 일치)";
+    const pickText = gameState.medFlags.length ? gameState.medFlags.map(labelOf).join(", ") : "이상 없음";
+
+    const box = document.createElement("div");
+    box.className = `feedback-box ${perfect ? "correct" : "wrong"}`;
+    box.innerHTML = `
+      <div style="font-weight:800;">${perfect ? "✅ 완전 정답" : (actionOk ? "🟡 행동은 맞았지만 대조가 어긋났어요" : "❌ 다시 확인해 봅시다")}</div>
+      <div class="mar-verdict">
+        <div><strong>1단계 어긋난 항목</strong> — 정답: ${escapeHtml(truthText)} / 내 선택: ${escapeHtml(pickText)} ${flagsOk ? "✅" : "❌"}</div>
+        <div><strong>2단계 최종 행동</strong> — 정답: ${escapeHtml(actionLabel(c.action))} / 내 선택: ${escapeHtml(actionLabel(gameState.medAction))} ${actionOk ? "✅" : "❌"}</div>
+      </div>
+      <div class="mar-why"><div class="mar-why-title">왜 그런가</div>${escapeHtml(c.why)}</div>
+      <div class="mar-why"><div class="mar-why-title">임상에서 무엇을 관찰하고 다음에 무엇을 하나</div>${escapeHtml(c.watch)}</div>
+      <div class="mar-source">근거: ${escapeHtml(c.source)}</div>`;
+    fb.appendChild(box);
+
+    if (perfect) { bumpCombo(); Sound.correct(); }
+    else { resetCombo(); Sound.wrong(); }
+
+    const next = document.createElement("button");
+    next.className = "choice-btn primary center";
+    next.textContent = gameState.medIndex + 1 >= gameState.medPool.length ? "결과 보기" : "다음 케이스";
+    next.dataset.action = "medNext";
+    fb.appendChild(next);
+    try { fb.scrollIntoView({ behavior: "smooth", block: "nearest" }); } catch {}
+    updateStats();
+}
+
+function medNext() {
+    gameState.medIndex += 1;
+    renderMedRightsCase();
+}
+
+function endMedRights() {
+    const total = gameState.medTotal, correct = gameState.medCorrect;
+    const acc = total ? Math.round(correct / total * 100) : 0;
+    const actAcc = total ? Math.round(gameState.medActionCorrect / total * 100) : 0;
+    Storage.setMedRightsBest(acc);
+    Storage.addHistory({ mode: "med_rights", at: Date.now(), total, correct, accuracy: acc });
+    const verdict = acc >= 80
+        ? "대조 습관이 잘 잡혀 있어요. 실제 병동에서도 이 순서를 그대로 유지하세요."
+        : acc >= 50
+            ? "행동 판단은 되지만 대조에서 놓치는 항목이 있어요. 처방 → 팔찌 → 준비된 약 순서를 소리 내어 확인해 보세요."
+            : "5R 대조를 한 항목씩 천천히 짚는 연습이 필요해요. 틀린 케이스의 설명을 다시 읽어보세요.";
+    UI.gameArea.innerHTML = `
+      <div class="scene-card card">
+        <h2 class="scene-title">투약 5 Rights 완료</h2>
+        <p class="scene-desc">완전 정답 ${correct}/${total} (${acc}%) · 최종 행동 정확도 ${actAcc}%</p>
+        <p class="scene-desc">${escapeHtml(verdict)}</p>
+        <div class="choice-list">
+          <button class="choice-btn primary" data-action="startMedRights">다시 시작</button>
+          <button class="choice-btn" data-action="renderDrillMenu">훈련 메뉴</button>
+          <button class="choice-btn" data-action="returnToMenu">메인 메뉴</button>
+        </div>
+      </div>`;
+    updateStats();
+}
+
+// =========================================================================
 // 에피소드 (장편 스토리 — 한 듀티 전체)
 // =========================================================================
 // 민감 컨텐츠 라벨 — 정서적·트라우마 사용자 보호 안내
@@ -6258,6 +6506,7 @@ function renderDashboard() {
         { label: _t("dash.mockBest", "모의고사 최고점"),  value: data.mockBest },
         { label: _t("dash.handoffAcc", "인계 정확도"),    value: `${data.handoffBest || 0}%` },
         { label: _t("dash.triageAcc", "트리아지 정확도"), value: `${data.triageBest || 0}%` },
+        { label: _t("dash.medRightsAcc", "투약 5R 정확도"), value: `${data.medRightsBest || 0}%` },
         { label: _t("status.wrongNote", "오답노트"),      value: `${wrongCount}${_t("unit.cases", "건")}` },
         { label: _t("dash.todayChallenge", "오늘의 챌린지"), value: dailyMsg },
     ].map(s => `<div class="dash-stat"><span class="dash-stat-label">${escapeHtml(s.label)}</span><span class="dash-stat-value">${escapeHtml(String(s.value))}</span></div>`).join("");
@@ -9313,6 +9562,11 @@ const DELEGATED_ACTIONS = {
     renderSimMenu: () => renderSimMenu(),
     renderCaseMenu: () => renderCaseMenu(),
     renderDrillMenu: () => renderDrillMenu(),
+    startMedRights: () => startMedRights(),
+    medToggleRight: (t) => medToggleRight(t),
+    medPickAction: (t) => medPickAction(t),
+    medSubmit: () => medSubmit(),
+    medNext: () => medNext(),
     pickShift: (t) => pickShift(t),
     renderShiftPicker: () => renderShiftPicker(),
     toggleKebab: () => toggleKebab(),

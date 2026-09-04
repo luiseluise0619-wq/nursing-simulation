@@ -104,6 +104,70 @@ describe("트리아지 케이스 invariants", () => {
     });
 });
 
+describe("투약 5 Rights 케이스 invariants", () => {
+    const VALID_FLAGS = ["patient", "drug", "dose", "route", "time"];
+    const VALID_ACTIONS = ["give", "hold", "verify"];
+
+    test("최소 20개 이상의 투약 케이스가 존재한다", () => {
+        expect(C.MED_ADMIN_CASES.length).toBeGreaterThanOrEqual(20);
+    });
+    test("케이스 id 가 모두 고유하다", () => {
+        const ids = C.MED_ADMIN_CASES.map(m => m.id);
+        expect(new Set(ids).size).toBe(ids.length);
+    });
+    test("세 가지 행동(give/hold/verify)이 모두 최소 2건씩 출제된다", () => {
+        VALID_ACTIONS.forEach(a => {
+            const n = C.MED_ADMIN_CASES.filter(m => m.action === a).length;
+            expect(n).toBeGreaterThanOrEqual(2);
+        });
+    });
+    test("5R 다섯 항목이 각각 최소 1건씩 불일치 사례로 다뤄진다", () => {
+        VALID_FLAGS.forEach(f => {
+            const n = C.MED_ADMIN_CASES.filter(m => m.flags.includes(f)).length;
+            expect(n).toBeGreaterThanOrEqual(1);
+        });
+    });
+
+    C.MED_ADMIN_CASES.forEach(m => {
+        describe(m.id, () => {
+            test("필수 필드를 모두 가진다", () => {
+                ["id", "title", "category", "clock", "why", "watch", "source"].forEach(k => {
+                    expect(typeof m[k]).toBe("string");
+                    expect(m[k].length).toBeGreaterThan(0);
+                });
+            });
+            test("처방·팔찌·준비된 약 3개 패널 데이터가 모두 있다", () => {
+                ["patient", "mrn", "drug", "dose", "route", "time"].forEach(k => {
+                    expect(m.order[k]).toBeTruthy();
+                });
+                ["name", "mrn", "allergy"].forEach(k => expect(m.band[k]).toBeTruthy());
+                ["label", "amount"].forEach(k => expect(m.supply[k]).toBeTruthy());
+            });
+            test("투약 전 사정 소견이 1개 이상 제공된다", () => {
+                expect(Array.isArray(m.checks)).toBe(true);
+                expect(m.checks.length).toBeGreaterThanOrEqual(1);
+                m.checks.forEach(c => expect(typeof c).toBe("string"));
+            });
+            test("flags 가 5R 항목만 담고 중복이 없다", () => {
+                expect(Array.isArray(m.flags)).toBe(true);
+                m.flags.forEach(f => expect(VALID_FLAGS).toContain(f));
+                expect(new Set(m.flags).size).toBe(m.flags.length);
+            });
+            test("action 이 유효한 값이다", () => {
+                expect(VALID_ACTIONS).toContain(m.action);
+            });
+            test("5R 불일치가 있으면 verify, 없으면 give 또는 hold 다", () => {
+                if (m.flags.length > 0) expect(m.action).toBe("verify");
+                else expect(["give", "hold"]).toContain(m.action);
+            });
+            test("해설(why)과 임상 관찰(watch)이 단답이 아니라 설명 수준이다", () => {
+                expect(m.why.length).toBeGreaterThanOrEqual(40);
+                expect(m.watch.length).toBeGreaterThanOrEqual(40);
+            });
+        });
+    });
+});
+
 describe("임상 시나리오 invariants", () => {
     test("최소 6개 이상의 시나리오가 존재한다", () => {
         expect(C.SCENARIOS.length).toBeGreaterThanOrEqual(6);
