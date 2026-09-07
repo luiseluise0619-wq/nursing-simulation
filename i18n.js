@@ -174,6 +174,7 @@
             "tutor.read": "답변 읽어주기",
             "tutor.privacy": "입력한 질문은 답변 생성을 위해 외부 AI 서비스로 전송됩니다. 실명·환자 정보는 입력하지 마세요.",
             "tts.readQ": "문제 읽어주기",
+            "quiz.done": "완료",
             "quiz.total": "총 문제",
             "quiz.correct": "정답",
             // 공통 액션
@@ -589,6 +590,7 @@
             "tutor.read": "Read answer aloud",
             "tutor.privacy": "Your question is sent to an external AI service to generate the answer. Do not enter real names or patient information.",
             "tts.readQ": "Read question aloud",
+            "quiz.done": "Done",
             "quiz.total": "Total",
             "quiz.correct": "Correct",
             "action.back": "Menu",

@@ -970,6 +970,41 @@ function pickAvatarForPatient(id, desc) {
     for (let i = 0; i < key.length; i++) h = ((h << 5) - h + key.charCodeAt(i)) | 0;
     return pool[Math.abs(h) % pool.length];
 }
+// 드릴·퀴즈 공용 조각 — 같은 마크업이 5곳에 복사돼 있었고,
+// 그중 3곳은 라벨이 한글로 하드코딩돼 영어 모드에서 그대로 새어 나왔다.
+// 드릴 완료 카드 — 재시도 액션만 다르고 나머지가 같아 두 곳에 복사돼 있었다
+function quizSummaryCard(total, correct, acc, retryAction) {
+    return `
+      <div class="scene-card card">
+        <h2 class="scene-title">${_t("quiz.done", "완료")}</h2>
+        <div class="quiz-summary-stats">
+            ${quizStatRows(total, correct, acc)}
+        </div>
+        <div class="choice-list">
+          <button class="choice-btn primary" data-action="${retryAction}">${_t("action.retry", "다시 시도")}</button>
+          <button class="choice-btn center" data-action="returnToMenu">${_t("nav.mainMenu", "메인 메뉴")}</button>
+        </div>
+      </div>`;
+}
+function quizStatRows(total, correct, acc) {
+    return `<div class="quiz-stat-row"><span>${_t("quiz.total", "총 문제")}</span><strong>${total}</strong></div>
+            <div class="quiz-stat-row"><span>${_t("quiz.correct", "정답")}</span><strong>${correct}</strong></div>
+            <div class="quiz-stat-row"><span>${_t("acc.rate", "정답률")}</span><strong>${acc}%</strong></div>`;
+}
+function verdictLine(isCorrect) {
+    return `<div class="${isCorrect ? "feedback-good" : "feedback-bad"}">${isCorrect
+        ? _t("common.correct", "✅ 정답") : _t("common.wrong", "❌ 오답")}</div>`;
+}
+// 채점 후 보기 잠금 + 정답/오답 표시 — choices[i].correct 로 정답을 판단하는 드릴 공용
+function revealChoices(selector, choices, pickedIdx) {
+    document.querySelectorAll(selector).forEach((btn, bi) => {
+        btn.disabled = true;
+        const c = choices[bi];
+        if (c && c.correct) btn.classList.add("correct-flash");
+        else if (bi === pickedIdx) btn.classList.add("wrong-flash");
+    });
+}
+
 function renderPatientAvatar(id, desc, opts = {}) {
     const avatar = pickAvatarForPatient(id, desc);
     const cls = opts.cls || "patient-avatar";
@@ -1380,18 +1415,14 @@ const Storage = {
         data.handoffSeen = [];
         Storage.save(data);
     },
-    setMedRightsBest(acc) {
+    // 드릴 최고 기록 — 세 모드가 같은 코드를 복사해 쓰고 있었다
+    _setBest(key, acc) {
         const data = Storage.load();
-        if (!Number.isFinite(data.medRightsBest) || acc > data.medRightsBest) { data.medRightsBest = acc; Storage.save(data); }
+        if (!Number.isFinite(data[key]) || acc > data[key]) { data[key] = acc; Storage.save(data); }
     },
-    setTriageBest(acc) {
-        const data = Storage.load();
-        if (!Number.isFinite(data.triageBest) || acc > data.triageBest) { data.triageBest = acc; Storage.save(data); }
-    },
-    setHandoffBest(acc) {
-        const data = Storage.load();
-        if (!Number.isFinite(data.handoffBest) || acc > data.handoffBest) { data.handoffBest = acc; Storage.save(data); }
-    },
+    setMedRightsBest(acc) { Storage._setBest("medRightsBest", acc); },
+    setTriageBest(acc) { Storage._setBest("triageBest", acc); },
+    setHandoffBest(acc) { Storage._setBest("handoffBest", acc); },
     setScenarioResult(id, hp, rep, completed) {
         const data = Storage.load();
         const prev = data.scenarios[id] || { bestHp: 0, bestRep: 0, completed: false };
@@ -3408,7 +3439,7 @@ function renderDrillMenu() {
         </button>
         <button class="row-card" data-action="renderDrugDrill">
           <div class="row-icon">${ICONS.training}</div>
-          <div class="row-body"><div class="row-title">${_t("drill.drug", "약물 드릴")}</div><div class="row-sub">${_t("drill.drug.sub", "핵심 약물 50종")}</div></div>
+          <div class="row-body"><div class="row-title">${_t("drill.drug", "약물 드릴")}${koBadge}</div><div class="row-sub">${_t("drill.drug.sub", "핵심 약물 50종")}</div></div>
           <div class="row-chev">›</div>
         </button>
         <button class="row-card" data-action="startHandoff">
@@ -3689,9 +3720,7 @@ function renderEcgQuizSummary() {
       <div class="scene-card card" style="text-align:center;">
         <h2 class="scene-title">${_t("ecg.done", "심전도 판독 완료")}</h2>
         <div class="quiz-summary-stats">
-          <div class="quiz-stat-row"><span>${_t("quiz.total", "총 문제")}</span><strong>${total}</strong></div>
-          <div class="quiz-stat-row"><span>${_t("quiz.correct", "정답")}</span><strong>${correct}</strong></div>
-          <div class="quiz-stat-row"><span>${_t("acc.rate", "정답률")}</span><strong>${acc}%</strong></div>
+          ${quizStatRows(total, correct, acc)}
         </div>
         <div class="choice-list">
           <button class="choice-btn primary" data-action="startEcgQuiz">${_t("action.retry", "다시 시도")}</button>
@@ -3809,9 +3838,7 @@ function renderSiteQuizSummary() {
       <div class="scene-card card" style="text-align:center;">
         <h2 class="scene-title">${_t("site.done", "부위 짚기 완료")}</h2>
         <div class="quiz-summary-stats">
-          <div class="quiz-stat-row"><span>${_t("quiz.total", "총 문제")}</span><strong>${total}</strong></div>
-          <div class="quiz-stat-row"><span>${_t("quiz.correct", "정답")}</span><strong>${correct}</strong></div>
-          <div class="quiz-stat-row"><span>${_t("acc.rate", "정답률")}</span><strong>${acc}%</strong></div>
+          ${quizStatRows(total, correct, acc)}
         </div>
         <div class="choice-list">
           <button class="choice-btn primary" data-action="startSiteQuiz">${_t("action.retry", "다시 시도")}</button>
@@ -4079,16 +4106,11 @@ function korQuizAnswer(t) {
             });
         } catch {}
     }
-    document.querySelectorAll("#kor-choices .choice-btn").forEach((btn, bi) => {
-        btn.disabled = true;
-        const c = q._shuffled[bi];
-        if (c && c.correct) btn.classList.add("correct-flash");
-        else if (bi === idx) btn.classList.add("wrong-flash");
-    });
+    revealChoices("#kor-choices .choice-btn", q._shuffled, idx);
     const fb = document.getElementById("kor-feedback");
     if (fb) {
         fb.innerHTML = `
-          <div class="${isCorrect ? "feedback-good" : "feedback-bad"}">${isCorrect ? _t("common.correct", "✅ 정답") : _t("common.wrong", "❌ 오답")}</div>
+          ${verdictLine(isCorrect)}
           <div class="feedback-log">${escapeHtml(choice.log || "")}</div>`;
         fb.classList.remove("hidden");
     }
@@ -4116,9 +4138,7 @@ function renderKorSummary() {
       <div class="scene-card card">
         <h2 class="scene-title">한국 국시 완료</h2>
         <div class="quiz-summary-stats">
-          <div class="quiz-stat-row"><span>총 문제</span><strong>${total}</strong></div>
-          <div class="quiz-stat-row"><span>정답</span><strong>${correct}</strong></div>
-          <div class="quiz-stat-row"><span>정답률</span><strong>${acc}%</strong></div>
+          ${quizStatRows(total, correct, acc)}
         </div>
         <div class="choice-list">
           <button class="choice-btn primary" data-action="renderKorMenu">다시 풀기</button>
@@ -4255,16 +4275,11 @@ function imageQuizAnswer(t) {
         Sound.correct();
         try { Storage.incrementImageCorrect(); } catch {}
     } else { Sound.wrong(); }
-    document.querySelectorAll("#image-quiz-choices .choice-btn").forEach((btn, bi) => {
-        btn.disabled = true;
-        const c = scene._shuffled[bi];
-        if (c && c.correct) btn.classList.add("correct-flash");
-        else if (bi === idx) btn.classList.add("wrong-flash");
-    });
+    revealChoices("#image-quiz-choices .choice-btn", scene._shuffled, idx);
     const fb = document.getElementById("image-quiz-feedback");
     if (fb) {
         fb.innerHTML = `
-            <div class="${isCorrect ? "feedback-good" : "feedback-bad"}">${isCorrect ? "✅ 정답" : "❌ 오답"}</div>
+            ${verdictLine(isCorrect)}
             <div class="feedback-log">${escapeHtml(choice.log || "")}</div>`;
         fb.classList.remove("hidden");
     }
@@ -4283,19 +4298,7 @@ function renderImageQuizSummary() {
     const correct = gameState.imageQuizCorrect || 0;
     const acc = total > 0 ? Math.round((correct / total) * 100) : 0;
     if (total > 0 && correct === total) { try { launchConfetti(); Haptics.heavy(); } catch {} }
-    UI.gameArea.innerHTML = `
-      <div class="scene-card card">
-        <h2 class="scene-title">완료</h2>
-        <div class="quiz-summary-stats">
-            <div class="quiz-stat-row"><span>총 문제</span><strong>${total}</strong></div>
-            <div class="quiz-stat-row"><span>정답</span><strong>${correct}</strong></div>
-            <div class="quiz-stat-row"><span>정답률</span><strong>${acc}%</strong></div>
-        </div>
-        <div class="choice-list">
-          <button class="choice-btn primary" data-action="renderImageQuizMenu">다시 풀기</button>
-          <button class="choice-btn center" data-action="returnToMenu">메인 메뉴</button>
-        </div>
-      </div>`;
+    UI.gameArea.innerHTML = quizSummaryCard(total, correct, acc, "renderImageQuizMenu");
     track("image_quiz_complete", { total, correct, acc });
 }
 const QUIZ_SET_SIZE = 10; // 한 세트 = 10문제 (종결감 + 진행도)
@@ -5142,6 +5145,16 @@ const Speech = {
     },
 };
 
+// 인계 키워드 채점 — 듣기(handoff)와 작성(SBAR) 두 모드가 같은 매칭 규칙을 쓴다
+function scoreHandoffKeywords(text, keywords) {
+    const tokens = String(text || "").split(/[\s,·•。、]+/).map(normalizeKeyword).filter(Boolean);
+    const hits = [], misses = [];
+    keywords.forEach(k => {
+        const n = normalizeKeyword(k);
+        if (tokens.some(t => t.includes(n) || n.includes(t))) hits.push(k); else misses.push(k);
+    });
+    return { hits, misses };
+}
 function normalizeKeyword(s) {
     return String(s || "").toLowerCase().replace(/[^\w가-힣]/g, "");
 }
@@ -5273,13 +5286,7 @@ function handoffSubmit() {
     if (!p) return;
     Speech.stop();
     const ans = document.getElementById("handoff-answer").value;
-    const tokens = ans.split(/[\s,·•。、]+/).map(normalizeKeyword).filter(Boolean);
-    const hits = [], misses = [];
-    p.keywords.forEach(k => {
-        const n = normalizeKeyword(k);
-        const found = tokens.some(t => t.includes(n) || n.includes(t));
-        if (found) hits.push(k); else misses.push(k);
-    });
+    const { hits, misses } = scoreHandoffKeywords(ans, p.keywords);
     gameState.handoffCorrect += hits.length;
     gameState.handoffTotal += p.keywords.length;
     const fb = document.getElementById("handoff-feedback");
@@ -5390,17 +5397,11 @@ function handoffWriteSubmit() {
         const el = document.getElementById(`sbar-${f.key}`);
         return el ? el.value : "";
     }).join(" ");
-    const tokens = combined.split(/[\s,·•。、]+/).map(normalizeKeyword).filter(Boolean);
     const filledFields = SBAR_FIELDS.filter(f => {
         const el = document.getElementById(`sbar-${f.key}`);
         return el && el.value.trim().length > 0;
     }).length;
-    const hits = [], misses = [];
-    p.keywords.forEach(k => {
-        const n = normalizeKeyword(k);
-        const found = tokens.some(t => t.includes(n) || n.includes(t));
-        if (found) hits.push(k); else misses.push(k);
-    });
+    const { hits, misses } = scoreHandoffKeywords(combined, p.keywords);
     // 구조 보너스 — SBAR 4칸 모두 작성 시 가점 개념 (표시용)
     const structureScore = Math.round((filledFields / SBAR_FIELDS.length) * 100);
     gameState.handoffCorrect += hits.length;
@@ -7307,16 +7308,11 @@ function drugDrillAnswer(t) {
     const isCorrect = !!choice.correct;
     if (isCorrect) { gameState.drugCorrect = (gameState.drugCorrect || 0) + 1; Sound.correct(); }
     else { Sound.wrong(); }
-    document.querySelectorAll("#drug-drill-choices .choice-btn").forEach((btn, bi) => {
-        btn.disabled = true;
-        const c = q.choices[bi];
-        if (c && c.correct) btn.classList.add("correct-flash");
-        else if (bi === idx) btn.classList.add("wrong-flash");
-    });
+    revealChoices("#drug-drill-choices .choice-btn", q.choices, idx);
     const fb = document.getElementById("drug-drill-feedback");
     if (fb) {
         fb.innerHTML = `
-            <div class="${isCorrect ? "feedback-good" : "feedback-bad"}">${isCorrect ? "✅ 정답" : "❌ 오답"}</div>
+            ${verdictLine(isCorrect)}
             <div class="feedback-log">${escapeHtml(choice.log || "")}</div>`;
         fb.classList.remove("hidden");
     }
@@ -7335,19 +7331,7 @@ function renderDrugDrillSummary() {
     const correct = gameState.drugCorrect || 0;
     const acc = total > 0 ? Math.round((correct / total) * 100) : 0;
     try { Storage.recordSetScore("💊 약물 드릴", correct, total); checkAndNotifyAchievements(); } catch {}
-    UI.gameArea.innerHTML = `
-      <div class="scene-card card">
-        <h2 class="scene-title">완료</h2>
-        <div class="quiz-summary-stats">
-            <div class="quiz-stat-row"><span>총 문제</span><strong>${total}</strong></div>
-            <div class="quiz-stat-row"><span>정답</span><strong>${correct}</strong></div>
-            <div class="quiz-stat-row"><span>정답률</span><strong>${acc}%</strong></div>
-        </div>
-        <div class="choice-list">
-          <button class="choice-btn primary" data-action="renderDrugDrill">다시 풀기</button>
-          <button class="choice-btn center" data-action="returnToMenu">메인 메뉴</button>
-        </div>
-      </div>`;
+    UI.gameArea.innerHTML = quizSummaryCard(total, correct, acc, "renderDrugDrill");
     track("drug_drill_complete", { total, correct, acc });
 }
 

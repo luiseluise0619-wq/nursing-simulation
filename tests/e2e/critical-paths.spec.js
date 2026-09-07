@@ -1032,3 +1032,65 @@ test.describe("하드웨어 뒤로가기", () => {
         expect(await page.evaluate(() => window.__exitCalls)).toBe(1);
     });
 });
+
+// 영어 모드에서 UI 껍데기(판정 줄·요약 라벨·버튼)에 한글이 새지 않아야 한다.
+// 드릴 요약 마크업이 5곳에 복사돼 있었고 그중 3곳이 라벨을 한글로 박아 두고 있었다.
+// (해설 본문은 한국어 전용 컨텐츠이므로 검사 대상이 아니며, 메뉴에 🇰🇷 배지로 표시된다)
+test.describe("영어 모드 — UI 한글 누출", () => {
+    async function seedEnglish(page) {
+        await page.addInitScript(() => {
+            try {
+                if (!localStorage.getItem("nurseSim:v1")) {
+                    localStorage.setItem("nurseSim:v1", JSON.stringify({
+                        accepted: { version: "1.0", at: Date.now() },
+                        onboarded: true,
+                        settings: { lang: "en", examMode: "nclex", theme: "dark", sound: false },
+                    }));
+                }
+            } catch {}
+            try { sessionStorage.setItem("nurseSim:cbIntroSeen", "1"); } catch {}
+        });
+    }
+    const KOREAN_CHROME = /총 문제|정답률|✅ 정답|❌ 오답|다시 풀기|메인 메뉴|완료/;
+
+    test("약물 드릴 — 판정 줄과 요약 라벨이 영어다", async ({ page }) => {
+        await seedEnglish(page);
+        await page.goto("/");
+        await page.waitForTimeout(1200);
+        await page.evaluate(() => window.startDrugDrill && window.startDrugDrill());
+        await page.waitForSelector("#drug-drill-choices .choice-btn", { timeout: 8000 });
+        await page.locator("#drug-drill-choices .choice-btn").first().click();
+
+        // 판정 줄만 검사 (해설 본문은 한국어 컨텐츠)
+        const verdict = await page.locator("#drug-drill-feedback .feedback-good, #drug-drill-feedback .feedback-bad").first().textContent();
+        expect(verdict).not.toMatch(/정답|오답/);
+
+        await page.evaluate(() => window.renderDrugDrillSummary && window.renderDrugDrillSummary());
+        const stats = await page.locator(".quiz-summary-stats").textContent();
+        expect(stats).not.toMatch(KOREAN_CHROME);
+        const buttons = await page.locator(".scene-card .choice-list").textContent();
+        expect(buttons).not.toMatch(KOREAN_CHROME);
+    });
+
+    test("이미지 퀴즈 요약 라벨이 영어다", async ({ page }) => {
+        await seedEnglish(page);
+        await page.goto("/");
+        await page.waitForTimeout(1200);
+        await page.evaluate(() => window.renderImageQuizSummary && window.renderImageQuizSummary());
+        const stats = await page.locator(".quiz-summary-stats").textContent();
+        expect(stats).not.toMatch(KOREAN_CHROME);
+    });
+
+    test("한국어 전용 드릴은 영어 모드에서 배지로 표시된다", async ({ page }) => {
+        await seedEnglish(page);
+        await page.goto("/");
+        await page.waitForTimeout(1200);
+        await page.evaluate(() => window.renderDrillMenu && window.renderDrillMenu());
+        const badged = await page.evaluate(() =>
+            [...document.querySelectorAll(".row-card")]
+                .filter(r => /🇰🇷/.test(r.textContent))
+                .map(r => r.dataset.action).sort());
+        // 해설·본문이 한국어인 드릴 5종
+        expect(badged).toEqual(["renderDrugDrill", "startHandoff", "startHandoffWrite", "startMedRights", "startTriage"]);
+    });
+});

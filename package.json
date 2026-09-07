@@ -10,7 +10,7 @@
     "test:e2e:ui": "playwright test --ui",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "lint": "eslint . --ext .js --ignore-pattern node_modules --ignore-pattern dist --ignore-pattern build",
+    "lint": "eslint . --ext .js --ignore-pattern node_modules --ignore-pattern dist --ignore-pattern build --ignore-pattern www --ignore-pattern android",
     "icons": "node scripts/generate-icons.js",
     "build:web": "node scripts/build-www.js",
     "build:preview": "node scripts/build-preview.js",
