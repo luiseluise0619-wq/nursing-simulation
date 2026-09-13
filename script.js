@@ -3883,6 +3883,9 @@ function renderKorMenu() {
           </div>`;
         return;
     }
+    const wrongPool = (typeof Storage !== "undefined" && Storage.getWrongQueue)
+        ? (Storage.getWrongQueue() || []).filter(e => e && typeof e.baseId === "string" && e.baseId.startsWith("kor-"))
+        : [];
     const cats = (window.KOR_CATEGORIES || []).slice();
     const counts = {};
     qs.forEach(q => counts[q.category] = (counts[q.category] || 0) + 1);
@@ -3890,33 +3893,75 @@ function renderKorMenu() {
       <button class="choice-btn primary" data-action="startKorQuiz" data-arg="${escapeHtml(c)}">
         ${escapeHtml(catDisplayName(c))} (${counts[c] || 0})
       </button>`).join("");
+    const retryBtn = wrongPool.length > 0
+        ? `<button class="choice-btn" data-action="startKorQuiz" data-arg="__kor_wrong__">🩺 ${_t("kor.retryWrong", "오답 복습")} (${wrongPool.length})</button>`
+        : "";
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
         <h2 class="scene-title">${_t("kor.title", "한국 국시 정적 문제")}${_koOnlyBadge()}</h2>
-        <p class="scene-desc">${_t("kor.desc", "정식 5지선다 {n}문제. 출처 인용 포함 (KNCA / 대한○○학회 / 의료법). 카테고리 또는 무작위 선택.").replace("{n}", qs.length)}</p>
+        <p class="scene-desc">${_t("kor.desc", "한 번에 10문제씩, 카테고리 또는 무작위로 연습할 수 있어요.").replace("{n}", qs.length)}</p>
         <div class="choice-list">
           <button class="choice-btn primary" data-action="startKorQuiz" data-arg="__all__">🎯 ${_t("kor.allRandom", "전체 무작위")} (${qs.length})</button>
           ${catBtns}
+          ${retryBtn}
           <button class="choice-btn center" data-action="returnToMenu">${_t("action.back", "메뉴")}</button>
         </div>
       </div>`;
     track("kor_menu_open", { total: qs.length });
 }
 
+function buildKorQuestionSnapshot(q) {
+    if (!q || typeof q !== "object") return null;
+    const id = q.baseId || q.id || `kor-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    return {
+        id,
+        category: q.category || "기타",
+        type: q.type || "mcq",
+        title: q.title || "",
+        desc: q.desc || "",
+        choices: Array.isArray(q.choices)
+            ? q.choices.map(c => ({ text: c.text || "", correct: !!c.correct, log: c.log || "" }))
+            : [],
+    };
+}
+
+function getWrongKorPool() {
+    const wrongQueue = (typeof Storage !== "undefined" && Storage.getWrongQueue)
+        ? (Storage.getWrongQueue() || [])
+        : [];
+    const seen = new Set();
+    const pool = [];
+    for (const item of wrongQueue) {
+        if (!item || typeof item.baseId !== "string" || !item.baseId.startsWith("kor-")) continue;
+        if (seen.has(item.baseId)) continue;
+        seen.add(item.baseId);
+        pool.push(buildKorQuestionSnapshot(item));
+    }
+    return pool;
+}
+
 function startKorQuiz(t) {
     const arg = (t && t.dataset && t.dataset.arg) || "__all__";
-    const all = (window.KOR_QUESTIONS || []).slice();
-    let pool = arg === "__all__" ? all : all.filter(q => q.category === arg);
+    const sessionSize = 10;
+    const all = (window.KOR_QUESTIONS || []).map(buildKorQuestionSnapshot);
+    let pool = [];
+    if (arg === "__kor_wrong__") {
+        pool = getWrongKorPool();
+    } else if (arg === "__all__") {
+        pool = all;
+    } else {
+        pool = all.filter(q => q.category === arg);
+    }
     if (pool.length === 0) { addLog("선택한 과목에 문제가 없습니다.", "log-bad"); renderKorMenu(); return; }
-    // Fisher-Yates 셔플
-    for (let i = pool.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [pool[i], pool[j]] = [pool[j], pool[i]];
+    pool = shuffle(pool);
+    if (arg !== "__kor_wrong__") {
+        pool = pool.slice(0, Math.min(sessionSize, pool.length));
     }
     gameState.mode = "kor_quiz";
     gameState.korPool = pool;
     gameState.korIndex = 0;
     gameState.korCorrect = 0;
+    gameState.korArg = arg;
     gameState.korCategory = arg === "__all__" ? null : arg;
     try { Storage.markModeUsed("kor_quiz"); } catch {}
     renderKorCard();
@@ -3943,10 +3988,12 @@ function renderKorCard() {
     // 다른 모드와 달리 이 함수만 상단바 갱신을 빠뜨려, 국시를 푸는 내내 진행률이 0% 에
     // 멈추고 상태 배지가 "대기"로 남아 있었다.
     showCoreUI(); updateStats();
+    const total = pool.length;
+    const titleText = `${_t("kor.questionTitle", "문제")} ${i + 1} / ${total}`;
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
-        <div class="quiz-progress">한국 국시 ${i + 1}/${pool.length} · ${escapeHtml(q.category)}</div>
-        <h2 class="scene-title">${escapeHtml(q.title)}</h2>
+        <div class="quiz-progress">한국 국시 연습 ${i + 1}/${total} · ${escapeHtml(q.category)}</div>
+        <h2 class="scene-title">${escapeHtml(titleText)}</h2>
         <p class="scene-desc">${escapeHtml(q.desc)}</p>
         <div class="choice-list" id="kor-choices">${choicesHtml}</div>
         <div id="kor-feedback" class="image-quiz-feedback hidden" aria-live="polite"></div>
@@ -3986,9 +4033,13 @@ function korQuizAnswer(t) {
     });
     const fb = document.getElementById("kor-feedback");
     if (fb) {
+        const optionsLog = (q._shuffled || q.choices || [])
+            .map(c => `${escapeHtml(c.text)} (${c.correct ? _t("common.correct", "정답") : _t("common.wrong", "오답")})`)
+            .join("<br>");
         fb.innerHTML = `
           <div class="${isCorrect ? "feedback-good" : "feedback-bad"}">${isCorrect ? _t("common.correct", "✅ 정답") : _t("common.wrong", "❌ 오답")}</div>
-          <div class="feedback-log">${escapeHtml(choice.log || "")}</div>`;
+          <div class="feedback-log"><strong>${_t("kor.questionTopic", "문항")}: ${escapeHtml(q.title || "")}</strong><br>${escapeHtml(choice.log || "")}</div>
+          <div class="feedback-log">${optionsLog}</div>`;
         fb.classList.remove("hidden");
     }
     const nextBtn = document.getElementById("kor-next-btn");
@@ -4020,7 +4071,8 @@ function renderKorSummary() {
           <div class="quiz-stat-row"><span>정답률</span><strong>${acc}%</strong></div>
         </div>
         <div class="choice-list">
-          <button class="choice-btn primary" data-action="renderKorMenu">${_t("action.retryQuiz", "다시 풀기")}</button>
+          <button class="choice-btn primary" data-action="startKorQuiz" data-arg="${escapeHtml(gameState.korArg || "__all__")}">${_t("kor.restart", "이어서 풀기")}</button>
+          <button class="choice-btn" data-action="startKorQuiz" data-arg="__kor_wrong__">${_t("kor.retryWrong", "오답 복습")}</button>
           <button class="choice-btn center" data-action="returnToMenu">${_t("action.back", "메뉴")}</button>
         </div>
       </div>`;
