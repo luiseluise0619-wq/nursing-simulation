@@ -4395,8 +4395,30 @@ async function renderNclexMenuLazy() {
 function _nclexAvailable() {
     return typeof window !== "undefined"
         && Array.isArray(window.NCLEX_CATEGORIES)
-        && Array.isArray(window.NCLEX_QUESTIONS)
-        && window.NCLEX_QUESTIONS.length > 0;
+        && _nclexQuestionPool().length > 0;
+}
+
+function _nclexQuestionPool() {
+    if (!Array.isArray(window.NCLEX_QUESTIONS)) return [];
+    return window.NCLEX_QUESTIONS.filter(isValidNclexQuestionForQuiz);
+}
+
+function isValidNclexQuestionForQuiz(q) {
+    if (!q || typeof q !== "object") return false;
+    if (!Array.isArray(q.choices) || q.choices.length < 2) return false;
+    if (q.type === "priority" && _isMalformedPriorityPrompt(q)) return false;
+    return true;
+}
+
+function _isMalformedPriorityPrompt(q) {
+    const desc = String(q?.desc || "").trim();
+    if (!desc || desc.length < 30) return true;
+    if (!/^four\b/i.test(desc)) return false;
+    if (!/\bpriority\b/i.test(desc)) return false;
+    if (/\:\s*$/i.test(desc)) return true;
+    if (/\:\s*\([^)]*\)\s*$/i.test(desc)) return true;
+    if (/\bpriority:\s*\(scenario\s*\d+\b/i.test(desc)) return true;
+    return false;
 }
 
 function renderNclexMenu() {
@@ -4415,8 +4437,9 @@ function renderNclexMenu() {
     }
     addLog("NCLEX-RN practice — English-language US licensing prep.", "log-important");
     const cats = window.NCLEX_CATEGORIES;
+    const nclexPool = _nclexQuestionPool();
     const counts = {};
-    cats.forEach(c => { counts[c] = window.NCLEX_QUESTIONS.filter(q => q.category === c).length; });
+    cats.forEach(c => { counts[c] = nclexPool.filter(q => q.category === c).length; });
     const buttons = cats.map(c => `<button class="choice-btn primary" data-action="startNclexQuiz" data-arg="${escapeHtml(c)}">${escapeHtml(c)} <small>(${counts[c]})</small></button>`).join("");
     UI.gameArea.innerHTML = `
       <div class="scene-card card">
@@ -4446,10 +4469,11 @@ function _nclexShuffle(arr) {
 function startNclexQuiz(category) {
     if (!_nclexAvailable()) { renderNclexMenu(); return; }
     gameState.mode = "nclex_quiz";
+    const poolSource = _nclexQuestionPool();
     const isRandom = !category || category === "__random__";
     const pool = isRandom
-        ? window.NCLEX_QUESTIONS.slice()
-        : window.NCLEX_QUESTIONS.filter(q => q.category === category);
+        ? poolSource.slice()
+        : poolSource.filter(q => q.category === category);
     if (pool.length === 0) {
         addLog("No questions in this category.", "log-bad");
         renderNclexMenu();
@@ -4479,7 +4503,7 @@ function startNclexQuiz(category) {
 // 문항 은행이 카테고리당 550개로 균등하므로 균등 추출을 그대로 쓴다.
 function _nclexPickBalanced(count, rng) {
     const cats = (window.NCLEX_CATEGORIES || []).slice();
-    const all = window.NCLEX_QUESTIONS || [];
+    const all = _nclexQuestionPool();
     if (!all.length) return [];
     const byCat = {};
     cats.forEach(c => { byCat[c] = all.filter(q => q.category === c); });
