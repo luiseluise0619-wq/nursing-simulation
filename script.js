@@ -31,7 +31,7 @@ const MOCK_EXAM_TOTAL = 30;           // 모의고사 1회 = 30문제
 const MOCK_EXAM_SECONDS = 30 * 60;    // 모의고사 시간 = 30분 (= 1800초)
 const DAILY_CHALLENGE_TOTAL = 10;     // 일일 챌린지 = 10문제
 const STORAGE_KEY = "nurseSim:v1";    // localStorage 키 (v1 = 스키마 버전)
-const APP_VERSION = "1.1.0-beta";     // package.json 과 별개 표시 버전
+const APP_VERSION = "1.1.0";          // package.json 과 별개 표시 버전
 
 // i18n 전역 헬퍼 — 현재 언어(ko/en)로 핵심 UI 라벨 번역. I18N 없으면 폴백 문자열.
 const _t = (k, fb) => (typeof window !== "undefined" && window.I18N) ? window.I18N.t(k, fb) : fb;
